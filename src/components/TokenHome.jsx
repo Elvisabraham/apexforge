@@ -1,0 +1,672 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { createChart, CandlestickSeries, AreaSeries } from 'lightweight-charts';
+
+export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat }) {
+  const chartContainerRef = useRef(null);
+  const [chartTimeframe, setChartTimeframe] = useState('1d');
+  const [chartType, setChartType] = useState('area'); 
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [expandedStat, setExpandedStat] = useState(null);
+  const [isReported, setIsReported] = useState(false);
+  
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isDepositOpen, setIsDepositOpen] = useState(false);
+  const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
+  
+  const [tradeMode, setTradeMode] = useState('buy');
+  const [tradeAmount, setTradeAmount] = useState('');
+  
+  const [isFollowing, setIsFollowing] = useState(false);
+
+  // DATA ENGINE
+  const rawProgress = token?.progress || 0;
+  const initialMcap = parseFloat((token?.mcap || token?.marketCap || '$10.0K').replace(/[^0-9.]/g, ''));
+  const isActuallyGraduated = token?.isGraduated === true || rawProgress >= 100 || initialMcap >= 69;
+
+  const displayToken = {
+    name: token?.name || token?.token || 'Unknown Token',
+    symbol: token?.symbol || 'TKN',
+    change: token?.change || '+0.0%',
+    icon: token?.icon || '🪙',
+    imagePreview: token?.imagePreview || token?.image || null, 
+    mintAddress: token?.mintAddress || '8AVmX9aQwZoonSolanaNet11oHEZforge',
+    description: token?.description || `A community-driven asset deployed fairly on the Apex Forge platform. Smart contract initialized.`,
+    links: { twitter: token?.links?.twitter || '', telegram: token?.links?.telegram || '', website: token?.links?.website || '' },
+    creator: 'ApexDeployer_0x1',
+    holders: '1',
+    supply: '1.0B',
+    createdTime: 'Just now',
+    isGraduated: isActuallyGraduated,
+    progress: rawProgress
+  };
+
+  const localCacheKey = `apex_mock_state_${displayToken.symbol}`;
+  const initialBasePrice = parseFloat(token?.price || '0.0000100');
+
+  const [curveState, setCurveState] = useState(() => {
+    const cached = localStorage.getItem(localCacheKey);
+    if (cached) return JSON.parse(cached).curveState;
+    return { price: initialBasePrice, mcap: initialMcap, progress: displayToken.progress, solInCurve: (displayToken.progress / 100) * 85 };
+  });
+
+  const [userBalanceSol, setUserBalanceSol] = useState(() => {
+    const cached = localStorage.getItem(localCacheKey);
+    if (cached) return JSON.parse(cached).userBalanceSol;
+    return 4.50; 
+  });
+
+  const [userTokenBalance, setUserTokenBalance] = useState(() => {
+    const cached = localStorage.getItem(localCacheKey);
+    if (cached) return JSON.parse(cached).userTokenBalance;
+    return 0;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(localCacheKey, JSON.stringify({ curveState, userBalanceSol, userTokenBalance }));
+  }, [curveState, userBalanceSol, userTokenBalance, localCacheKey]);
+
+  const dynamicPriceImpact = tradeAmount && parseFloat(tradeAmount) > 0 
+    ? (parseFloat(tradeAmount) * (tradeMode === 'buy' ? 0.12 : 0.08)).toFixed(2) 
+    : '0.00';
+
+  const isPositive = displayToken.change.includes('+') || parseFloat(displayToken.change) >= 0;
+  const trendColorHex = isPositive ? '#089981' : '#F23645'; 
+  const trendBgColor = isPositive ? 'bg-[#089981]' : 'bg-[#F23645]'; 
+  const trendTextColor = isPositive ? 'text-[#089981]' : 'text-[#F23645]';
+
+  const timeframeLabels = { '15m': 'Past 15 mins', '1h': 'Past hour', '4h': 'Past 4 hours', '1d': 'Today', 'MAX': 'All time' };
+
+  const getShortCA = (address) => {
+    if (!address || typeof address !== 'string') return '8AVm...forge';
+    return `${address.slice(0, 4)}...${address.slice(-5)}`;
+  };
+  const shortCA = getShortCA(displayToken.mintAddress);
+
+  const formatProPrice = (val) => {
+    if (!val && val !== 0) return '';
+    const str = val.toString();
+    if (str.startsWith('$')) return <><span className="font-bold mr-[2px]">$</span>{str.slice(1)}</>;
+    return str;
+  };
+
+  const statsList = [
+    { id: 'mcap', icon: '📈', label: 'Market cap', value: `$${curveState.mcap.toFixed(2)}K`, desc: 'The total market value of a cryptocurrency\'s circulating supply.' },
+    { id: 'vol', icon: '💧', label: 'Volume', subLabel: 'Past 24h', value: '$409.90', desc: 'A metric measuring the total quantity of tokens transacted over the trailing 24-hour cycle.' },
+    { id: 'holders', icon: '👥', label: 'Holders', value: displayToken.holders, desc: 'The complete aggregate number of unique cryptographic wallet addresses holding a balance.' },
+    { id: 'supply', icon: '🪙', label: 'Circulating supply', value: displayToken.supply, desc: 'The exact volume of tokens that are actively generated and circulating.' },
+    { id: 'creator', icon: '🛠️', label: 'Created by', value: displayToken.creator, isAvatar: true, desc: 'The definitive cryptographic signature and public wallet address responsible for broadcasting the contract.' },
+    { id: 'time', icon: '⏱️', label: 'Created', value: displayToken.createdTime, desc: 'The historical age and precise blockchain block confirmation depth.' },
+  ];
+
+  const [recentTrades, setRecentTrades] = useState([
+    { id: 1, type: 'sell', amountToken: '12.4M', amountSol: '0.85', price: `$${curveState.price.toFixed(7)}`, time: '28m ago', user: 'sold' },
+    { id: 2, type: 'buy', amountToken: '2.1M', amountSol: '0.15', price: `$${curveState.price.toFixed(7)}`, time: '31m ago', user: 'bought' },
+  ]);
+
+  const handleExecuteTrade = () => {
+    const amount = parseFloat(tradeAmount);
+    
+    if (tradeMode === 'buy') {
+      if (!amount || amount <= 0 || amount > userBalanceSol) return;
+
+      const platformFeePercent = displayToken.isGraduated ? 0.005 : 0; 
+      const feeAmount = amount * platformFeePercent;
+      const netSolAmount = amount - feeAmount;
+
+      const currentPrice = curveState.price;
+      const tokensReceived = (netSolAmount / currentPrice) / 1000000; 
+
+      let newProgress = curveState.progress;
+      let newSolInCurve = curveState.solInCurve;
+      
+      if (!displayToken.isGraduated) {
+        newSolInCurve = curveState.solInCurve + netSolAmount;
+        newProgress = Math.min(100, (newSolInCurve / 85) * 100); 
+      }
+
+      const pricePumpFactor = 1 + (netSolAmount * 0.05); 
+      const newPrice = currentPrice * pricePumpFactor;
+      const newMcap = curveState.mcap * pricePumpFactor;
+
+      setUserBalanceSol(prev => prev - amount);
+      setUserTokenBalance(prev => prev + (tokensReceived * 1000000));
+      setCurveState({ price: newPrice, mcap: newMcap, progress: newProgress.toFixed(1), solInCurve: newSolInCurve });
+
+      setRecentTrades(prev => [{
+        id: Date.now(), type: 'buy', amountToken: `${tokensReceived.toFixed(1)}M`, amountSol: netSolAmount.toFixed(2), price: `$${newPrice.toFixed(7)}`, time: 'Just now', user: 'You'
+      }, ...prev].slice(0, 10));
+
+      if (displayToken.isGraduated) {
+          alert(`Jupiter API BUY Executed on Raydium! \n\nFee collected for Treasury: ${feeAmount.toFixed(4)} SOL (0.5%)`);
+      }
+
+    } else if (tradeMode === 'sell') {
+      const tokenQuantity = amount * 1000000;
+      if (!amount || amount <= 0 || tokenQuantity > userTokenBalance) return;
+
+      const currentPrice = curveState.price;
+      const grossSolReceived = (tokenQuantity * currentPrice);
+      
+      const platformFeePercent = displayToken.isGraduated ? 0.005 : 0; 
+      const feeAmount = grossSolReceived * platformFeePercent;
+      const netSolReceived = grossSolReceived - feeAmount;
+
+      let newProgress = curveState.progress;
+      let newSolInCurve = curveState.solInCurve;
+
+      if (!displayToken.isGraduated) {
+        newSolInCurve = Math.max(0, curveState.solInCurve - grossSolReceived);
+        newProgress = Math.max(0, (newSolInCurve / 85) * 100); 
+      }
+
+      const priceDumpFactor = 1 - (grossSolReceived * 0.05); 
+      const newPrice = Math.max(0.0000001, currentPrice * priceDumpFactor);
+      const newMcap = Math.max(1, curveState.mcap * priceDumpFactor);
+
+      setUserTokenBalance(prev => prev - tokenQuantity);
+      setUserBalanceSol(prev => prev + netSolReceived);
+      setCurveState({ price: newPrice, mcap: newMcap, progress: newProgress.toFixed(1), solInCurve: newSolInCurve });
+
+      setRecentTrades(prev => [{
+        id: Date.now(), type: 'sell', amountToken: `${amount.toFixed(1)}M`, amountSol: netSolReceived.toFixed(2), price: `$${newPrice.toFixed(7)}`, time: 'Just now', user: 'You'
+      }, ...prev].slice(0, 10));
+
+      if (displayToken.isGraduated) {
+          alert(`Jupiter API SELL Executed on Raydium! \n\nFee collected for Treasury: ${feeAmount.toFixed(4)} SOL (0.5%)`);
+      }
+    }
+
+    setIsBuyModalOpen(false);
+    setTradeAmount('');
+  };
+
+  const handleCopyCA = () => {
+    navigator.clipboard.writeText(displayToken.mintAddress);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyShareLink = () => {
+    navigator.clipboard.writeText(`https://apexforge.app/token/${displayToken.mintAddress}`);
+    alert("Token link copied to clipboard!");
+    setIsShareOpen(false);
+  };
+
+  const handleReportToken = () => {
+    setIsReported(true);
+    setTimeout(() => setIsReported(false), 3000);
+  };
+
+  const executeNativeShare = async () => {
+    const shareData = { title: `${displayToken.name} on Apex Forge`, text: `Check out ${displayToken.name} (${displayToken.symbol}). Market Cap: $${curveState.mcap.toFixed(2)}K 🚀`, url: `https://apexforge.app/token/${displayToken.mintAddress}` };
+    if (navigator.share) { try { await navigator.share(shareData); } catch (err) { console.log('Share cancelled or failed.', err); } } else { handleCopyShareLink(); }
+  };
+
+  const executeDownload = () => {
+    alert(`Screenshot saved to 'ApexForge' album in your gallery!`);
+    setIsShareOpen(false);
+  };
+
+  useEffect(() => {
+    if (!chartContainerRef.current) return;
+    const showGrid = chartType === 'candle';
+
+    const chart = createChart(chartContainerRef.current, {
+      layout: { background: { type: 'solid', color: '#0A0A0B' }, textColor: '#D1D5DB', attributionLogo: false },
+      grid: { vertLines: { color: '#2B2B43', style: 0, visible: showGrid }, horzLines: { color: '#2B2B43', style: 0, visible: showGrid } },
+      width: chartContainerRef.current.clientWidth,
+      height: 280,
+      timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#2B2B43' },
+      rightPriceScale: { borderColor: '#2B2B43', visible: true }, 
+    });
+
+    let series;
+    if (chartType === 'candle') {
+      series = chart.addSeries(CandlestickSeries, { upColor: '#089981', downColor: '#F23645', borderVisible: false, wickUpColor: '#089981', wickDownColor: '#F23645' });
+    } else {
+      series = chart.addSeries(AreaSeries, { lineColor: trendColorHex, topColor: isPositive ? 'rgba(8, 153, 129, 0.15)' : 'rgba(242, 54, 69, 0.15)', bottomColor: isPositive ? 'rgba(8, 153, 129, 0.00)' : 'rgba(242, 54, 69, 0.00)', lineWidth: 2, crosshairMarkerRadius: 5 });
+    }
+
+    const generateChartData = () => {
+      let data = [];
+      let time = Math.floor(Date.now() / 1000) - 3600; 
+      let basePrice = curveState.price; 
+      for (let i = 0; i < 40; i++) {
+        let volatility = basePrice * 0.1;
+        let open = basePrice + (Math.random() - 0.4) * volatility;
+        let close = isPositive ? open + (Math.random() - 0.2) * volatility : open + (Math.random() - 0.8) * volatility; 
+        let high = Math.max(open, close) + Math.random() * (volatility * 0.2);
+        let low = Math.min(open, close) - Math.random() * (volatility * 0.2);
+        chartType === 'candle' ? data.push({ time: time + (i * 90), open, high, low, close }) : data.push({ time: time + (i * 90), value: close });
+        basePrice = close;
+      }
+      const finalPoint = chartType === 'candle' ? { time: time + (40 * 90), open: basePrice, high: Math.max(basePrice, curveState.price), low: Math.min(basePrice, curveState.price), close: curveState.price } : { time: time + (40 * 90), value: curveState.price };
+      data.push(finalPoint);
+      return data;
+    };
+
+    series.setData(generateChartData());
+    chart.timeScale().fitContent();
+
+    const handleResize = () => chart.applyOptions({ width: chartContainerRef.current.clientWidth });
+    window.addEventListener('resize', handleResize);
+    return () => { window.removeEventListener('resize', handleResize); chart.remove(); };
+  }, [chartTimeframe, chartType, curveState.price, trendColorHex, isPositive]);
+
+  const formatLink = (url) => url.startsWith('http') ? url : `https://${url}`;
+
+  return (
+    <div className="flex flex-col w-full h-screen bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative">
+      
+      <style>{`
+        * { -webkit-tap-highlight-color: transparent !important; }
+        @keyframes slideUpNative { 0% { transform: translateY(100%); } 100% { transform: translateY(0); } }
+        .animate-slideUpNative { animation: slideUpNative 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes expandDown { 0% { opacity: 0; max-height: 0; } 100% { opacity: 1; max-height: 200px; } }
+        .animate-expandDown { animation: expandDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; overflow: hidden; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+
+      {/* --- UNMOVABLE HEADER --- */}
+      <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <button onClick={onBack} className="flex items-center justify-center transition-colors active:scale-95 pr-1 shrink-0">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <div className="w-10 h-10 bg-[#1A1A24] border border-white/10 rounded-full flex items-center justify-center text-xl shrink-0 overflow-hidden shadow-inner">
+            {displayToken.imagePreview ? <img src={displayToken.imagePreview} className="w-full h-full object-cover" alt="icon" /> : <span className="select-none">{displayToken.icon}</span>}
+          </div>
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-2">
+               <span className="text-lg font-black text-white leading-tight tracking-wide truncate">{displayToken.name}</span>
+               {displayToken.isGraduated && <span className="bg-amber-400/10 text-amber-400 border border-amber-400/20 text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-widest font-black shrink-0">Graduated</span>}
+            </div>
+            <div onClick={handleCopyCA} className="flex items-center gap-1.5 text-[12px] font-bold text-zinc-400 mt-0.5 cursor-pointer hover:text-white transition-colors">
+              <span className="font-mono tracking-tight">{displayToken.symbol}</span><span className="text-zinc-600">|</span><span className="font-mono tracking-tight">{shortCA}</span>
+              {copied ? <span className="text-[#089981] text-[10px] font-black tracking-wider ml-1">COPIED</span> : <svg className="w-3.5 h-3.5 shrink-0 opacity-70 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeWidth="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeWidth="2"></path></svg>}
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3 shrink-0">
+          <button onClick={() => setIsShareOpen(true)} className="text-white hover:text-zinc-300 transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-4-6l-4-4-4 4m4-4v13" /></svg></button>
+          <button onClick={() => setIsFavorited(!isFavorited)} className="transition-colors"><svg className={`w-6 h-6 ${isFavorited ? 'text-amber-400 fill-amber-400' : 'text-white'}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg></button>
+        </div>
+      </header>
+
+      {/* --- SCROLLABLE CONTENT --- */}
+      <div className="flex-1 overflow-y-auto no-scrollbar relative">
+        <div className="flex flex-col w-full pb-48">
+          
+          <div className="flex flex-col px-4 pt-4 pb-2">
+            <span className="text-[44px] font-black tracking-tighter leading-none">{formatProPrice(`$${curveState.price.toFixed(7)}`)}</span>
+            <span className={`${trendTextColor} font-bold text-sm mt-1.5 tracking-wide flex items-center gap-1`}>{isPositive ? '▲' : '▼'} {formatProPrice(displayToken.change)} <span className="text-[#787B86] font-medium ml-1">{timeframeLabels[chartTimeframe]}</span></span>
+          </div>
+
+          <div className="w-full relative bg-[#0A0A0B] border-y border-white/[0.05]">
+             <div className="absolute top-2 right-14 z-20 flex flex-col items-end pointer-events-none">
+               <span className="text-sm font-black text-white/50 tracking-widest">{displayToken.symbol}</span>
+               <span className="text-[10px] font-bold text-white/40">MC: ${curveState.mcap.toFixed(2)}K</span>
+             </div>
+             <div ref={chartContainerRef} className="w-full h-full" />
+          </div>
+
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05] bg-[#0A0A0B]">
+             <div className="flex gap-2">
+               {['15m', '1h', '4h', '1d', 'MAX'].map(tf => (
+                 <button key={tf} onClick={() => setChartTimeframe(tf)} className={`text-[12px] font-bold uppercase px-3 py-1.5 rounded-lg transition-colors ${chartTimeframe === tf ? `bg-[#2B2B43] text-white shadow-sm` : 'text-zinc-500 hover:text-white bg-transparent'}`}>{tf}</button>
+               ))}
+             </div>
+             <button onClick={() => setChartType(chartType === 'candle' ? 'area' : 'candle')} className="text-zinc-400 hover:text-white transition-colors flex items-center justify-center p-1.5 bg-white/5 rounded-md">
+                {chartType === 'candle' ? <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v2h2v12H7v2H5v-2H3V6h2V4h2zm8 4v2h2v6h-2v2h-2v-2h-2v-6h2V8h2z"/></svg> : <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 8-8" /></svg>}
+             </button>
+          </div>
+
+          <div className="flex items-center justify-between px-4 py-4 bg-[#121212]/50 border-b border-white/[0.05] mb-2">
+            <div className="flex items-center gap-3">
+              <div onClick={() => onOpenProfile(displayToken.creator)} className="relative cursor-pointer group">
+                <div className="w-11 h-11 bg-black rounded-full border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-[#089981]/50 transition-all shadow-inner">
+                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${displayToken.creator}`} className="w-full h-full object-cover" alt="Creator" />
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none mb-1">Creator</span>
+                <div className="flex items-center gap-2">
+                  <span onClick={() => onOpenProfile(displayToken.creator)} className="text-sm font-bold text-white hover:text-[#089981] transition-colors cursor-pointer">{displayToken.creator}</span>
+                  <button onClick={() => setIsFollowing(!isFollowing)} className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${isFollowing ? 'bg-white/10 text-white border border-transparent' : 'bg-transparent text-[#089981] border border-[#089981]/30 hover:bg-[#089981]/10'}`}>{isFollowing ? 'Following' : 'Follow'}</button>
+                </div>
+              </div>
+            </div>
+            
+            <button 
+              onClick={userTokenBalance > 0 ? onOpenChat : () => alert('You must hold this token to enter the trench chat!')}
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${userTokenBalance > 0 ? 'bg-[#089981] text-black hover:bg-[#06806b] hover:shadow-[0_0_15px_rgba(8,153,129,0.4)] active:scale-95' : 'bg-white/5 text-zinc-500 cursor-not-allowed border border-white/5'}`}
+            >
+              {userTokenBalance > 0 ? <>💬 Enter Chat</> : <>🔒 Buy to Chat</>}
+            </button>
+          </div>
+
+          <div className="flex flex-col px-4 pt-4 gap-6">
+
+            {/* CONDITIONAL BONDING CURVE UI (Hidden when graduated) */}
+            {!displayToken.isGraduated && (
+              <div className="flex flex-col w-full animate-fadeIn">
+                <div className="flex justify-between items-end mb-2">
+                  <span className="text-sm font-bold text-zinc-300">Bonding Curve Progress</span>
+                  <span className={`text-sm font-black text-[#089981]`}>{curveState.progress}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                   <div className={`h-full bg-gradient-to-r from-transparent to-[#089981] transition-all duration-500`} style={{ width: `${curveState.progress}%`, backgroundColor: '#089981' }} />
+                </div>
+                <p className="text-[10px] text-zinc-500 font-medium mt-2 text-right">
+                  {curveState.solInCurve.toFixed(2)} / 85 SOL for Raydium Launch
+                </p>
+              </div>
+            )}
+
+            {/* BALANCE */}
+            <div className="flex flex-col w-full">
+              <h2 className="text-2xl font-black mb-4">Your balance</h2>
+              <div className="flex justify-between items-start mb-5">
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-0.5">Value</span>
+                  <span className="text-3xl font-black text-white">{formatProPrice(`$${((userTokenBalance / 1000000) * curveState.price).toFixed(2)}`)}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-0.5">Quantity</span>
+                  <span className="text-3xl font-black text-[#089981]">{userTokenBalance > 0 ? `${(userTokenBalance / 1000000).toFixed(2)}M` : '0'}</span>
+                </div>
+              </div>
+              <div className="flex gap-3 w-full">
+                <button onClick={() => setIsDepositOpen(true)} className="flex-1 py-3 rounded-xl border border-white/10 bg-transparent hover:bg-white/5 text-sm font-bold flex items-center justify-center gap-2 transition-colors active:scale-98">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> Deposit SOL
+                </button>
+                <button className="flex-1 py-3 rounded-xl border border-white/10 bg-transparent hover:bg-white/5 text-sm font-bold flex items-center justify-center gap-2 transition-colors active:scale-98">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg> Alerts
+                </button>
+              </div>
+            </div>
+
+            <div className="w-full h-px bg-white/5"></div>
+
+            {/* ABOUT */}
+            <div className="flex flex-col w-full">
+              <h2 className="text-xl font-black mb-3">About</h2>
+              {displayToken.imagePreview && (
+                <div className="w-full h-40 bg-[#131722] rounded-xl mb-3 overflow-hidden">
+                  <img src={displayToken.imagePreview} className="w-full h-full object-cover" alt="Asset Image" />
+                </div>
+              )}
+              <p className="text-[14px] text-zinc-300 leading-relaxed mb-4 whitespace-pre-wrap">{displayToken.description}</p>
+              
+              <div className="flex flex-wrap gap-2">
+                <button onClick={handleCopyCA} className="px-4 py-2 rounded-full bg-white/5 text-xs font-bold flex items-center gap-1.5 hover:bg-white/10 transition-colors">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeWidth="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeWidth="2"></path></svg> Address
+                </button>
+                {displayToken.links.twitter && <a href={formatLink(displayToken.links.twitter)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-full bg-white/5 text-xs font-bold flex items-center gap-1.5 hover:bg-white/10 transition-colors"><span className="font-black text-sm">𝕏</span> Twitter</a>}
+                {displayToken.links.telegram && <a href={formatLink(displayToken.links.telegram)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-full bg-white/5 text-xs font-bold flex items-center gap-1.5 hover:bg-white/10 transition-colors">Telegram</a>}
+                {displayToken.links.website && <a href={formatLink(displayToken.links.website)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-full bg-white/5 text-xs font-bold flex items-center gap-1.5 hover:bg-white/10 transition-colors">Website</a>}
+              </div>
+            </div>
+
+            {/* STATS */}
+            <div className="flex flex-col mt-2 border-t border-white/[0.05]">
+              {statsList.map((stat, index) => (
+                <div key={stat.id} onClick={() => setExpandedStat(expandedStat === stat.id ? null : stat.id)} className={`flex flex-col py-3 cursor-pointer z-10 ${index !== statsList.length - 1 ? 'border-b border-white/[0.05]' : ''}`}>
+                  <div className="flex justify-between items-center w-full pointer-events-none">
+                    <span className="text-zinc-400 text-sm flex items-center gap-2">{stat.icon} {stat.label}</span>
+                    <span className="font-mono text-sm font-black text-white flex items-center gap-2">
+                      {stat.isAvatar && <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${stat.value}`} className="w-4 h-4 rounded-full" alt="Avatar" />}
+                      {stat.isAvatar ? `${stat.value.slice(0, 5)}...${stat.value.slice(-4)}` : formatProPrice(stat.value)}
+                    </span>
+                  </div>
+                  {expandedStat === stat.id && <div className="text-xs text-[#787B86] mt-2 animate-expandDown leading-relaxed pr-4">{stat.desc}</div>}
+                </div>
+              ))}
+            </div>
+
+            {/* RECENT TRADES */}
+            <div className="flex flex-col w-full mt-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-black">Recent trades</h2>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 bg-[#e81cff] rounded-full animate-pulse"></span>
+                  <span className="text-[10px] font-black uppercase text-[#e81cff]">Live</span>
+                </div>
+              </div>
+              
+              <div className="flex flex-col">
+                {recentTrades.map((trade, index) => (
+                  <div key={trade.id} className={`flex justify-between items-center py-2.5 ${index !== recentTrades.length - 1 ? 'border-b border-white/[0.03]' : ''} animate-fadeIn`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full ${trade.user === 'You' ? 'bg-[#089981] text-white' : 'bg-white/5 text-zinc-500'} flex items-center justify-center text-[8px] font-mono font-black`}>
+                        {trade.user === 'You' ? 'ME' : 'ID'}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-[14px] text-zinc-200">{trade.user} <span className={`ml-1.5 font-mono font-black ${trade.type === 'buy' ? 'text-[#089981]' : 'text-[#F23645]'}`}>{trade.amountToken}</span></span>
+                        <span className="text-[11px] font-mono text-[#787B86] flex items-center gap-1">◎ {trade.amountSol} SOL</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-[11px] font-mono text-[#787B86]">{trade.price}</span>
+                      <span className={`text-xs font-medium w-10 text-right ${trade.user === 'You' ? 'text-[#089981]' : 'text-zinc-600'}`}>{trade.time}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-6 pt-6 border-t border-white/[0.05]">
+              <p className="text-center text-[11px] text-[#787B86] font-medium leading-relaxed max-w-2xl">
+                Apex Forge acts strictly as a decentralized non-custodial software launcher suite and does not operate a centralized exchange infrastructure. Cryptographic assets are inherently exposed to extreme market volatility. Engage at your own risk.
+              </p>
+              <button onClick={handleReportToken} className={`text-xs font-bold transition-colors flex items-center gap-1.5 py-2 ${isReported ? 'text-rose-400' : 'text-zinc-500 hover:text-rose-400'}`}>🚩 {isReported ? 'Flagged for Auditing' : 'Report'}</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* --- NATIVE SHARE MODAL --- */}
+      {isShareOpen && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="absolute inset-0" onClick={() => setIsShareOpen(false)}></div>
+          
+          <div className="bg-[#1C1C1E] border-t border-white/10 rounded-t-3xl w-full max-w-lg p-6 relative z-10 animate-slideUpNative flex flex-col">
+             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6"></div>
+             
+             {/* 🚀 RESTORED ORIGINAL SHARE CARD LAYOUT WITH NATIVE QR CODE */}
+             <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-5 flex flex-col mb-8 shadow-2xl relative overflow-hidden">
+               <div className={`absolute -top-12 -right-12 w-40 h-40 ${trendBgColor} opacity-20 rounded-full blur-3xl pointer-events-none`}></div>
+               <div className={`absolute -bottom-12 -left-12 w-40 h-40 ${trendBgColor} opacity-10 rounded-full blur-3xl pointer-events-none`}></div>
+               
+               {/* TOP ROW: Token Info & Market Cap */}
+               <div className="flex justify-between items-start w-full z-10">
+                  <div className="flex items-center gap-3">
+                     <div className="w-12 h-12 bg-[#1A1A24] border border-white/5 rounded-full flex items-center justify-center text-2xl overflow-hidden shadow-inner">
+                       {displayToken.imagePreview ? <img src={displayToken.imagePreview} className="w-full h-full object-cover" alt="icon"/> : <span>{displayToken.icon}</span>}
+                     </div>
+                     <div className="flex flex-col">
+                        <span className="font-black text-white text-lg leading-tight">{displayToken.name}</span>
+                        <span className="text-xs text-zinc-400 font-mono mt-0.5">{displayToken.symbol}</span>
+                     </div>
+                  </div>
+                  <div className="flex flex-col items-end">
+                     <span className={`text-[9px] font-black ${trendTextColor} uppercase tracking-widest mb-0.5`}>Market Cap</span>
+                     <span className="text-2xl font-black text-white tracking-wide">{formatProPrice(`$${curveState.mcap.toFixed(2)}K`)}</span>
+                  </div>
+               </div>
+
+               {/* MIDDLE ROW: Big Price (Breathing Room) */}
+               <div className="flex flex-col mt-6 z-10">
+                  <span className="text-4xl font-black text-white tracking-tighter">{formatProPrice(`$${curveState.price.toFixed(7)}`)}</span>
+                  <span className={`text-sm font-bold ${trendTextColor} mt-1 tracking-wide`}>{isPositive ? '▲' : '▼'} {displayToken.change}</span>
+               </div>
+
+               {/* BOTTOM ROW: Apex Forge Logo + QR Code */}
+               <div className="flex justify-between items-end mt-6 pt-4 border-t border-white/10 z-10">
+                  <div className="flex items-center gap-2">
+                     <div className="relative w-6 h-6 flex items-center justify-center">
+                        <svg viewBox="0 0 100 100" className="w-full h-full">
+                           <path d="M 50 10 L 10 90 L 30 90 L 50 45 L 70 90 L 90 90 Z" fill="#FFFFFF" />
+                           <path d="M 50 45 C 35 70, 35 85, 50 85 C 65 85, 70, 50 45 Z" fill="#089981" />
+                        </svg>
+                     </div>
+                     <div className="flex flex-col">
+                       <span className="text-sm font-black tracking-widest text-white uppercase mt-0.5 leading-none">Apex Forge</span>
+                       <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Scan to Trade</span>
+                     </div>
+                  </div>
+                  
+                  {/* 📦 IMMUTABLE VECTOR QR CODE (Restored to bottom right) */}
+                  <div className="bg-white p-1.5 rounded-lg shadow-lg shrink-0 flex items-center justify-center border border-white/20 w-14 h-14">
+                    <svg className="w-full h-full text-black" viewBox="0 0 100 100" shapeRendering="crispEdges">
+                      <path d="M0 0h30v30H0zm10 10h10v10H10zM70 0h30v30H70zm10 10h10v10H80zM0 70h30v30H0zm10 10h10v10H10z" fill="currentColor" />
+                      <path d="M35 5h5v5h-5zm10 0h15v5H45zm0 10h5v10h-5zm10-5h5v5h-5zm0 10h10v5H55zm-20 5h10v5H35zm0 10h5v5h-5zm10 5h5v5h-5zm20-20h5v5h-5zm5 5h5v10h-5zm5 10h5v5h-5zm-15 5h10v5H70zm10 5h15v5H80zm5 5h5v5h-5zm-50 5h5v5h-5zm10 0h5v5h-5zm10 0h15v5H50z" fill="currentColor" />
+                      <rect x="42" y="42" width="16" height="16" rx="4" fill="#089981" />
+                    </svg>
+                  </div>
+               </div>
+             </div>
+
+             <div className="flex gap-4 px-2">
+               <div className="flex flex-col items-center gap-2">
+                 <button onClick={handleCopyShareLink} className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                 </button>
+                 <span className="text-[10px] font-bold text-zinc-400">Copy link</span>
+               </div>
+               <div className="flex flex-col items-center gap-2">
+                 <button onClick={executeNativeShare} className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-4-6l-4-4-4 4m4-4v13" /></svg>
+                 </button>
+                 <span className="text-[10px] font-bold text-zinc-400">Share</span>
+               </div>
+               <div className="flex flex-col items-center gap-2">
+                 <button onClick={executeDownload} className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                 </button>
+                 <span className="text-[10px] font-bold text-zinc-400">Download</span>
+               </div>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- THE NEW SWAP/BUY/SELL MODAL --- */}
+      {isBuyModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="absolute inset-0" onClick={() => setIsBuyModalOpen(false)}></div>
+          
+          <div className={`bg-[#1C1C1E] border-t ${displayToken.isGraduated ? 'border-amber-500/30' : (tradeMode === 'buy' ? 'border-[#089981]/30' : 'border-[#F23645]/30')} rounded-t-3xl w-full max-w-lg p-6 relative z-10 animate-slideUpNative flex flex-col transition-colors duration-300`}>
+             
+             {/* HEADER */}
+             <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col">
+                  <h3 className="text-lg font-black text-white uppercase tracking-widest flex items-center gap-2">
+                    Trade {displayToken.symbol}
+                    {displayToken.isGraduated && <span className="bg-amber-500/10 text-amber-500 text-[8px] px-1.5 py-0.5 rounded uppercase border border-amber-500/20">DEX Swap</span>}
+                  </h3>
+                  {displayToken.isGraduated && <span className="text-[9px] text-zinc-500 font-bold uppercase mt-1">Jupiter Aggregator Routing</span>}
+                </div>
+                <button onClick={() => setIsBuyModalOpen(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg></button>
+             </div>
+
+             {/* BUY / SELL TOGGLE SWITCH */}
+             <div className="flex p-1 bg-black/40 rounded-xl mb-6 border border-white/5 shadow-inner">
+               <button onClick={() => { setTradeMode('buy'); setTradeAmount(''); }} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${tradeMode === 'buy' ? 'bg-[#089981] text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}>Buy</button>
+               <button onClick={() => { setTradeMode('sell'); setTradeAmount(''); }} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}>Sell</button>
+             </div>
+
+             {/* DYNAMIC INPUT FIELD */}
+             <div className={`bg-black/40 border border-white/5 focus-within:border-white/20 rounded-2xl p-4 flex items-center justify-between gap-4 transition-all mb-2`}>
+                <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg shrink-0">
+                  {tradeMode === 'buy' ? (
+                    <><img src="https://cryptologos.cc/logos/solana-sol-logo.png" className="w-4 h-4" alt="SOL"/><span className="text-xs font-black text-white">SOL</span></>
+                  ) : (
+                    <><div className="w-4 h-4 rounded-full bg-black overflow-hidden flex items-center justify-center text-[8px]">{displayToken.imagePreview ? <img src={displayToken.imagePreview} className="w-full h-full object-cover" alt="TKN"/> : displayToken.icon}</div><span className="text-xs font-black text-white">{displayToken.symbol}</span></>
+                  )}
+                </div>
+                <input type="number" value={tradeAmount} onChange={(e) => setTradeAmount(e.target.value)} placeholder="0.00" className="bg-transparent text-right text-3xl font-black text-white w-full focus:outline-none placeholder-zinc-700" />
+             </div>
+
+             {/* DYNAMIC BALANCE QUICK SELECT */}
+             <div className="flex justify-between items-center px-1 mb-6">
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                  Balance: {tradeMode === 'buy' ? `${userBalanceSol.toFixed(2)} SOL` : `${(userTokenBalance / 1000000).toFixed(2)}M ${displayToken.symbol}`}
+                </span>
+                <div className="flex gap-2">
+                  <button onClick={() => setTradeAmount(tradeMode === 'buy' ? (userBalanceSol * 0.5).toFixed(2) : ((userTokenBalance * 0.5) / 1000000).toFixed(2))} className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors">Half</button>
+                  <button onClick={() => setTradeAmount(tradeMode === 'buy' ? userBalanceSol.toFixed(2) : (userTokenBalance / 1000000).toFixed(2))} className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors">Max</button>
+                </div>
+             </div>
+
+             {/* DYNAMIC ESTIMATES BOX */}
+             <div className="flex flex-col gap-2 p-4 bg-[#0A0A0A] border border-white/5 rounded-xl mb-6 shadow-inner">
+               <div className="flex justify-between items-center">
+                 <span className="text-[10px] font-bold text-zinc-500 uppercase">You Receive (Est.)</span>
+                 <span className={`text-sm font-black ${displayToken.isGraduated ? 'text-amber-500' : (tradeMode === 'buy' ? 'text-[#089981]' : 'text-[#00FF66]')}`}>
+                   {tradeAmount && parseFloat(tradeAmount) > 0 ? (
+                     tradeMode === 'buy' 
+                       ? `${(((parseFloat(tradeAmount) * (displayToken.isGraduated ? 0.995 : 1)) / curveState.price) / 1000000).toFixed(2)}M ${displayToken.symbol}`
+                       : `${((parseFloat(tradeAmount) * 1000000 * curveState.price) * (displayToken.isGraduated ? 0.995 : 1)).toFixed(4)} SOL`
+                   ) : '0.00'}
+                 </span>
+               </div>
+               
+               {displayToken.isGraduated ? (
+                 <div className="flex justify-between items-center">
+                   <span className="text-[10px] font-bold text-zinc-500 uppercase">Routing & Fees</span>
+                   <span className="text-[10px] font-black text-zinc-300 flex items-center gap-1">Raydium LP <span className="text-zinc-600">|</span> 0.5%</span>
+                 </div>
+               ) : (
+                 <div className="flex justify-between items-center">
+                   <span className="text-[10px] font-bold text-zinc-500 uppercase">Price Impact</span>
+                   <span className="text-[10px] font-black text-zinc-300">~{dynamicPriceImpact}%</span>
+                 </div>
+               )}
+             </div>
+
+             {/* DYNAMIC CONFIRM BUTTON */}
+             <button 
+                onClick={handleExecuteTrade}
+                disabled={!tradeAmount || parseFloat(tradeAmount) <= 0}
+                className={`w-full ${displayToken.isGraduated ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-[0_0_20px_rgba(245,158,11,0.3)]' : (tradeMode === 'buy' ? 'bg-[#089981] hover:bg-[#06806b] shadow-[0_0_20px_rgba(8,153,129,0.3)]' : 'bg-[#F23645] hover:bg-rose-600 shadow-[0_0_20px_rgba(242,54,69,0.3)]')} disabled:opacity-50 text-white font-black text-sm py-4 rounded-2xl tracking-[0.2em] uppercase transition-all active:scale-95 flex items-center justify-center gap-2`}
+             >
+                Confirm {tradeMode} ⚡
+             </button>
+          </div>
+        </div>
+      )}
+
+      {/* --- CONDITIONAL UNMOVABLE BOTTOM BUY MAT --- */}
+      <div className="flex-none bg-[#0E0E14] z-30 pt-3 pb-5 px-4 border-t border-white/[0.05] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] relative">
+        <div className="max-w-4xl mx-auto flex flex-col items-center">
+          
+          <button 
+            onClick={() => { setTradeMode('buy'); setIsBuyModalOpen(true); }} 
+            className={`w-full ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)]' : 'bg-[#089981] hover:opacity-90 text-white shadow-[0_0_20px_rgba(8,153,129,0.4)]'} font-black text-lg py-4 rounded-2xl flex items-center justify-center gap-2 transition-transform active:scale-95 uppercase tracking-widest`}
+          >
+            {displayToken.isGraduated ? 'Trade on DEX ⚡' : 'Trade Token'}
+          </button>
+          
+          {displayToken.isGraduated ? (
+            <div className="flex items-center justify-center gap-1.5 mt-3">
+              <span className="text-amber-500 text-[10px]">🔒</span>
+              <span className="text-[11px] font-bold text-zinc-400 tracking-wide">Liquidity pool burned & locked on Raydium.</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-1.5 mt-3">
+              <span className="text-amber-500 text-[10px]">⚠️</span>
+              <span className="text-[11px] font-medium text-amber-500/90 tracking-wide">This coin is new and may be volatile.</span>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+    </div>
+  );
+}
