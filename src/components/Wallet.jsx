@@ -1,4 +1,4 @@
-// 🚀 VERSION 4.5: THE INSTITUTIONAL WALLET (Settings Routing Fix)
+// 🚀 VERSION 4.6: THE INSTITUTIONAL WALLET (Settings Routing Fix)
 import React, { useState, useEffect, useRef } from 'react';
 import AccountSettingsSystem from './AccountSettingsSystem';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -292,7 +292,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                         {copied ? (
                           <svg className="w-3 h-3 text-[#00FF66] shrink-0" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         ) : (
-                          <svg className="w-3 h-3 text-zinc-600 group-hover/copy:text-[#089981] transition-colors shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                          <svg className="w-3 h-3 text-zinc-600 group-hover/copy:text-[#089981] transition-colors shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                         )}
                       </button>
                     ) : (
@@ -637,11 +637,10 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                   </button>
                 </div>
 
-                {/* 🚀 FIXED: Now fires onOpenSettings() prop to open your main app settings modal */}
+                {/* 🚀 FIXED: Directly passing 'settings' string instead of 'preferences' */}
                 <button onClick={() => { 
                   setShowWalletManager(false); 
-                  if (onOpenSettings) onOpenSettings(); 
-                  else setSettingsView('preferences'); 
+                  setSettingsView('settings'); 
                 }} className="w-full flex justify-between items-center py-5 mt-6 border-t border-white/10 group">
                   <span className="text-xs font-black uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">App Preferences & Security</span>
                   <span className="text-zinc-600 group-hover:text-white">›</span>
@@ -695,11 +694,10 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
               <div className="mb-4">
                 <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 px-3">Security</span>
                 <div className="mt-2 flex flex-col gap-1">
-                  {/* 🚀 FIXED: Now fires onOpenSettings() prop to open your main app settings modal */}
+                  {/* 🚀 FIXED: Directly passing 'settings' string instead of 'preferences' */}
                   <button onClick={() => { 
                     setIsMenuOpen(false); 
-                    if (onOpenSettings) onOpenSettings(); 
-                    else setSettingsView('preferences'); 
+                    setSettingsView('settings'); 
                   }} className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-white/5 transition-colors text-left group">
                     <svg className="w-5 h-5 text-zinc-500 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                     <span className="text-sm font-bold text-zinc-300 group-hover:text-white">App Settings & Preferences</span>
