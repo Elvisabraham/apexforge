@@ -1,3 +1,4 @@
+// 🚀 VERSION 3: FIXED Z-INDEX & USERNAMES
 import React, { useState, useEffect, useRef } from 'react';
 
 export default function Watch({ onTokenClick, userProfile }) {
@@ -158,15 +159,15 @@ export default function Watch({ onTokenClick, userProfile }) {
       `}</style>
 
       {/* --- FLOATING HEADER --- */}
-      <header className="fixed top-0 left-0 w-full z-40 px-4 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-2 drop-shadow-md">
+      <header className="fixed top-0 left-0 w-full z-40 px-4 py-6 flex items-center justify-between pointer-events-none">
+        <div className="flex items-center gap-2 drop-shadow-md pointer-events-auto">
            <svg viewBox="0 0 100 100" className="w-6 h-6 text-[#089981]" fill="currentColor">
               <path d="M 50 10 L 10 90 L 30 90 L 50 45 L 70 90 L 90 90 Z" fill="#FFFFFF" />
               <path d="M 50 45 C 35 70, 35 85, 50 45 Z" fill="#089981" />
            </svg>
            <h1 className="text-xl font-black tracking-widest text-white uppercase">Watch</h1>
         </div>
-        <div className="flex items-center gap-5 drop-shadow-md z-40">
+        <div className="flex items-center gap-5 drop-shadow-md z-40 pointer-events-auto">
           <span 
             onClick={() => setCurrentFeedTab('FOLLOWING')}
             className={`text-sm font-black cursor-pointer transition-colors duration-200 relative py-1 ${
@@ -312,7 +313,7 @@ export default function Watch({ onTokenClick, userProfile }) {
         })}
       </div>
 
-      {/* --- 🚀 FIXED: OVERLAY DRAWER WITH z-[100] TO CLEAR BOTTOM NAV --- */}
+      {/* --- 🚀 VERSION 3: OVERLAY DRAWER WITH z-[100] TO CLEAR BOTTOM NAV --- */}
       {isCommentDrawerOpen && (
         <div className="fixed inset-0 z-[100] flex flex-col justify-end">
           
@@ -343,7 +344,7 @@ export default function Watch({ onTokenClick, userProfile }) {
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 no-scrollbar bg-[#0E0E10]">
               {activeToken.comments.map((comment) => (
                 <div key={comment.id} className="flex flex-col bg-white/[0.02] border border-white/[0.04] p-3 rounded-xl">
-                  {/* 🚀 FIXED: Clickable Username! */}
+                  {/* 🚀 VERSION 3: Clickable Username! */}
                   <span 
                     onClick={() => alert(`Navigating to @${comment.user}'s profile...`)} 
                     className="text-xs font-black text-[#089981] mb-1 cursor-pointer hover:underline w-max active:scale-95 transition-transform"
