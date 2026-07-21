@@ -1,4 +1,4 @@
-// 🚀 VERSION 5.2: THE INSTITUTIONAL WALLET (Typing Unlocked, Header Collision & Icon Fix)
+// 🚀 VERSION 5.3: THE INSTITUTIONAL WALLET (Uncrushable SVGs, Inputs & Eye Icon)
 import React, { useState, useEffect, useRef } from 'react';
 import AccountSettingsSystem from './AccountSettingsSystem';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -168,12 +168,6 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
     setSwapReceiveAsset(temp);
   };
 
-  const handleOpenSettings = () => {
-    setShowWalletManager(false);
-    setIsMenuOpen(false);
-    setSettingsView('settings'); 
-  };
-
   const activeMethodConfig = depositMethods.find(m => m.id === depositMethod);
   const activeFiatConfig = fiatProviders.find(p => p.id === selectedFiatProvider);
   const activeWithdrawMethodConfig = withdrawMethods.find(m => m.id === withdrawMethod);
@@ -250,13 +244,13 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
     setActiveTab('activity');
   };
 
-  // 🚀 FIXED: Global Keyboard Listener double typing bug
+  // 🚀 FIXED: Global Keyboard Listener double typing bug killed!
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!activeModal) return;
       if (activeModal === 'deposit' && depositStep === 2 && activeMethodConfig?.type === 'crypto') return;
       
-      // 🛡️ IGNORE if the user is typing in a native input or textarea. This stops the double typing!
+      // 🛡️ IGNORE if the user is typing in a native input or textarea. Stops double typing.
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
       if (e.key >= '0' && e.key <= '9') { handleNumpad(e.key); } 
@@ -307,12 +301,11 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
     <>
       <div className="flex flex-col w-full h-screen overflow-hidden bg-[#030303] text-white selection:bg-[#089981]/30 font-sans relative">
         
-        <header className="flex-none z-40 bg-[#030303]/90 backdrop-blur-3xl px-4 sm:px-6 py-3 border-b border-white/[0.02] flex items-center justify-between sticky top-0 relative">
+        <header className="flex-none z-40 bg-[#030303]/90 backdrop-blur-3xl px-4 sm:px-6 py-3 border-b border-white/[0.02] flex items-center justify-between sticky top-0">
           
-          <div className="flex items-center z-10 w-2/5">
-            <div onClick={(e) => { e.stopPropagation(); setShowWalletManager(true); }} className="flex items-center gap-2 sm:gap-3 cursor-pointer group w-full">
-               
-               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-white/5 overflow-hidden bg-[#121212] flex items-center justify-center shadow-inner group-hover:border-[#089981]/50 transition-colors shrink-0">
+          <div className="flex-1 flex items-center min-w-0">
+            <div onClick={(e) => { e.stopPropagation(); setShowWalletManager(true); }} className="flex items-center gap-3 cursor-pointer group shrink-0">
+               <div className="w-10 h-10 rounded-full border-2 border-white/5 overflow-hidden bg-[#121212] flex items-center justify-center shadow-inner group-hover:border-[#089981]/50 transition-colors">
                  {displayAvatar ? (
                    <img src={displayAvatar} alt="Profile" className="w-full h-full object-cover" />
                  ) : (
@@ -320,50 +313,50 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                  )}
                </div>
                
-               <div className="flex flex-col justify-center flex-1">
-                  <span className="text-[13px] sm:text-sm font-black text-white tracking-wide group-hover:text-[#089981] transition-colors leading-tight">
+               <div className="flex flex-col min-w-0 justify-center">
+                  <span className="text-sm font-black text-white tracking-wide truncate group-hover:text-[#089981] transition-colors leading-tight">
                     {displayUsername}
                   </span>
                   
-                  <div className="flex items-center mt-0.5 w-full">
+                  <div className="flex items-center gap-1.5 mt-0.5">
                     {connected ? (
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleCopyAddress(e); }}
-                        className="flex items-center gap-1.5 group/copy hover:bg-white/5 py-0.5 pr-1 -ml-1 rounded-md transition-colors cursor-pointer"
+                        className="flex items-center gap-1.5 group/copy hover:bg-white/5 px-1.5 py-0.5 -ml-1.5 rounded-md transition-colors cursor-pointer"
                         title="Copy Address"
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] shadow-[0_0_5px_#00FF66] animate-pulse shrink-0"></span>
-                        <span className="text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold transition-colors">
+                        <span className="text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold truncate tracking-wider transition-colors flex-1 text-left min-w-0">
                           {shortAddress}
                         </span>
                         {copied ? (
-                          <svg className="w-3 h-3 text-[#00FF66]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          // 🚀 FIXED: UNCRUSHABLE SVGS (min-w and min-h added)
+                          <svg className="w-3 h-3 min-w-[12px] min-h-[12px] shrink-0 text-[#00FF66]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         ) : (
-                          <svg className="w-3 h-3 text-zinc-600 group-hover/copy:text-[#089981] transition-colors" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                          <svg className="w-3 h-3 min-w-[12px] min-h-[12px] shrink-0 text-zinc-600 group-hover/copy:text-[#089981] transition-colors" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                         )}
                       </button>
                     ) : (
-                      <div className="flex items-center gap-1 w-full mt-0.5">
+                      <>
                         <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_5px_#f43f5e] shrink-0"></span>
-                        <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Disconnected</span>
-                      </div>
+                        <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest truncate">Disconnected</span>
+                      </>
                     )}
                   </div>
                </div>
             </div>
           </div>
 
-          {/* 🚀 FIXED: Sticky balance locked to strict inset margins to prevent overlapping your copy icon */}
-          <div className="absolute inset-x-28 top-0 bottom-0 flex justify-center items-center pointer-events-none z-0">
-            <div className={`transition-all duration-300 transform w-full flex justify-center ${isScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-              <span className="text-[13px] font-black text-white tracking-tight truncate block text-center w-full">{isMuted ? '••••••' : displayNetWorth}</span>
+          <div className="flex-1 flex justify-center items-center pointer-events-none px-2">
+            <div className={`transition-all duration-300 transform ${isScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+              <span className="text-sm font-black text-white tracking-tight">{isMuted ? '••••••' : displayNetWorth}</span>
             </div>
           </div>
 
-          <div className="flex items-center justify-end z-10">
+          <div className="flex-1 flex items-center justify-end gap-2 shrink-0">
             <button 
               onClick={(e) => { e.stopPropagation(); setIsMenuOpen(true); }}
-              className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-zinc-400 hover:text-white transition-all shadow-md group relative cursor-pointer"
+              className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-zinc-400 hover:text-white transition-all shadow-md group relative z-50 cursor-pointer"
             >
               <svg className="w-5 h-5 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
@@ -379,21 +372,21 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
         >
           <div className="flex flex-col w-full max-w-4xl mx-auto">
             
-            <section className="bg-gradient-to-b from-[#0A0A0A] to-[#050505] border-b border-white/[0.04] p-6 sm:p-8 flex flex-col items-center relative shadow-sm rounded-b-3xl mb-4 overflow-hidden">
+            <section className="bg-gradient-to-b from-[#0A0A0A] to-[#050505] border-b border-white/[0.04] p-6 sm:p-8 flex flex-col items-center relative shadow-sm rounded-b-3xl mb-4">
               
-              <div className="flex items-center justify-center gap-2 mb-3 z-10 w-full px-4">
-                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] truncate">Estimated Net Worth</p>
-                <button onClick={() => setIsMuted(!isMuted)} className="text-zinc-500 hover:text-white transition-colors flex items-center justify-center group">
-                  {/* 🚀 FIXED: World-class premium eye/hide SVG icons */}
+              <div className="flex items-center gap-2 mb-3 z-10">
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Estimated Net Worth</p>
+                <button onClick={() => setIsMuted(!isMuted)} className="text-zinc-500 hover:text-white transition-colors shrink-0 outline-none">
+                  {/* 🚀 FIXED: WORLD CLASS PREMIUM EYE ICON + Uncrushable classes */}
                   {isMuted ? (
-                    <svg className="w-[18px] h-[18px] shrink-0 text-zinc-500 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+                    <svg className="w-[18px] h-[18px] min-w-[18px] min-h-[18px] shrink-0 text-zinc-500 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
                   ) : (
-                    <svg className="w-[18px] h-[18px] shrink-0 text-zinc-500 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg className="w-[18px] h-[18px] min-w-[18px] min-h-[18px] shrink-0 text-zinc-500 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                   )}
                 </button>
               </div>
               
-              <h2 className={`text-5xl md:text-6xl font-sans tracking-tight font-bold text-white z-10 leading-none transition-opacity duration-300 truncate max-w-full w-full px-4 text-center ${isScrolled ? 'opacity-0' : 'opacity-100'}`}>
+              <h2 className={`text-5xl md:text-6xl font-sans tracking-tight font-bold text-white z-10 leading-none transition-opacity duration-300 ${isScrolled ? 'opacity-0' : 'opacity-100'}`}>
                 {isMuted ? '••••••' : displayNetWorth}
               </h2>
 
@@ -509,6 +502,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                 <div className="flex flex-col gap-2 animate-fadeIn">
                   {transactions.length > 0 ? (
                     <>
+                      {/* 🚀 FIXED: Always strictly maps the top 5 here */}
                       {visibleActivity.map((tx) => (
                         <div key={tx.id} onClick={() => handleActivityClick(tx.hash)} className="flex justify-between items-center p-4 bg-[#0A0A0A] rounded-2xl border border-white/[0.03] hover:bg-[#0D0D0D] transition-all duration-300 cursor-pointer group">
                           <div className="flex items-center gap-4">
@@ -686,7 +680,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                   </button>
                 </div>
 
-                <button onClick={handleOpenSettings} className="w-full flex justify-between items-center py-5 mt-6 border-t border-white/10 group">
+                <button onClick={() => { setShowWalletManager(false); setSettingsView('main'); }} className="w-full flex justify-between items-center py-5 mt-6 border-t border-white/10 group">
                   <span className="text-xs font-black uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">App Preferences & Security</span>
                   <span className="text-zinc-600 group-hover:text-white">›</span>
                 </button>
@@ -739,7 +733,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
               <div className="mb-4">
                 <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 px-3">Security</span>
                 <div className="mt-2 flex flex-col gap-1">
-                  <button onClick={handleOpenSettings} className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-white/5 transition-colors text-left group">
+                  <button onClick={() => { setIsMenuOpen(false); setSettingsView('main'); }} className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-white/5 transition-colors text-left group">
                     <svg className="w-5 h-5 text-zinc-500 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                     <span className="text-sm font-bold text-zinc-300 group-hover:text-white">App Settings & Preferences</span>
                   </button>
@@ -859,7 +853,8 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                       <button key={method.id} onClick={() => { setDepositMethod(method.id); setDepositStep(2); }} className="w-full flex items-center gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/[0.02] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 text-left shadow-lg group">
                         <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center text-xl border border-white/5 group-hover:border-white/20 transition-all duration-300 shadow-inner"><span className="text-center drop-shadow-md">{method.icon}</span></div>
                         <div className="flex flex-col"><span className="font-black text-sm text-zinc-200 group-hover:text-white tracking-wide transition-colors">{method.label}</span><span className="text-[10px] text-zinc-500 font-semibold tracking-wide mt-1">{method.sub}</span></div>
-                        <div className="ml-auto text-zinc-700 group-hover:text-white transition-colors duration-300"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7-7" /></svg></div>
+                        {/* 🚀 FIXED: Uncrushable Chevron SVGs */}
+                        <div className="ml-auto text-zinc-700 group-hover:text-white transition-colors duration-300 shrink-0"><svg className="w-5 h-5 min-w-[20px] min-h-[20px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7-7" /></svg></div>
                       </button>
                     ))}
                   </div>
@@ -899,7 +894,8 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                                 <span className="text-sm font-bold text-white">{activeFiatConfig?.label}</span>
                               </div>
                             </div>
-                            <svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                            {/* 🚀 FIXED: Uncrushable Chevron SVGs */}
+                            <svg className="w-5 h-5 min-w-[20px] min-h-[20px] shrink-0 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                           </button>
                           {showFiatDropdown && (
                             <div className="absolute top-full left-0 right-0 mt-2 bg-[#1A1A1A] border border-white/10 rounded-2xl overflow-hidden z-20 shadow-2xl">
@@ -914,7 +910,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                         </div>
                         <div className="text-center mb-6">
                           <span className="text-zinc-500 font-bold text-sm">$</span>
-                          {/* 🚀 FIXED: Native Input for Deposit */}
+                          {/* 🚀 FIXED: NATIVE DEVICE TYPING */}
                           <input 
                             type="text" 
                             inputMode="decimal"
@@ -948,7 +944,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                 </div>
                 <div className="text-center mb-6 mt-4">
                   <div className="flex justify-center items-center gap-2">
-                    {/* 🚀 FIXED: Native Input for Send */}
+                    {/* 🚀 FIXED: NATIVE DEVICE TYPING */}
                     <input 
                       type="text" 
                       inputMode="decimal"
@@ -982,7 +978,8 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                       <button key={method.id} onClick={() => { setWithdrawMethod(method.id); setWithdrawStep(2); }} className="w-full flex items-center gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/[0.02] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 text-left shadow-lg group">
                         <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center text-xl border border-white/5 group-hover:border-white/20 transition-all duration-300 shadow-inner"><span className="text-center drop-shadow-md">{method.icon}</span></div>
                         <div className="flex flex-col"><span className="font-black text-sm text-zinc-200 group-hover:text-white tracking-wide transition-colors">{method.label}</span><span className="text-[10px] text-zinc-500 font-semibold tracking-wide mt-1">{method.sub}</span></div>
-                        <div className="ml-auto text-zinc-700 group-hover:text-white transition-colors duration-300"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7-7" /></svg></div>
+                        {/* 🚀 FIXED: Uncrushable Chevron SVGs */}
+                        <div className="ml-auto text-zinc-700 group-hover:text-white transition-colors duration-300 shrink-0"><svg className="w-5 h-5 min-w-[20px] min-h-[20px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7-7" /></svg></div>
                       </button>
                     ))}
                   </div>
@@ -997,7 +994,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                         </div>
                         <div className="text-center mb-6 mt-2">
                           <div className="flex justify-center items-center gap-2">
-                            {/* 🚀 FIXED: Native Input for Withdraw Crypto */}
+                            {/* 🚀 FIXED: NATIVE DEVICE TYPING */}
                             <input 
                               type="text" 
                               inputMode="decimal"
@@ -1030,7 +1027,8 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                                 <span className="text-sm font-bold text-white">{activeWithdrawFiatConfig?.label}</span>
                               </div>
                             </div>
-                            <svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                            {/* 🚀 FIXED: Uncrushable Chevron SVGs */}
+                            <svg className="w-5 h-5 min-w-[20px] min-h-[20px] shrink-0 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                           </button>
                           {showWithdrawFiatDropdown && (
                             <div className="absolute top-full left-0 right-0 mt-2 bg-[#1A1A1A] border border-white/10 rounded-2xl overflow-hidden z-20 shadow-2xl">
@@ -1045,7 +1043,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                         </div>
                         <div className="text-center mb-6">
                           <span className="text-zinc-500 font-bold text-sm">$</span>
-                          {/* 🚀 FIXED: Native Input for Withdraw Fiat */}
+                          {/* 🚀 FIXED: NATIVE DEVICE TYPING */}
                           <input 
                             type="text" 
                             inputMode="decimal"
@@ -1078,7 +1076,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                 <div className="bg-[#121212] border border-white/10 rounded-3xl p-5 flex flex-col relative z-20 focus-within:border-[#089981]/50 transition-colors">
                   <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">You Pay</span>
                   <div className="flex justify-between items-center">
-                    {/* 🚀 FIXED: Native Input for Swap */}
+                    {/* 🚀 FIXED: NATIVE DEVICE TYPING */}
                     <input 
                       type="text" 
                       inputMode="decimal"
@@ -1093,7 +1091,8 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                           {activePayAsset?.symbol.charAt(0)}
                         </div>
                         <span className="font-bold text-white text-sm">{activePayAsset?.symbol}</span>
-                        <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                        {/* 🚀 FIXED: Uncrushable Chevron SVGs */}
+                        <svg className="w-4 h-4 min-w-[16px] min-h-[16px] shrink-0 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                       </button>
                       {showPayDropdown && (
                         <div className="absolute top-full right-0 mt-2 w-48 bg-[#1A1A1A] border border-white/10 rounded-2xl overflow-hidden z-30 shadow-2xl">
@@ -1127,7 +1126,8 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                           {activeReceiveAsset?.symbol.charAt(0)}
                         </div>
                         <span className="font-bold text-white text-sm">{activeReceiveAsset?.symbol}</span>
-                        <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                        {/* 🚀 FIXED: Uncrushable Chevron SVGs */}
+                        <svg className="w-4 h-4 min-w-[16px] min-h-[16px] shrink-0 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                       </button>
                       {showReceiveDropdown && (
                         <div className="absolute top-full right-0 mt-2 w-48 bg-[#1A1A1A] border border-white/10 rounded-2xl overflow-hidden z-30 shadow-2xl">
