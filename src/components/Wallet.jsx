@@ -1,4 +1,4 @@
-// 🚀 VERSION 4.7: THE INSTITUTIONAL WALLET (Perfect Routing & Icon Flex Patch)
+// 🚀 VERSION 5.0: THE INSTITUTIONAL WALLET (Ultimate Layout & Routing Fix)
 import React, { useState, useEffect, useRef } from 'react';
 import AccountSettingsSystem from './AccountSettingsSystem';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -145,15 +145,11 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
     setSwapReceiveAsset(temp);
   };
 
-  // 🚀 FIXED: Global Settings Handler
+  // 🚀 FIXED: Directly passing 'settings' to the local AccountSettingsSystem component
   const handleOpenSettings = () => {
     setShowWalletManager(false);
     setIsMenuOpen(false);
-    if (typeof onOpenSettings === 'function') {
-      onOpenSettings(); // Fires your global app settings modal
-    } else {
-      setSettingsView('appSettings'); // Fallback if no prop is passed
-    }
+    setSettingsView('settings'); 
   };
 
   const activeMethodConfig = depositMethods.find(m => m.id === depositMethod);
@@ -274,8 +270,10 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
         
         <header className="flex-none z-40 bg-[#030303]/90 backdrop-blur-3xl px-4 sm:px-6 py-3 border-b border-white/[0.02] flex items-center justify-between sticky top-0 relative">
           
-          <div className="flex items-center min-w-0 z-10 max-w-[45%]">
+          {/* 🚀 FIXED HEADER SECTION: Bulletproof flex layout so nothing ever gets crushed */}
+          <div className="flex-1 flex items-center min-w-0 z-10 pr-2">
             <div onClick={(e) => { e.stopPropagation(); setShowWalletManager(true); }} className="flex items-center gap-2 sm:gap-3 cursor-pointer group w-full min-w-0">
+               
                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-white/5 overflow-hidden bg-[#121212] flex items-center justify-center shadow-inner group-hover:border-[#089981]/50 transition-colors shrink-0">
                  {displayAvatar ? (
                    <img src={displayAvatar} alt="Profile" className="w-full h-full object-cover" />
@@ -284,36 +282,39 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                  )}
                </div>
                
-               <div className="flex flex-col min-w-0 justify-center flex-1">
+               <div className="flex flex-col min-w-0 flex-1 justify-center">
                   <span className="text-[13px] sm:text-sm font-black text-white tracking-wide truncate group-hover:text-[#089981] transition-colors leading-tight">
                     {displayUsername}
                   </span>
                   
-                  <div className="flex items-center mt-0.5 w-full min-w-0">
-                    {connected ? (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleCopyAddress(e); }}
-                        className="flex items-center gap-1.5 group/copy hover:bg-white/5 py-0.5 px-1 -ml-1 rounded-md transition-colors cursor-pointer max-w-full"
-                        title="Copy Address"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] shadow-[0_0_5px_#00FF66] animate-pulse shrink-0"></span>
-                        {/* 🚀 FIXED: min-w-0 on text allows truncation, shrink-0 on SVG prevents cutoff */}
-                        <span className="text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold truncate transition-colors min-w-0">
-                          {shortAddress}
-                        </span>
+                  {connected ? (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleCopyAddress(e); }}
+                      className="flex items-center gap-1.5 group/copy hover:bg-white/5 py-0.5 pr-2 -ml-1 rounded-md transition-colors cursor-pointer w-full min-w-0 mt-0.5"
+                      title="Copy Address"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] shadow-[0_0_5px_#00FF66] animate-pulse shrink-0"></span>
+                      
+                      {/* TEXT SHRINKS AND TRUNCATES */}
+                      <span className="text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold truncate transition-colors flex-1 text-left min-w-0">
+                        {shortAddress}
+                      </span>
+                      
+                      {/* SVG IS PROTECTED BY SHRINK-0 */}
+                      <div className="shrink-0 flex items-center justify-center">
                         {copied ? (
-                          <svg className="w-3 h-3 text-[#00FF66] shrink-0 block" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <svg className="w-3 h-3 text-[#00FF66]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         ) : (
-                          <svg className="w-3 h-3 text-zinc-600 group-hover/copy:text-[#089981] transition-colors shrink-0 block" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                          <svg className="w-3 h-3 text-zinc-600 group-hover/copy:text-[#089981] transition-colors" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                         )}
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-1 w-full min-w-0">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_5px_#f43f5e] shrink-0"></span>
-                        <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest truncate">Disconnected</span>
                       </div>
-                    )}
-                  </div>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-1 w-full min-w-0 mt-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_5px_#f43f5e] shrink-0"></span>
+                      <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest truncate min-w-0">Disconnected</span>
+                    </div>
+                  )}
                </div>
             </div>
           </div>
@@ -324,7 +325,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 shrink-0 z-10 w-12">
+          <div className="flex-1 flex items-center justify-end z-10 shrink-0">
             <button 
               onClick={(e) => { e.stopPropagation(); setIsMenuOpen(true); }}
               className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-zinc-400 hover:text-white transition-all shadow-md group relative cursor-pointer"
@@ -345,13 +346,14 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
             
             <section className="bg-gradient-to-b from-[#0A0A0A] to-[#050505] border-b border-white/[0.04] p-6 sm:p-8 flex flex-col items-center relative shadow-sm rounded-b-3xl mb-4 overflow-hidden">
               
-              <div className="flex items-center gap-2 mb-3 z-10">
-                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Estimated Net Worth</p>
-                <button onClick={() => setIsMuted(!isMuted)} className="text-zinc-500 hover:text-white transition-colors">
+              {/* 🚀 FIXED EYE ICON: Added shrink-0 and wrapper protection */}
+              <div className="flex items-center justify-center gap-2 mb-3 z-10 w-full px-4">
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] truncate shrink">Estimated Net Worth</p>
+                <button onClick={() => setIsMuted(!isMuted)} className="text-zinc-500 hover:text-white transition-colors shrink-0 flex items-center justify-center">
                   {isMuted ? (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" /></svg>
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" /></svg>
                   ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268-2.943-9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268-2.943-9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                   )}
                 </button>
               </div>
@@ -649,6 +651,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                   </button>
                 </div>
 
+                {/* 🚀 SETTINGS TRIGGER */}
                 <button onClick={handleOpenSettings} className="w-full flex justify-between items-center py-5 mt-6 border-t border-white/10 group">
                   <span className="text-xs font-black uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">App Preferences & Security</span>
                   <span className="text-zinc-600 group-hover:text-white">›</span>
@@ -702,6 +705,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
               <div className="mb-4">
                 <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 px-3">Security</span>
                 <div className="mt-2 flex flex-col gap-1">
+                  {/* 🚀 SETTINGS TRIGGER */}
                   <button onClick={handleOpenSettings} className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-white/5 transition-colors text-left group">
                     <svg className="w-5 h-5 text-zinc-500 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                     <span className="text-sm font-bold text-zinc-300 group-hover:text-white">App Settings & Preferences</span>
@@ -1020,7 +1024,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                             <button key={amt} onClick={() => handleWithdrawQuickAmount(amt)} className="py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-xs font-black text-zinc-300 transition-colors">${amt}</button>
                           ))}
                         </div>
-                        <button onClick={handleExecuteWithdraw} className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all mt-auto ${withdrawAmount && withdrawAmount !== '0' ? 'bg-[#00FF66] text-black hover:bg-[#00cc52] shadow-[0_0_20px_rgba(0,255,102,0.3)]' : 'bg-white/10 text-zinc-500 cursor-not-allowed'}`}>
+                        <button onClick={handleExecuteWithdraw} className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all mt-auto ${withdrawAmount && withdrawAmount !== '0' ? 'bg-[#089981] text-white hover:bg-[#00cc52] shadow-[0_0_20px_rgba(0,255,102,0.3)]' : 'bg-white/10 text-zinc-500 cursor-not-allowed'}`}>
                           Withdraw to {activeWithdrawFiatConfig?.label || 'Bank'}
                         </button>
                       </>
