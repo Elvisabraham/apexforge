@@ -1,4 +1,4 @@
-// 🚀 VERSION 4.4: THE INSTITUTIONAL WALLET (App Settings Routing Patch)
+// 🚀 VERSION 4.5: THE INSTITUTIONAL WALLET (Settings Routing Fix)
 import React, { useState, useEffect, useRef } from 'react';
 import AccountSettingsSystem from './AccountSettingsSystem';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -582,7 +582,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
 
             {connected ? (
               <>
-                <div onClick={() => { setShowWalletManager(false); }} className="bg-gradient-to-r from-[#121212] to-[#0A0A0A] border border-[#089981]/50 rounded-3xl p-5 shadow-[0_0_30px_rgba(8,153,129,0.15)] relative overflow-hidden flex flex-col mb-6 cursor-pointer hover:border-[#089981] transition-all group">
+                <div onClick={() => { setShowWalletManager(false); setSettingsView('editProfile'); }} className="bg-gradient-to-r from-[#121212] to-[#0A0A0A] border border-[#089981]/50 rounded-3xl p-5 shadow-[0_0_30px_rgba(8,153,129,0.15)] relative overflow-hidden flex flex-col mb-6 cursor-pointer hover:border-[#089981] transition-all group">
                   <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-[#089981]/20 rounded-full blur-3xl pointer-events-none"></div>
                   
                   <div className="flex justify-between items-start z-10 w-full mb-6">
@@ -637,8 +637,12 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                   </button>
                 </div>
 
-                {/* 🚀 FIXED: Now properly maps to settings instead of the main account drawer */}
-                <button onClick={() => { setShowWalletManager(false); setSettingsView('settings'); }} className="w-full flex justify-between items-center py-5 mt-6 border-t border-white/10 group">
+                {/* 🚀 FIXED: Now fires onOpenSettings() prop to open your main app settings modal */}
+                <button onClick={() => { 
+                  setShowWalletManager(false); 
+                  if (onOpenSettings) onOpenSettings(); 
+                  else setSettingsView('preferences'); 
+                }} className="w-full flex justify-between items-center py-5 mt-6 border-t border-white/10 group">
                   <span className="text-xs font-black uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">App Preferences & Security</span>
                   <span className="text-zinc-600 group-hover:text-white">›</span>
                 </button>
@@ -691,8 +695,12 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
               <div className="mb-4">
                 <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 px-3">Security</span>
                 <div className="mt-2 flex flex-col gap-1">
-                  {/* 🚀 FIXED: Now properly maps to settings instead of the main account drawer */}
-                  <button onClick={() => { setIsMenuOpen(false); setSettingsView('settings'); }} className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-white/5 transition-colors text-left group">
+                  {/* 🚀 FIXED: Now fires onOpenSettings() prop to open your main app settings modal */}
+                  <button onClick={() => { 
+                    setIsMenuOpen(false); 
+                    if (onOpenSettings) onOpenSettings(); 
+                    else setSettingsView('preferences'); 
+                  }} className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-white/5 transition-colors text-left group">
                     <svg className="w-5 h-5 text-zinc-500 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                     <span className="text-sm font-bold text-zinc-300 group-hover:text-white">App Settings & Preferences</span>
                   </button>
