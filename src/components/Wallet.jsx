@@ -1,5 +1,5 @@
-// 🚀 VERSION 4.3: THE INSTITUTIONAL WALLET (Ultimate Mobile Input & Layout Patch)
-import React, { useState, useRef } from 'react';
+// 🚀 VERSION 4.4: THE INSTITUTIONAL WALLET (App Settings Routing Patch)
+import React, { useState, useEffect, useRef } from 'react';
 import AccountSettingsSystem from './AccountSettingsSystem';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
@@ -263,7 +263,6 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
         
         <header className="flex-none z-40 bg-[#030303]/90 backdrop-blur-3xl px-4 sm:px-6 py-3 border-b border-white/[0.02] flex items-center justify-between sticky top-0 relative">
           
-          {/* 🚀 FIXED HEADER: min-w-0 guarantees proper truncation inside flex containers */}
           <div className="flex items-center min-w-0 z-10 w-2/5">
             <div onClick={(e) => { e.stopPropagation(); setShowWalletManager(true); }} className="flex items-center gap-2 sm:gap-3 cursor-pointer group w-full min-w-0">
                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-white/5 overflow-hidden bg-[#121212] flex items-center justify-center shadow-inner group-hover:border-[#089981]/50 transition-colors shrink-0">
@@ -638,7 +637,8 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                   </button>
                 </div>
 
-                <button onClick={() => { setShowWalletManager(false); setSettingsView('main'); }} className="w-full flex justify-between items-center py-5 mt-6 border-t border-white/10 group">
+                {/* 🚀 FIXED: Now properly maps to settings instead of the main account drawer */}
+                <button onClick={() => { setShowWalletManager(false); setSettingsView('settings'); }} className="w-full flex justify-between items-center py-5 mt-6 border-t border-white/10 group">
                   <span className="text-xs font-black uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">App Preferences & Security</span>
                   <span className="text-zinc-600 group-hover:text-white">›</span>
                 </button>
@@ -691,7 +691,8 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
               <div className="mb-4">
                 <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 px-3">Security</span>
                 <div className="mt-2 flex flex-col gap-1">
-                  <button onClick={() => { setIsMenuOpen(false); setSettingsView('main'); }} className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-white/5 transition-colors text-left group">
+                  {/* 🚀 FIXED: Now properly maps to settings instead of the main account drawer */}
+                  <button onClick={() => { setIsMenuOpen(false); setSettingsView('settings'); }} className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-white/5 transition-colors text-left group">
                     <svg className="w-5 h-5 text-zinc-500 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                     <span className="text-sm font-bold text-zinc-300 group-hover:text-white">App Settings & Preferences</span>
                   </button>
@@ -1059,7 +1060,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
 
                 <div className="flex justify-center -my-3 relative z-30">
                   <button onClick={flipSwap} className="w-10 h-10 bg-[#1A1A1A] border-4 border-[#050505] rounded-xl flex items-center justify-center text-white hover:text-[#089981] hover:scale-110 transition-all shadow-lg">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4-4l4-4" /></svg>
                   </button>
                 </div>
 
