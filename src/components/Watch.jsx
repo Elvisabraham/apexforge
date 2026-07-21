@@ -3,50 +3,72 @@ import React, { useState, useEffect, useRef } from 'react';
 export default function Watch({ onTokenClick, userProfile }) {
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
   const [currentFeedTab, setCurrentFeedTab] = useState('FOR_YOU'); // 'FOLLOWING' or 'FOR_YOU'
+  const [isCommentDrawerOpen, setIsCommentDrawerOpen] = useState(false);
+  const [newCommentText, setNewCommentText] = useState('');
   const containerRef = useRef(null);
 
-  // 🚀 TIKTOK-STYLE VIDEO FEED DATA
+  // 🚀 TIKTOK-STYLE VIDEO FEED DATA WITH DYNAMIC INITIAL COMMENTS
   const initialWatchFeed = [
     { 
       id: 'APEX', name: 'Apex AI', symbol: 'APEX', icon: '🔥', mcap: '$10.4M', price: '0.0102', change: '+500%', 
       isPositive: true, 
       videoType: 'bg-gradient-to-br from-emerald-900 to-black', 
       hypeText: "The fastest executing AI router on Solana. Don't fade the tech! 🚀🧠",
-      likes: 12400, shares: 1200, comments: 842,
-      isGraduated: true
+      likes: 12400, shares: 1200, commentsCount: 4,
+      isGraduated: true,
+      comments: [
+        { id: 1, user: "SolWhale_99", text: "This is easily hitting 50M mcap this week minimum! 🔥" },
+        { id: 2, user: "AlphaHunter", text: "Dev is completely cooking in the terminal." },
+        { id: 3, user: "ChadGains", text: "Just doubled my bag on that micro dip." },
+        { id: 4, user: "MemeLord", text: "Apex router speed is actually insane." }
+      ]
     },
     { 
       id: 'BCAT', name: 'Based Cat', symbol: 'BCAT', icon: '🐱', mcap: '$1.2M', price: '0.0012', change: '+142.5%', 
       isPositive: true, 
       videoType: 'bg-gradient-to-tr from-blue-900 to-black', 
       hypeText: "We just swept the floor! Cat meta is officially back. 🐾💎",
-      likes: 4800, shares: 312, comments: 156,
-      isGraduated: false
+      likes: 4800, shares: 312, commentsCount: 3,
+      isGraduated: false,
+      comments: [
+        { id: 1, user: "DegenCat", text: "Meow meta is sending hard! 🐱🚀" },
+        { id: 2, user: "SolRunner", text: "Floor is completely locked, next leg up loading." },
+        { id: 3, user: "CryptoPaws", text: "Holding this until graduation!" }
+      ]
     },
     { 
       id: 'VTORO', name: 'The Matador', symbol: 'VTORO', icon: '🐂', mcap: '$850K', price: '0.00085', change: '-5.3%', 
       isPositive: false, 
       videoType: 'bg-gradient-to-bl from-rose-900 to-black', 
       hypeText: "Dips are just discounts. We are charging the red candles today! 🐂🩸",
-      likes: 1100, shares: 89, comments: 45,
-      isGraduated: false
+      likes: 1100, shares: 89, commentsCount: 2,
+      isGraduated: false,
+      comments: [
+        { id: 1, user: "BullRun_X", text: "Perfect entry zone right here." },
+        { id: 2, user: "RedCandleSniper", text: "Load up, the rebound will be massive." }
+      ]
     },
     { 
       id: 'NEURO', name: 'Neuro AI', symbol: 'NEURO', icon: '🧠', mcap: '$4.5M', price: '0.0045', change: '+89.2%', 
       isPositive: true, 
       videoType: 'bg-gradient-to-b from-purple-900 to-black', 
       hypeText: "Neural net integration complete. We are breaking the matrix. 🌌🤖",
-      likes: 8900, shares: 920, comments: 411,
-      isGraduated: true
+      likes: 8900, shares: 920, commentsCount: 2,
+      isGraduated: true,
+      comments: [
+        { id: 1, user: "NeoCrypto", text: "Matrix broken. AI agents are taking over." },
+        { id: 2, user: "SolanaBrain", text: "Pure utility token, love to see it." }
+      ]
     }
   ];
 
   const [feedData, setFeedData] = useState(initialWatchFeed);
-  const [likedStatus, setLikedStatus] = useState({}); // Tracks which token ids are liked locally
+  const [likedStatus, setLikedStatus] = useState({});
 
-  // Handle Scroll Snapping to track which video is active
+  const activeToken = feedData[activeVideoIndex] || feedData[0];
+
   const handleScroll = () => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || isCommentDrawerOpen) return;
     const scrollPosition = containerRef.current.scrollTop;
     const windowHeight = window.innerHeight;
     const currentIndex = Math.round(scrollPosition / windowHeight);
@@ -58,13 +80,9 @@ export default function Watch({ onTokenClick, userProfile }) {
   const handleLikeToggle = (tokenId) => {
     setLikedStatus(prev => {
       const isCurrentlyLiked = prev[tokenId];
-      // Update dynamic feed stats
       setFeedData(currentFeed => currentFeed.map(item => {
         if (item.id === tokenId) {
-          return {
-            ...item,
-            likes: isCurrentlyLiked ? item.likes - 1 : item.likes + 1
-          };
+          return { ...item, likes: isCurrentlyLiked ? item.likes - 1 : item.likes + 1 };
         }
         return item;
       }));
@@ -80,7 +98,6 @@ export default function Watch({ onTokenClick, userProfile }) {
         url: window.location.href,
       }).catch(() => {});
     } else {
-      // Fallback
       alert(`Link copied for ${token.name} ticker!`);
     }
   };
@@ -101,16 +118,39 @@ export default function Watch({ onTokenClick, userProfile }) {
     }
   };
 
+  const handleAddComment = (e) => {
+    e.preventDefault();
+    if (!newCommentText.trim()) return;
+
+    setFeedData(currentFeed => currentFeed.map(item => {
+      if (item.id === activeToken.id) {
+        return {
+          ...item,
+          commentsCount: item.commentsCount + 1,
+          comments: [
+            ...item.comments,
+            {
+              id: Date.now(),
+              user: userProfile?.username || "You",
+              text: newCommentText.trim()
+            }
+          ]
+        };
+      }
+      return item;
+    }));
+    setNewCommentText('');
+  };
+
   const formatCount = (num) => {
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
     return num;
   };
 
   return (
-    <div className="flex flex-col w-full h-screen bg-black text-white font-sans overflow-hidden select-none">
+    <div className="flex flex-col w-full h-screen bg-black text-white font-sans overflow-hidden select-none relative">
       
       <style>{`
-        /* Crucial classes for scroll snapping */
         .snap-container { scroll-snap-type: y mandatory; overflow-y: scroll; height: 100vh; }
         .snap-item { scroll-snap-align: start; height: 100vh; position: relative; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -118,7 +158,7 @@ export default function Watch({ onTokenClick, userProfile }) {
       `}</style>
 
       {/* --- FLOATING HEADER --- */}
-      <header className="fixed top-0 left-0 w-full z-50 px-4 py-6 flex items-center justify-between">
+      <header className="fixed top-0 left-0 w-full z-40 px-4 py-6 flex items-center justify-between">
         <div className="flex items-center gap-2 drop-shadow-md">
            <svg viewBox="0 0 100 100" className="w-6 h-6 text-[#089981]" fill="currentColor">
               <path d="M 50 10 L 10 90 L 30 90 L 50 45 L 70 90 L 90 90 Z" fill="#FFFFFF" />
@@ -126,7 +166,7 @@ export default function Watch({ onTokenClick, userProfile }) {
            </svg>
            <h1 className="text-xl font-black tracking-widest text-white uppercase">Watch</h1>
         </div>
-        <div className="flex items-center gap-5 drop-shadow-md z-50">
+        <div className="flex items-center gap-5 drop-shadow-md z-40">
           <span 
             onClick={() => setCurrentFeedTab('FOLLOWING')}
             className={`text-sm font-black cursor-pointer transition-colors duration-200 relative py-1 ${
@@ -156,7 +196,7 @@ export default function Watch({ onTokenClick, userProfile }) {
       <div 
         ref={containerRef} 
         onScroll={handleScroll} 
-        className="snap-container no-scrollbar w-full relative pb-20"
+        className={`snap-container no-scrollbar w-full relative pb-20 ${isCommentDrawerOpen ? 'overflow-hidden touch-none' : ''}`}
       >
         {feedData.map((token, index) => {
           const isActive = index === activeVideoIndex;
@@ -171,8 +211,8 @@ export default function Watch({ onTokenClick, userProfile }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
               </div>
 
-              {/* 鼠标 CONTROL BUTTONS SIDEBAR */}
-              <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-40">
+              {/* ACTION BUTTONS SIDEBAR */}
+              <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-30">
                 
                 {/* LIKE BUTTON */}
                 <div 
@@ -193,15 +233,15 @@ export default function Watch({ onTokenClick, userProfile }) {
                   </span>
                 </div>
 
-                {/* COMMENT BUTTON */}
+                {/* 💬 OPTIMIZED: COMMENT BUTTON (OPENS BOTTOM DRAWER) */}
                 <div 
-                  onClick={() => handleQuickTrade(token)} 
+                  onClick={() => setIsCommentDrawerOpen(true)} 
                   className="flex flex-col items-center gap-1 cursor-pointer transition-transform active:scale-95"
                 >
                   <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 hover:bg-white/20 text-white">
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 14v-2h12v2H6zm0-3v-2h12v2H6zm0-3V6h12v2H6z"/></svg>
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                   </div>
-                  <span className="text-[10px] font-bold text-white drop-shadow-md">{token.comments}</span>
+                  <span className="text-[10px] font-bold text-white drop-shadow-md">{token.commentsCount}</span>
                 </div>
 
                 {/* SHARE BUTTON */}
@@ -216,8 +256,8 @@ export default function Watch({ onTokenClick, userProfile }) {
                 </div>
               </div>
 
-              {/* 📊 BOTTOM PANEL */}
-              <div className="absolute left-0 bottom-24 w-[85%] p-4 flex flex-col z-40">
+              {/* BOTTOM PANEL */}
+              <div className="absolute left-0 bottom-24 w-[85%] p-4 flex flex-col z-30">
                 <div 
                   onClick={() => handleQuickTrade(token)}
                   className="flex items-center gap-2 mb-2 cursor-pointer group w-max"
@@ -254,13 +294,12 @@ export default function Watch({ onTokenClick, userProfile }) {
                   </div>
                 </div>
 
-                {/* 🚀 ACTION PORTAL BUY BUTTON */}
                 <button 
                   onClick={() => handleQuickTrade(token)}
                   className={`w-full py-4 rounded-xl flex items-center justify-center gap-2 font-black text-lg uppercase tracking-widest transition-all active:scale-95 shadow-xl ${
                     token.isGraduated 
-                      ? 'bg-amber-500 text-black hover:bg-amber-600 shadow-amber-500/10' 
-                      : 'bg-[#089981] text-white hover:bg-[#06806b] shadow-[#089981]/10'
+                      ? 'bg-amber-500 text-black hover:bg-amber-600' 
+                      : 'bg-[#089981] text-white hover:bg-[#06806b]'
                   }`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
@@ -272,6 +311,66 @@ export default function Watch({ onTokenClick, userProfile }) {
           );
         })}
       </div>
+
+      {/* --- 🚀 INTERACTIVE BOTTOM SLIDING COMMENT DRAWER --- */}
+      {isCommentDrawerOpen && (
+        <>
+          {/* Backdrop Overlay to close drawer */}
+          <div 
+            onClick={() => setIsCommentDrawerOpen(false)}
+            className="fixed inset-0 bg-black/60 z-50 transition-opacity backdrop-blur-sm"
+          />
+          
+          {/* Sliding Panel */}
+          <div className="fixed bottom-0 left-0 w-full h-[65vh] bg-[#0E0E10] border-t border-white/10 rounded-t-3xl z-50 flex flex-col overflow-hidden animate-slide-up">
+            
+            {/* Drawer Handle / Title */}
+            <div className="flex-none p-4 border-b border-white/[0.04] flex items-center justify-between relative">
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1 bg-zinc-700 rounded-full" />
+              <span className="text-xs font-black uppercase tracking-widest text-zinc-400 mt-2">
+                Comments ({activeToken.commentsCount})
+              </span>
+              <button 
+                onClick={() => setIsCommentDrawerOpen(false)}
+                className="text-zinc-400 hover:text-white text-sm font-bold mt-2"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* List of Comments */}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 no-scrollbar">
+              {activeToken.comments.map((comment) => (
+                <div key={comment.id} className="flex flex-col bg-white/[0.02] border border-white/[0.04] p-3 rounded-xl">
+                  <span className="text-xs font-black text-[#089981] mb-1">@{comment.user}</span>
+                  <p className="text-sm font-medium text-zinc-200 leading-normal">{comment.text}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Input Footer Form */}
+            <form 
+              onSubmit={handleAddComment}
+              className="flex-none p-4 bg-[#131316] border-t border-white/5 flex items-center gap-3 pb-8"
+            >
+              <input 
+                type="text"
+                placeholder={`Replying to @${activeToken.symbol}...`}
+                value={newCommentText}
+                onChange={(e) => setNewCommentText(e.target.value)}
+                className="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white placeholder-zinc-600 outline-none focus:border-[#089981]/50 transition-colors"
+              />
+              <button 
+                type="submit"
+                className="bg-[#089981] hover:bg-[#06806b] text-white px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-transform active:scale-95"
+              >
+                Send
+              </button>
+            </form>
+
+          </div>
+        </>
+      )}
 
     </div>
   );
