@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 
 export default function Home({ tokens = [], trendingTokens = [], graduatedTokens = [], onTokenClick, setActivePage, userProfile, onOpenAccountDrawer }) {
-  const [activeTab, setActiveTab] = useState('TRENDING');
+  // 🚀 FIXED: Set the default tab to EXPLORE for maximum user retention
+  const [activeTab, setActiveTab] = useState('EXPLORE');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // 🚀 We still enrich the tokens with visual elements (sparklines)
+  // We still enrich the tokens with visual elements (sparklines)
   const enrichedTokens = tokens.map(t => {
     const trend = t.trend || Array.from({length: 12}, () => Math.random() * 100);
     const mcapValue = parseFloat((t.mcap || t.marketCap || '$1M').replace(/[^0-9.]/g, ''));
@@ -13,7 +14,7 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
     return { ...t, trend, mcapValue, isPositive };
   });
 
-  // 🚀 FIXED: Strict filtering logic with a momentum threshold
+  // 🚀 UPGRADED: Added the EXPLORE logic to show everything
   const displayedTokens = enrichedTokens.filter(t => {
     // 1. If searching, override the tabs and search ALL tokens
     if (searchQuery) {
@@ -24,6 +25,10 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
     }
     
     // 2. Strict Tab Routing
+    if (activeTab === 'EXPLORE') {
+      return true; // The Infinite Scroll: Shows every single token
+    }
+
     if (activeTab === 'GRADUATED') {
       return t.isGraduated === true || t.progress >= 100;
     }
@@ -85,7 +90,6 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
         <div className="flex items-center justify-between mb-4">
           
           <div className="flex items-center gap-3">
-            {/* Pure Trigger for Account Drawer */}
             <div 
               onClick={() => {
                 if (onOpenAccountDrawer) onOpenAccountDrawer();
@@ -124,7 +128,6 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
           </div>
         </div>
 
-        {/* Global Search Bar */}
         <div className="flex items-center bg-[#131722] border border-white/5 rounded-xl px-4 py-3 focus-within:border-[#089981]/50 transition-colors shadow-inner">
           <svg className="w-4 h-4 text-zinc-500 mr-3 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           <input 
@@ -141,7 +144,7 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
       <div className="flex-1 overflow-y-auto no-scrollbar relative pb-32">
         
         {/* STEALTH MONETIZATION: SPOTLIGHT BANNER */}
-        {spotlightToken && !searchQuery && activeTab === 'TRENDING' && (
+        {spotlightToken && !searchQuery && (activeTab === 'TRENDING' || activeTab === 'EXPLORE') && (
           <div className="px-4 pt-4 pb-2">
             <div 
               onClick={() => handleTokenClick(spotlightToken)}
@@ -183,11 +186,12 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
 
         <div className="sticky top-0 z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04]">
           <div className="flex gap-2 w-full overflow-x-auto no-scrollbar bg-[#131722] p-1.5 rounded-xl border border-white/5">
-            {['TRENDING', 'NEW', 'GRADUATED'].map(tab => (
+            {/* 🚀 UPGRADED: Added EXPLORE to the tab navigation */}
+            {['EXPLORE', 'TRENDING', 'NEW', 'GRADUATED'].map(tab => (
               <button 
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                className={`flex-1 min-w-[70px] py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
                   activeTab === tab 
                     ? 'bg-[#089981] text-white shadow-md' 
                     : 'bg-transparent text-zinc-500 hover:text-white'
@@ -199,7 +203,6 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
           </div>
         </div>
 
-        {/* 🚀 FIXED: min-h added to stop layout jumping when switching to empty tabs */}
         <div className="flex flex-col px-2 pt-1 min-h-[500px]">
           {displayedTokens.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
