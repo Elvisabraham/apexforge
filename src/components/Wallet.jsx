@@ -1,5 +1,5 @@
-// 🚀 VERSION 4.2: THE INSTITUTIONAL WALLET (Double-Type & Header Layout Patch)
-import React, { useState, useEffect, useRef } from 'react';
+// 🚀 VERSION 4.3: THE INSTITUTIONAL WALLET (Ultimate Mobile Input & Layout Patch)
+import React, { useState, useRef } from 'react';
 import AccountSettingsSystem from './AccountSettingsSystem';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
@@ -104,29 +104,6 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
   const formatBalance = (val) => {
     if (!val) return '0';
     return Number(val).toLocaleString('en-US', { maximumFractionDigits: 2 });
-  };
-
-  const handleNumpad = (val) => {
-    let currentAmount = '';
-    if (activeModal === 'deposit') currentAmount = depositAmount;
-    if (activeModal === 'send') currentAmount = sendAmount;
-    if (activeModal === 'withdraw') currentAmount = withdrawAmount;
-    if (activeModal === 'swap') currentAmount = swapAmount;
-
-    let raw = currentAmount.replace(/,/g, '');
-    
-    if (val === 'back') { 
-      raw = raw.slice(0, -1); 
-    } else {
-      if (raw === '' && val === '.') return;
-      if (val === '.' && raw.includes('.')) return;
-      raw = raw + val;
-    }
-    
-    if (activeModal === 'deposit') setDepositAmount(formatNumber(raw));
-    if (activeModal === 'send') setSendAmount(formatNumber(raw));
-    if (activeModal === 'withdraw') setWithdrawAmount(formatNumber(raw));
-    if (activeModal === 'swap') setSwapAmount(formatNumber(raw));
   };
 
   const handleDepositQuickAmount = (amount) => setDepositAmount(formatNumber(amount));
@@ -244,23 +221,6 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
     setActiveTab('activity');
   };
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!activeModal) return;
-      if (activeModal === 'deposit' && depositStep === 2 && activeMethodConfig?.type === 'crypto') return;
-      
-      // 🚀 FIX: If the user is currently typing inside an input field, DO NOT fire the global numpad code.
-      // This solves the double-typing bug where both the browser and the app were appending the digit.
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-      if (e.key >= '0' && e.key <= '9') { handleNumpad(e.key); } 
-      else if (e.key === '.') { handleNumpad('.'); } 
-      else if (e.key === 'Backspace') { handleNumpad('back'); }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeModal, depositAmount, sendAmount, withdrawAmount, swapAmount, depositStep, withdrawStep]);
-
   const handleScroll = (e) => {
     setIsScrolled(e.target.scrollTop > 150);
   };
@@ -303,9 +263,9 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
         
         <header className="flex-none z-40 bg-[#030303]/90 backdrop-blur-3xl px-4 sm:px-6 py-3 border-b border-white/[0.02] flex items-center justify-between sticky top-0 relative">
           
-          {/* 🚀 FIXED HEADER: Expanded width allowance (max-w-[50%]) so long usernames/addresses aren't crushed on Note 10+ */}
-          <div className="flex items-center min-w-0 z-10 max-w-[50%]">
-            <div onClick={(e) => { e.stopPropagation(); setShowWalletManager(true); }} className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0 w-full">
+          {/* 🚀 FIXED HEADER: min-w-0 guarantees proper truncation inside flex containers */}
+          <div className="flex items-center min-w-0 z-10 w-2/5">
+            <div onClick={(e) => { e.stopPropagation(); setShowWalletManager(true); }} className="flex items-center gap-2 sm:gap-3 cursor-pointer group w-full min-w-0">
                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-white/5 overflow-hidden bg-[#121212] flex items-center justify-center shadow-inner group-hover:border-[#089981]/50 transition-colors shrink-0">
                  {displayAvatar ? (
                    <img src={displayAvatar} alt="Profile" className="w-full h-full object-cover" />
@@ -319,23 +279,25 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                     {displayUsername}
                   </span>
                   
-                  <div className="flex items-center mt-0.5 w-full">
+                  <div className="flex items-center mt-0.5 w-full min-w-0">
                     {connected ? (
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleCopyAddress(e); }}
-                        className="flex items-center gap-1 group/copy hover:bg-white/5 py-0.5 rounded-md transition-colors cursor-pointer w-full max-w-full"
+                        className="flex items-center gap-1.5 group/copy hover:bg-white/5 py-0.5 pr-1 -ml-1 rounded-md transition-colors cursor-pointer w-full min-w-0"
                         title="Copy Address"
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] shadow-[0_0_5px_#00FF66] animate-pulse shrink-0"></span>
-                        <span className="text-[9px] sm:text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold truncate tracking-wider transition-colors min-w-0 pr-1">
+                        <span className="text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold truncate transition-colors">
                           {shortAddress}
                         </span>
-                        {copied && (
+                        {copied ? (
                           <svg className="w-3 h-3 text-[#00FF66] shrink-0" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        ) : (
+                          <svg className="w-3 h-3 text-zinc-600 group-hover/copy:text-[#089981] transition-colors shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                         )}
                       </button>
                     ) : (
-                      <div className="flex items-center gap-1 w-full">
+                      <div className="flex items-center gap-1 w-full min-w-0">
                         <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_5px_#f43f5e] shrink-0"></span>
                         <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest truncate">Disconnected</span>
                       </div>
