@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 
 export default function Watch({ onTokenClick, userProfile }) {
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
-  const [currentFeedTab, setCurrentFeedTab] = useState('FOR_YOU'); // 'FOLLOWING' or 'FOR_YOU'
+  const [currentFeedTab, setCurrentFeedTab] = useState('FOR_YOU');
   const [isCommentDrawerOpen, setIsCommentDrawerOpen] = useState(false);
   const [newCommentText, setNewCommentText] = useState('');
   const containerRef = useRef(null);
 
-  // 🚀 TIKTOK-STYLE VIDEO FEED DATA WITH DYNAMIC INITIAL COMMENTS
+  // 🚀 TIKTOK-STYLE VIDEO FEED DATA
   const initialWatchFeed = [
     { 
       id: 'APEX', name: 'Apex AI', symbol: 'APEX', icon: '🔥', mcap: '$10.4M', price: '0.0102', change: '+500%', 
@@ -131,7 +131,7 @@ export default function Watch({ onTokenClick, userProfile }) {
             ...item.comments,
             {
               id: Date.now(),
-              user: userProfile?.username || "You",
+              user: userProfile?.username?.replace('@', '') || "You",
               text: newCommentText.trim()
             }
           ]
@@ -233,7 +233,7 @@ export default function Watch({ onTokenClick, userProfile }) {
                   </span>
                 </div>
 
-                {/* 💬 OPTIMIZED: COMMENT BUTTON (OPENS BOTTOM DRAWER) */}
+                {/* 💬 COMMENT BUTTON */}
                 <div 
                   onClick={() => setIsCommentDrawerOpen(true)} 
                   className="flex flex-col items-center gap-1 cursor-pointer transition-transform active:scale-95"
@@ -312,37 +312,44 @@ export default function Watch({ onTokenClick, userProfile }) {
         })}
       </div>
 
-      {/* --- 🚀 INTERACTIVE BOTTOM SLIDING COMMENT DRAWER --- */}
+      {/* --- 🚀 FIXED: OVERLAY DRAWER WITH z-[100] TO CLEAR BOTTOM NAV --- */}
       {isCommentDrawerOpen && (
-        <>
-          {/* Backdrop Overlay to close drawer */}
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end">
+          
+          {/* Backdrop Overlay */}
           <div 
             onClick={() => setIsCommentDrawerOpen(false)}
-            className="fixed inset-0 bg-black/60 z-50 transition-opacity backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 transition-opacity backdrop-blur-sm"
           />
           
           {/* Sliding Panel */}
-          <div className="fixed bottom-0 left-0 w-full h-[65vh] bg-[#0E0E10] border-t border-white/10 rounded-t-3xl z-50 flex flex-col overflow-hidden animate-slide-up">
+          <div className="relative w-full h-[70vh] bg-[#0E0E10] border-t border-white/10 rounded-t-3xl flex flex-col overflow-hidden animate-slideUpNative shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
             
             {/* Drawer Handle / Title */}
-            <div className="flex-none p-4 border-b border-white/[0.04] flex items-center justify-between relative">
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1 bg-zinc-700 rounded-full" />
+            <div className="flex-none p-4 border-b border-white/[0.04] flex items-center justify-between relative bg-[#0E0E10]">
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-white/20 rounded-full" />
               <span className="text-xs font-black uppercase tracking-widest text-zinc-400 mt-2">
                 Comments ({activeToken.commentsCount})
               </span>
               <button 
                 onClick={() => setIsCommentDrawerOpen(false)}
-                className="text-zinc-400 hover:text-white text-sm font-bold mt-2"
+                className="text-zinc-400 hover:text-white text-sm font-bold mt-2 p-2"
               >
                 ✕
               </button>
             </div>
 
             {/* List of Comments */}
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 no-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 no-scrollbar bg-[#0E0E10]">
               {activeToken.comments.map((comment) => (
                 <div key={comment.id} className="flex flex-col bg-white/[0.02] border border-white/[0.04] p-3 rounded-xl">
-                  <span className="text-xs font-black text-[#089981] mb-1">@{comment.user}</span>
+                  {/* 🚀 FIXED: Clickable Username! */}
+                  <span 
+                    onClick={() => alert(`Navigating to @${comment.user}'s profile...`)} 
+                    className="text-xs font-black text-[#089981] mb-1 cursor-pointer hover:underline w-max active:scale-95 transition-transform"
+                  >
+                    @{comment.user}
+                  </span>
                   <p className="text-sm font-medium text-zinc-200 leading-normal">{comment.text}</p>
                 </div>
               ))}
@@ -362,14 +369,14 @@ export default function Watch({ onTokenClick, userProfile }) {
               />
               <button 
                 type="submit"
-                className="bg-[#089981] hover:bg-[#06806b] text-white px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-transform active:scale-95"
+                className="bg-[#089981] hover:bg-[#06806b] text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-transform active:scale-95"
               >
                 Send
               </button>
             </form>
 
           </div>
-        </>
+        </div>
       )}
 
     </div>
