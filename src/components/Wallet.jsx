@@ -1,4 +1,4 @@
-// 🚀 VERSION 4.1: THE INSTITUTIONAL WALLET (Layout & Input Patch)
+// 🚀 VERSION 4.2: THE INSTITUTIONAL WALLET (Double-Type & Header Layout Patch)
 import React, { useState, useEffect, useRef } from 'react';
 import AccountSettingsSystem from './AccountSettingsSystem';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -248,7 +248,10 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
     const handleKeyDown = (e) => {
       if (!activeModal) return;
       if (activeModal === 'deposit' && depositStep === 2 && activeMethodConfig?.type === 'crypto') return;
-      if (e.target.tagName === 'INPUT' && e.target.type === 'text' && !e.target.inputMode) return;
+      
+      // 🚀 FIX: If the user is currently typing inside an input field, DO NOT fire the global numpad code.
+      // This solves the double-typing bug where both the browser and the app were appending the digit.
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
       if (e.key >= '0' && e.key <= '9') { handleNumpad(e.key); } 
       else if (e.key === '.') { handleNumpad('.'); } 
@@ -298,12 +301,12 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
     <>
       <div className="flex flex-col w-full h-screen overflow-hidden bg-[#030303] text-white selection:bg-[#089981]/30 font-sans relative">
         
-        {/* 🚀 FIXED HEADER: Absolute Centering prevents collision */}
         <header className="flex-none z-40 bg-[#030303]/90 backdrop-blur-3xl px-4 sm:px-6 py-3 border-b border-white/[0.02] flex items-center justify-between sticky top-0 relative">
           
-          <div className="flex items-center min-w-0 z-10 w-1/3">
-            <div onClick={(e) => { e.stopPropagation(); setShowWalletManager(true); }} className="flex items-center gap-3 cursor-pointer group shrink-0 w-full">
-               <div className="w-10 h-10 rounded-full border-2 border-white/5 overflow-hidden bg-[#121212] flex items-center justify-center shadow-inner group-hover:border-[#089981]/50 transition-colors shrink-0">
+          {/* 🚀 FIXED HEADER: Expanded width allowance (max-w-[50%]) so long usernames/addresses aren't crushed on Note 10+ */}
+          <div className="flex items-center min-w-0 z-10 max-w-[50%]">
+            <div onClick={(e) => { e.stopPropagation(); setShowWalletManager(true); }} className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0 w-full">
+               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-white/5 overflow-hidden bg-[#121212] flex items-center justify-center shadow-inner group-hover:border-[#089981]/50 transition-colors shrink-0">
                  {displayAvatar ? (
                    <img src={displayAvatar} alt="Profile" className="w-full h-full object-cover" />
                  ) : (
@@ -312,32 +315,30 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                </div>
                
                <div className="flex flex-col min-w-0 justify-center flex-1">
-                  <span className="text-sm font-black text-white tracking-wide truncate group-hover:text-[#089981] transition-colors leading-tight">
+                  <span className="text-[13px] sm:text-sm font-black text-white tracking-wide truncate group-hover:text-[#089981] transition-colors leading-tight">
                     {displayUsername}
                   </span>
                   
-                  <div className="flex items-center gap-1.5 mt-0.5 w-full">
+                  <div className="flex items-center mt-0.5 w-full">
                     {connected ? (
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleCopyAddress(e); }}
-                        className="flex items-center gap-1.5 group/copy hover:bg-white/5 px-1.5 py-0.5 -ml-1.5 rounded-md transition-colors cursor-pointer w-full"
+                        className="flex items-center gap-1 group/copy hover:bg-white/5 py-0.5 rounded-md transition-colors cursor-pointer w-full max-w-full"
                         title="Copy Address"
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] shadow-[0_0_5px_#00FF66] animate-pulse shrink-0"></span>
-                        <span className="text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold truncate tracking-wider transition-colors">
+                        <span className="text-[9px] sm:text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold truncate tracking-wider transition-colors min-w-0 pr-1">
                           {shortAddress}
                         </span>
-                        {copied ? (
+                        {copied && (
                           <svg className="w-3 h-3 text-[#00FF66] shrink-0" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        ) : (
-                          <svg className="w-3 h-3 text-zinc-600 group-hover/copy:text-[#089981] transition-colors shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                         )}
                       </button>
                     ) : (
-                      <>
+                      <div className="flex items-center gap-1 w-full">
                         <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_5px_#f43f5e] shrink-0"></span>
                         <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest truncate">Disconnected</span>
-                      </>
+                      </div>
                     )}
                   </div>
                </div>
@@ -350,7 +351,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 shrink-0 z-10 w-1/3">
+          <div className="flex items-center justify-end gap-2 shrink-0 z-10 w-12">
             <button 
               onClick={(e) => { e.stopPropagation(); setIsMenuOpen(true); }}
               className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-zinc-400 hover:text-white transition-all shadow-md group relative cursor-pointer"
@@ -382,7 +383,6 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                 </button>
               </div>
               
-              {/* 🚀 FIXED: Truncation applied to handle massive balances cleanly */}
               <h2 className={`text-5xl md:text-6xl font-sans tracking-tight font-bold text-white z-10 leading-none transition-opacity duration-300 truncate max-w-full w-full px-4 text-center ${isScrolled ? 'opacity-0' : 'opacity-100'}`}>
                 {isMuted ? '••••••' : displayNetWorth}
               </h2>
@@ -849,7 +849,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                       <button key={method.id} onClick={() => { setDepositMethod(method.id); setDepositStep(2); }} className="w-full flex items-center gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/[0.02] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 text-left shadow-lg group">
                         <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center text-xl border border-white/5 group-hover:border-white/20 transition-all duration-300 shadow-inner"><span className="text-center drop-shadow-md">{method.icon}</span></div>
                         <div className="flex flex-col"><span className="font-black text-sm text-zinc-200 group-hover:text-white tracking-wide transition-colors">{method.label}</span><span className="text-[10px] text-zinc-500 font-semibold tracking-wide mt-1">{method.sub}</span></div>
-                        <div className="ml-auto text-zinc-700 group-hover:text-white transition-colors duration-300"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
+                        <div className="ml-auto text-zinc-700 group-hover:text-white transition-colors duration-300"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7-7" /></svg></div>
                       </button>
                     ))}
                   </div>
@@ -902,7 +902,6 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                             </div>
                           )}
                         </div>
-                        {/* 🚀 FIXED: Input is no longer readOnly so it won't dim on Android, and users can tap to use software keyboard */}
                         <div className="text-center mb-6">
                           <span className="text-zinc-500 font-bold text-sm">$</span>
                           <input 
@@ -938,7 +937,6 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                 </div>
                 <div className="text-center mb-6 mt-4">
                   <div className="flex justify-center items-center gap-2">
-                    {/* 🚀 FIXED */}
                     <input 
                       type="text" 
                       inputMode="decimal"
@@ -972,7 +970,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                       <button key={method.id} onClick={() => { setWithdrawMethod(method.id); setWithdrawStep(2); }} className="w-full flex items-center gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/[0.02] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 text-left shadow-lg group">
                         <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center text-xl border border-white/5 group-hover:border-white/20 transition-all duration-300 shadow-inner"><span className="text-center drop-shadow-md">{method.icon}</span></div>
                         <div className="flex flex-col"><span className="font-black text-sm text-zinc-200 group-hover:text-white tracking-wide transition-colors">{method.label}</span><span className="text-[10px] text-zinc-500 font-semibold tracking-wide mt-1">{method.sub}</span></div>
-                        <div className="ml-auto text-zinc-700 group-hover:text-white transition-colors duration-300"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
+                        <div className="ml-auto text-zinc-700 group-hover:text-white transition-colors duration-300"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7-7" /></svg></div>
                       </button>
                     ))}
                   </div>
@@ -987,7 +985,6 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                         </div>
                         <div className="text-center mb-6 mt-2">
                           <div className="flex justify-center items-center gap-2">
-                            {/* 🚀 FIXED */}
                             <input 
                               type="text" 
                               inputMode="decimal"
@@ -1035,7 +1032,6 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                         </div>
                         <div className="text-center mb-6">
                           <span className="text-zinc-500 font-bold text-sm">$</span>
-                          {/* 🚀 FIXED */}
                           <input 
                             type="text" 
                             inputMode="decimal"
@@ -1068,7 +1064,6 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                 <div className="bg-[#121212] border border-white/10 rounded-3xl p-5 flex flex-col relative z-20 focus-within:border-[#089981]/50 transition-colors">
                   <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">You Pay</span>
                   <div className="flex justify-between items-center">
-                    {/* 🚀 FIXED */}
                     <input 
                       type="text" 
                       inputMode="decimal"
