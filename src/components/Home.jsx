@@ -13,7 +13,7 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
     return { ...t, trend, mcapValue, isPositive };
   });
 
-  // 🚀 FIXED: Absolute strict filtering logic based on the real status flags
+  // 🚀 FIXED: Strict filtering logic with a momentum threshold
   const displayedTokens = enrichedTokens.filter(t => {
     // 1. If searching, override the tabs and search ALL tokens
     if (searchQuery) {
@@ -29,11 +29,13 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
     }
     
     if (activeTab === 'TRENDING') {
-      return !t.isGraduated && t.progress > 0 && t.progress < 100;
+      // Must have at least 5% progress to be considered "Trending"
+      return !t.isGraduated && t.progress >= 5 && t.progress < 100;
     }
 
     if (activeTab === 'NEW') {
-      return !t.isGraduated && (!t.progress || t.progress === 0);
+      // Newly forged tokens (under 5% progress) stay here
+      return !t.isGraduated && (!t.progress || t.progress < 5);
     }
     
     return true; 
