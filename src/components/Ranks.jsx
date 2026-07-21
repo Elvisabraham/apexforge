@@ -1,4 +1,4 @@
-// 🚀 VERSION 2: INTERACTIVE LEADERBOARD ENGINE WITH LIVE SEARCH & FOLLOW STATES
+// 🚀 VERSION 3: HIGH-PERFORMANCE LEADERBOARD WITH ADVANCED STATE FILTERS
 import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 
