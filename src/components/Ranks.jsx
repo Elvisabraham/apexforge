@@ -1,16 +1,19 @@
+// 🚀 VERSION 2: INTERACTIVE LEADERBOARD ENGINE WITH LIVE SEARCH & FOLLOW STATES
 import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 
 export default function Ranks({ onOpenProfile }) {
   const { publicKey, connected } = useWallet();
   const [activeTab, setActiveTab] = useState('TRADERS');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [followedWallets, setFollowedWallets] = useState({});
 
   // Helper to format short address
   const shortAddress = connected && publicKey 
     ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}`
     : '8xV9...yYyW';
 
-  // 1. DATA ENGINE: Top Traders
+  // DATA ENGINE: Top Traders
   const topTraders = [
     { rank: 1, wallet: 'Ansem...sol', pnl: '+4,250 SOL', winRate: '82%', badge: '🐋', color: 'text-amber-400', bg: 'bg-amber-400/10 border border-amber-400/30' },
     { rank: 2, wallet: 'Mitch...pump', pnl: '+2,100 SOL', winRate: '75%', badge: '🎯', color: 'text-zinc-300', bg: 'bg-white/10 border border-white/20' },
@@ -22,7 +25,7 @@ export default function Ranks({ onOpenProfile }) {
     { rank: 8, wallet: 'Ghost...dev', pnl: '+390 SOL', winRate: '52%', badge: '', color: 'text-zinc-500', bg: 'bg-white/[0.02] border border-transparent' },
   ];
 
-  // 2. DATA ENGINE: Top Creators
+  // DATA ENGINE: Top Creators
   const topCreators = [
     { rank: 1, wallet: 'Studio...web3', volume: '$12.5M', tokens: 4, badge: '👑', color: 'text-amber-400', bg: 'bg-amber-400/10 border border-amber-400/30' },
     { rank: 2, wallet: 'Forge...Labs', volume: '$8.2M', tokens: 2, badge: '🛠️', color: 'text-zinc-300', bg: 'bg-white/10 border border-white/20' },
@@ -32,10 +35,23 @@ export default function Ranks({ onOpenProfile }) {
     { rank: 6, wallet: '44zP...xx99', volume: '$950K', tokens: 5, badge: '', color: 'text-zinc-500', bg: 'bg-white/[0.02] border border-transparent' },
   ];
 
-  const displayData = activeTab === 'TRADERS' ? topTraders : topCreators;
+  const rawData = activeTab === 'TRADERS' ? topTraders : topCreators;
+
+  // Filter based on search input
+  const displayData = rawData.filter(user => 
+    user.wallet.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const toggleFollow = (walletId, e) => {
+    e.stopPropagation();
+    setFollowedWallets(prev => ({
+      ...prev,
+      [walletId]: !prev[walletId]
+    }));
+  };
 
   return (
-    <div className="flex flex-col w-full h-screen bg-[#0A0A0B] text-white font-sans overflow-hidden">
+    <div className="flex flex-col w-full h-screen bg-[#0A0A0B] text-white font-sans overflow-hidden select-none">
       
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -46,7 +62,7 @@ export default function Ranks({ onOpenProfile }) {
 
       {/* --- UNMOVABLE HEADER --- */}
       <header className="flex-none z-50 bg-[#0A0A0B]/95 backdrop-blur-xl pt-4 pb-2 px-4 border-b border-white/[0.04]">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <span className="text-2xl drop-shadow-md">🏆</span>
             <h1 className="text-xl font-black tracking-widest text-white uppercase mt-1">Leaderboard</h1>
@@ -81,7 +97,7 @@ export default function Ranks({ onOpenProfile }) {
               </div>
             </div>
 
-            {/* 🚀 UPGRADED: XP Progress Bar */}
+            {/* XP Progress Bar */}
             <div className="w-full flex flex-col z-10">
               <div className="flex justify-between items-end mb-1.5">
                 <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Next Tier: Whale</span>
@@ -95,13 +111,17 @@ export default function Ranks({ onOpenProfile }) {
           </div>
         </div>
 
-        {/* Sticky Tab Navigation */}
-        <div className="sticky top-0 z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 pb-3 pt-1 border-b border-white/[0.04]">
+        {/* Sticky Controls Panel */}
+        <div className="sticky top-0 z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 pb-3 pt-1 border-b border-white/[0.04] flex flex-col gap-2">
+          {/* Tabs */}
           <div className="flex gap-2 w-full bg-[#131722] p-1.5 rounded-xl border border-white/5 shadow-inner">
             {['TRADERS', 'CREATORS'].map(tab => (
               <button 
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab);
+                  setSearchQuery('');
+                }}
                 className={`flex-1 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
                   activeTab === tab 
                     ? 'bg-[#089981] text-white shadow-md' 
@@ -111,6 +131,20 @@ export default function Ranks({ onOpenProfile }) {
                 Top {tab}
               </button>
             ))}
+          </div>
+
+          {/* 🚀 LIVE SEARCH BAR */}
+          <div className="relative w-full">
+            <input 
+              type="text"
+              placeholder={`Search ${activeTab.toLowerCase()} by handle...`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-[#131722] border border-white/5 rounded-xl pl-9 pr-4 py-2 text-xs font-medium text-white placeholder-zinc-600 outline-none focus:border-[#089981]/30 transition-colors"
+            />
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
           </div>
         </div>
 
@@ -126,68 +160,83 @@ export default function Ranks({ onOpenProfile }) {
           </div>
 
           <div className="flex flex-col gap-1">
-            {displayData.map((user, index) => (
-              <div 
-                key={user.rank} 
-                onClick={() => {
-                  if (onOpenProfile) onOpenProfile(user.wallet);
-                }}
-                // 🚀 UPGRADED: Dynamic Animation Delay for cascading effect
-                className="flex items-center justify-between p-4 rounded-2xl cursor-pointer hover:bg-[#131722] transition-colors border border-transparent hover:border-white/[0.02] group animate-slideDown"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${user.bg} ${user.color} shadow-inner`}>
-                    {user.rank}
-                  </div>
+            {displayData.length > 0 ? (
+              displayData.map((user, index) => {
+                const isFollowed = followedWallets[user.wallet];
+                
+                return (
+                  <div 
+                    key={user.rank} 
+                    onClick={() => {
+                      if (onOpenProfile) onOpenProfile(user.wallet);
+                    }}
+                    className="flex items-center justify-between p-4 rounded-2xl cursor-pointer bg-white/[0.01] hover:bg-[#131722] transition-colors border border-transparent hover:border-white/[0.02] group animate-slideDown"
+                    style={{ animationDelay: `${index * 40}ms` }}
+                  >
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${user.bg} ${user.color} shadow-inner`}>
+                        {user.rank}
+                      </div>
 
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 bg-black border border-white/10 rounded-full flex items-center justify-center text-lg shrink-0 shadow-sm overflow-hidden">
-                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.wallet}`} alt="Avatar" className="w-full h-full object-cover" />
-                    </div>
-                    
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-black text-white flex items-center gap-1.5 truncate group-hover:text-[#089981] transition-colors">
-                        {user.wallet}
-                        {user.badge && <span className="text-xs drop-shadow-md">{user.badge}</span>}
-                      </span>
-                      
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                          {activeTab === 'TRADERS' ? `WR: ${user.winRate}` : `Tokens: ${user.tokens}`}
-                        </span>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 bg-black border border-white/10 rounded-full flex items-center justify-center text-lg shrink-0 shadow-sm overflow-hidden">
+                          <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.wallet}`} alt="Avatar" className="w-full h-full object-cover" />
+                        </div>
+                        
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-sm font-black text-white flex items-center gap-1.5 truncate group-hover:text-[#089981] transition-colors">
+                            {user.wallet}
+                            {user.badge && <span className="text-xs drop-shadow-md">{user.badge}</span>}
+                          </span>
+                          
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                              {activeTab === 'TRADERS' ? `WR: ${user.winRate}` : `Tokens: ${user.tokens}`}
+                            </span>
 
-                        <button 
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            alert(`Following ${user.wallet}...`); 
-                          }}
-                          className="lg:hidden px-2 py-0.5 bg-[#089981]/10 hover:bg-[#089981]/20 border border-[#089981]/30 text-[8px] font-black uppercase tracking-widest text-[#089981] rounded transition-all shadow-sm"
-                        >
-                          + Follow
-                        </button>
+                            {/* Mobile Interactive Follow */}
+                            <button 
+                              onClick={(e) => toggleFollow(user.wallet, e)}
+                              className={`lg:hidden px-2 py-0.5 border text-[8px] font-black uppercase tracking-widest rounded transition-all shadow-sm ${
+                                isFollowed 
+                                  ? 'bg-[#089981] border-[#089981] text-white' 
+                                  : 'bg-[#089981]/10 hover:bg-[#089981]/20 border border-[#089981]/30 text-[#089981]'
+                              }`}
+                            >
+                              {isFollowed ? '✓ Following' : '+ Follow'}
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="flex flex-col items-end shrink-0 relative">
-                  <span className={`text-[15px] font-black font-mono tracking-tight transition-all duration-200 ${activeTab === 'TRADERS' ? 'text-[#089981]' : 'text-white'} lg:group-hover:opacity-0 drop-shadow-md`}>
-                    {activeTab === 'TRADERS' ? user.pnl : user.volume}
-                  </span>
-                  
-                  <button 
-                    onClick={(e) => { 
-                      e.stopPropagation(); 
-                      alert(`Following ${user.wallet}...`); 
-                    }}
-                    className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-[9px] font-black uppercase tracking-widest text-white rounded-lg transition-all duration-200 shadow-md"
-                  >
-                    + Follow
-                  </button>
-                </div>
+                    <div className="flex items-center gap-4 shrink-0 relative">
+                      <span className={`text-[15px] font-black font-mono tracking-tight transition-all duration-200 ${
+                        activeTab === 'TRADERS' ? 'text-[#089981]' : 'text-white'
+                      } lg:group-hover:opacity-0 drop-shadow-md`}>
+                        {activeTab === 'TRADERS' ? user.pnl : user.volume}
+                      </span>
+                      
+                      {/* Desktop Interactive Follow */}
+                      <button 
+                        onClick={(e) => toggleFollow(user.wallet, e)}
+                        className={`hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all duration-200 shadow-md ${
+                          isFollowed 
+                            ? 'bg-[#089981] text-white' 
+                            : 'bg-white/10 hover:bg-white/20 text-white'
+                        }`}
+                      >
+                        {isFollowed ? '✓ Following' : '+ Follow'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8 text-xs font-bold text-zinc-600 uppercase tracking-widest">
+                No profiles found matching search
               </div>
-            ))}
+            )}
           </div>
         </div>
 
