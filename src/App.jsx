@@ -145,7 +145,6 @@ export default function App() {
     };
   });
 
-  // 🚀 FIXED: Added Global Transactions Ledger
   const [globalTransactions, setGlobalTransactions] = useState(() => {
     const savedTxs = localStorage.getItem('apex_global_transactions');
     return savedTxs ? JSON.parse(savedTxs) : [];
@@ -270,7 +269,6 @@ export default function App() {
         return updated;
       });
       
-      // 🚀 FIXED: Inject Buy into Global Transactions
       setGlobalTransactions(prev => [{
         id: Date.now().toString(),
         type: 'Swap',
@@ -311,7 +309,6 @@ export default function App() {
         return updated;
       });
 
-      // 🚀 FIXED: Inject Sell into Global Transactions
       setGlobalTransactions(prev => [{
         id: Date.now().toString(),
         type: 'Swap',
@@ -330,7 +327,6 @@ export default function App() {
   };
 
   const handleForgeSuccess = (newToken) => {
-    // 🚀 FIXED: Add "isMine" flag to explicitly track it as YOUR created token
     const forgedToken = {
         ...newToken,
         isGraduated: false,
@@ -340,7 +336,6 @@ export default function App() {
 
     setGlobalTokens(prev => [forgedToken, ...prev]);
 
-    // 🚀 FIXED: Log Deployment into Global Transactions
     setGlobalTransactions(prev => [{
       id: Date.now().toString(),
       type: 'Deploy',
@@ -412,9 +407,9 @@ export default function App() {
         return (
           <Wallet 
             portfolio={userPortfolio}
-            transactions={globalTransactions} // 🚀 PASS LIVE TXS TO WALLET
-            createdTokens={globalTokens.filter(t => t.isMine)} // 🚀 PASS ONLY YOUR FORGED TOKENS TO WALLET
-            onAddTransaction={(tx) => setGlobalTransactions(prev => [tx, ...prev])} // 🚀 ALLOW WALLET TO INJECT DEPOSITS INTO GLOBAL FEED
+            transactions={globalTransactions} 
+            createdTokens={globalTokens.filter(t => t.isMine)} 
+            onAddTransaction={(tx) => setGlobalTransactions(prev => [tx, ...prev])} 
             setActivePage={(page) => { setPreviousPage('wallet'); setActivePage(page); }} 
             onTokenClick={handleTokenClick} 
             onOpenProfile={() => { setPublicProfileView(null); setActivePage('profile'); }} 
@@ -478,10 +473,30 @@ export default function App() {
     }
   };
 
+  // 🚀 ADDED: select-none to absolute root wrapper
   return (
-    <div className="bg-[#050505] h-screen text-white flex overflow-hidden w-screen">
+    <div className="bg-[#050505] h-screen text-white flex overflow-hidden w-screen select-none">
       
       <style>{`
+        /* 🚀 GLOBAL NATIVE APP LOCKDOWN 🚀 */
+        * {
+          -webkit-touch-callout: none; /* Disable iOS Safari Callout */
+          -webkit-user-select: none; /* Safari */
+          -ms-user-select: none; /* Internet Explorer/Edge */
+          user-select: none; /* Standard syntax */
+        }
+        
+        /* EXCEPTIONS: We MUST allow typing in inputs! */
+        input, textarea {
+          -webkit-user-select: auto !important;
+          user-select: auto !important;
+        }
+
+        /* 🚀 STOPS THE BROWSER SCROLL BOUNCE/JUMP 🚀 */
+        body {
+          overscroll-behavior-y: none;
+        }
+
         @keyframes slideRight {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(0); }
