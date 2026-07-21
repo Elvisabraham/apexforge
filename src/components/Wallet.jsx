@@ -1,4 +1,4 @@
-// 🚀 VERSION 4.6: THE INSTITUTIONAL WALLET (Settings Routing Fix)
+// 🚀 VERSION 4.7: THE INSTITUTIONAL WALLET (Perfect Routing & Icon Flex Patch)
 import React, { useState, useEffect, useRef } from 'react';
 import AccountSettingsSystem from './AccountSettingsSystem';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -145,6 +145,17 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
     setSwapReceiveAsset(temp);
   };
 
+  // 🚀 FIXED: Global Settings Handler
+  const handleOpenSettings = () => {
+    setShowWalletManager(false);
+    setIsMenuOpen(false);
+    if (typeof onOpenSettings === 'function') {
+      onOpenSettings(); // Fires your global app settings modal
+    } else {
+      setSettingsView('appSettings'); // Fallback if no prop is passed
+    }
+  };
+
   const activeMethodConfig = depositMethods.find(m => m.id === depositMethod);
   const activeFiatConfig = fiatProviders.find(p => p.id === selectedFiatProvider);
   const activeWithdrawMethodConfig = withdrawMethods.find(m => m.id === withdrawMethod);
@@ -263,7 +274,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
         
         <header className="flex-none z-40 bg-[#030303]/90 backdrop-blur-3xl px-4 sm:px-6 py-3 border-b border-white/[0.02] flex items-center justify-between sticky top-0 relative">
           
-          <div className="flex items-center min-w-0 z-10 w-2/5">
+          <div className="flex items-center min-w-0 z-10 max-w-[45%]">
             <div onClick={(e) => { e.stopPropagation(); setShowWalletManager(true); }} className="flex items-center gap-2 sm:gap-3 cursor-pointer group w-full min-w-0">
                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-white/5 overflow-hidden bg-[#121212] flex items-center justify-center shadow-inner group-hover:border-[#089981]/50 transition-colors shrink-0">
                  {displayAvatar ? (
@@ -282,17 +293,18 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                     {connected ? (
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleCopyAddress(e); }}
-                        className="flex items-center gap-1.5 group/copy hover:bg-white/5 py-0.5 pr-1 -ml-1 rounded-md transition-colors cursor-pointer w-full min-w-0"
+                        className="flex items-center gap-1.5 group/copy hover:bg-white/5 py-0.5 px-1 -ml-1 rounded-md transition-colors cursor-pointer max-w-full"
                         title="Copy Address"
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] shadow-[0_0_5px_#00FF66] animate-pulse shrink-0"></span>
-                        <span className="text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold truncate transition-colors">
+                        {/* 🚀 FIXED: min-w-0 on text allows truncation, shrink-0 on SVG prevents cutoff */}
+                        <span className="text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold truncate transition-colors min-w-0">
                           {shortAddress}
                         </span>
                         {copied ? (
-                          <svg className="w-3 h-3 text-[#00FF66] shrink-0" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <svg className="w-3 h-3 text-[#00FF66] shrink-0 block" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         ) : (
-                          <svg className="w-3 h-3 text-zinc-600 group-hover/copy:text-[#089981] transition-colors shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                          <svg className="w-3 h-3 text-zinc-600 group-hover/copy:text-[#089981] transition-colors shrink-0 block" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                         )}
                       </button>
                     ) : (
@@ -637,11 +649,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                   </button>
                 </div>
 
-                {/* 🚀 FIXED: Directly passing 'settings' string instead of 'preferences' */}
-                <button onClick={() => { 
-                  setShowWalletManager(false); 
-                  setSettingsView('settings'); 
-                }} className="w-full flex justify-between items-center py-5 mt-6 border-t border-white/10 group">
+                <button onClick={handleOpenSettings} className="w-full flex justify-between items-center py-5 mt-6 border-t border-white/10 group">
                   <span className="text-xs font-black uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">App Preferences & Security</span>
                   <span className="text-zinc-600 group-hover:text-white">›</span>
                 </button>
@@ -694,11 +702,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
               <div className="mb-4">
                 <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 px-3">Security</span>
                 <div className="mt-2 flex flex-col gap-1">
-                  {/* 🚀 FIXED: Directly passing 'settings' string instead of 'preferences' */}
-                  <button onClick={() => { 
-                    setIsMenuOpen(false); 
-                    setSettingsView('settings'); 
-                  }} className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-white/5 transition-colors text-left group">
+                  <button onClick={handleOpenSettings} className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-white/5 transition-colors text-left group">
                     <svg className="w-5 h-5 text-zinc-500 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                     <span className="text-sm font-bold text-zinc-300 group-hover:text-white">App Settings & Preferences</span>
                   </button>
