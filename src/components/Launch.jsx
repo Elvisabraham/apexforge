@@ -8,11 +8,16 @@ export default function Launch({ onForgeSuccess }) {
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [description, setDescription] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
+  const [mediaType, setMediaType] = useState('image'); // 🚀 'image' or 'video'
   const [showSocials, setShowSocials] = useState(false);
   const [twitter, setTwitter] = useState('');
   const [telegram, setTelegram] = useState('');
   const [website, setWebsite] = useState('');
   const [initialBuy, setInitialBuy] = useState('');
+  
+  // 🚀 APP STORE COMPLIANCE & SECURITY STATE
+  const [acceptedDisclaimer, setAcceptedDisclaimer] = useState(false);
+  const [deployedHistory, setDeployedHistory] = useState([]); // 🚀 Duplicate Blocker Memory
 
   const [isDeploying, setIsDeploying] = useState(false);
   const [deploymentStep, setDeploymentStep] = useState(0);
@@ -21,6 +26,7 @@ export default function Launch({ onForgeSuccess }) {
 
   const deploymentStages = [
     { text: "> initializing anchor workspace...", duration: 800 },
+    { text: "> verifying unique asset hash...", duration: 1000 },
     { text: "> compiling smart contract...", duration: 1200 },
     { text: "> uploading metadata to IPFS...", duration: 1500 },
     { text: "> generating mint authority...", duration: 1000 },
@@ -41,28 +47,31 @@ export default function Launch({ onForgeSuccess }) {
         setDeploySuccess(true);
         const finalAddress = generateMockAddress();
         
+        // 🚀 Add to local history to prevent duplicates
+        setDeployedHistory(prev => [...prev, tokenName.toLowerCase()]);
+        
         if (onForgeSuccess) {
           const newToken = {
-  id: Date.now().toString(),
-  name: tokenName,
-  symbol: tokenSymbol,
-  description: description, 
-  links: {                  
-    twitter: twitter,
-    telegram: telegram,
-    website: website
-  },
-  mintAddress: finalAddress,
-  imagePreview: imagePreview,
-  icon: '🔥', 
-  mcap: '$10.0K', 
-  price: '0.0001',
-  change: '+0.0%',
-  initialSnipe: parseFloat(initialBuy || '0'),
-  // 🛠️ ADD THESE FLAGS HERE:
-  isGraduated: false, 
-  progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
-};
+            id: Date.now().toString(),
+            name: tokenName,
+            symbol: tokenSymbol,
+            description: description, 
+            links: {                  
+              twitter: twitter,
+              telegram: telegram,
+              website: website
+            },
+            mintAddress: finalAddress,
+            imagePreview: imagePreview,
+            mediaType: mediaType, // Pass media type to feeds
+            icon: '🔥', 
+            mcap: '$10.0K', 
+            price: '0.0001',
+            change: '+0.0%',
+            initialSnipe: parseFloat(initialBuy || '0'),
+            isGraduated: false, 
+            progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
+          };
           onForgeSuccess(newToken);
         }
 
@@ -70,14 +79,40 @@ export default function Launch({ onForgeSuccess }) {
     }
   }, [isDeploying, deploymentStep]);
 
+  // 🚀 UPGRADED: Handle both Images and Videos (MP4/GIF)
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      const isVideo = file.type.startsWith('video');
+      setMediaType(isVideo ? 'video' : 'image');
+      
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // 🚀 APP STORE COMPLIANCE: The Smart Sanitizer
+  const handleDescriptionChange = (e) => {
+    let val = e.target.value;
+    
+    // Prohibited words that get apps banned from Apple/Google
+    const bannedWords = [/100x/gi, /guaranteed profit/gi, /rug pull/gi, /moon safe/gi, /financial advice/gi, /risk free/gi];
+    let isFlagged = false;
+
+    bannedWords.forEach(regex => {
+      if (regex.test(val)) {
+        val = val.replace(regex, "***");
+        isFlagged = true;
+      }
+    });
+
+    setDescription(val);
+
+    if (isFlagged) {
+      alert("⚠️ App Store Safety Protocol: Certain financial hype words have been sanitized to protect the Apex Forge ecosystem and maintain platform compliance.");
     }
   };
 
@@ -100,13 +135,22 @@ export default function Launch({ onForgeSuccess }) {
   };
 
   const startMockDeployment = () => {
-    // 🚀 FIXED: Wallet connection requirement removed. Burner access granted.
     if (!tokenName || !tokenSymbol) {
       alert("⚠️ Token Name and Symbol are required to forge an asset.");
       return;
     }
     if (!imagePreview) {
-      alert("⚠️ Please upload an asset logo to proceed.");
+      alert("⚠️ Please upload an asset logo or video to proceed.");
+      return;
+    }
+    if (!acceptedDisclaimer) {
+      alert("⚠️ You must acknowledge the entertainment and risk disclaimer before launching an asset.");
+      return;
+    }
+    
+    // 🚀 THE DUPLICATE / RUG BLOCKER
+    if (deployedHistory.includes(tokenName.toLowerCase())) {
+      alert(`⚠️ Rug Blocker Active: You have already deployed an asset named "${tokenName}". Please choose a unique name to prevent community confusion.`);
       return;
     }
     
@@ -125,6 +169,7 @@ export default function Launch({ onForgeSuccess }) {
     setWebsite('');
     setInitialBuy('');
     setShowSocials(false);
+    setAcceptedDisclaimer(false);
     
     setIsDeploying(false);
     setDeploySuccess(false);
@@ -132,10 +177,10 @@ export default function Launch({ onForgeSuccess }) {
   };
 
   return (
-    <div className="flex flex-col w-full h-screen bg-[#050505] text-white font-sans overflow-hidden relative">
+    <div className="flex flex-col w-full h-screen bg-[#050505] text-white font-sans overflow-hidden relative select-none">
       
       {/* --- HEADER --- */}
-      <header className="flex-none z-40 bg-[#050505]/95 backdrop-blur-md px-4 py-4 border-b border-white/[0.04] flex items-center justify-center shadow-md">
+      <header className="flex-none z-40 bg-[#050505]/95 backdrop-blur-md px-4 py-4 border-b border-white/[0.04] flex items-center justify-center shadow-md relative">
         <h1 className="text-xl font-black tracking-wide text-white uppercase flex items-center gap-2">
           <svg viewBox="0 0 100 100" className="w-5 h-5 text-[#089981]" fill="currentColor">
             <path d="M 50 10 L 10 90 L 30 90 L 50 45 L 70 90 L 90 90 Z" fill="#FFFFFF" />
@@ -146,7 +191,7 @@ export default function Launch({ onForgeSuccess }) {
       </header>
 
       {/* --- DEPLOYMENT FORM --- */}
-      <div className={`flex-1 overflow-y-auto no-scrollbar pb-28 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`flex-1 overflow-y-auto no-scrollbar pb-32 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
         <div className="w-full max-w-2xl mx-auto px-4 pt-6 flex flex-col gap-6">
           
           <div className="flex flex-col gap-1">
@@ -154,18 +199,23 @@ export default function Launch({ onForgeSuccess }) {
             <p className="text-[13px] text-zinc-400 font-medium leading-relaxed">Create and launch a fair-launch token instantly. Liquidity is securely locked.</p>
           </div>
 
-          {/* LARGE LOGO UPLOAD */}
+          {/* 🚀 UPGRADED: LARGE LOGO/VIDEO UPLOAD */}
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Asset Logo <span className="text-rose-500">*</span></label>
-            <div className="relative w-full h-40 bg-[#121212] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center overflow-hidden hover:border-[#089981]/50 transition-colors group cursor-pointer shadow-inner">
-              <input type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
+            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Asset Media (Video/GIF/Image) <span className="text-rose-500">*</span></label>
+            <div className="relative w-full h-44 bg-[#121212] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center overflow-hidden hover:border-[#089981]/50 transition-colors group cursor-pointer shadow-inner">
+              <input type="file" accept="image/*,video/mp4" onChange={handleImageChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
+              
               {imagePreview ? (
-                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover z-10" />
+                mediaType === 'video' ? (
+                  <video src={imagePreview} autoPlay loop muted playsInline className="w-full h-full object-cover z-10" />
+                ) : (
+                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover z-10" />
+                )
               ) : (
                 <div className="flex flex-col items-center text-zinc-500 group-hover:text-[#089981] transition-colors">
                   <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                  <span className="text-sm font-bold">Tap to upload image</span>
-                  <span className="text-[10px] uppercase tracking-widest mt-1 opacity-50 font-black">JPG, PNG, GIF</span>
+                  <span className="text-sm font-bold">Tap to upload media</span>
+                  <span className="text-[10px] uppercase tracking-widest mt-1 opacity-50 font-black">MP4, GIF, PNG, JPG</span>
                 </div>
               )}
             </div>
@@ -185,8 +235,16 @@ export default function Launch({ onForgeSuccess }) {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Description</label>
-              <textarea placeholder="Describe your project's utility and vision..." value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981]/50 transition-all font-medium text-sm resize-none shadow-inner" />
+              <div className="flex justify-between items-end">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Description</label>
+              </div>
+              <textarea 
+                placeholder="Describe your project's utility and vision... (Note: Excessive financial hype will be sanitized)" 
+                value={description} 
+                onChange={handleDescriptionChange} 
+                rows={4} 
+                className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981]/50 transition-all font-medium text-sm resize-none shadow-inner" 
+              />
             </div>
           </div>
 
@@ -218,7 +276,7 @@ export default function Launch({ onForgeSuccess }) {
           </div>
 
           {/* ANTI-BOT PROTECTION CARD */}
-          <div className="bg-gradient-to-br from-[#121212] to-[#0A0A0A] border border-[#089981]/30 rounded-3xl p-6 shadow-[0_0_30px_rgba(8,153,129,0.05)] relative overflow-hidden mb-6 group">
+          <div className="bg-gradient-to-br from-[#121212] to-[#0A0A0A] border border-[#089981]/30 rounded-3xl p-6 shadow-[0_0_30px_rgba(8,153,129,0.05)] relative overflow-hidden group">
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#089981]/10 rounded-full blur-3xl group-hover:bg-[#089981]/20 transition-colors"></div>
             
             <div className="flex justify-between items-center border-b border-white/5 pb-3 mb-5 relative z-10">
@@ -243,7 +301,6 @@ export default function Launch({ onForgeSuccess }) {
                ))}
             </div>
 
-            {/* Bonding Curve Visual */}
             <div className="mt-6 pt-5 border-t border-white/5 relative z-10">
               <div className="flex justify-between text-[9px] font-black uppercase text-zinc-600 mb-2">
                 <span>Curve Progress</span>
@@ -255,23 +312,43 @@ export default function Launch({ onForgeSuccess }) {
             </div>
           </div>
 
+          {/* 🚀 MANDATORY APP STORE DISCLAIMER */}
+          <div className="flex items-start gap-3 bg-[#121212] border border-white/10 p-4 rounded-xl mt-2 mb-4">
+            <input 
+              type="checkbox" 
+              checked={acceptedDisclaimer} 
+              onChange={(e) => setAcceptedDisclaimer(e.target.checked)} 
+              className="mt-1 min-w-[20px] min-h-[20px] accent-[#089981] cursor-pointer"
+            />
+            <p className="text-[10px] text-zinc-400 font-medium leading-relaxed">
+              <strong className="text-white">Mandatory Disclosure:</strong> I acknowledge that assets deployed on Apex Forge are community digital art concepts intended strictly for entertainment and social engagement. They hold no intrinsic financial value and do not constitute investment products.
+            </p>
+          </div>
+
         </div>
       </div>
+
+      {/* 🚀 LIVE SUPPORT WIDGET */}
+      {!isDeploying && (
+        <div 
+          onClick={() => alert("Connecting to live Forge Support Agent...")}
+          className="absolute right-4 bottom-28 z-40 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
+        >
+          <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+        </div>
+      )}
 
       {/* --- COMPILATION TERMINAL (ACTIVE DURING DEPLOYMENT) --- */}
       {isDeploying && (
         <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-md animate-fadeIn">
-          
           <div className="w-full max-w-lg bg-[#0A0A0A] border border-[#089981]/40 rounded-xl overflow-hidden shadow-[0_0_80px_rgba(8,153,129,0.15)] flex flex-col relative">
             
-            {/* 🚀 FIXED: Added Abort button in Terminal */}
             {!deploySuccess && (
               <button onClick={resetForge} className="absolute top-3 right-4 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-400 transition-colors z-20 cursor-pointer">
                 Abort
               </button>
             )}
 
-            {/* Terminal Header */}
             <div className="bg-[#121212] px-4 py-3 border-b border-white/5 flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-rose-500/80"></div>
               <div className="w-3 h-3 rounded-full bg-amber-500/80"></div>
@@ -279,7 +356,6 @@ export default function Launch({ onForgeSuccess }) {
               <span className="ml-2 text-[10px] font-mono font-bold text-zinc-500">root@apex-forge: ~/deploy/${tokenSymbol || 'unknown'}</span>
             </div>
 
-            {/* Terminal Body */}
             <div className="p-6 font-mono text-xs sm:text-sm h-64 overflow-y-auto flex flex-col gap-2 relative">
               {!deploySuccess ? (
                 <>
@@ -312,7 +388,6 @@ export default function Launch({ onForgeSuccess }) {
               )}
             </div>
 
-            {/* Terminal Footer (Progress Bar) */}
             {!deploySuccess && (
               <div className="h-1 w-full bg-[#121212]">
                 <div className="h-full bg-[#089981] transition-all duration-300" style={{ width: `${(deploymentStep / deploymentStages.length) * 100}%` }}></div>
@@ -332,10 +407,13 @@ export default function Launch({ onForgeSuccess }) {
               <span className="text-sm font-black text-white">0.05 SOL</span>
             </div>
 
-            {/* 🚀 FIXED: Pristine and syntactically flawless action button */}
             <button 
               onClick={startMockDeployment} 
-              className="flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all active:scale-95 flex items-center justify-center gap-2 bg-[#089981] hover:bg-[#06806b] text-white shadow-[0_0_15px_rgba(8,153,129,0.3)]"
+              className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(8,153,129,0.3)] ${
+                acceptedDisclaimer 
+                  ? 'bg-[#089981] hover:bg-[#06806b] text-white active:scale-95 cursor-pointer' 
+                  : 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50'
+              }`}
             >
               Initialize Contract 🚀
             </button>
