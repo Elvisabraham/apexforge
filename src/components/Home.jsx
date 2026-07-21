@@ -69,7 +69,7 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
   };
 
   return (
-    <div className="flex flex-col w-full h-screen bg-[#0A0A0B] text-white font-sans overflow-hidden">
+    <div className="flex flex-col w-full h-screen bg-[#0A0A0B] text-white font-sans overflow-hidden select-none">
       
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -197,7 +197,8 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
           </div>
         </div>
 
-        <div className="flex flex-col px-2 pt-1">
+        {/* 🚀 FIXED: min-h added to stop layout jumping when switching to empty tabs */}
+        <div className="flex flex-col px-2 pt-1 min-h-[500px]">
           {displayedTokens.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
               <span className="text-sm font-bold uppercase tracking-widest">No assets found.</span>
@@ -212,7 +213,6 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
                   onClick={() => handleTokenClick(t)}
                   className="flex items-center justify-between p-4 rounded-xl cursor-pointer hover:bg-[#131722] transition-colors border border-transparent hover:border-white/[0.02] group animate-slideDown"
                 >
-                  {/* 🚀 UPGRADED: Flex Layout (Allows the chart to render properly on mobile) */}
                   <div className="flex items-center gap-3.5 min-w-0 w-[45%]">
                     <div className="w-10 h-10 bg-[#1A1A24] border border-white/5 rounded-full flex items-center justify-center text-xl shrink-0 shadow-inner overflow-hidden group-hover:border-[#089981]/30 transition-colors">
                       {t.imagePreview ? <img src={t.imagePreview} alt={t.name} className="w-full h-full object-cover" /> : t.icon}
@@ -228,12 +228,10 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
                     </div>
                   </div>
 
-                  {/* 🚀 UPGRADED: Sparkline is now permanently visible on mobile */}
                   <div className="flex flex-col items-center justify-center w-12 sm:w-16 h-8 opacity-70 group-hover:opacity-100 transition-opacity">
                     {renderSparkline(t.trend, t.isPositive)}
                   </div>
 
-                  {/* Right Side: Price */}
                   <div className="flex flex-col items-end shrink-0 w-[30%]">
                     <span className="text-[14px] sm:text-[15px] font-black text-white font-mono tracking-tight">${t.price}</span>
                     <span className={`text-[10px] sm:text-[11px] font-black ${changeColor} tracking-wide mt-0.5`}>{t.isPositive ? '▲' : '▼'} {t.change}</span>
