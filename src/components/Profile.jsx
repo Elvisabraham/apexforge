@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 
 export default function Profile({ 
@@ -7,13 +7,38 @@ export default function Profile({
   userProfile, 
   isOwnProfile = false, 
   isFollowingUser = false,
-  onFollowToggle
+  onFollowToggle,
+  profileUsername = '@degen_forge'
 }) {
   const { publicKey, connected } = useWallet();
 
-  // 🚀 FIXED: Display Name is completely removed. Web3 uses Handles only.
-  const displayUsername = userProfile?.username || '@degen_forge';
-  const displayBio = userProfile?.bio || 'No bio provided.';
+  // 🚀 PERMANENT IDENTITY & FOLLOW STORAGE SYNC
+  const targetUserKey = profileUsername.replace('@', '');
+  const followStorageKey = `apex_follow_state_${targetUserKey}`;
+  const blockStorageKey = `apex_blocked_users`;
+
+  const [isFollowing, setIsFollowing] = useState(() => {
+    const cached = localStorage.getItem(followStorageKey);
+    return cached !== null ? JSON.parse(cached) : isFollowingUser;
+  });
+
+  const [isBlocked, setIsBlocked] = useState(() => {
+    const blockedList = JSON.parse(localStorage.getItem(blockStorageKey) || '[]');
+    return blockedList.includes(targetUserKey);
+  });
+
+  useEffect(() => {
+    localStorage.setItem(followStorageKey, JSON.stringify(isFollowing));
+  }, [isFollowing, followStorageKey]);
+
+  const handleToggleFollow = () => {
+    const nextState = !isFollowing;
+    setIsFollowing(nextState);
+    if (onFollowToggle) onFollowToggle(nextState);
+  };
+
+  const displayUsername = profileUsername.startsWith('@') ? profileUsername : `@${profileUsername}`;
+  const displayBio = userProfile?.bio || 'Independent Web3 builder & trench sniper. Forging the next wave of decentralized multi-chain liquidities on Solana ⚡';
   const displayAvatar = userProfile?.avatar;
 
   const displayAddress = connected && publicKey 
@@ -27,6 +52,17 @@ export default function Profile({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [notificationsMuted, setNotificationsMuted] = useState(false);
 
+  // MODALS STATE
+  const [activeModal, setActiveModal] = useState(null); // 'share', 'report', 'block', 'tip', 'followers', 'following'
+  const [reportReason, setReportReason] = useState('Scam / Phishing');
+  const [tipAmount, setTipAmount] = useState('0.1');
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
   const displayNetWorth = isOwnProfile ? '$16,530.00' : '$142,400.00';
 
   const mockForgedAssets = [
@@ -34,7 +70,7 @@ export default function Profile({
     { id: 2, name: 'Trench Runner', symbol: 'RUNNER', mcap: '$45K', change: '-4%', supplyBonded: '42%', status: 'Bonding', isRaydium: false }
   ];
 
-  const mockActivity = [
+  const [mockActivity, setMockActivity] = useState([
     { 
       id: 1, 
       type: 'bought', 
@@ -48,7 +84,8 @@ export default function Profile({
       lossText: '$0.32',
       lossPct: '-99.32%',
       currentValue: '$0.00220565',
-      iconUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Hunter'
+      iconUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Hunter',
+      reactions: { '😄': 3, '🚀': 12 }
     },
     { 
       id: 2, 
@@ -63,40 +100,97 @@ export default function Profile({
       lossText: '$3.47',
       lossPct: '-98.77%',
       currentValue: '$0.0432',
-      iconUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=Sell'
+      iconUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=Sell',
+      reactions: { '🔥': 5, '💎': 8 }
     }
+  ]);
+
+  const mockCallouts = [
+    { id: 1, tokenName: 'Apex Forge', symbol: 'FORGE', calloutText: 'Massive volume breakout incoming on the 4-hour chart. Don’t fade the trench leader!', time: '2d ago', mcap: '$2.4M' },
+    { id: 2, tokenName: 'Trench Runner', symbol: 'RUNNER', calloutText: 'Bonding curve filling up fast. Dev is based and marketing wallet is unlocked.', time: '4d ago', mcap: '$45K' }
   ];
 
-  // 🚀 FIXED: Address Copy vs Profile Share logic completely separated
+  const mockUsersList = [
+    { id: 1, name: '@ApexSniper', address: '7xK2...9pQ1', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sniper' },
+    { id: 2, name: '@SolWhale', address: '3fR8...2vL4', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Whale' },
+    { id: 3, name: '@DegenToly', address: '9pQ1...4xK2', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Toly' }
+  ];
+
   const handleCopyAddress = () => {
     navigator.clipboard.writeText(displayAddress);
     setCopied(true);
+    showToast('Wallet Address Copied to Clipboard!');
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleShareProfile = () => {
-    const profileLink = `apexforge.app/${displayUsername.replace('@', '')}`;
+    const profileLink = `https://apexforge.app/profile/${targetUserKey}`;
     navigator.clipboard.writeText(profileLink);
-    alert('Profile link copied to clipboard!');
+    showToast(`Profile Link for ${displayUsername} Copied!`);
     setIsMenuOpen(false);
   };
 
   const handleNotificationToggle = () => {
     setNotificationsMuted(!notificationsMuted);
-    alert(notificationsMuted ? 'Notifications Unmuted 🔔' : 'Notifications Muted 🔕');
+    showToast(notificationsMuted ? 'Notifications Unmuted 🔔' : 'Notifications Muted 🔕');
   };
+
+  const handleBlockUser = () => {
+    const blockedList = JSON.parse(localStorage.getItem(blockStorageKey) || '[]');
+    if (!blockedList.includes(targetUserKey)) {
+      blockedList.push(targetuserKey);
+      localStorage.setItem(blockStorageKey, JSON.stringify(blockedList));
+    }
+    setIsBlocked(true);
+    setActiveModal(null);
+    showToast(`Successfully blocked ${displayUsername}`);
+  };
+
+  const handleReportSubmit = () => {
+    setActiveModal(null);
+    showToast(`Report submitted for ${reportReason}. Thank you for keeping the trenches clean.`);
+  };
+
+  const handleSendTip = () => {
+    setActiveModal(null);
+    showToast(`Successfully sent ${tipAmount} SOL tip to ${displayUsername} ⚡`);
+  };
+
+  const handleAddReaction = (actId, emoji) => {
+    setMockActivity(prev => prev.map(item => {
+      if (item.id === actId) {
+        const current = item.reactions || {};
+        return {
+          ...item,
+          reactions: { ...current, [emoji]: (current[emoji] || 0) + 1 }
+        };
+      }
+      return item;
+    }));
+    showToast(`Reacted with ${emoji}!`);
+  };
+
+  if (isBlocked) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full h-screen bg-[#0A0A0B] text-white p-6 text-center">
+        <span className="text-4xl mb-4">🚫</span>
+        <h2 className="text-lg font-black uppercase tracking-widest text-zinc-300">User Blocked</h2>
+        <p className="text-xs text-zinc-500 mt-1 mb-6">You have blocked {displayUsername}. Their profile and activity are hidden.</p>
+        <button onClick={onBack} className="bg-white/10 hover:bg-white/20 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors">Go Back</button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col w-full h-screen bg-[#0A0A0B] text-white font-sans overflow-hidden animate-fadeIn relative">
       
-      <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; } 
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
-        .animate-slideUpDelay1 { animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards; opacity: 0; }
-        .animate-slideUpDelay2 { animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; opacity: 0; }
-        .animate-slideUpDelay3 { animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards; opacity: 0; }
-      `}</style>
+      {/* 🚀 WORLD-CLASS TOAST NOTIFICATION */}
+      {toastMessage && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[300] bg-[#121212]/95 backdrop-blur-2xl border border-[#089981]/40 shadow-[0_10px_40px_rgba(8,153,129,0.2)] px-4 py-2.5 rounded-2xl flex items-center gap-3 animate-slideUpNative">
+          <span className="w-2 h-2 rounded-full bg-[#089981] animate-ping"></span>
+          <span className="text-xs font-black text-white tracking-wide">{toastMessage}</span>
+        </div>
+      )}
 
       {/* --- HEADER --- */}
       <header className="flex-none z-50 bg-[#0A0A0B]/95 backdrop-blur-xl pt-4 pb-3 px-4 border-b border-white/[0.04] flex items-center justify-between sticky top-0">
@@ -105,7 +199,6 @@ export default function Profile({
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
           <div className="flex flex-col min-w-0">
-            {/* 🚀 FIXED: Username perfectly anchored in the Header */}
             <h1 className="text-sm font-black text-white leading-tight truncate">{displayUsername}</h1>
             <span className="text-[10px] text-zinc-500 font-bold">{mockForgedAssets.length} tokens forged</span>
           </div>
@@ -133,7 +226,6 @@ export default function Profile({
               <button onClick={onOpenSettings} className="p-2 text-zinc-400 hover:text-white transition-colors active:scale-95 bg-white/5 rounded-full border border-white/5 shadow-sm">
                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               </button>
-              {/* 🚀 FIXED: Share Button uses handleShareProfile */}
               <button onClick={handleShareProfile} className="p-2 text-zinc-400 hover:text-white transition-colors active:scale-95 bg-white/5 rounded-full border border-white/5 shadow-sm">
                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
               </button>
@@ -147,20 +239,19 @@ export default function Profile({
           {isMenuOpen && !isOwnProfile && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
-              <div className="absolute top-12 right-0 w-40 bg-[#121212]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] z-50 overflow-hidden py-1 animate-fadeIn">
-                {/* 🚀 FIXED: Menu Share uses handleShareProfile */}
+              <div className="absolute top-12 right-0 w-44 bg-[#121212]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] z-50 overflow-hidden py-1 animate-fadeIn">
                 <button onClick={handleShareProfile} className="w-full text-left px-4 py-3 text-sm font-bold text-white hover:bg-white/5 transition-colors flex items-center gap-2">
                   <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
                   Share Profile
                 </button>
                 <div className="h-px bg-white/5 my-1 w-full"></div>
-                <button className="w-full text-left px-4 py-3 text-sm font-bold text-white hover:bg-white/5 transition-colors flex items-center gap-2">
+                <button onClick={() => { setIsMenuOpen(false); setActiveModal('block'); }} className="w-full text-left px-4 py-3 text-sm font-bold text-white hover:bg-white/5 transition-colors flex items-center gap-2">
                   <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                   Block User
                 </button>
-                <button className="w-full text-left px-4 py-3 text-sm font-bold text-rose-500 hover:bg-rose-500/10 transition-colors flex items-center gap-2">
+                <button onClick={() => { setIsMenuOpen(false); setActiveModal('report'); }} className="w-full text-left px-4 py-3 text-sm font-bold text-rose-500 hover:bg-rose-500/10 transition-colors flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" /></svg>
-                  Report
+                  Report User
                 </button>
               </div>
             </>
@@ -189,40 +280,41 @@ export default function Profile({
                 <span className="text-xl font-black text-white font-mono tracking-tight leading-none">{displayNetWorth}</span>
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <span className="text-[11px] font-black text-[#089981] font-mono leading-none">+$450.00</span>
-                  <span className="text-[8px] font-black bg-[#089981]/10 text-[#089981] px-1.5 py-0.5 rounded uppercase tracking-widest border border-[#089981]/20 shadow-[0_0_10px_rgba(8,153,129,0.1)] leading-none">+2.4% Today</span>
+                  <span className="text-[8px] font-black bg-[#089981]/10 text-[#089981] px-1.5 py-0.5 rounded uppercase tracking-widest border border-[#089981]/25 shadow-[0_0_10px_rgba(8,153,129,0.1)] leading-none">+2.4% Today</span>
                 </div>
               </div>
             ) : (
               <div className="flex items-center gap-2 pb-1">
+                {/* 🚀 FIXED TIP BUTTON */}
                 <button 
-                  className="w-10 h-10 shrink-0 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-[#089981]/20 hover:text-[#089981] hover:border-[#089981]/30 transition-all active:scale-95 shadow-sm"
+                  onClick={() => setActiveModal('tip')}
+                  className="w-10 h-10 shrink-0 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-[#089981]/20 hover:text-[#089981] hover:border-[#089981]/40 transition-all active:scale-95 shadow-sm"
                   title="Send Tip"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </button>
+                {/* 🚀 FIXED PERMANENT FOLLOW BUTTON */}
                 <button 
-                  onClick={onFollowToggle}
-                  className={`px-5 py-2 shrink-0 rounded-full text-[11px] font-black uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center min-w-[100px] ${
-                    isFollowingUser 
-                      ? 'bg-transparent border border-white/20 text-white hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/30' 
-                      : 'bg-white text-black hover:bg-zinc-200 shadow-md'
+                  onClick={handleToggleFollow}
+                  className={`px-5 py-2.5 shrink-0 rounded-full text-[11px] font-black uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center min-w-[100px] shadow-lg ${
+                    isFollowing 
+                      ? 'bg-transparent border border-white/25 text-white hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/40' 
+                      : 'bg-white text-black hover:bg-zinc-200'
                   }`}
                 >
-                  {isFollowingUser ? 'Following' : 'Follow'}
+                  {isFollowing ? 'Following' : 'Follow'}
                 </button>
               </div>
             )}
           </div>
 
           <div className="animate-slideUpDelay1 flex flex-col px-1">
-            
-            {/* 🚀 FIXED: Followers/Following pulled up into Name's old spot */}
             <div className="flex items-center gap-4 mb-3">
-              <div className="flex items-center gap-1.5 cursor-pointer group">
+              <div onClick={() => setActiveModal('following')} className="flex items-center gap-1.5 cursor-pointer group">
                 <span className="text-sm font-black text-white group-hover:text-[#089981] transition-colors">340</span>
                 <span className="text-[11px] text-zinc-500 font-medium">Following</span>
               </div>
-              <div className="flex items-center gap-1.5 cursor-pointer group">
+              <div onClick={() => setActiveModal('followers')} className="flex items-center gap-1.5 cursor-pointer group">
                 <span className="text-sm font-black text-white group-hover:text-[#089981] transition-colors">1,240</span>
                 <span className="text-[11px] text-zinc-500 font-medium">Followers</span>
               </div>
@@ -236,7 +328,6 @@ export default function Profile({
             <p className="text-[13px] text-zinc-300 leading-relaxed whitespace-pre-wrap">{displayBio}</p>
 
             <div className="flex items-center mt-3 gap-3">
-              {/* 🚀 FIXED: handleCopyAddress logic strictly for the wallet address */}
               <button onClick={handleCopyAddress} className="flex items-center gap-1.5 bg-[#121212] hover:bg-[#1A1A24] border border-white/5 px-2.5 py-1 rounded-md transition-colors text-[10px] font-mono text-zinc-400">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                 {copied ? <span className="text-[#089981]">Copied!</span> : shortAddress}
@@ -257,7 +348,7 @@ export default function Profile({
         </div>
 
         <div className="animate-slideUpDelay2">
-          <div className="sticky top-0 z-40 bg-[#0A0A0B]/80 backdrop-blur-md border-b border-white/[0.05] flex">
+          <div className="sticky top-0 z-40 bg-[#0A0A0B]/90 backdrop-blur-md border-b border-white/[0.05] flex">
             {['activity', 'created', 'callouts'].map(tab => (
               <button 
                 key={tab}
@@ -275,16 +366,17 @@ export default function Profile({
           </div>
 
           <div className="flex flex-col w-full pb-32">
+            
+            {/* ACTIVITY TAB */}
             {activeTab === 'activity' && (
               <div className="flex flex-col p-3 gap-4">
                 {mockActivity.map(act => (
                   <div key={act.id} className="flex flex-col gap-2">
                     <div className="flex items-center gap-2 px-1">
                       <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10">
-                         {displayAvatar ? <img src={displayAvatar} className="w-full h-full object-cover" /> : <span className="text-[10px] flex items-center justify-center h-full bg-[#121212]">👤</span>}
+                         {displayAvatar ? <img src={displayAvatar} className="w-full h-full object-cover" alt="Avatar" /> : <span className="text-[10px] flex items-center justify-center h-full bg-[#121212]">👤</span>}
                       </div>
                       <span className="text-xs font-bold text-white">
-                        {/* 🚀 FIXED: Activity feed uses username instead of display name */}
                         {displayUsername} <span className="text-zinc-400 font-medium">bought {act.amount} {act.tokenSymbol}</span>
                       </span>
                       <span className="text-[10px] font-bold text-zinc-600 ml-auto shrink-0">• {act.time}</span>
@@ -302,7 +394,7 @@ export default function Profile({
                             </div>
                           </div>
                         </div>
-                        <button className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full transition-colors shrink-0 ml-2">
+                        <button onClick={() => showToast(`Opening trade terminal for ${act.tokenSymbol}...`)} className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full transition-colors shrink-0 ml-2">
                           Buy
                         </button>
                       </div>
@@ -333,10 +425,13 @@ export default function Profile({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4 px-2 mt-1">
-                      <button className="text-zinc-500 hover:text-white transition-colors" title="Share"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg></button>
-                      <button className="flex items-center gap-1 bg-white/5 hover:bg-white/10 px-2 py-1 rounded-full text-xs transition-colors ml-2">
-                        😄 <span className="text-[10px] font-bold text-zinc-400">1</span>
+                    <div className="flex items-center gap-2 px-2 mt-1">
+                      <button onClick={handleShareProfile} className="text-zinc-500 hover:text-white transition-colors p-1" title="Share Activity"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg></button>
+                      <button onClick={() => handleAddReaction(act.id, '🔥')} className="flex items-center gap-1 bg-white/5 hover:bg-white/10 px-2 py-1 rounded-full text-xs transition-colors">
+                        🔥 <span className="text-[10px] font-bold text-zinc-400">{act.reactions?.['🔥'] || 5}</span>
+                      </button>
+                      <button onClick={() => handleAddReaction(act.id, '🚀')} className="flex items-center gap-1 bg-white/5 hover:bg-white/10 px-2 py-1 rounded-full text-xs transition-colors">
+                        🚀 <span className="text-[10px] font-bold text-zinc-400">{act.reactions?.['🚀'] || 12}</span>
                       </button>
                     </div>
 
@@ -345,6 +440,7 @@ export default function Profile({
               </div>
             )}
 
+            {/* CREATED TAB */}
             {activeTab === 'created' && (
               <div className="flex flex-col gap-3 p-3 animate-fadeIn">
                 {mockForgedAssets.map(asset => (
@@ -382,17 +478,137 @@ export default function Profile({
               </div>
             )}
 
+            {/* CALLOUTS TAB */}
             {activeTab === 'callouts' && (
-              <div className="flex flex-col items-center justify-center p-12 text-center opacity-50 animate-fadeIn">
-                <span className="text-3xl mb-3">📌</span>
-                <p className="text-xs font-black uppercase tracking-widest text-zinc-500">No tokens pinned</p>
+              <div className="flex flex-col gap-3 p-3 animate-fadeIn">
+                {mockCallouts.map(callout => (
+                  <div key={callout.id} className="p-4 bg-[#121212] border border-white/5 rounded-2xl flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-black text-[#089981] uppercase tracking-wider">📌 {callout.tokenName} ({callout.symbol})</span>
+                      <span className="text-[9px] font-mono text-zinc-500">{callout.time}</span>
+                    </div>
+                    <p className="text-xs text-zinc-300 leading-relaxed font-medium">{callout.calloutText}</p>
+                    <div className="flex justify-between items-center pt-2 border-t border-white/5 text-[10px] text-zinc-400 font-mono">
+                      <span>Market Cap: <strong className="text-white">{callout.mcap}</strong></span>
+                      <span className="text-[#00FF66]">Active Alpha</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
           </div>
         </div>
-
       </div>
+
+      {/* --- INTERACTIVE MODALS (REPORT, BLOCK, TIP, FOLLOWERS, FOLLOWING) --- */}
+      {activeModal && (
+        <div className="fixed inset-0 z-[250] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="absolute inset-0" onClick={() => setActiveModal(null)}></div>
+          
+          <div className="bg-[#121212] border-t sm:border border-white/10 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6 relative z-10 animate-slideUpNative flex flex-col shadow-2xl">
+            
+            {/* 1. REPORT MODAL */}
+            {activeModal === 'report' && (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-black text-white uppercase tracking-widest">Report {displayUsername}</h3>
+                  <button onClick={() => setActiveModal(null)} className="p-1 text-zinc-400 hover:text-white">✕</button>
+                </div>
+                <p className="text-xs text-zinc-400 mb-4">Select the primary reason for reporting this profile to the Apex moderation DAO:</p>
+                <div className="flex flex-col gap-2 mb-6">
+                  {['Scam / Phishing', 'Bot / Automated Spam', 'Impersonation', 'Harassment or Toxic Behavior'].map((reason) => (
+                    <label key={reason} className="flex items-center gap-3 p-3 bg-black/40 border border-white/5 rounded-xl cursor-pointer hover:border-white/20 transition-colors">
+                      <input 
+                        type="radio" 
+                        name="reportReason" 
+                        checked={reportReason === reason} 
+                        onChange={() => setReportReason(reason)} 
+                        className="accent-[#089981]"
+                      />
+                      <span className="text-xs font-bold text-zinc-200">{reason}</span>
+                    </label>
+                  ))}
+                </div>
+                <button onClick={handleReportSubmit} className="w-full bg-rose-500 hover:bg-rose-600 text-white font-black text-xs py-3.5 rounded-xl uppercase tracking-widest transition-all">
+                  Submit Report
+                </button>
+              </>
+            )}
+
+            {/* 2. BLOCK MODAL */}
+            {activeModal === 'block' && (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-black text-rose-500 uppercase tracking-widest">Block {displayUsername}?</h3>
+                  <button onClick={() => setActiveModal(null)} className="p-1 text-zinc-400 hover:text-white">✕</button>
+                </div>
+                <p className="text-xs text-zinc-400 mb-6 leading-relaxed">They will no longer be able to message you in chat rooms, view your portfolio activity, or tag you in token callouts.</p>
+                <div className="flex gap-3">
+                  <button onClick={() => setActiveModal(null)} className="flex-1 bg-white/5 hover:bg-white/10 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors">Cancel</button>
+                  <button onClick={handleBlockUser} className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all">Confirm Block</button>
+                </div>
+              </>
+            )}
+
+            {/* 3. TIP MODAL */}
+            {activeModal === 'tip' && (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-black text-white uppercase tracking-widest">Tip {displayUsername}</h3>
+                  <button onClick={() => setActiveModal(null)} className="p-1 text-zinc-400 hover:text-white">✕</button>
+                </div>
+                <p className="text-xs text-zinc-400 mb-4">Support this builder by sending SOL directly to their wallet via micro-tip:</p>
+                <div className="bg-black/50 border border-white/10 rounded-2xl p-4 flex items-center justify-between gap-3 mb-4">
+                  <span className="text-xs font-bold text-zinc-400">Amount (SOL)</span>
+                  <input 
+                    type="number" 
+                    value={tipAmount} 
+                    onChange={(e) => setTipAmount(e.target.value)} 
+                    className="bg-transparent text-right text-2xl font-black text-white w-32 focus:outline-none"
+                  />
+                </div>
+                <div className="flex gap-2 mb-6">
+                  {['0.05', '0.1', '0.5', '1.0'].map(amt => (
+                    <button key={amt} onClick={() => setTipAmount(amt)} className="flex-1 bg-white/5 hover:bg-white/10 py-2 rounded-lg text-xs font-mono font-bold text-zinc-300">{amt} SOL</button>
+                  ))}
+                </div>
+                <button onClick={handleSendTip} className="w-full bg-[#089981] hover:bg-[#06806b] text-white font-black text-xs py-3.5 rounded-xl uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(8,153,129,0.3)]">
+                  Send {tipAmount} SOL Tip ⚡
+                </button>
+              </>
+            )}
+
+            {/* 4. FOLLOWERS / FOLLOWING LIST MODAL */}
+            {(activeModal === 'followers' || activeModal === 'following') && (
+              <>
+                <div className="flex justify-between items-center mb-4 border-b border-white/5 pb-3">
+                  <h3 className="text-sm font-black text-white uppercase tracking-widest">{activeModal === 'followers' ? 'Followers' : 'Following'}</h3>
+                  <button onClick={() => setActiveModal(null)} className="p-1 text-zinc-400 hover:text-white">✕</button>
+                </div>
+                <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto no-scrollbar">
+                  {mockUsersList.map(u => (
+                    <div key={u.id} className="flex items-center justify-between p-3 bg-black/40 border border-white/5 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <img src={u.avatar} alt="User" className="w-9 h-9 rounded-full bg-black border border-white/10" />
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-white">{u.name}</span>
+                          <span className="text-[10px] font-mono text-zinc-500">{u.address}</span>
+                        </div>
+                      </div>
+                      <button onClick={() => showToast(`Following state updated for ${u.name}`)} className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-full text-[10px] font-black uppercase tracking-wider transition-colors">
+                        Following
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
