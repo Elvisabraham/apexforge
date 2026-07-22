@@ -364,7 +364,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
                     onClick={() => onOpenProfile && onOpenProfile(msg.sender)}
                     className={`text-[10px] font-black ${msg.isDev ? 'text-amber-400' : 'text-zinc-400'} cursor-pointer hover:text-white transition-colors`}
                   >
-                    {msg.sender}
+                    {msg.sender.startsWith('@') ? msg.sender : `@${msg.sender}`}
                   </span>
                   <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${msg.isDev ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40' : msg.isMe ? 'bg-[#089981]/20 text-[#089981]' : 'bg-white/10 text-zinc-300'}`}>
                     {msg.badge}
