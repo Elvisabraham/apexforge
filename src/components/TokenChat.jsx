@@ -144,6 +144,48 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     e.preventDefault();
     if (!inputText.trim()) return;
 
+    // 🚀 NATIVE IMAGE UPLOADER
+  const fileInputRef = useRef(null);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const newMsg = {
+          id: Date.now().toString(),
+          sender: myName,
+          avatar: myAvatar,
+          text: '', 
+          image: event.target.result, // Sets the uploaded image
+          time: 'Just now',
+          badge: formatBadge(userTokenBalance),
+          isMe: true,
+          reactions: {}
+        };
+        setMessages(prev => [...prev, newMsg]);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // 🚀 MOCK GIF SENDER (For testing the Image UI)
+  const handleSendMockGif = () => {
+    const newMsg = {
+      id: Date.now().toString(),
+      sender: myName,
+      avatar: myAvatar,
+      text: '',
+      // Random Web3 Moon GIF
+      image: 'https://media.giphy.com/media/amrNGnZUeWhZC/giphy.gif', 
+      time: 'Just now',
+      badge: formatBadge(userTokenBalance),
+      isMe: true,
+      reactions: {}
+    };
+    setMessages(prev => [...prev, newMsg]);
+  };
+
     const newMessage = {
       id: Date.now().toString(),
       sender: myName,
