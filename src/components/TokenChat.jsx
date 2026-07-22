@@ -140,11 +140,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     });
   };
 
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (!inputText.trim()) return;
-
-    // 🚀 NATIVE IMAGE UPLOADER
+  // 🚀 NATIVE IMAGE UPLOADER (Safely extracted to the top level)
   const fileInputRef = useRef(null);
 
   const handleImageUpload = (e) => {
@@ -157,7 +153,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
           sender: myName,
           avatar: myAvatar,
           text: '', 
-          image: event.target.result, // Sets the uploaded image
+          image: event.target.result, 
           time: 'Just now',
           badge: formatBadge(userTokenBalance),
           isMe: true,
@@ -169,14 +165,13 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     }
   };
 
-  // 🚀 MOCK GIF SENDER (For testing the Image UI)
+  // 🚀 MOCK GIF SENDER
   const handleSendMockGif = () => {
     const newMsg = {
       id: Date.now().toString(),
       sender: myName,
       avatar: myAvatar,
       text: '',
-      // Random Web3 Moon GIF
       image: 'https://media.giphy.com/media/amrNGnZUeWhZC/giphy.gif', 
       time: 'Just now',
       badge: formatBadge(userTokenBalance),
@@ -185,6 +180,11 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     };
     setMessages(prev => [...prev, newMsg]);
   };
+
+  // 🚀 STANDARD TEXT MESSAGE SENDER
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!inputText.trim()) return;
 
     const newMessage = {
       id: Date.now().toString(),
