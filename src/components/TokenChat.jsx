@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-export default function TokenChat({ token, onBack, userBalance, userProfile }) {
+export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile }) {
   const messagesEndRef = useRef(null);
   const [inputText, setInputText] = useState('');
   const [activeReactionId, setActiveReactionId] = useState(null);
@@ -89,8 +89,8 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
   ];
 
   const [messages, setMessages] = useState([
-    { id: 1, sender: 'ApexDeployer_0x1', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Dev', text: 'Official contract deployed. Liquidity locked on bonding curve! ⚡', time: '10:30 AM', badge: 'DEV', isDev: true, reactions: { '🚀': 24, '💎': 15 } },
-    { id: 2, sender: 'Apex Sniper', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sniper', text: 'This chart is looking incredibly primed. 🚀', time: '10:42 AM', badge: '42M', isMe: false, reactions: { '🚀': 12, '🐳': 3 } },
+    { id: 1, sender: 'ApexDeployer_0x1', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Dev', text: `Official contract deployed for $${tokenSymbol}. Liquidity locked on bonding curve! ⚡`, time: '10:30 AM', badge: 'DEV', isDev: true, reactions: { '🚀': 24, '💎': 15 } },
+    { id: 2, sender: 'Apex Sniper', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sniper', text: `This chart for $${tokenSymbol} is looking incredibly primed. 🚀`, time: '10:42 AM', badge: '42M', isMe: false, reactions: { '🚀': 12, '🐳': 3 } },
     { id: 3, sender: '0xDegen', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Degen', text: 'Just swept the floor. Nobody is selling!', time: '10:45 AM', badge: '38M', isMe: false, reactions: { '💎': 8 } },
   ]);
 
@@ -100,7 +100,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
       const fomoMessage = {
         id: Date.now().toString(),
         isSystem: true,
-        text: `🟢 Wallet 0x${Math.random().toString(16).slice(2, 6).toUpperCase()}... just scooped 50 SOL ($7.2k) of ${tokenSymbol}!`,
+        text: `🟢 Wallet 0x${Math.random().toString(16).slice(2, 6).toUpperCase()}... just scooped 50 SOL ($7.2k) of $${tokenSymbol}!`,
         time: 'Just now'
       };
       setMessages(prev => [...prev, fomoMessage]);
@@ -116,6 +116,22 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // 🚀 Cashtag Formatter ($TICKER parser)
+  const renderFormattedText = (text) => {
+    if (!text) return '';
+    const parts = text.split(/(\$[A-Za-z0-9]+)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('$')) {
+        return (
+          <span key={i} className="inline-flex items-center gap-1 bg-[#089981]/20 text-[#089981] border border-[#089981]/40 px-1.5 py-0.5 rounded font-mono font-black text-xs mx-0.5 align-baseline shadow-sm">
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
 
   const handleSendMessage = (e) => {
     e.preventDefault();
@@ -253,7 +269,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
         </div>
         <div className="flex gap-4 overflow-x-auto no-scrollbar pb-1">
           {topHolders.map((whale, idx) => (
-            <div key={whale.id} onClick={() => setIsHoldersModalOpen(true)} className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group">
+            <div key={whale.id} onClick={() => onOpenProfile ? onOpenProfile(whale.name) : setIsHoldersModalOpen(true)} className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group">
               <div className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-transform group-hover:scale-105 ${idx === 0 ? 'border-amber-400' : 'border-white/10'}`}>
                 <img src={whale.avatar} alt={whale.name} className="w-full h-full object-cover" />
               </div>
@@ -263,7 +279,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
         </div>
       </div>
 
-      {/* --- 🚀 PINNED DEV ANNOUNCEMENT BANNER --- */}
+      {/* --- PINNED DEV ANNOUNCEMENT BANNER --- */}
       <div className="flex-none bg-gradient-to-r from-amber-500/20 via-[#121212] to-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between z-20">
         <div className="flex items-center gap-2">
           <span className="bg-amber-400 text-black text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest shrink-0">Pinned</span>
@@ -289,14 +305,22 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
             <div key={msg.id} className={`flex w-full ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
               <div className={`flex max-w-[85%] ${msg.isMe ? 'flex-row-reverse' : 'flex-row'} gap-3 items-end group relative`}>
                 {!msg.isMe && (
-                  <div className={`w-8 h-8 rounded-full overflow-hidden shrink-0 border ${msg.isDev ? 'border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'border-white/10'} bg-black mb-1`}>
+                  <div 
+                    onClick={() => onOpenProfile && onOpenProfile(msg.sender)}
+                    className={`w-8 h-8 rounded-full overflow-hidden shrink-0 border ${msg.isDev ? 'border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'border-white/10'} bg-black mb-1 cursor-pointer hover:border-[#089981] transition-colors`}
+                  >
                     <img src={msg.avatar} alt="avatar" className="w-full h-full object-cover" />
                   </div>
                 )}
                 
                 <div className={`flex flex-col ${msg.isMe ? 'items-end' : 'items-start'} relative`}>
                   <div className={`flex items-center gap-1.5 mb-1 ${msg.isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <span className={`text-[11px] font-black ${msg.isDev ? 'text-amber-400 font-bold' : 'text-zinc-400'}`}>{msg.sender}</span>
+                    <span 
+                      onClick={() => onOpenProfile && onOpenProfile(msg.sender)}
+                      className={`text-[11px] font-black ${msg.isDev ? 'text-amber-400 font-bold' : 'text-zinc-400'} cursor-pointer hover:text-white transition-colors`}
+                    >
+                      {msg.sender}
+                    </span>
                     <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${msg.isDev ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40' : msg.isMe ? 'bg-[#089981]/20 text-[#089981]' : 'bg-white/10 text-zinc-300'}`}>{msg.badge}</span>
                   </div>
 
@@ -309,7 +333,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
                     </div>
 
                     <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-md ${msg.isDev ? 'bg-gradient-to-r from-amber-500/20 to-[#1A1A24] border border-amber-500/40 text-amber-100 rounded-bl-sm shadow-[0_0_15px_rgba(251,191,36,0.15)]' : msg.isMe ? 'bg-[#089981] text-white rounded-br-sm' : 'bg-[#1A1A24] border border-white/5 text-zinc-200 rounded-bl-sm'}`}>
-                      {msg.text}
+                      {renderFormattedText(msg.text)}
                     </div>
 
                     {/* Reaction Badges Footer */}
@@ -339,7 +363,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
             <button type="button" className="p-2 text-zinc-500 hover:text-white transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></button>
             <button type="button" className="p-2 text-zinc-500 hover:text-[#089981] transition-colors font-black text-xs">GIF</button>
           </div>
-          <input type="text" value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder="Shill the trenches..." className="flex-1 bg-transparent text-sm text-white placeholder-zinc-600 focus:outline-none py-3 px-1 min-w-0" />
+          <input type="text" value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={`Shill the trenches using $${tokenSymbol}...`} className="flex-1 bg-transparent text-sm text-white placeholder-zinc-600 focus:outline-none py-3 px-1 min-w-0" />
           <button type="submit" disabled={!inputText.trim()} className="p-3 bg-[#089981] hover:bg-[#06806b] disabled:bg-[#089981]/30 text-white rounded-full transition-all active:scale-90 shrink-0 shadow-[0_0_10px_rgba(8,153,129,0.3)]"><svg className="w-4 h-4 translate-x-0.5 -translate-y-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg></button>
         </form>
       </div>
@@ -359,7 +383,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
 
             <div className="flex-1 overflow-y-auto no-scrollbar pb-6 space-y-2">
               {topHolders.map((holder, index) => (
-                <div key={holder.id} className="bg-[#121212] border border-white/5 p-4 rounded-xl flex justify-between items-center">
+                <div key={holder.id} onClick={() => { setIsHoldersModalOpen(false); if(onOpenProfile) onOpenProfile(holder.name); }} className="bg-[#121212] border border-white/5 p-4 rounded-xl flex justify-between items-center cursor-pointer hover:border-[#089981]/50 transition-colors">
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-mono font-bold text-zinc-500 w-4">#{index + 1}</span>
                     <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10">
