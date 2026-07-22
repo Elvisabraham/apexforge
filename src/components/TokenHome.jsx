@@ -7,7 +7,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const [chartType, setChartType] = useState('area'); 
   const [isFavorited, setIsFavorited] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [expandedStat, setExpandedStat] = useState(null);
   const [isReported, setIsReported] = useState(false);
   
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -34,7 +33,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     description: token?.description || `A community-driven asset deployed fairly on the Apex Forge platform. Smart contract initialized.`,
     links: { twitter: token?.links?.twitter || '', telegram: token?.links?.telegram || '', website: token?.links?.website || '' },
     creator: 'ApexDeployer_0x1',
-    holders: '1',
+    holders: '1,204',
     supply: '1.0B',
     createdTime: 'Just now',
     isGraduated: isActuallyGraduated,
@@ -89,15 +88,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     if (str.startsWith('$')) return <><span className="font-bold mr-[2px]">$</span>{str.slice(1)}</>;
     return str;
   };
-
-  const statsList = [
-    { id: 'mcap', icon: '📈', label: 'Market cap', value: `$${curveState.mcap.toFixed(2)}K`, desc: 'The total market value of a cryptocurrency\'s circulating supply.' },
-    { id: 'vol', icon: '💧', label: 'Volume', subLabel: 'Past 24h', value: '$409.90', desc: 'A metric measuring the total quantity of tokens transacted over the trailing 24-hour cycle.' },
-    { id: 'holders', icon: '👥', label: 'Holders', value: displayToken.holders, desc: 'The complete aggregate number of unique cryptographic wallet addresses holding a balance.' },
-    { id: 'supply', icon: '🪙', label: 'Circulating supply', value: displayToken.supply, desc: 'The exact volume of tokens that are actively generated and circulating.' },
-    { id: 'creator', icon: '🛠️', label: 'Created by', value: displayToken.creator, isAvatar: true, desc: 'The definitive cryptographic signature and public wallet address responsible for broadcasting the contract.' },
-    { id: 'time', icon: '⏱️', label: 'Created', value: displayToken.createdTime, desc: 'The historical age and precise blockchain block confirmation depth.' },
-  ];
 
   const [recentTrades, setRecentTrades] = useState([
     { id: 1, type: 'sell', amountToken: '12.4M', amountSol: '0.85', price: `$${curveState.price.toFixed(7)}`, time: '28m ago', user: 'sold' },
@@ -214,11 +204,11 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
 
     const chart = createChart(chartContainerRef.current, {
       layout: { background: { type: 'solid', color: '#0A0A0B' }, textColor: '#D1D5DB', attributionLogo: false },
-      grid: { vertLines: { color: '#2B2B43', style: 0, visible: showGrid }, horzLines: { color: '#2B2B43', style: 0, visible: showGrid } },
+      grid: { vertLines: { color: '#1E2028', style: 0, visible: showGrid }, horzLines: { color: '#1E2028', style: 0, visible: showGrid } },
       width: chartContainerRef.current.clientWidth,
-      height: 280,
-      timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#2B2B43' },
-      rightPriceScale: { borderColor: '#2B2B43', visible: true }, 
+      height: 320, // 🚀 Slightly taller chart for pro feel
+      timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#1E2028' },
+      rightPriceScale: { borderColor: '#1E2028', visible: true }, 
     });
 
     let series;
@@ -263,8 +253,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
         * { -webkit-tap-highlight-color: transparent !important; }
         @keyframes slideUpNative { 0% { transform: translateY(100%); } 100% { transform: translateY(0); } }
         .animate-slideUpNative { animation: slideUpNative 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes expandDown { 0% { opacity: 0; max-height: 0; } 100% { opacity: 1; max-height: 200px; } }
-        .animate-expandDown { animation: expandDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; overflow: hidden; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
@@ -350,119 +338,126 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
 
           <div className="flex flex-col px-4 pt-4 gap-6">
 
-            {/* CONDITIONAL BONDING CURVE UI (Hidden when graduated) */}
+            {/* 🚀 UPGRADED CONDITIONAL BONDING CURVE UI */}
             {!displayToken.isGraduated && (
-              <div className="flex flex-col w-full animate-fadeIn">
-                <div className="flex justify-between items-end mb-2">
-                  <span className="text-sm font-bold text-zinc-300">Bonding Curve Progress</span>
-                  <span className={`text-sm font-black text-[#089981]`}>{curveState.progress}%</span>
+              <div className="flex flex-col w-full animate-fadeIn bg-[#121212] border border-white/5 p-4 rounded-2xl shadow-inner">
+                <div className="flex justify-between items-end mb-3">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Bonding Curve Progress</span>
+                    <span className="text-sm font-bold text-zinc-300 mt-1">Race to Raydium</span>
+                  </div>
+                  <span className="text-lg font-black text-[#089981]">{curveState.progress}%</span>
                 </div>
-                <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                   <div className={`h-full bg-gradient-to-r from-transparent to-[#089981] transition-all duration-500`} style={{ width: `${curveState.progress}%`, backgroundColor: '#089981' }} />
+                <div className="w-full h-2.5 bg-black rounded-full overflow-hidden border border-white/5 relative">
+                   <div className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-[#089981]/50 to-[#00FF66] transition-all duration-500 shadow-[0_0_10px_rgba(0,255,102,0.5)]" style={{ width: `${curveState.progress}%` }} />
                 </div>
-                <p className="text-[10px] text-zinc-500 font-medium mt-2 text-right">
-                  {curveState.solInCurve.toFixed(2)} / 85 SOL for Raydium Launch
+                <p className="text-[10px] text-zinc-500 font-medium mt-3 text-right font-mono">
+                  {curveState.solInCurve.toFixed(2)} / 85.00 SOL Filled
                 </p>
               </div>
             )}
 
             {/* BALANCE */}
             <div className="flex flex-col w-full">
-              <h2 className="text-2xl font-black mb-4">Your balance</h2>
-              <div className="flex justify-between items-start mb-5">
+              <h2 className="text-xl font-black mb-4">Your Position</h2>
+              <div className="flex justify-between items-start mb-5 bg-[#121212] border border-white/5 p-4 rounded-2xl shadow-inner">
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-0.5">Value</span>
-                  <span className="text-3xl font-black text-white">{formatProPrice(`$${((userTokenBalance / 1000000) * curveState.price).toFixed(2)}`)}</span>
+                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Total Value</span>
+                  <span className="text-2xl font-black text-white font-mono">{formatProPrice(`$${((userTokenBalance / 1000000) * curveState.price).toFixed(2)}`)}</span>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-0.5">Quantity</span>
-                  <span className="text-3xl font-black text-[#089981]">{userTokenBalance > 0 ? `${(userTokenBalance / 1000000).toFixed(2)}M` : '0'}</span>
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Balance ({displayToken.symbol})</span>
+                  <span className="text-2xl font-black text-[#089981] font-mono">{userTokenBalance > 0 ? `${(userTokenBalance / 1000000).toFixed(2)}M` : '0'}</span>
                 </div>
               </div>
               <div className="flex gap-3 w-full">
-                <button onClick={() => setIsDepositOpen(true)} className="flex-1 py-3 rounded-xl border border-white/10 bg-transparent hover:bg-white/5 text-sm font-bold flex items-center justify-center gap-2 transition-colors active:scale-98">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> Deposit SOL
+                <button onClick={() => setIsDepositOpen(true)} className="flex-1 py-3.5 rounded-xl border border-white/10 bg-[#1A1A24] hover:bg-white/10 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-colors shadow-sm">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> Deposit
                 </button>
-                <button className="flex-1 py-3 rounded-xl border border-white/10 bg-transparent hover:bg-white/5 text-sm font-bold flex items-center justify-center gap-2 transition-colors active:scale-98">
+                <button className="flex-1 py-3.5 rounded-xl border border-white/10 bg-[#1A1A24] hover:bg-white/10 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-colors shadow-sm">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg> Alerts
                 </button>
               </div>
             </div>
 
-            <div className="w-full h-px bg-white/5"></div>
+            <div className="w-full h-px bg-white/5 my-2"></div>
 
-            {/* ABOUT */}
+            {/* 🚀 UPGRADED ABOUT SECTION (NO MORE MASSIVE IMAGE) */}
             <div className="flex flex-col w-full">
-              <h2 className="text-xl font-black mb-3">About</h2>
-              {displayToken.imagePreview && (
-                <div className="w-full h-40 bg-[#131722] rounded-xl mb-3 overflow-hidden">
-                  <img src={displayToken.imagePreview} className="w-full h-full object-cover" alt="Asset Image" />
-                </div>
-              )}
-              <p className="text-[14px] text-zinc-300 leading-relaxed mb-4 whitespace-pre-wrap">{displayToken.description}</p>
+              <h2 className="text-xl font-black mb-3">About {displayToken.symbol}</h2>
+              <p className="text-[13px] font-medium text-zinc-400 leading-relaxed mb-5 whitespace-pre-wrap">{displayToken.description}</p>
               
               <div className="flex flex-wrap gap-2">
-                <button onClick={handleCopyCA} className="px-4 py-2 rounded-full bg-white/5 text-xs font-bold flex items-center gap-1.5 hover:bg-white/10 transition-colors">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeWidth="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeWidth="2"></path></svg> Address
+                <button onClick={handleCopyCA} className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner">
+                  <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeWidth="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeWidth="2"></path></svg> CA: {shortCA}
                 </button>
-                {displayToken.links.twitter && <a href={formatLink(displayToken.links.twitter)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-full bg-white/5 text-xs font-bold flex items-center gap-1.5 hover:bg-white/10 transition-colors"><span className="font-black text-sm">𝕏</span> Twitter</a>}
-                {displayToken.links.telegram && <a href={formatLink(displayToken.links.telegram)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-full bg-white/5 text-xs font-bold flex items-center gap-1.5 hover:bg-white/10 transition-colors">Telegram</a>}
-                {displayToken.links.website && <a href={formatLink(displayToken.links.website)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-full bg-white/5 text-xs font-bold flex items-center gap-1.5 hover:bg-white/10 transition-colors">Website</a>}
+                {displayToken.links.twitter && <a href={formatLink(displayToken.links.twitter)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner"><span className="font-black text-sm text-zinc-500">𝕏</span> Twitter</a>}
+                {displayToken.links.telegram && <a href={formatLink(displayToken.links.telegram)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner"><span className="text-zinc-500">✈</span> Telegram</a>}
+                {displayToken.links.website && <a href={formatLink(displayToken.links.website)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner"><span className="text-zinc-500">🌐</span> Website</a>}
               </div>
             </div>
 
-            {/* STATS */}
-            <div className="flex flex-col mt-2 border-t border-white/[0.05]">
-              {statsList.map((stat, index) => (
-                <div key={stat.id} onClick={() => setExpandedStat(expandedStat === stat.id ? null : stat.id)} className={`flex flex-col py-3 cursor-pointer z-10 ${index !== statsList.length - 1 ? 'border-b border-white/[0.05]' : ''}`}>
-                  <div className="flex justify-between items-center w-full pointer-events-none">
-                    <span className="text-zinc-400 text-sm flex items-center gap-2">{stat.icon} {stat.label}</span>
-                    <span className="font-mono text-sm font-black text-white flex items-center gap-2">
-                      {stat.isAvatar && <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${stat.value}`} className="w-4 h-4 rounded-full" alt="Avatar" />}
-                      {stat.isAvatar ? `${stat.value.slice(0, 5)}...${stat.value.slice(-4)}` : formatProPrice(stat.value)}
-                    </span>
-                  </div>
-                  {expandedStat === stat.id && <div className="text-xs text-[#787B86] mt-2 animate-expandDown leading-relaxed pr-4">{stat.desc}</div>}
-                </div>
-              ))}
+            {/* 🚀 UPGRADED HIGH-DENSITY STATS GRID (Replaces Accordion) */}
+            <div className="grid grid-cols-2 gap-3 mt-2 border-t border-white/[0.05] pt-6">
+              <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
+                <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Market Cap</span>
+                <span className="text-sm font-mono font-bold text-white mt-1.5">{formatProPrice(`$${curveState.mcap.toFixed(2)}K`)}</span>
+              </div>
+              <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
+                <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Volume (24h)</span>
+                <span className="text-sm font-mono font-bold text-white mt-1.5">$409.90</span>
+              </div>
+              <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
+                <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Holders</span>
+                <span className="text-sm font-mono font-bold text-white mt-1.5">{displayToken.holders}</span>
+              </div>
+              <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
+                <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Circulating Supply</span>
+                <span className="text-sm font-mono font-bold text-white mt-1.5">{displayToken.supply}</span>
+              </div>
             </div>
 
             {/* RECENT TRADES */}
             <div className="flex flex-col w-full mt-4">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-black">Recent trades</h2>
-                <div className="flex items-center gap-1.5">
+                <h2 className="text-xl font-black">Recent Trades</h2>
+                <div className="flex items-center gap-1.5 bg-[#e81cff]/10 px-2 py-1 rounded border border-[#e81cff]/20">
                   <span className="w-1.5 h-1.5 bg-[#e81cff] rounded-full animate-pulse"></span>
-                  <span className="text-[10px] font-black uppercase text-[#e81cff]">Live</span>
+                  <span className="text-[9px] font-black uppercase text-[#e81cff] tracking-widest">Live</span>
                 </div>
               </div>
               
               <div className="flex flex-col">
                 {recentTrades.map((trade, index) => (
-                  <div key={trade.id} className={`flex justify-between items-center py-2.5 ${index !== recentTrades.length - 1 ? 'border-b border-white/[0.03]' : ''} animate-fadeIn`}>
+                  <div key={trade.id} className={`flex justify-between items-center py-3 ${index !== recentTrades.length - 1 ? 'border-b border-white/[0.03]' : ''} animate-fadeIn`}>
                     <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full ${trade.user === 'You' ? 'bg-[#089981] text-white' : 'bg-white/5 text-zinc-500'} flex items-center justify-center text-[8px] font-mono font-black`}>
-                        {trade.user === 'You' ? 'ME' : 'ID'}
+                      <div className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${trade.type === 'buy' ? 'bg-[#089981]/10 text-[#089981]' : 'bg-[#F23645]/10 text-[#F23645]'}`}>
+                        {trade.type}
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-bold text-[14px] text-zinc-200">{trade.user} <span className={`ml-1.5 font-mono font-black ${trade.type === 'buy' ? 'text-[#089981]' : 'text-[#F23645]'}`}>{trade.amountToken}</span></span>
-                        <span className="text-[11px] font-mono text-[#787B86] flex items-center gap-1">◎ {trade.amountSol} SOL</span>
+                        <span className="font-bold text-[13px] text-white flex items-center gap-1.5">
+                          {trade.user} 
+                          {trade.user === 'You' && <span className="bg-white/10 text-zinc-400 text-[8px] px-1 py-0.5 rounded font-black uppercase">Me</span>}
+                        </span>
+                        <span className="text-[11px] font-mono text-[#787B86] mt-0.5">{trade.amountToken} TKN</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-[11px] font-mono text-[#787B86]">{trade.price}</span>
-                      <span className={`text-xs font-medium w-10 text-right ${trade.user === 'You' ? 'text-[#089981]' : 'text-zinc-600'}`}>{trade.time}</span>
+                    <div className="flex flex-col items-end">
+                      <span className="text-[12px] font-mono font-bold text-white">◎ {trade.amountSol}</span>
+                      <span className={`text-[10px] font-mono mt-0.5 ${trade.type === 'buy' ? 'text-[#089981]' : 'text-zinc-500'}`}>{trade.time}</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="flex flex-col items-center gap-6 pt-6 border-t border-white/[0.05]">
-              <p className="text-center text-[11px] text-[#787B86] font-medium leading-relaxed max-w-2xl">
-                Apex Forge acts strictly as a decentralized non-custodial software launcher suite and does not operate a centralized exchange infrastructure. Cryptographic assets are inherently exposed to extreme market volatility. Engage at your own risk.
+            <div className="flex flex-col items-center gap-4 pt-8 border-t border-white/[0.05]">
+              <button onClick={handleReportToken} className={`text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-1.5 py-2 px-4 rounded-full border ${isReported ? 'border-rose-500/50 text-rose-400 bg-rose-500/10' : 'border-white/10 text-zinc-500 hover:text-rose-400 hover:border-rose-500/30'}`}>
+                🚩 {isReported ? 'Flagged for Auditing' : 'Report Token'}
+              </button>
+              <p className="text-center text-[10px] text-zinc-600 font-medium leading-relaxed max-w-sm">
+                Apex Forge acts strictly as a decentralized non-custodial software launcher suite. Cryptographic assets are inherently exposed to extreme market volatility.
               </p>
-              <button onClick={handleReportToken} className={`text-xs font-bold transition-colors flex items-center gap-1.5 py-2 ${isReported ? 'text-rose-400' : 'text-zinc-500 hover:text-rose-400'}`}>🚩 {isReported ? 'Flagged for Auditing' : 'Report'}</button>
             </div>
 
           </div>
@@ -477,7 +472,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
           <div className="bg-[#1C1C1E] border-t border-white/10 rounded-t-3xl w-full max-w-lg p-6 relative z-10 animate-slideUpNative flex flex-col">
              <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6"></div>
              
-             {/* 🚀 RESTORED ORIGINAL SHARE CARD LAYOUT WITH NATIVE QR CODE */}
+             {/* SHARE CARD LAYOUT WITH NATIVE QR CODE */}
              <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-5 flex flex-col mb-8 shadow-2xl relative overflow-hidden">
                <div className={`absolute -top-12 -right-12 w-40 h-40 ${trendBgColor} opacity-20 rounded-full blur-3xl pointer-events-none`}></div>
                <div className={`absolute -bottom-12 -left-12 w-40 h-40 ${trendBgColor} opacity-10 rounded-full blur-3xl pointer-events-none`}></div>
@@ -499,7 +494,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                   </div>
                </div>
 
-               {/* MIDDLE ROW: Big Price (Breathing Room) */}
+               {/* MIDDLE ROW: Big Price */}
                <div className="flex flex-col mt-6 z-10">
                   <span className="text-4xl font-black text-white tracking-tighter">{formatProPrice(`$${curveState.price.toFixed(7)}`)}</span>
                   <span className={`text-sm font-bold ${trendTextColor} mt-1 tracking-wide`}>{isPositive ? '▲' : '▼'} {displayToken.change}</span>
@@ -520,7 +515,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                      </div>
                   </div>
                   
-                  {/* 📦 IMMUTABLE VECTOR QR CODE (Restored to bottom right) */}
+                  {/* IMMUTABLE VECTOR QR CODE */}
                   <div className="bg-white p-1.5 rounded-lg shadow-lg shrink-0 flex items-center justify-center border border-white/20 w-14 h-14">
                     <svg className="w-full h-full text-black" viewBox="0 0 100 100" shapeRendering="crispEdges">
                       <path d="M0 0h30v30H0zm10 10h10v10H10zM70 0h30v30H70zm10 10h10v10H80zM0 70h30v30H0zm10 10h10v10H10z" fill="currentColor" />
