@@ -35,18 +35,19 @@ const V1_POPULAR_LOCALES = [
 ];
 
 export default function AccountSettingsSystem({ initialView = 'wallet_drawer', onBack, onCloseSettings, userProfile, setUserProfile }) {
-  // 🚀 FIXED: Directly sets the active view based on the initialView prop from Wallet.jsx
-  const [activeView, setActiveView] = useState(initialView);
+  
+  // 🚀 FIXED: Normalizes 'settings' (from the hamburger menu) into 'main'
+  const normalizedInitView = initialView === 'settings' ? 'main' : initialView;
+  const [activeView, setActiveView] = useState(normalizedInitView);
 
   useEffect(() => {
-    setActiveView(initialView);
+    setActiveView(initialView === 'settings' ? 'main' : initialView);
   }, [initialView]);
 
   // App Configurations
   const [appLanguage, setAppLanguage] = useState('English');
   const [appearanceMode, setAppearanceMode] = useState('Dark');
   
-  // 🚀 FIXED: Removed 'editName' state entirely.
   const [editUsername, setEditUsername] = useState(userProfile?.username || '@elviscrypto');
   const [editBio, setEditBio] = useState(userProfile?.bio || 'HODL');
   const [editAvatar, setEditAvatar] = useState(userProfile?.avatar || null);
@@ -91,14 +92,13 @@ export default function AccountSettingsSystem({ initialView = 'wallet_drawer', o
   ]);
 
   const handleSaveProfile = () => {
-    // 🚀 FIXED: Removed 'name' from the payload.
     if (setUserProfile) setUserProfile({ username: editUsername, bio: editBio, avatar: editAvatar });
     alert("Profile metadata updated successfully!"); 
-    // Return to wherever they came from (either 'main' app settings or close the modal if they came from the Burner Manager)
-    if (initialView === 'editProfile') {
+    // Close cleanly back out
+    if (normalizedInitView === 'editProfile') {
       if (onCloseSettings) onCloseSettings();
     } else {
-      setActiveView(initialView === 'main' ? 'main' : 'wallet_drawer'); 
+      setActiveView(normalizedInitView); 
     }
   };
 
@@ -122,24 +122,42 @@ export default function AccountSettingsSystem({ initialView = 'wallet_drawer', o
     }, 1000);
   };
 
-  // 🚀 FIXED: Navigation Stack Logic (Closes properly if at root or if jumped straight to editProfile)
+  // 🚀 FIXED: Rock-solid navigation mapping matrix
   const handleBackNavigation = () => {
-    if (activeView === 'wallet_drawer' || (activeView === 'main' && initialView === 'main') || (activeView === 'editProfile' && initialView === 'editProfile')) {
+    // If we are currently on the exact view the modal opened with, close it entirely (X)
+    if (activeView === normalizedInitView) {
       if (onCloseSettings) onCloseSettings();
       else if (onBack) onBack();
       return;
     }
-    if (activeView === 'main' || activeView === 'editProfile') {
-      if (initialView === 'main') {
-        if (onCloseSettings) onCloseSettings();
-        else if (onBack) onBack();
-      } else {
-        setActiveView('wallet_drawer');
-      }
+
+    // Explicit routing back to the root if deep
+    if (activeView === 'editProfile' || activeView === 'main') {
+      setActiveView(normalizedInitView);
       return;
     }
-    const menuMap = { 'export_warning': 'security', 'export_reveal': 'export_warning', 'backup_password': 'security', 'legal_terms': 'legal', 'legal_privacy': 'legal', 'legal_livestream': 'legal', 'legal_fees': 'legal' };
-    setActiveView(menuMap[activeView] || 'main');
+
+    // Deep room routing map (Sends you back to the correct parent)
+    const menuMap = { 
+      'export_warning': 'security', 
+      'export_reveal': 'export_warning', 
+      'backup_password': 'security', 
+      'legal_terms': 'legal', 
+      'legal_privacy': 'legal', 
+      'legal_livestream': 'legal', 
+      'legal_fees': 'legal',
+      'security': 'main',
+      'execution': 'main',
+      'community': 'main',
+      'notifications': 'main',
+      'appearance': 'main',
+      'language': 'main',
+      'faqs': 'main',
+      'legal': 'main',
+      'support': 'main'
+    };
+    
+    setActiveView(menuMap[activeView] || normalizedInitView);
   };
 
   // --- REUSABLE COMPONENTS ---
@@ -214,17 +232,20 @@ export default function AccountSettingsSystem({ initialView = 'wallet_drawer', o
       {/* --- HEADER --- */}
       <header className="flex-none z-50 bg-[#050505]/95 backdrop-blur-xl pt-4 pb-3 px-4 border-b border-white/[0.04] flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={handleBackNavigation} className="p-2 -ml-2 text-zinc-400 hover:text-white transition-colors active:scale-95">
-            {activeView === 'wallet_drawer' || (activeView === 'main' && initialView === 'main') || (activeView === 'editProfile' && initialView === 'editProfile') ? (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          <button onClick={handleBackNavigation} className="p-2 -ml-2 text-zinc-400 hover:text-white transition-colors active:scale-95 shrink-0">
+            {/* 🚀 FIXED: Dynamic icon rendering based on navigation depth */}
+            {activeView === normalizedInitView ? (
+              // X icon for 'Close Modal'
+              <svg className="w-6 h-6 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             ) : (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+              // Back Arrow for 'Return to Previous Menu'
+              <svg className="w-6 h-6 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
             )}
           </button>
           <h1 className="text-lg font-black tracking-widest text-white uppercase">
             {activeView === 'wallet_drawer' ? 'Your Accounts' :
              activeView === 'main' ? 'App Settings' :
-             activeView === 'editProfile' ? 'Edit Profile' : // 🚀 FIXED: String match updated
+             activeView === 'editProfile' ? 'Edit Profile' :
              activeView === 'security' ? 'Security & Backup' :
              activeView === 'notifications' ? 'Notifications' :
              activeView === 'execution' ? 'Trade Settings' :
@@ -362,7 +383,6 @@ export default function AccountSettingsSystem({ initialView = 'wallet_drawer', o
                 <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Tap to update avatar</p>
               </div>
 
-              {/* 🚀 FIXED: Name Field Removed. Only Handle and Bio remain. */}
               <div className="space-y-4">
                 <div>
                   <label className="text-[10px] text-zinc-500 uppercase font-black tracking-widest pl-1">Handle / Username</label>
@@ -656,4 +676,4 @@ export default function AccountSettingsSystem({ initialView = 'wallet_drawer', o
       </div>
     </div>
   );
-} 
+}
