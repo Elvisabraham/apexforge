@@ -145,7 +145,10 @@ export default function WithdrawModal({
               <button key={method.id} onClick={() => { setWithdrawMethod(method.id); setWithdrawStep(2); }} className="w-full flex items-center gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/[0.02] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 text-left shadow-lg group">
                 <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center text-xl border border-white/5 group-hover:border-white/20 transition-all duration-300 shadow-inner shrink-0"><span className="text-center drop-shadow-md">{method.icon}</span></div>
                 <div className="flex flex-col min-w-0 flex-1"><span className="font-black text-sm text-zinc-200 group-hover:text-white tracking-wide transition-colors truncate">{method.label}</span><span className="text-[10px] text-zinc-500 font-semibold tracking-wide mt-1 truncate">{method.sub}</span></div>
-                <div className="ml-auto text-zinc-700 group-hover:text-white transition-colors duration-300 shrink-0"><svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7-7" /></svg></div>
+                <div className="ml-auto text-zinc-700 group-hover:text-white transition-colors duration-300 shrink-0">
+                  {/* 🚀 FIXED: UNCRUSHABLE ARROW SVGS */}
+                  <svg className="w-5 h-5 min-w-[20px] min-h-[20px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7-7" /></svg>
+                </div>
               </button>
             ))}
           </div>
@@ -232,7 +235,8 @@ export default function WithdrawModal({
                         <span className="text-sm font-bold text-white truncate">{activeWithdrawFiatConfig?.label}</span>
                       </div>
                     </div>
-                    <svg className="w-5 h-5 text-zinc-500 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                    {/* 🚀 FIXED: Uncrushable Chevron SVGs */}
+                    <svg className="w-5 h-5 min-w-[20px] min-h-[20px] shrink-0 text-zinc-500 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                   </button>
                   {showWithdrawFiatDropdown && (
                     <div className="absolute top-full left-0 right-0 mt-2 bg-[#1A1A1A] border border-white/10 rounded-2xl overflow-hidden z-20 shadow-2xl">
