@@ -224,7 +224,8 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   };
 
   return (
-    <div className="flex flex-col w-full h-screen bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative z-50">
+    // 🚀 FIXED: Mobile Locked Layout (100dvh + flex-col lock)
+    <div className="flex flex-col w-full h-[100dvh] bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative z-50">
       
       {/* --- HEADER --- */}
       <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between shadow-sm">
@@ -235,18 +236,12 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <span className="text-lg font-black text-white uppercase">{tokenSymbol} HQ</span>
-              <span className="flex items-center gap-1 text-[9px] font-black uppercase bg-[#089981]/20 text-[#089981] px-1.5 py-0.5 rounded border border-[#089981]/30">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse"></span> Live
-              </span>
             </div>
             
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Holder Exclusive</span>
-              <span className="text-zinc-700">•</span>
-              <div className="flex items-center gap-1.5 bg-[#00FF66]/10 px-1.5 py-0.5 rounded border border-[#00FF66]/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_5px_#00FF66]"></span>
-                <span className="text-[9px] font-black text-[#00FF66] uppercase tracking-widest">1,420 Online</span>
-              </div>
+            {/* 🚀 FIXED: Cleaned up Header Badges */}
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_5px_#00FF66]"></span>
+              <span className="text-[10px] font-black text-[#00FF66] uppercase tracking-widest">1,420 Online</span>
             </div>
           </div>
         </div>
@@ -269,18 +264,19 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
       </header>
 
       {/* --- TOP HOLDERS --- */}
-      <div className="flex-none bg-[#121212] border-b border-white/[0.03] py-3 px-4 shadow-inner z-30 relative">
-        <div className="flex items-center justify-between mb-2">
+      <div className="flex-none bg-[#121212] border-b border-white/[0.03] py-2 px-4 shadow-inner z-30 relative">
+        <div className="flex items-center justify-between mb-1.5">
           <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Top Room Holders</span>
           <span onClick={() => setIsHoldersModalOpen(true)} className="text-[10px] font-bold text-[#089981] cursor-pointer hover:text-white transition-colors">View All</span>
         </div>
         <div className="flex gap-4 overflow-x-auto no-scrollbar pb-1">
           {topHolders.map((whale, idx) => (
             <div key={whale.id} onClick={() => onOpenProfile ? onOpenProfile(whale.name) : setIsHoldersModalOpen(true)} className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group">
-              <div className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-transform group-hover:scale-105 ${idx === 0 ? 'border-amber-400' : 'border-white/10'}`}>
+              {/* 🚀 FIXED: Miniaturized Holders (w-7 h-7) */}
+              <div className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-transform group-hover:scale-105 ${idx === 0 ? 'border-amber-400' : 'border-white/10'}`}>
                 <img src={whale.avatar} alt={whale.name} className="w-full h-full object-cover" />
               </div>
-              <span className="text-[9px] font-black text-zinc-400">{whale.holding}</span>
+              <span className="text-[8px] font-black text-zinc-400">{whale.holding}</span>
             </div>
           ))}
         </div>
@@ -296,7 +292,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
       </div>
 
       {/* --- CHAT FEED --- */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar bg-[#050505]" onClick={() => setActiveReactionId(null)}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar bg-[#050505]" onClick={() => setActiveReactionId(null)}>
         {messages.map((msg) => {
           if (msg.isSystem) {
             return (
@@ -309,52 +305,53 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
           }
 
           return (
-            <div key={msg.id} className={`flex w-full ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
-              <div className={`flex max-w-[85%] ${msg.isMe ? 'flex-row-reverse' : 'flex-row'} gap-3 items-end group relative`}>
-                {!msg.isMe && (
-                  <div 
-                    onClick={() => onOpenProfile && onOpenProfile(msg.sender)}
-                    className={`w-8 h-8 rounded-full overflow-hidden shrink-0 border ${msg.isDev ? 'border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'border-white/10'} bg-black mb-1 cursor-pointer hover:border-[#089981] transition-colors`}
-                  >
-                    <img src={msg.avatar} alt="avatar" className="w-full h-full object-cover" />
-                  </div>
-                )}
+            <div key={msg.id} className={`flex w-full ${msg.isMe ? 'justify-end' : 'justify-start'} mb-1`}>
+              <div className={`flex flex-col max-w-[85%] ${msg.isMe ? 'items-end' : 'items-start'} group relative`}>
                 
-                <div className={`flex flex-col ${msg.isMe ? 'items-end' : 'items-start'} relative`}>
-                  <div className={`flex items-center gap-1.5 mb-1 ${msg.isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <span 
+                {/* 🚀 FIXED: "Near Aside" Compact Profile Row */}
+                <div className={`flex items-center gap-1.5 mb-1 ${msg.isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                  {!msg.isMe && (
+                    <div 
                       onClick={() => onOpenProfile && onOpenProfile(msg.sender)}
-                      className={`text-[11px] font-black ${msg.isDev ? 'text-amber-400 font-bold' : 'text-zinc-400'} cursor-pointer hover:text-white transition-colors`}
+                      className={`w-4 h-4 rounded-full overflow-hidden shrink-0 border ${msg.isDev ? 'border-amber-400' : 'border-white/10'} bg-black cursor-pointer hover:border-[#089981] transition-colors`}
                     >
-                      {msg.sender}
-                    </span>
-                    <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${msg.isDev ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40' : msg.isMe ? 'bg-[#089981]/20 text-[#089981]' : 'bg-white/10 text-zinc-300'}`}>{msg.badge}</span>
+                      <img src={msg.avatar} alt="avatar" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <span 
+                    onClick={() => onOpenProfile && onOpenProfile(msg.sender)}
+                    className={`text-[10px] font-black ${msg.isDev ? 'text-amber-400' : 'text-zinc-400'} cursor-pointer hover:text-white transition-colors`}
+                  >
+                    {msg.sender}
+                  </span>
+                  <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${msg.isDev ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40' : msg.isMe ? 'bg-[#089981]/20 text-[#089981]' : 'bg-white/10 text-zinc-300'}`}>
+                    {msg.badge}
+                  </span>
+                  <span className="text-[8px] font-bold text-zinc-600">{msg.time}</span>
+                </div>
+
+                <div className="relative cursor-pointer w-full" onMouseEnter={() => setActiveReactionId(msg.id)} onClick={(e) => { e.stopPropagation(); setActiveReactionId(msg.id); }}>
+                  {/* Floating Reaction Bar */}
+                  <div className={`absolute ${msg.isMe ? '-top-10 right-0' : '-top-10 left-0'} bg-[#121212] border border-white/10 rounded-full px-2 py-1.5 flex items-center gap-2 shadow-xl z-10 transition-all ${activeReactionId === msg.id ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}>
+                    {['🚀', '💎', '🐳', '🔥'].map(emoji => (
+                      <button key={emoji} onClick={() => handleAddReaction(msg.id, emoji)} className="hover:scale-125 transition-transform text-sm">{emoji}</button>
+                    ))}
                   </div>
 
-                  <div className="relative cursor-pointer" onMouseEnter={() => setActiveReactionId(msg.id)} onClick={(e) => { e.stopPropagation(); setActiveReactionId(msg.id); }}>
-                    {/* Floating Reaction Bar */}
-                    <div className={`absolute ${msg.isMe ? '-top-10 right-0' : '-top-10 left-0'} bg-[#121212] border border-white/10 rounded-full px-2 py-1.5 flex items-center gap-2 shadow-xl z-10 transition-all ${activeReactionId === msg.id ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}>
-                      {['🚀', '💎', '🐳', '🔥'].map(emoji => (
-                        <button key={emoji} onClick={() => handleAddReaction(msg.id, emoji)} className="hover:scale-125 transition-transform text-sm">{emoji}</button>
+                  <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-md ${msg.isDev ? 'bg-gradient-to-r from-amber-500/20 to-[#1A1A24] border border-amber-500/40 text-amber-100 rounded-bl-sm shadow-[0_0_15px_rgba(251,191,36,0.15)]' : msg.isMe ? 'bg-[#089981] text-white rounded-br-sm' : 'bg-[#1A1A24] border border-white/5 text-zinc-200 rounded-bl-sm'}`}>
+                    {renderFormattedText(msg.text, msg.isMe)}
+                  </div>
+
+                  {/* Reaction Badges Footer */}
+                  {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                    <div className={`flex flex-wrap gap-1 mt-1.5 ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
+                      {Object.entries(msg.reactions).map(([emoji, count]) => (
+                        <span key={emoji} className="bg-[#1A1A24] border border-white/10 text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1 text-zinc-300 font-mono">
+                          {emoji} <span className="font-bold text-white">{count}</span>
+                        </span>
                       ))}
                     </div>
-
-                    <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-md ${msg.isDev ? 'bg-gradient-to-r from-amber-500/20 to-[#1A1A24] border border-amber-500/40 text-amber-100 rounded-bl-sm shadow-[0_0_15px_rgba(251,191,36,0.15)]' : msg.isMe ? 'bg-[#089981] text-white rounded-br-sm' : 'bg-[#1A1A24] border border-white/5 text-zinc-200 rounded-bl-sm'}`}>
-                      {renderFormattedText(msg.text, msg.isMe)}
-                    </div>
-
-                    {/* Reaction Badges Footer */}
-                    {msg.reactions && Object.keys(msg.reactions).length > 0 && (
-                      <div className={`flex flex-wrap gap-1 mt-1.5 ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
-                        {Object.entries(msg.reactions).map(([emoji, count]) => (
-                          <span key={emoji} className="bg-[#1A1A24] border border-white/10 text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1 text-zinc-300 font-mono">
-                            {emoji} <span className="font-bold text-white">{count}</span>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-[9px] font-bold text-zinc-600 mx-1 mt-1">{msg.time}</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -364,7 +361,8 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
       </div>
 
       {/* --- INPUT AREA --- */}
-      <div className="flex-none bg-[#0E0E14] border-t border-white/[0.05] p-3 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+      {/* 🚀 FIXED: Dynamic SafeArea padding (pb-safe equivalent) to stop mobile keyboards hiding the input */}
+      <div className="flex-none bg-[#0E0E14] border-t border-white/[0.05] p-3 pb-[max(12px,env(safe-area-inset-bottom))] shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
         <form onSubmit={handleSendMessage} className="flex items-end gap-1.5 bg-black border border-white/10 focus-within:border-[#089981]/50 rounded-3xl p-1.5 transition-all shadow-inner">
           <div className="flex items-center shrink-0">
             <button type="button" className="p-2 text-zinc-500 hover:text-white transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></button>
@@ -485,7 +483,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
                 disabled={!tradeAmount || parseFloat(tradeAmount) <= 0}
                 className={`w-full ${displayToken.isGraduated ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-[0_0_20px_rgba(245,158,11,0.3)]' : (tradeMode === 'buy' ? 'bg-[#089981] hover:bg-[#06806b] shadow-[0_0_20px_rgba(8,153,129,0.3)]' : 'bg-[#F23645] hover:bg-rose-600 shadow-[0_0_20px_rgba(242,54,69,0.3)]')} disabled:opacity-50 text-white font-black text-sm py-4 rounded-2xl tracking-[0.2em] uppercase transition-all active:scale-95 flex items-center justify-center gap-2`}
              >
-                Confirm {tradeMode} ⚡
+               Confirm {tradeMode} ⚡
              </button>
           </div>
         </div>
