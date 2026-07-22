@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Html5QrcodeScanner, Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 
 export default function SendModal({
   isOpen,
@@ -17,8 +17,6 @@ export default function SendModal({
   const [isScanning, setIsScanning] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const scannerRef = useRef(null);
-
-  if (!isOpen) return null;
 
   const solBalance = portfolio.find(a => a.symbol === 'SOL')?.balance || 0;
 
@@ -40,10 +38,11 @@ export default function SendModal({
     setIsScanning(false);
   };
 
+  // 🚀 HOOK MOVED UP HERE: React requires hooks to always render in the same order
   useEffect(() => {
     let html5QrcodeInstance = null;
 
-    if (isScanning) {
+    if (isScanning && isOpen) {
       // Small timeout to ensure the DOM element #reader is rendered
       const timer = setTimeout(() => {
         html5QrcodeInstance = new Html5Qrcode("qr-reader");
@@ -80,12 +79,15 @@ export default function SendModal({
         }
       };
     }
-  }, [isScanning]);
+  }, [isScanning, isOpen]);
 
   const handleClose = () => {
     if (isScanning) stopScanner();
     onClose();
   };
+
+  // 🚀 MOVED EARLY RETURN HERE: Safely placed after all hooks!
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-[#000000]/80 backdrop-blur-3xl animate-fadeIn overflow-y-auto">
@@ -139,7 +141,7 @@ export default function SendModal({
                 {/* 📷 QR CAMERA SCAN BUTTON */}
                 <button 
                   onClick={startScanner}
-                  className="flex items-center gap-1.5 text-[#089981] hover:text-emerald-400 text-[10px] font-black uppercase tracking-wider bg-[#089981]/10 px-2 py-1 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 text-[#089981] hover:text-emerald-400 text-[10px] font-black uppercase tracking-wider bg-[#089981]/10 px-2 py-1 rounded-lg transition-colors shrink-0"
                 >
                   <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h3.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0113.07 4h1.86a2 2 0 011.664.89l.812 1.22A2 2 0 0019.07 7H21a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
