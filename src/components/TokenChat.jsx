@@ -12,7 +12,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [tradeAmount, setTradeAmount] = useState('');
 
   // Identity Context
-  const myName = userProfile?.username || '@User';
+  const myName = (userProfile?.username || 'User').replace('@', '');
   const myAvatar = userProfile?.avatar;
   const tokenSymbol = token?.symbol || 'TKN';
 
