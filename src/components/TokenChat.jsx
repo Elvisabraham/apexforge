@@ -6,7 +6,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
   const [activeReactionId, setActiveReactionId] = useState(null);
   const [isHoldersModalOpen, setIsHoldersModalOpen] = useState(false);
 
-  // 🚀 INLINE TRADE MODAL STATE
+  // INLINE TRADE MODAL STATE
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
   const [tradeMode, setTradeMode] = useState('buy');
   const [tradeAmount, setTradeAmount] = useState('');
@@ -16,7 +16,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
   const myAvatar = userProfile?.avatar;
   const tokenSymbol = token?.symbol || 'TKN';
 
-  // 🚀 PERMANENT MEMORY CACHE (Synced with TokenHome)
+  // PERMANENT MEMORY CACHE
   const rawProgress = token?.progress || 0;
   const initialMcap = parseFloat((token?.mcap || token?.marketCap || '$10.0K').replace(/[^0-9.]/g, ''));
   const isActuallyGraduated = token?.isGraduated === true || rawProgress >= 100 || initialMcap >= 69;
@@ -57,7 +57,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
     localStorage.setItem(localCacheKey, JSON.stringify({ curveState, userBalanceSol, userTokenBalance }));
   }, [curveState, userBalanceSol, userTokenBalance, localCacheKey]);
 
-  // Dynamic PnL calculation based on user token balance vs entry price
   const userPnlPercent = userTokenBalance > 0 ? '+14.2%' : '0.0%';
   const isPnlPositive = !userPnlPercent.includes('-');
 
@@ -90,12 +89,12 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
   ];
 
   const [messages, setMessages] = useState([
-    { id: 1, sender: 'Apex Sniper', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sniper', text: 'This chart is looking incredibly primed. 🚀', time: '10:42 AM', badge: '42M', isMe: false, reactions: { '🚀': 12, '🐳': 3 } },
-    { id: 2, sender: '0xDegen', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Degen', text: 'Just swept the floor. Nobody is selling!', time: '10:45 AM', badge: '38M', isMe: false, reactions: { '💎': 8 } },
-    { id: 3, sender: 'SolWhale', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Whale', text: 'Raydium graduation incoming today. Hold the line.', time: '10:48 AM', badge: '21M', isMe: false, reactions: {} },
+    { id: 1, sender: 'ApexDeployer_0x1', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Dev', text: 'Official contract deployed. Liquidity locked on bonding curve! ⚡', time: '10:30 AM', badge: 'DEV', isDev: true, reactions: { '🚀': 24, '💎': 15 } },
+    { id: 2, sender: 'Apex Sniper', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sniper', text: 'This chart is looking incredibly primed. 🚀', time: '10:42 AM', badge: '42M', isMe: false, reactions: { '🚀': 12, '🐳': 3 } },
+    { id: 3, sender: '0xDegen', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Degen', text: 'Just swept the floor. Nobody is selling!', time: '10:45 AM', badge: '38M', isMe: false, reactions: { '💎': 8 } },
   ]);
 
-  // 🤖 FOMO BUY BOT INJECTION
+  // FOMO BUY BOT INJECTION
   useEffect(() => {
     const timer = setTimeout(() => {
       const fomoMessage = {
@@ -137,16 +136,25 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
     setInputText('');
   };
 
+  const handleAddReaction = (msgId, emoji) => {
+    setMessages(prev => prev.map(m => {
+      if (m.id === msgId) {
+        const currentReactions = m.reactions || {};
+        const count = currentReactions[emoji] || 0;
+        return { ...m, reactions: { ...currentReactions, [emoji]: count + 1 } };
+      }
+      return m;
+    }));
+    setActiveReactionId(null);
+  };
+
   const handleExecuteTrade = () => {
     const amount = parseFloat(tradeAmount);
-    
+    if (!amount || amount <= 0) return;
+
     if (tradeMode === 'buy') {
-      if (!amount || amount <= 0 || amount > userBalanceSol) return;
-
-      const platformFeePercent = displayToken.isGraduated ? 0.005 : 0; 
-      const feeAmount = amount * platformFeePercent;
-      const netSolAmount = amount - feeAmount;
-
+      if (amount > userBalanceSol) return;
+      const netSolAmount = amount;
       const currentPrice = curveState.price;
       const tokensReceived = (netSolAmount / currentPrice) / 1000000; 
 
@@ -165,21 +173,11 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
       setUserBalanceSol(prev => prev - amount);
       setUserTokenBalance(prev => prev + (tokensReceived * 1000000));
       setCurveState({ price: newPrice, mcap: newMcap, progress: newProgress.toFixed(1), solInCurve: newSolInCurve });
-
-      if (displayToken.isGraduated) {
-          alert(`Jupiter API BUY Executed on Raydium! \n\nFee collected for Treasury: ${feeAmount.toFixed(4)} SOL (0.5%)`);
-      }
-
-    } else if (tradeMode === 'sell') {
+    } else {
       const tokenQuantity = amount * 1000000;
-      if (!amount || amount <= 0 || tokenQuantity > userTokenBalance) return;
-
+      if (tokenQuantity > userTokenBalance) return;
       const currentPrice = curveState.price;
       const grossSolReceived = (tokenQuantity * currentPrice);
-      
-      const platformFeePercent = displayToken.isGraduated ? 0.005 : 0; 
-      const feeAmount = grossSolReceived * platformFeePercent;
-      const netSolReceived = grossSolReceived - feeAmount;
 
       let newProgress = curveState.progress;
       let newSolInCurve = curveState.solInCurve;
@@ -194,12 +192,8 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
       const newMcap = Math.max(1, curveState.mcap * priceDumpFactor);
 
       setUserTokenBalance(prev => prev - tokenQuantity);
-      setUserBalanceSol(prev => prev + netSolReceived);
+      setUserBalanceSol(prev => prev + grossSolReceived);
       setCurveState({ price: newPrice, mcap: newMcap, progress: newProgress.toFixed(1), solInCurve: newSolInCurve });
-
-      if (displayToken.isGraduated) {
-          alert(`Jupiter API SELL Executed on Raydium! \n\nFee collected for Treasury: ${feeAmount.toFixed(4)} SOL (0.5%)`);
-      }
     }
 
     setIsBuyModalOpen(false);
@@ -234,7 +228,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
           </div>
         </div>
 
-        {/* 🚀 UPGRADED HEADER: Price, Live PnL, & Explicit Trade Button */}
         <div className="flex items-center gap-3">
           <div className="flex flex-col items-end">
             <span className="text-sm font-black text-[#00FF66] font-mono">{formatProPrice(`$${curveState.price.toFixed(7)}`)}</span>
@@ -270,13 +263,22 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
         </div>
       </div>
 
+      {/* --- 🚀 PINNED DEV ANNOUNCEMENT BANNER --- */}
+      <div className="flex-none bg-gradient-to-r from-amber-500/20 via-[#121212] to-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between z-20">
+        <div className="flex items-center gap-2">
+          <span className="bg-amber-400 text-black text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest shrink-0">Pinned</span>
+          <p className="text-[11px] font-bold text-amber-200 truncate">🎯 Target: Raydium graduation at 85 SOL. Keep pushing!</p>
+        </div>
+        <span className="text-[10px] text-zinc-500 font-mono shrink-0 ml-2">ApexDev</span>
+      </div>
+
       {/* --- CHAT FEED --- */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar bg-[#050505]" onClick={() => setActiveReactionId(null)}>
         {messages.map((msg) => {
           if (msg.isSystem) {
             return (
               <div key={msg.id} className="flex justify-center w-full my-2 animate-slideUpNative">
-                <div className="bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66] px-4 py-2 rounded-xl text-xs font-mono font-bold text-center max-w-[90%]">
+                <div className="bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66] px-4 py-2 rounded-xl text-xs font-mono font-bold text-center max-w-[90%] shadow-[0_0_10px_rgba(0,255,102,0.1)]">
                   {msg.text}
                 </div>
               </div>
@@ -286,22 +288,40 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
           return (
             <div key={msg.id} className={`flex w-full ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
               <div className={`flex max-w-[85%] ${msg.isMe ? 'flex-row-reverse' : 'flex-row'} gap-3 items-end group relative`}>
-                {!msg.isMe && <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-white/10 bg-black mb-1"><img src={msg.avatar} alt="avatar" className="w-full h-full object-cover" /></div>}
+                {!msg.isMe && (
+                  <div className={`w-8 h-8 rounded-full overflow-hidden shrink-0 border ${msg.isDev ? 'border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'border-white/10'} bg-black mb-1`}>
+                    <img src={msg.avatar} alt="avatar" className="w-full h-full object-cover" />
+                  </div>
+                )}
                 
                 <div className={`flex flex-col ${msg.isMe ? 'items-end' : 'items-start'} relative`}>
                   <div className={`flex items-center gap-1.5 mb-1 ${msg.isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <span className="text-[11px] font-black text-zinc-400">{msg.sender}</span>
-                    <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${msg.isMe ? 'bg-[#089981]/20 text-[#089981]' : 'bg-white/10 text-zinc-300'}`}>{msg.badge}</span>
+                    <span className={`text-[11px] font-black ${msg.isDev ? 'text-amber-400 font-bold' : 'text-zinc-400'}`}>{msg.sender}</span>
+                    <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${msg.isDev ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40' : msg.isMe ? 'bg-[#089981]/20 text-[#089981]' : 'bg-white/10 text-zinc-300'}`}>{msg.badge}</span>
                   </div>
 
                   <div className="relative cursor-pointer" onMouseEnter={() => setActiveReactionId(msg.id)} onClick={(e) => { e.stopPropagation(); setActiveReactionId(msg.id); }}>
+                    {/* Floating Reaction Bar */}
                     <div className={`absolute ${msg.isMe ? '-top-10 right-0' : '-top-10 left-0'} bg-[#121212] border border-white/10 rounded-full px-2 py-1.5 flex items-center gap-2 shadow-xl z-10 transition-all ${activeReactionId === msg.id ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}>
-                      {['🚀', '💎', '🐳', '💩'].map(emoji => (<button key={emoji} className="hover:scale-125 transition-transform text-sm">{emoji}</button>))}
+                      {['🚀', '💎', '🐳', '🔥'].map(emoji => (
+                        <button key={emoji} onClick={() => handleAddReaction(msg.id, emoji)} className="hover:scale-125 transition-transform text-sm">{emoji}</button>
+                      ))}
                     </div>
 
-                    <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-md ${msg.isMe ? 'bg-[#089981] text-white rounded-br-sm' : 'bg-[#1A1A24] border border-white/5 text-zinc-200 rounded-bl-sm'}`}>
+                    <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-md ${msg.isDev ? 'bg-gradient-to-r from-amber-500/20 to-[#1A1A24] border border-amber-500/40 text-amber-100 rounded-bl-sm shadow-[0_0_15px_rgba(251,191,36,0.15)]' : msg.isMe ? 'bg-[#089981] text-white rounded-br-sm' : 'bg-[#1A1A24] border border-white/5 text-zinc-200 rounded-bl-sm'}`}>
                       {msg.text}
                     </div>
+
+                    {/* Reaction Badges Footer */}
+                    {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                      <div className={`flex flex-wrap gap-1 mt-1.5 ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
+                        {Object.entries(msg.reactions).map(([emoji, count]) => (
+                          <span key={emoji} className="bg-[#1A1A24] border border-white/10 text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1 text-zinc-300 font-mono">
+                            {emoji} <span className="font-bold text-white">{count}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <span className="text-[9px] font-bold text-zinc-600 mx-1 mt-1">{msg.time}</span>
                 </div>
@@ -324,7 +344,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile }) {
         </form>
       </div>
 
-      {/* --- HOLDERS LEDGER MODAL ("VIEW ALL") --- */}
+      {/* --- HOLDERS LEDGER MODAL --- */}
       {isHoldersModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="absolute inset-0" onClick={() => setIsHoldersModalOpen(false)}></div>
