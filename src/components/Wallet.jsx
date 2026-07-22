@@ -756,7 +756,8 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
 
             {connected ? (
               <>
-                <div onClick={() => { setShowWalletManager(false); setSettingsView('editProfile'); }} className="bg-gradient-to-r from-[#121212] to-[#0A0A0A] border border-[#089981]/50 rounded-3xl p-5 shadow-[0_0_30px_rgba(8,153,129,0.15)] relative overflow-hidden flex flex-col mb-6 cursor-pointer hover:border-[#089981] transition-all group">
+                {/* 🚀 FIXED: Removed the onClick and cursor-pointer from this main card container */}
+                <div className="bg-gradient-to-r from-[#121212] to-[#0A0A0A] border border-[#089981]/50 rounded-3xl p-5 shadow-[0_0_30px_rgba(8,153,129,0.15)] relative overflow-hidden flex flex-col mb-6 transition-all">
                   <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-[#089981]/20 rounded-full blur-3xl pointer-events-none"></div>
                   
                   <div className="flex justify-between items-start z-10 w-full mb-6">
@@ -764,7 +765,8 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                        {displayAvatar ? <img src={displayAvatar} alt="You" className="w-full h-full object-cover" /> : <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${displayUsername}`} alt="You" className="w-full h-full object-cover" />}
                     </div>
                     
-                    <button onClick={(e) => { e.stopPropagation(); setShowWalletManager(false); setSettingsView('editProfile'); }} className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-full transition-colors text-white shrink-0">
+                    {/* 🚀 This Edit button is now the ONLY thing that opens the Profile view! */}
+                    <button onClick={(e) => { e.stopPropagation(); setShowWalletManager(false); setSettingsView('editProfile'); }} className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-full transition-colors text-white shrink-0 cursor-pointer">
                       <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                       <span className="text-[10px] font-black uppercase tracking-widest">Edit</span>
                     </button>
