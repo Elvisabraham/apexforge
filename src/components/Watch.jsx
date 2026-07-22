@@ -1,4 +1,4 @@
-// 🚀 VERSION 3: FIXED Z-INDEX & USERNAMES
+// 🚀 VERSION 4: FLUID VIDEO AUTOPLAY + Z-INDEX & USERNAMES PRESERVED
 import React, { useState, useEffect, useRef } from 'react';
 
 export default function Watch({ onTokenClick, userProfile }) {
@@ -6,14 +6,16 @@ export default function Watch({ onTokenClick, userProfile }) {
   const [currentFeedTab, setCurrentFeedTab] = useState('FOR_YOU');
   const [isCommentDrawerOpen, setIsCommentDrawerOpen] = useState(false);
   const [newCommentText, setNewCommentText] = useState('');
+  
   const containerRef = useRef(null);
+  const videoRefs = useRef({}); // 🚀 NEW: Reference store for all video elements
 
-  // 🚀 TIKTOK-STYLE VIDEO FEED DATA
+  // 🚀 TIKTOK-STYLE VIDEO FEED DATA (Now with Video URLs)
   const initialWatchFeed = [
     { 
       id: 'APEX', name: 'Apex AI', symbol: 'APEX', icon: '🔥', mcap: '$10.4M', price: '0.0102', change: '+500%', 
       isPositive: true, 
-      videoType: 'bg-gradient-to-br from-emerald-900 to-black', 
+      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-code-31910-large.mp4',
       hypeText: "The fastest executing AI router on Solana. Don't fade the tech! 🚀🧠",
       likes: 12400, shares: 1200, commentsCount: 4,
       isGraduated: true,
@@ -27,7 +29,7 @@ export default function Watch({ onTokenClick, userProfile }) {
     { 
       id: 'BCAT', name: 'Based Cat', symbol: 'BCAT', icon: '🐱', mcap: '$1.2M', price: '0.0012', change: '+142.5%', 
       isPositive: true, 
-      videoType: 'bg-gradient-to-tr from-blue-900 to-black', 
+      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-hacker-typing-on-a-laptop-43093-large.mp4',
       hypeText: "We just swept the floor! Cat meta is officially back. 🐾💎",
       likes: 4800, shares: 312, commentsCount: 3,
       isGraduated: false,
@@ -40,7 +42,7 @@ export default function Watch({ onTokenClick, userProfile }) {
     { 
       id: 'VTORO', name: 'The Matador', symbol: 'VTORO', icon: '🐂', mcap: '$850K', price: '0.00085', change: '-5.3%', 
       isPositive: false, 
-      videoType: 'bg-gradient-to-bl from-rose-900 to-black', 
+      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-financial-trading-charts-and-data-in-a-computer-screen-31012-large.mp4',
       hypeText: "Dips are just discounts. We are charging the red candles today! 🐂🩸",
       likes: 1100, shares: 89, commentsCount: 2,
       isGraduated: false,
@@ -52,7 +54,7 @@ export default function Watch({ onTokenClick, userProfile }) {
     { 
       id: 'NEURO', name: 'Neuro AI', symbol: 'NEURO', icon: '🧠', mcap: '$4.5M', price: '0.0045', change: '+89.2%', 
       isPositive: true, 
-      videoType: 'bg-gradient-to-b from-purple-900 to-black', 
+      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-futuristic-robotic-arm-working-42171-large.mp4',
       hypeText: "Neural net integration complete. We are breaking the matrix. 🌌🤖",
       likes: 8900, shares: 920, commentsCount: 2,
       isGraduated: true,
@@ -67,6 +69,21 @@ export default function Watch({ onTokenClick, userProfile }) {
   const [likedStatus, setLikedStatus] = useState({});
 
   const activeToken = feedData[activeVideoIndex] || feedData[0];
+
+  // 🚀 NEW: Flawless Autoplay Lifecycle Management
+  useEffect(() => {
+    Object.keys(videoRefs.current).forEach((key) => {
+      const vid = videoRefs.current[key];
+      if (vid) {
+        if (Number(key) === activeVideoIndex) {
+          vid.play().catch(() => {}); // Catch prevents browser autoplay block errors
+        } else {
+          vid.pause();
+          vid.currentTime = 0;
+        }
+      }
+    });
+  }, [activeVideoIndex]);
 
   const handleScroll = () => {
     if (!containerRef.current || isCommentDrawerOpen) return;
@@ -207,9 +224,17 @@ export default function Watch({ onTokenClick, userProfile }) {
           return (
             <div key={token.id} className="snap-item w-full bg-black">
               
-              {/* 🎬 BACKGROUND MEDIA */}
-              <div className={`absolute inset-0 w-full h-full ${token.videoType} opacity-80`}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+              {/* 🎬 🚀 NEW: ACTUAL VIDEO BACKGROUND */}
+              <div className="absolute inset-0 w-full h-full opacity-80">
+                <video 
+                  ref={(el) => (videoRefs.current[index] = el)}
+                  src={token.videoUrl}
+                  className="w-full h-full object-cover"
+                  loop
+                  muted
+                  playsInline
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent z-10 pointer-events-none"></div>
               </div>
 
               {/* ACTION BUTTONS SIDEBAR */}
@@ -344,7 +369,7 @@ export default function Watch({ onTokenClick, userProfile }) {
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 no-scrollbar bg-[#0E0E10]">
               {activeToken.comments.map((comment) => (
                 <div key={comment.id} className="flex flex-col bg-white/[0.02] border border-white/[0.04] p-3 rounded-xl">
-                  {/* 🚀 VERSION 3: Clickable Username! */}
+                  {/* Clickable Username! */}
                   <span 
                     onClick={() => alert(`Navigating to @${comment.user}'s profile...`)} 
                     className="text-xs font-black text-[#089981] mb-1 cursor-pointer hover:underline w-max active:scale-95 transition-transform"
