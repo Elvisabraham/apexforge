@@ -380,8 +380,12 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
                     ))}
                   </div>
 
-                  <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-md ${msg.isDev ? 'bg-gradient-to-r from-amber-500/20 to-[#1A1A24] border border-amber-500/40 text-amber-100 rounded-bl-sm shadow-[0_0_15px_rgba(251,191,36,0.15)]' : msg.isMe ? 'bg-[#089981] text-white rounded-br-sm' : 'bg-[#1A1A24] border border-white/5 text-zinc-200 rounded-bl-sm'}`}>
-                    {renderFormattedText(msg.text, msg.isMe)}
+                  <div className={`rounded-2xl text-sm shadow-md flex flex-col ${msg.isDev ? 'bg-gradient-to-r from-amber-500/20 to-[#1A1A24] border border-amber-500/40 text-amber-100 rounded-bl-sm shadow-[0_0_15px_rgba(251,191,36,0.15)]' : msg.isMe ? 'bg-[#089981] text-white rounded-br-sm' : 'bg-[#1A1A24] border border-white/5 text-zinc-200 rounded-bl-sm'} ${msg.text ? 'px-4 py-2.5' : 'p-1'}`}>
+                    {/* 🖼️ RENDER UPLOADED IMAGE OR GIF */}
+                    {msg.image && (
+                      <img src={msg.image} alt="attachment" className="max-w-[200px] sm:max-w-[250px] rounded-xl object-cover" />
+                    )}
+                    {msg.text && renderFormattedText(msg.text, msg.isMe)}
                   </div>
 
                   {/* Reaction Badges Footer */}
