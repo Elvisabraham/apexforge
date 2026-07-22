@@ -117,14 +117,21 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     scrollToBottom();
   }, [messages]);
 
-  // 🚀 Cashtag Formatter ($TICKER parser)
-  const renderFormattedText = (text) => {
+  // 🚀 FIXED: Dynamic Contrast Cashtag Formatter
+  const renderFormattedText = (text, isMe) => {
     if (!text) return '';
     const parts = text.split(/(\$[A-Za-z0-9]+)/g);
     return parts.map((part, i) => {
       if (part.startsWith('$')) {
         return (
-          <span key={i} className="inline-flex items-center gap-1 bg-[#089981]/20 text-[#089981] border border-[#089981]/40 px-1.5 py-0.5 rounded font-mono font-black text-xs mx-0.5 align-baseline shadow-sm">
+          <span 
+            key={i} 
+            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-mono font-black text-xs mx-0.5 align-baseline shadow-sm border ${
+              isMe 
+                ? 'bg-black/30 text-white border-white/30' 
+                : 'bg-[#089981]/20 text-[#089981] border-[#089981]/40'
+            }`}
+          >
             {part}
           </span>
         );
@@ -333,7 +340,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
                     </div>
 
                     <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-md ${msg.isDev ? 'bg-gradient-to-r from-amber-500/20 to-[#1A1A24] border border-amber-500/40 text-amber-100 rounded-bl-sm shadow-[0_0_15px_rgba(251,191,36,0.15)]' : msg.isMe ? 'bg-[#089981] text-white rounded-br-sm' : 'bg-[#1A1A24] border border-white/5 text-zinc-200 rounded-bl-sm'}`}>
-                      {renderFormattedText(msg.text)}
+                      {renderFormattedText(msg.text, msg.isMe)}
                     </div>
 
                     {/* Reaction Badges Footer */}
