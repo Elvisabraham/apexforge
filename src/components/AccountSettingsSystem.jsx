@@ -34,15 +34,27 @@ const V1_POPULAR_LOCALES = [
   { code: 'ms', flag: 'MY', native: 'Bahasa Melayu', english: 'Malay' }
 ];
 
-export default function AccountSettingsSystem({ initialView = 'wallet_drawer', onBack, onCloseSettings, userProfile, setUserProfile }) {
+export default function AccountSettingsSystem({ 
+  initialView, 
+  view, // 🚀 Catching the prop Wallet.jsx is sending
+  onBack, 
+  onCloseSettings, 
+  onClose, // 🚀 Catching the close command Wallet.jsx is sending
+  userProfile, 
+  setUserProfile 
+}) {
   
-  // 🚀 FIXED: Normalizes 'settings' (from the hamburger menu) into 'main'
-  const normalizedInitView = initialView === 'settings' ? 'main' : initialView;
+  // 🚀 FIXED: Synchronizing the props perfectly between the files
+  const startingView = view || initialView || 'wallet_drawer';
+  const closeScreen = onClose || onCloseSettings;
+
+  // Normalizes 'settings' (from the hamburger menu) into 'main'
+  const normalizedInitView = startingView === 'settings' ? 'main' : startingView;
   const [activeView, setActiveView] = useState(normalizedInitView);
 
   useEffect(() => {
-    setActiveView(initialView === 'settings' ? 'main' : initialView);
-  }, [initialView]);
+    setActiveView(startingView === 'settings' ? 'main' : startingView);
+  }, [startingView]);
 
   // App Configurations
   const [appLanguage, setAppLanguage] = useState('English');
@@ -96,7 +108,7 @@ export default function AccountSettingsSystem({ initialView = 'wallet_drawer', o
     alert("Profile metadata updated successfully!"); 
     // Close cleanly back out
     if (normalizedInitView === 'editProfile') {
-      if (onCloseSettings) onCloseSettings();
+      if (closeScreen) closeScreen();
     } else {
       setActiveView(normalizedInitView); 
     }
@@ -122,11 +134,11 @@ export default function AccountSettingsSystem({ initialView = 'wallet_drawer', o
     }, 1000);
   };
 
-  // 🚀 FIXED: Rock-solid navigation mapping matrix
+  // 🚀 FIXED: Rock-solid navigation mapping matrix with working close events
   const handleBackNavigation = () => {
     // If we are currently on the exact view the modal opened with, close it entirely (X)
     if (activeView === normalizedInitView) {
-      if (onCloseSettings) onCloseSettings();
+      if (closeScreen) closeScreen();
       else if (onBack) onBack();
       return;
     }
@@ -268,7 +280,7 @@ export default function AccountSettingsSystem({ initialView = 'wallet_drawer', o
           {/* ==================================================== */}
           {activeView === 'wallet_drawer' && (
             <div className="w-full animate-fadeIn duration-200">
-              <div onClick={() => { if(onCloseSettings) onCloseSettings(); }} className="bg-gradient-to-r from-[#121212] to-[#0A0A0A] border border-[#089981]/50 rounded-3xl p-5 shadow-[0_0_30px_rgba(8,153,129,0.15)] relative overflow-hidden flex flex-col mb-8 cursor-pointer hover:border-[#089981] transition-all group">
+              <div onClick={() => { if(closeScreen) closeScreen(); }} className="bg-gradient-to-r from-[#121212] to-[#0A0A0A] border border-[#089981]/50 rounded-3xl p-5 shadow-[0_0_30px_rgba(8,153,129,0.15)] relative overflow-hidden flex flex-col mb-8 cursor-pointer hover:border-[#089981] transition-all group">
                 <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-[#089981]/20 rounded-full blur-3xl pointer-events-none"></div>
                 <div className="flex justify-between items-start z-10 w-full mb-6">
                   <div className="w-14 h-14 bg-black border-2 border-[#089981] rounded-full flex items-center justify-center overflow-hidden shrink-0 shadow-lg">
