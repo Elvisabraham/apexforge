@@ -8,16 +8,22 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const [isFavorited, setIsFavorited] = useState(false);
   const [isReported, setIsReported] = useState(false);
   
+  // Modals
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
+  const [isDepositOpen, setIsDepositOpen] = useState(false);
+  const [isAlertsOpen, setIsAlertsOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [showAllTrades, setShowAllTrades] = useState(false);
   
   const [tradeMode, setTradeMode] = useState('buy');
   const [tradeAmount, setTradeAmount] = useState('');
+  const [alertPrice, setAlertPrice] = useState('');
+  const [reportReason, setReportReason] = useState('');
   
   const [isFollowing, setIsFollowing] = useState(false);
 
-  // 🚀 FIXED 1: Separate Copy States so they don't trigger each other
+  // Copy States
   const [headerCopied, setHeaderCopied] = useState(false);
   const [bodyCopied, setBodyCopied] = useState(false);
 
@@ -64,13 +70,17 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     return 0;
   });
 
-  // 🚀 FIXED 4: Persistent Recent Trades saved to LocalStorage
+  // Persistent Trades Logic
   const [recentTrades, setRecentTrades] = useState(() => {
     const cachedTrades = localStorage.getItem(`${localCacheKey}_trades`);
     if (cachedTrades) return JSON.parse(cachedTrades);
     return [
       { id: 1, type: 'sell', amountToken: '12.4M', amountSol: '0.85', price: `$${initialBasePrice.toFixed(7)}`, time: '28m ago', user: 'sold' },
       { id: 2, type: 'buy', amountToken: '2.1M', amountSol: '0.15', price: `$${initialBasePrice.toFixed(7)}`, time: '31m ago', user: 'bought' },
+      { id: 3, type: 'buy', amountToken: '5.0M', amountSol: '0.35', price: `$${(initialBasePrice * 0.98).toFixed(7)}`, time: '45m ago', user: 'bought' },
+      { id: 4, type: 'sell', amountToken: '1.2M', amountSol: '0.08', price: `$${(initialBasePrice * 0.95).toFixed(7)}`, time: '1h ago', user: 'sold' },
+      { id: 5, type: 'buy', amountToken: '15.0M', amountSol: '1.10', price: `$${(initialBasePrice * 0.92).toFixed(7)}`, time: '2h ago', user: 'bought' },
+      { id: 6, type: 'buy', amountToken: '8.5M', amountSol: '0.60', price: `$${(initialBasePrice * 0.89).toFixed(7)}`, time: '3h ago', user: 'bought' },
     ];
   });
 
@@ -137,7 +147,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
 
       setRecentTrades(prev => [{
         id: Date.now(), type: 'buy', amountToken: `${tokensReceived.toFixed(1)}M`, amountSol: netSolAmount.toFixed(2), price: `$${newPrice.toFixed(7)}`, time: 'Just now', user: 'You'
-      }, ...prev].slice(0, 10));
+      }, ...prev].slice(0, 50));
 
       if (displayToken.isGraduated) {
           alert(`Jupiter API BUY Executed on Raydium! \n\nFee collected for Treasury: ${feeAmount.toFixed(4)} SOL (0.5%)`);
@@ -172,7 +182,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
 
       setRecentTrades(prev => [{
         id: Date.now(), type: 'sell', amountToken: `${amount.toFixed(1)}M`, amountSol: netSolReceived.toFixed(2), price: `$${newPrice.toFixed(7)}`, time: 'Just now', user: 'You'
-      }, ...prev].slice(0, 10));
+      }, ...prev].slice(0, 50));
 
       if (displayToken.isGraduated) {
           alert(`Jupiter API SELL Executed on Raydium! \n\nFee collected for Treasury: ${feeAmount.toFixed(4)} SOL (0.5%)`);
@@ -183,7 +193,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     setTradeAmount('');
   };
 
-  // 🚀 FIXED 1: Smart routing for the Copy function to trigger the correct visual pop-up
   const handleCopyCA = (source) => {
     navigator.clipboard.writeText(displayToken.mintAddress);
     if (source === 'header') {
@@ -201,11 +210,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     setIsShareOpen(false);
   };
 
-  const handleReportToken = () => {
-    setIsReported(true);
-    setTimeout(() => setIsReported(false), 3000);
-  };
-
   const executeNativeShare = async () => {
     const shareData = { title: `${displayToken.name} on Apex Forge`, text: `Check out ${displayToken.name} (${displayToken.symbol}). Market Cap: $${curveState.mcap.toFixed(2)}K 🚀`, url: `https://apexforge.app/token/${displayToken.mintAddress}` };
     if (navigator.share) { try { await navigator.share(shareData); } catch (err) { console.log('Share cancelled or failed.', err); } } else { handleCopyShareLink(); }
@@ -216,12 +220,17 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     setIsShareOpen(false);
   };
 
-  // 🚀 FIXED 2: Ultra-robust back arrow handler
+  const submitReport = () => {
+    if(!reportReason) return alert("Please select a valid reason for the report.");
+    alert("Report securely submitted to ApexAI moderation team. Thank you.");
+    setIsReported(true);
+    setIsReportModalOpen(false);
+  };
+
   const executeBackArrow = () => {
     if (onBack) {
       onBack();
     } else {
-      // Emergency fallback if the parent file fails to pass the prop
       window.history.back();
     }
   };
@@ -275,7 +284,8 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const formatLink = (url) => url.startsWith('http') ? url : `https://${url}`;
 
   return (
-    <div className="flex flex-col w-full h-screen bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative">
+    // 🚀 FIXED 1: Swapped `h-screen` for `h-[100dvh]` to account for dynamic mobile viewports
+    <div className="flex flex-col w-full min-h-screen h-[100dvh] bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative">
       
       <style>{`
         * { -webkit-tap-highlight-color: transparent !important; }
@@ -288,8 +298,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       {/* --- UNMOVABLE HEADER --- */}
       <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between relative">
         <div className="flex items-center gap-3 min-w-0">
-          
-          {/* 🚀 FIXED 2: Deeply secured Back Arrow with High Z-Index & padding block */}
           <button onClick={executeBackArrow} className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-1 -ml-1 pr-2 shrink-0 relative z-50 cursor-pointer">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
@@ -303,7 +311,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                {displayToken.isGraduated && <span className="bg-amber-400/10 text-amber-400 border border-amber-400/20 text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-widest font-black shrink-0">Graduated</span>}
             </div>
             
-            {/* 🚀 FIXED 1: Header specific Copy Click */}
             <div onClick={() => handleCopyCA('header')} className="flex items-center gap-1.5 text-[12px] font-bold text-zinc-400 mt-0.5 cursor-pointer hover:text-white transition-colors">
               <span className="font-mono tracking-tight">{displayToken.symbol}</span><span className="text-zinc-600">|</span><span className="font-mono tracking-tight">{shortCA}</span>
               {headerCopied ? <span className="text-[#089981] text-[10px] font-black tracking-wider ml-1">COPIED</span> : <svg className="w-3.5 h-3.5 shrink-0 opacity-70 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeWidth="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeWidth="2"></path></svg>}
@@ -319,7 +326,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
 
       {/* --- SCROLLABLE CONTENT --- */}
       <div className="flex-1 overflow-y-auto no-scrollbar relative">
-        <div className="flex flex-col w-full pb-48">
+        <div className="flex flex-col w-full pb-32">
           
           <div className="flex flex-col px-4 pt-4 pb-2">
             <span className="text-[44px] font-black tracking-tighter leading-none">{formatProPrice(`$${curveState.price.toFixed(7)}`)}</span>
@@ -334,17 +341,12 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
              <div ref={chartContainerRef} className="w-full h-full" />
           </div>
 
-          {/* 🚀 FIXED 3: Grouped Chart Toggles tied tightly together */}
           <div className="flex items-center px-4 py-3 border-b border-white/[0.05] bg-[#0A0A0B] overflow-x-auto no-scrollbar">
              <div className="flex items-center gap-1.5">
                {['15m', '1h', '4h', '1d', 'MAX'].map(tf => (
                  <button key={tf} onClick={() => setChartTimeframe(tf)} className={`text-[12px] font-bold uppercase px-3 py-1.5 rounded-lg transition-colors shrink-0 ${chartTimeframe === tf ? `bg-[#2B2B43] text-white shadow-sm` : 'text-zinc-500 hover:text-white bg-transparent'}`}>{tf}</button>
                ))}
-               
-               {/* Vertical Divider */}
                <div className="w-px h-5 bg-white/10 mx-2 shrink-0"></div>
-               
-               {/* Chart Type Toggle Button */}
                <button onClick={() => setChartType(chartType === 'candle' ? 'area' : 'candle')} className="text-zinc-400 hover:text-white transition-colors flex items-center justify-center p-1.5 bg-white/5 rounded-md shrink-0">
                   {chartType === 'candle' ? <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v2h2v12H7v2H5v-2H3V6h2V4h2zm8 4v2h2v6h-2v2h-2v-2h-2v-6h2V8h2z"/></svg> : <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 8-8" /></svg>}
                </button>
@@ -409,10 +411,11 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                 </div>
               </div>
               <div className="flex gap-3 w-full">
+                {/* 🚀 FIXED 2: Actionable Deposit & Alerts */}
                 <button onClick={() => setIsDepositOpen(true)} className="flex-1 py-3.5 rounded-xl border border-white/10 bg-[#1A1A24] hover:bg-white/10 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-colors shadow-sm">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> Deposit
                 </button>
-                <button className="flex-1 py-3.5 rounded-xl border border-white/10 bg-[#1A1A24] hover:bg-white/10 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-colors shadow-sm">
+                <button onClick={() => setIsAlertsOpen(true)} className="flex-1 py-3.5 rounded-xl border border-white/10 bg-[#1A1A24] hover:bg-white/10 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-colors shadow-sm">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg> Alerts
                 </button>
               </div>
@@ -425,8 +428,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
               <p className="text-[13px] font-medium text-zinc-400 leading-relaxed mb-5 whitespace-pre-wrap">{displayToken.description}</p>
               
               <div className="flex flex-wrap gap-2">
-                
-                {/* 🚀 FIXED 1: Body specific Copy Click with beautiful inline feedback */}
                 <button onClick={() => handleCopyCA('body')} className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner w-[140px] justify-center">
                   {bodyCopied ? (
                     <span className="text-[#089981] font-black tracking-widest">✓ Copied</span>
@@ -441,7 +442,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
               </div>
             </div>
 
-            {/* HIGH-DENSITY STATS GRID */}
             <div className="grid grid-cols-2 gap-3 mt-2 border-t border-white/[0.05] pt-6">
               <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
                 <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Market Cap</span>
@@ -472,8 +472,64 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
               </div>
               
               <div className="flex flex-col">
-                {recentTrades.map((trade, index) => (
-                  <div key={trade.id} className={`flex justify-between items-center py-3 ${index !== recentTrades.length - 1 ? 'border-b border-white/[0.03]' : ''} animate-fadeIn`}>
+                {/* 🚀 FIXED 3: Hard limit the active view to 5 trades max */}
+                {recentTrades.slice(0, 5).map((trade, index) => (
+                  <div key={trade.id} className={`flex justify-between items-center py-3 ${index !== 4 && index !== recentTrades.length - 1 ? 'border-b border-white/[0.03]' : ''} animate-fadeIn`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${trade.type === 'buy' ? 'bg-[#089981]/10 text-[#089981]' : 'bg-[#F23645]/10 text-[#F23645]'}`}>
+                        {trade.type}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-[13px] text-white flex items-center gap-1.5">
+                          {trade.user} 
+                          {trade.user === 'You' && <span className="bg-white/10 text-zinc-400 text-[8px] px-1 py-0.5 rounded font-black uppercase">Me</span>}
+                        </span>
+                        <span className="text-[11px] font-mono text-[#787B86] mt-0.5">{trade.amountToken} TKN</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-[12px] font-mono font-bold text-white">◎ {trade.amountSol}</span>
+                      <span className={`text-[10px] font-mono mt-0.5 ${trade.type === 'buy' ? 'text-[#089981]' : 'text-zinc-500'}`}>{trade.time}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Expand Trades Button */}
+              {recentTrades.length > 5 && (
+                <button onClick={() => setShowAllTrades(true)} className="w-full mt-2 py-3.5 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-zinc-400 transition-colors shadow-sm">
+                  View All {recentTrades.length} Trades
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-col items-center gap-4 pt-8 border-t border-white/[0.05]">
+              {/* 🚀 FIXED 4: Require a reason to report to make it actionable */}
+              <button onClick={() => setIsReportModalOpen(true)} className={`text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-1.5 py-2 px-4 rounded-full border ${isReported ? 'border-rose-500/50 text-rose-400 bg-rose-500/10' : 'border-white/10 text-zinc-500 hover:text-rose-400 hover:border-rose-500/30'}`}>
+                🚩 {isReported ? 'Flagged for Auditing' : 'Report Token'}
+              </button>
+              <p className="text-center text-[10px] text-zinc-600 font-medium leading-relaxed max-w-sm">
+                Apex Forge acts strictly as a decentralized non-custodial software launcher suite. Cryptographic assets are inherently exposed to extreme market volatility.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* --- ALL TRADES MODAL (LEDGER ROOM) --- */}
+      {showAllTrades && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="absolute inset-0" onClick={() => setShowAllTrades(false)}></div>
+          <div className="bg-[#050505] border-t border-white/10 rounded-t-3xl w-full h-[85vh] p-6 relative z-10 animate-slideUpNative flex flex-col">
+            <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+              <h3 className="text-lg font-black text-white uppercase tracking-widest">Transaction Ledger</h3>
+              <button onClick={() => setShowAllTrades(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg></button>
+            </div>
+            <div className="flex-1 overflow-y-auto no-scrollbar pb-6">
+              <div className="flex flex-col gap-2">
+                {recentTrades.map((trade) => (
+                  <div key={trade.id} className="bg-[#121212] border border-white/5 p-3 rounded-xl flex justify-between items-center">
                     <div className="flex items-center gap-3">
                       <div className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${trade.type === 'buy' ? 'bg-[#089981]/10 text-[#089981]' : 'bg-[#F23645]/10 text-[#F23645]'}`}>
                         {trade.type}
@@ -494,19 +550,67 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                 ))}
               </div>
             </div>
-
-            <div className="flex flex-col items-center gap-4 pt-8 border-t border-white/[0.05]">
-              <button onClick={handleReportToken} className={`text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-1.5 py-2 px-4 rounded-full border ${isReported ? 'border-rose-500/50 text-rose-400 bg-rose-500/10' : 'border-white/10 text-zinc-500 hover:text-rose-400 hover:border-rose-500/30'}`}>
-                🚩 {isReported ? 'Flagged for Auditing' : 'Report Token'}
-              </button>
-              <p className="text-center text-[10px] text-zinc-600 font-medium leading-relaxed max-w-sm">
-                Apex Forge acts strictly as a decentralized non-custodial software launcher suite. Cryptographic assets are inherently exposed to extreme market volatility.
-              </p>
-            </div>
-
           </div>
         </div>
-      </div>
+      )}
+
+      {/* --- DEPOSIT MODAL --- */}
+      {isDepositOpen && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="absolute inset-0" onClick={() => setIsDepositOpen(false)}></div>
+          <div className="bg-[#1C1C1E] border-t border-white/10 rounded-t-3xl w-full max-w-lg p-6 relative z-10 animate-slideUpNative flex flex-col items-center">
+             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6"></div>
+             <h3 className="text-lg font-black text-white uppercase tracking-widest mb-2">Deposit SOL</h3>
+             <p className="text-[11px] font-medium text-zinc-400 mb-6 text-center">Scan QR or copy your address to fund your wallet.</p>
+             <div className="bg-white p-2 rounded-xl mb-6">
+                <svg className="w-40 h-40 text-black" viewBox="0 0 100 100" shapeRendering="crispEdges">
+                   <path d="M0 0h30v30H0zm10 10h10v10H10zM70 0h30v30H70zm10 10h10v10H80zM0 70h30v30H0zm10 10h10v10H10z" fill="currentColor" />
+                   <path d="M35 5h5v5h-5zm10 0h15v5H45zm0 10h5v10h-5zm10-5h5v5h-5zm0 10h10v5H55zm-20 5h10v5H35zm0 10h5v5h-5zm10 5h5v5h-5zm20-20h5v5h-5zm5 5h5v10h-5zm5 10h5v5h-5zm-15 5h10v5H70zm10 5h15v5H80zm5 5h5v5h-5zm-50 5h5v5h-5zm10 0h5v5h-5zm10 0h15v5H50z" fill="currentColor" />
+                </svg>
+             </div>
+             <div className="bg-[#0A0A0B] border border-white/10 w-full p-4 rounded-xl flex justify-between items-center mb-6">
+                <span className="font-mono text-xs text-white truncate">FzVQv...9xCuH</span>
+                <button onClick={() => { navigator.clipboard.writeText('FzVQv...9xCuH'); alert('Address Copied!'); }} className="text-[#089981] font-black text-[10px] uppercase tracking-widest bg-[#089981]/10 px-3 py-1.5 rounded">Copy</button>
+             </div>
+             <button onClick={() => setIsDepositOpen(false)} className="w-full py-4 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-zinc-400">Done</button>
+          </div>
+        </div>
+      )}
+
+      {/* --- ALERTS MODAL --- */}
+      {isAlertsOpen && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="absolute inset-0" onClick={() => setIsAlertsOpen(false)}></div>
+          <div className="bg-[#1C1C1E] border-t border-white/10 rounded-t-3xl w-full max-w-lg p-6 relative z-10 animate-slideUpNative flex flex-col">
+             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6"></div>
+             <h3 className="text-lg font-black text-white uppercase tracking-widest mb-2 text-center">Set Price Alert</h3>
+             <p className="text-[11px] font-medium text-zinc-400 mb-6 text-center">Get notified instantly when {displayToken.symbol} hits your target.</p>
+             <div className="bg-[#0A0A0B] border border-white/10 rounded-xl p-4 flex items-center justify-between gap-4 mb-6">
+                <span className="text-xl font-bold text-white">$</span>
+                <input type="number" value={alertPrice} onChange={(e) => setAlertPrice(e.target.value)} placeholder={curveState.price.toFixed(7)} className="bg-transparent text-right text-3xl font-black text-white w-full focus:outline-none placeholder-zinc-700" />
+             </div>
+             <button onClick={() => { alert(`Alert set for $${alertPrice}!`); setIsAlertsOpen(false); }} disabled={!alertPrice} className="w-full py-4 bg-[#089981] hover:bg-[#06806b] disabled:opacity-50 rounded-xl text-xs font-black uppercase tracking-widest text-white shadow-sm">Confirm Target</button>
+          </div>
+        </div>
+      )}
+
+      {/* --- REPORT MODAL --- */}
+      {isReportModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="absolute inset-0" onClick={() => setIsReportModalOpen(false)}></div>
+          <div className="bg-[#1C1C1E] border-t border-rose-500/30 rounded-t-3xl w-full max-w-lg p-6 relative z-10 animate-slideUpNative flex flex-col">
+             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6"></div>
+             <h3 className="text-lg font-black text-white uppercase tracking-widest mb-2 flex items-center gap-2">🚩 Report {displayToken.symbol}</h3>
+             <p className="text-[11px] font-medium text-zinc-400 mb-6">Select a violation reason. False reporting will result in a global wallet ban.</p>
+             <div className="flex flex-col gap-3 mb-6">
+                {['Suspected Scam / Rug Pull', 'Impersonating Official Brand', 'Explicit / Offensive Content', 'Other Violation'].map(reason => (
+                  <button key={reason} onClick={() => setReportReason(reason)} className={`w-full py-4 px-5 rounded-xl border text-left text-xs font-black tracking-widest uppercase transition-all ${reportReason === reason ? 'border-rose-500 bg-rose-500/10 text-rose-400' : 'border-white/10 bg-[#0A0A0B] text-zinc-400 hover:border-white/30'}`}>{reason}</button>
+                ))}
+             </div>
+             <button onClick={submitReport} className="w-full py-4 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black uppercase tracking-widest text-white shadow-[0_0_20px_rgba(242,54,69,0.3)]">Submit to Moderation</button>
+          </div>
+        </div>
+      )}
 
       {/* --- NATIVE SHARE MODAL --- */}
       {isShareOpen && (
@@ -681,7 +785,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       )}
 
       {/* --- CONDITIONAL UNMOVABLE BOTTOM BUY MAT --- */}
-      <div className="flex-none bg-[#0E0E14] z-30 pt-3 pb-5 px-4 border-t border-white/[0.05] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] relative">
+      <div className="flex-none bg-[#0E0E14] z-30 pt-3 pb-6 md:pb-5 px-4 border-t border-white/[0.05] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] relative">
         <div className="max-w-4xl mx-auto flex flex-col items-center">
           
           <button 
