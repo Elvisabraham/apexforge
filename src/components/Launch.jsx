@@ -13,6 +13,7 @@ export default function Launch({ onForgeSuccess }) {
   const [imagePreview, setImagePreview] = useState(null);
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
   const [mediaType, setMediaType] = useState('image'); // 'image' or 'video'
+  const [uploaderKey, setUploaderKey] = useState(0); // 🚀 FIX: Forces uploader to reset
   
   const [showSocials, setShowSocials] = useState(false);
   const [twitter, setTwitter] = useState('');
@@ -173,6 +174,8 @@ export default function Launch({ onForgeSuccess }) {
     setIsDeploying(false);
     setDeploySuccess(false);
     setDeploymentStep(0);
+    
+    setUploaderKey(prev => prev + 1); // 🚀 FIX: THIS CLEARS THE UPLOADER PREVIEW
   };
 
   return (
@@ -201,7 +204,7 @@ export default function Launch({ onForgeSuccess }) {
           {/* 🚀 UPGRADED: REPLACED WITH OUR NEW MEDIA UPLOADER */}
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Asset Media (Video/GIF/Image) <span className="text-rose-500">*</span></label>
-            <MediaUploader onMediaSelected={handleMediaSelected} />
+            <MediaUploader key={uploaderKey} onMediaSelected={handleMediaSelected} />
           </div>
 
           {/* TOKEN DETAILS */}
