@@ -410,11 +410,34 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
       {/* 🚀 FIXED: Dynamic SafeArea padding (pb-safe equivalent) to stop mobile keyboards hiding the input */}
       <div className="flex-none bg-[#0E0E14] border-t border-white/[0.05] p-3 pb-[max(12px,env(safe-area-inset-bottom))] shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
         <form onSubmit={handleSendMessage} className="flex items-end gap-1.5 bg-black border border-white/10 focus-within:border-[#089981]/50 rounded-3xl p-1.5 transition-all shadow-inner">
+          
           <div className="flex items-center shrink-0">
-            <button type="button" className="p-2 text-zinc-500 hover:text-white transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></button>
-            <button type="button" className="p-2 text-zinc-500 hover:text-[#089981] transition-colors font-black text-xs">GIF</button>
+            {/* 🚀 FIXED: Hidden file input triggered by the button */}
+            <input 
+              type="file" 
+              accept="image/*" 
+              ref={fileInputRef} 
+              className="hidden" 
+              onChange={handleImageUpload} 
+            />
+            <button 
+              type="button" 
+              onClick={() => fileInputRef.current.click()} 
+              className="p-2 text-zinc-500 hover:text-white transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            </button>
+            <button 
+              type="button" 
+              onClick={handleSendMockGif}
+              className="p-2 text-zinc-500 hover:text-[#089981] transition-colors font-black text-xs"
+            >
+              GIF
+            </button>
           </div>
+
           <input type="text" value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={`Shill the trenches using $${tokenSymbol}...`} className="flex-1 bg-transparent text-sm text-white placeholder-zinc-600 focus:outline-none py-3 px-1 min-w-0" />
+          
           <button type="submit" disabled={!inputText.trim()} className="p-3 bg-[#089981] hover:bg-[#06806b] disabled:bg-[#089981]/30 text-white rounded-full transition-all active:scale-90 shrink-0 shadow-[0_0_10px_rgba(8,153,129,0.3)]"><svg className="w-4 h-4 translate-x-0.5 -translate-y-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg></button>
         </form>
       </div>
