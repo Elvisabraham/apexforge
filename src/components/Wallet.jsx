@@ -338,11 +338,11 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                     {connected ? (
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleCopyAddress(e); }}
-                        className="flex items-center gap-1.5 group/copy hover:bg-white/5 py-0.5 pr-1 -ml-1 rounded-md transition-colors cursor-pointer w-full min-w-0"
+                        className="flex items-center gap-1.5 group/copy hover:bg-white/5 px-1.5 py-0.5 -ml-1.5 rounded-md transition-colors cursor-pointer max-w-full"
                         title="Copy Address"
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] shadow-[0_0_5px_#00FF66] animate-pulse shrink-0"></span>
-                        <span className="text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold truncate transition-colors flex-1 text-left min-w-0">
+                        <span className="text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold truncate tracking-wider transition-colors">
                           {shortAddress}
                         </span>
                         {/* 🚀 FIXED: Copy icon protected by min-w-[12px] and shrink-0 */}
