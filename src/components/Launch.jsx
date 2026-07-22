@@ -67,8 +67,8 @@ export default function Launch({ onForgeSuccess }) {
               website: website
             },
             mintAddress: finalAddress,
-            imagePreview: thumbnailUrl || imagePreview, // Pass the static thumbnail for lists/charts
-            videoUrl: mediaType === 'video' ? imagePreview : null, // Pass actual video to watch feed
+            imagePreview: thumbnailUrl || imagePreview, 
+            videoUrl: mediaType === 'video' ? 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-code-31910-large.mp4' : null, 
             mediaType: mediaType, 
             icon: '🔥', 
             mcap: '$10.0K', 
