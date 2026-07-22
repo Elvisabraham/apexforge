@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
+import MediaUploader from './MediaUploader'; // 🚀 IMPORTING OUR NEW COMPONENT
 
 export default function Launch({ onForgeSuccess }) {
   const { connected, publicKey } = useWallet();
@@ -7,8 +8,12 @@ export default function Launch({ onForgeSuccess }) {
   const [tokenName, setTokenName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [description, setDescription] = useState('');
+  
+  // 🚀 MEDIA STATES WIRED TO UPLOADER
   const [imagePreview, setImagePreview] = useState(null);
-  const [mediaType, setMediaType] = useState('image'); // 🚀 'image' or 'video'
+  const [thumbnailUrl, setThumbnailUrl] = useState(null);
+  const [mediaType, setMediaType] = useState('image'); // 'image' or 'video'
+  
   const [showSocials, setShowSocials] = useState(false);
   const [twitter, setTwitter] = useState('');
   const [telegram, setTelegram] = useState('');
@@ -62,8 +67,9 @@ export default function Launch({ onForgeSuccess }) {
               website: website
             },
             mintAddress: finalAddress,
-            imagePreview: imagePreview,
-            mediaType: mediaType, // Pass media type to feeds
+            imagePreview: thumbnailUrl || imagePreview, // Pass the static thumbnail for lists/charts
+            videoUrl: mediaType === 'video' ? imagePreview : null, // Pass actual video to watch feed
+            mediaType: mediaType, 
             icon: '🔥', 
             mcap: '$10.0K', 
             price: '0.0001',
@@ -79,19 +85,11 @@ export default function Launch({ onForgeSuccess }) {
     }
   }, [isDeploying, deploymentStep]);
 
-  // 🚀 UPGRADED: Handle both Images and Videos (MP4/GIF)
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const isVideo = file.type.startsWith('video');
-      setMediaType(isVideo ? 'video' : 'image');
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+  // 🚀 RECEIVE MEDIA FROM OUR NEW UPLOADER
+  const handleMediaSelected = (mediaData) => {
+    setImagePreview(mediaData.previewUrl);
+    setThumbnailUrl(mediaData.thumbnailUrl);
+    setMediaType(mediaData.type);
   };
 
   // 🚀 APP STORE COMPLIANCE: The Smart Sanitizer
@@ -164,6 +162,7 @@ export default function Launch({ onForgeSuccess }) {
     setTokenSymbol('');
     setDescription('');
     setImagePreview(null);
+    setThumbnailUrl(null);
     setTwitter('');
     setTelegram('');
     setWebsite('');
@@ -199,26 +198,10 @@ export default function Launch({ onForgeSuccess }) {
             <p className="text-[13px] text-zinc-400 font-medium leading-relaxed">Create and launch a fair-launch token instantly. Liquidity is securely locked.</p>
           </div>
 
-          {/* 🚀 UPGRADED: LARGE LOGO/VIDEO UPLOAD */}
+          {/* 🚀 UPGRADED: REPLACED WITH OUR NEW MEDIA UPLOADER */}
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Asset Media (Video/GIF/Image) <span className="text-rose-500">*</span></label>
-            <div className="relative w-full h-44 bg-[#121212] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center overflow-hidden hover:border-[#089981]/50 transition-colors group cursor-pointer shadow-inner">
-              <input type="file" accept="image/*,video/mp4" onChange={handleImageChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
-              
-              {imagePreview ? (
-                mediaType === 'video' ? (
-                  <video src={imagePreview} autoPlay loop muted playsInline className="w-full h-full object-cover z-10" />
-                ) : (
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover z-10" />
-                )
-              ) : (
-                <div className="flex flex-col items-center text-zinc-500 group-hover:text-[#089981] transition-colors">
-                  <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                  <span className="text-sm font-bold">Tap to upload media</span>
-                  <span className="text-[10px] uppercase tracking-widest mt-1 opacity-50 font-black">MP4, GIF, PNG, JPG</span>
-                </div>
-              )}
-            </div>
+            <MediaUploader onMediaSelected={handleMediaSelected} />
           </div>
 
           {/* TOKEN DETAILS */}
