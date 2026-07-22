@@ -393,6 +393,25 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
           </div>
         </header>
 
+        {/* 🚀 WORLD-CLASS COPY TOAST NOTIFICATION */}
+        <div 
+          className={`fixed top-20 left-1/2 -translate-x-1/2 z-[100] transition-all duration-300 ease-out ${
+            copied ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95 pointer-events-none'
+          }`}
+        >
+          <div className="flex items-center gap-3 bg-[#111111]/95 backdrop-blur-2xl border border-[#00FF66]/20 shadow-[0_10px_40px_rgba(0,255,102,0.1)] px-4 py-2.5 rounded-2xl">
+            <div className="w-7 h-7 rounded-full bg-[#00FF66]/10 flex items-center justify-center shrink-0">
+              <svg className="w-4 h-4 text-[#00FF66]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div className="flex flex-col pr-2">
+              <span className="text-[13px] text-white font-black tracking-wide leading-tight">Address Copied!</span>
+              <span className="text-[10px] text-[#00FF66] font-mono mt-0.5">{shortAddress}</span>
+            </div>
+          </div>
+        </div>
+
         <div 
           ref={scrollContainerRef}
           onScroll={handleScroll}
