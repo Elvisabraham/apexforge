@@ -6,7 +6,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const [chartTimeframe, setChartTimeframe] = useState('1d');
   const [chartType, setChartType] = useState('area'); 
   const [isFavorited, setIsFavorited] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [isReported, setIsReported] = useState(false);
   
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -17,6 +16,10 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const [tradeAmount, setTradeAmount] = useState('');
   
   const [isFollowing, setIsFollowing] = useState(false);
+
+  // 🚀 FIXED 1: Separate Copy States so they don't trigger each other
+  const [headerCopied, setHeaderCopied] = useState(false);
+  const [bodyCopied, setBodyCopied] = useState(false);
 
   // DATA ENGINE
   const rawProgress = token?.progress || 0;
@@ -61,9 +64,23 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     return 0;
   });
 
+  // 🚀 FIXED 4: Persistent Recent Trades saved to LocalStorage
+  const [recentTrades, setRecentTrades] = useState(() => {
+    const cachedTrades = localStorage.getItem(`${localCacheKey}_trades`);
+    if (cachedTrades) return JSON.parse(cachedTrades);
+    return [
+      { id: 1, type: 'sell', amountToken: '12.4M', amountSol: '0.85', price: `$${initialBasePrice.toFixed(7)}`, time: '28m ago', user: 'sold' },
+      { id: 2, type: 'buy', amountToken: '2.1M', amountSol: '0.15', price: `$${initialBasePrice.toFixed(7)}`, time: '31m ago', user: 'bought' },
+    ];
+  });
+
   useEffect(() => {
     localStorage.setItem(localCacheKey, JSON.stringify({ curveState, userBalanceSol, userTokenBalance }));
   }, [curveState, userBalanceSol, userTokenBalance, localCacheKey]);
+
+  useEffect(() => {
+    localStorage.setItem(`${localCacheKey}_trades`, JSON.stringify(recentTrades));
+  }, [recentTrades, localCacheKey]);
 
   const dynamicPriceImpact = tradeAmount && parseFloat(tradeAmount) > 0 
     ? (parseFloat(tradeAmount) * (tradeMode === 'buy' ? 0.12 : 0.08)).toFixed(2) 
@@ -88,11 +105,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     if (str.startsWith('$')) return <><span className="font-bold mr-[2px]">$</span>{str.slice(1)}</>;
     return str;
   };
-
-  const [recentTrades, setRecentTrades] = useState([
-    { id: 1, type: 'sell', amountToken: '12.4M', amountSol: '0.85', price: `$${curveState.price.toFixed(7)}`, time: '28m ago', user: 'sold' },
-    { id: 2, type: 'buy', amountToken: '2.1M', amountSol: '0.15', price: `$${curveState.price.toFixed(7)}`, time: '31m ago', user: 'bought' },
-  ]);
 
   const handleExecuteTrade = () => {
     const amount = parseFloat(tradeAmount);
@@ -171,10 +183,16 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     setTradeAmount('');
   };
 
-  const handleCopyCA = () => {
+  // 🚀 FIXED 1: Smart routing for the Copy function to trigger the correct visual pop-up
+  const handleCopyCA = (source) => {
     navigator.clipboard.writeText(displayToken.mintAddress);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (source === 'header') {
+      setHeaderCopied(true);
+      setTimeout(() => setHeaderCopied(false), 2000);
+    } else {
+      setBodyCopied(true);
+      setTimeout(() => setBodyCopied(false), 2000);
+    }
   };
 
   const handleCopyShareLink = () => {
@@ -198,6 +216,16 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     setIsShareOpen(false);
   };
 
+  // 🚀 FIXED 2: Ultra-robust back arrow handler
+  const executeBackArrow = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      // Emergency fallback if the parent file fails to pass the prop
+      window.history.back();
+    }
+  };
+
   useEffect(() => {
     if (!chartContainerRef.current) return;
     const showGrid = chartType === 'candle';
@@ -206,7 +234,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       layout: { background: { type: 'solid', color: '#0A0A0B' }, textColor: '#D1D5DB', attributionLogo: false },
       grid: { vertLines: { color: '#1E2028', style: 0, visible: showGrid }, horzLines: { color: '#1E2028', style: 0, visible: showGrid } },
       width: chartContainerRef.current.clientWidth,
-      height: 320, // 🚀 Slightly taller chart for pro feel
+      height: 320, 
       timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#1E2028' },
       rightPriceScale: { borderColor: '#1E2028', visible: true }, 
     });
@@ -258,11 +286,14 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       `}</style>
 
       {/* --- UNMOVABLE HEADER --- */}
-      <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between">
+      <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between relative">
         <div className="flex items-center gap-3 min-w-0">
-          <button onClick={onBack} className="flex items-center justify-center transition-colors active:scale-95 pr-1 shrink-0">
+          
+          {/* 🚀 FIXED 2: Deeply secured Back Arrow with High Z-Index & padding block */}
+          <button onClick={executeBackArrow} className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-1 -ml-1 pr-2 shrink-0 relative z-50 cursor-pointer">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
+          
           <div className="w-10 h-10 bg-[#1A1A24] border border-white/10 rounded-full flex items-center justify-center text-xl shrink-0 overflow-hidden shadow-inner">
             {displayToken.imagePreview ? <img src={displayToken.imagePreview} className="w-full h-full object-cover" alt="icon" /> : <span className="select-none">{displayToken.icon}</span>}
           </div>
@@ -271,9 +302,11 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                <span className="text-lg font-black text-white leading-tight tracking-wide truncate">{displayToken.name}</span>
                {displayToken.isGraduated && <span className="bg-amber-400/10 text-amber-400 border border-amber-400/20 text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-widest font-black shrink-0">Graduated</span>}
             </div>
-            <div onClick={handleCopyCA} className="flex items-center gap-1.5 text-[12px] font-bold text-zinc-400 mt-0.5 cursor-pointer hover:text-white transition-colors">
+            
+            {/* 🚀 FIXED 1: Header specific Copy Click */}
+            <div onClick={() => handleCopyCA('header')} className="flex items-center gap-1.5 text-[12px] font-bold text-zinc-400 mt-0.5 cursor-pointer hover:text-white transition-colors">
               <span className="font-mono tracking-tight">{displayToken.symbol}</span><span className="text-zinc-600">|</span><span className="font-mono tracking-tight">{shortCA}</span>
-              {copied ? <span className="text-[#089981] text-[10px] font-black tracking-wider ml-1">COPIED</span> : <svg className="w-3.5 h-3.5 shrink-0 opacity-70 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeWidth="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeWidth="2"></path></svg>}
+              {headerCopied ? <span className="text-[#089981] text-[10px] font-black tracking-wider ml-1">COPIED</span> : <svg className="w-3.5 h-3.5 shrink-0 opacity-70 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeWidth="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeWidth="2"></path></svg>}
             </div>
           </div>
         </div>
@@ -301,15 +334,21 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
              <div ref={chartContainerRef} className="w-full h-full" />
           </div>
 
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05] bg-[#0A0A0B]">
-             <div className="flex gap-2">
+          {/* 🚀 FIXED 3: Grouped Chart Toggles tied tightly together */}
+          <div className="flex items-center px-4 py-3 border-b border-white/[0.05] bg-[#0A0A0B] overflow-x-auto no-scrollbar">
+             <div className="flex items-center gap-1.5">
                {['15m', '1h', '4h', '1d', 'MAX'].map(tf => (
-                 <button key={tf} onClick={() => setChartTimeframe(tf)} className={`text-[12px] font-bold uppercase px-3 py-1.5 rounded-lg transition-colors ${chartTimeframe === tf ? `bg-[#2B2B43] text-white shadow-sm` : 'text-zinc-500 hover:text-white bg-transparent'}`}>{tf}</button>
+                 <button key={tf} onClick={() => setChartTimeframe(tf)} className={`text-[12px] font-bold uppercase px-3 py-1.5 rounded-lg transition-colors shrink-0 ${chartTimeframe === tf ? `bg-[#2B2B43] text-white shadow-sm` : 'text-zinc-500 hover:text-white bg-transparent'}`}>{tf}</button>
                ))}
+               
+               {/* Vertical Divider */}
+               <div className="w-px h-5 bg-white/10 mx-2 shrink-0"></div>
+               
+               {/* Chart Type Toggle Button */}
+               <button onClick={() => setChartType(chartType === 'candle' ? 'area' : 'candle')} className="text-zinc-400 hover:text-white transition-colors flex items-center justify-center p-1.5 bg-white/5 rounded-md shrink-0">
+                  {chartType === 'candle' ? <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v2h2v12H7v2H5v-2H3V6h2V4h2zm8 4v2h2v6h-2v2h-2v-2h-2v-6h2V8h2z"/></svg> : <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 8-8" /></svg>}
+               </button>
              </div>
-             <button onClick={() => setChartType(chartType === 'candle' ? 'area' : 'candle')} className="text-zinc-400 hover:text-white transition-colors flex items-center justify-center p-1.5 bg-white/5 rounded-md">
-                {chartType === 'candle' ? <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v2h2v12H7v2H5v-2H3V6h2V4h2zm8 4v2h2v6h-2v2h-2v-2h-2v-6h2V8h2z"/></svg> : <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 8-8" /></svg>}
-             </button>
           </div>
 
           <div className="flex items-center justify-between px-4 py-4 bg-[#121212]/50 border-b border-white/[0.05] mb-2">
@@ -338,7 +377,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
 
           <div className="flex flex-col px-4 pt-4 gap-6">
 
-            {/* 🚀 UPGRADED CONDITIONAL BONDING CURVE UI */}
             {!displayToken.isGraduated && (
               <div className="flex flex-col w-full animate-fadeIn bg-[#121212] border border-white/5 p-4 rounded-2xl shadow-inner">
                 <div className="flex justify-between items-end mb-3">
@@ -382,22 +420,28 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
 
             <div className="w-full h-px bg-white/5 my-2"></div>
 
-            {/* 🚀 UPGRADED ABOUT SECTION (NO MORE MASSIVE IMAGE) */}
             <div className="flex flex-col w-full">
               <h2 className="text-xl font-black mb-3">About {displayToken.symbol}</h2>
               <p className="text-[13px] font-medium text-zinc-400 leading-relaxed mb-5 whitespace-pre-wrap">{displayToken.description}</p>
               
               <div className="flex flex-wrap gap-2">
-                <button onClick={handleCopyCA} className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner">
-                  <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeWidth="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeWidth="2"></path></svg> CA: {shortCA}
+                
+                {/* 🚀 FIXED 1: Body specific Copy Click with beautiful inline feedback */}
+                <button onClick={() => handleCopyCA('body')} className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner w-[140px] justify-center">
+                  {bodyCopied ? (
+                    <span className="text-[#089981] font-black tracking-widest">✓ Copied</span>
+                  ) : (
+                    <><svg className="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeWidth="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeWidth="2"></path></svg> CA: {shortCA}</>
+                  )}
                 </button>
+
                 {displayToken.links.twitter && <a href={formatLink(displayToken.links.twitter)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner"><span className="font-black text-sm text-zinc-500">𝕏</span> Twitter</a>}
                 {displayToken.links.telegram && <a href={formatLink(displayToken.links.telegram)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner"><span className="text-zinc-500">✈</span> Telegram</a>}
                 {displayToken.links.website && <a href={formatLink(displayToken.links.website)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner"><span className="text-zinc-500">🌐</span> Website</a>}
               </div>
             </div>
 
-            {/* 🚀 UPGRADED HIGH-DENSITY STATS GRID (Replaces Accordion) */}
+            {/* HIGH-DENSITY STATS GRID */}
             <div className="grid grid-cols-2 gap-3 mt-2 border-t border-white/[0.05] pt-6">
               <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
                 <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Market Cap</span>
