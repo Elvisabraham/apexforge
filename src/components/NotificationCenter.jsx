@@ -4,13 +4,14 @@ export default function NotificationCenter({ isOpen, onClose, notifications = []
   const [activeCategory, setActiveCategory] = useState('ALL');
   const [isSettingsView, setIsSettingsView] = useState(false);
 
-  // 🚀 Notification On/Off Preferences (Matching your iron-clad and user-choice rules)
+  // 🚀 Notification On/Off Preferences (Now including New Token Deployments)
   const [preferences, setPreferences] = useState({
-    graduations: true,  // Iron-clad / Forced ON
-    mentions: true,     // Iron-clad / Forced ON
-    security: true,     // Iron-clad / Forced ON
-    priceAlerts: false, // User toggle
-    stakingYield: false // User toggle
+    tokenDeployments: true, // 🚀 Forced / Default ON for launch momentum
+    graduations: true,      // Required / Forced ON
+    mentions: true,         // Required / Forced ON
+    security: true,         // Required / Forced ON
+    priceAlerts: false,     // User toggle
+    stakingYield: false     // User toggle
   });
 
   // Request browser native push permission on mount
@@ -23,8 +24,8 @@ export default function NotificationCenter({ isOpen, onClose, notifications = []
   if (!isOpen) return null;
 
   const togglePreference = (key) => {
-    // Keep iron-clad critical alerts locked to true for safety/retention
-    if (['graduations', 'mentions', 'security'].includes(key)) return;
+    // Keep critical security and core launch metrics locked to true
+    if (['tokenDeployments', 'graduations', 'mentions', 'security'].includes(key)) return;
     setPreferences(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
@@ -77,11 +78,23 @@ export default function NotificationCenter({ isOpen, onClose, notifications = []
             </div>
 
             <div className="flex flex-col gap-3">
-              {/* Iron-Clad / Forced Toggles */}
+              {/* 🚀 NEW TOKEN DEPLOYMENTS (Added & Locked for Launch Momentum) */}
               <div className="p-4 rounded-2xl bg-[#131722] border border-[#089981]/30 flex items-center justify-between">
                 <div className="flex flex-col pr-4">
                   <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-                    🚀 Token Graduations <span className="text-[8px] bg-[#089981]/20 text-[#089981] px-1.5 py-0.2 rounded">Required</span>
+                    🚀 New Token Deployments <span className="text-[8px] bg-[#089981]/20 text-[#089981] px-1.5 py-0.2 rounded">Required</span>
+                  </span>
+                  <span className="text-[10px] text-zinc-400 mt-0.5">Instant alerts when a new asset goes live on Forge.</span>
+                </div>
+                <div className="w-10 h-6 bg-[#089981] rounded-full p-1 flex items-center justify-end cursor-not-allowed opacity-90">
+                  <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#131722] border border-[#089981]/30 flex items-center justify-between">
+                <div className="flex flex-col pr-4">
+                  <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                    📈 Token Graduations <span className="text-[8px] bg-[#089981]/20 text-[#089981] px-1.5 py-0.2 rounded">Required</span>
                   </span>
                   <span className="text-[10px] text-zinc-400 mt-0.5">Alerts when tokens hit 100% and deploy to Raydium.</span>
                 </div>
@@ -120,7 +133,7 @@ export default function NotificationCenter({ isOpen, onClose, notifications = []
                 className="p-4 rounded-2xl bg-black/30 border border-white/5 flex items-center justify-between cursor-pointer hover:border-white/10 transition-colors"
               >
                 <div className="flex flex-col pr-4">
-                  <span className="text-xs font-black text-white uppercase tracking-wider">📈 Price & Volume Triggers</span>
+                  <span className="text-xs font-black text-white uppercase tracking-wider">📊 Price & Volume Triggers</span>
                   <span className="text-[10px] text-zinc-400 mt-0.5">General pumps and target price notifications.</span>
                 </div>
                 <div className={`w-10 h-6 rounded-full p-1 flex items-center transition-colors ${preferences.priceAlerts ? 'bg-[#089981] justify-end' : 'bg-zinc-800 justify-start'}`}>
