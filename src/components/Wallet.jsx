@@ -177,11 +177,8 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
   const handleOpenSettings = () => {
     setShowWalletManager(false);
     setIsMenuOpen(false);
-    if (typeof onOpenSettings === 'function') {
-      onOpenSettings();
-    } else {
-      setSettingsView('settings');
-    }
+    // 🚀 FIXED: We bypass the parent and tell the local router exactly which room to open!
+    setSettingsView('main');
   };
 
   const activeMethodConfig = depositMethods.find(m => m.id === depositMethod);
