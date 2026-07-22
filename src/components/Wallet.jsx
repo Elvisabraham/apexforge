@@ -351,7 +351,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                           {shortAddress}
                         </span>
                         {/* 🚀 FIXED: Unbreakable cage for the copy icon */}
-                        <div className="shrink-0 w-3.5 h-3.5 flex items-center justify-center">
+                        <div className="shrink-0 min-w-[14px] w-3.5 h-3.5 flex items-center justify-center">
                           {copied ? (
                             <svg className="w-3.5 h-3.5 min-w-[14px] min-h-[14px] shrink-0 text-[#00FF66]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                           ) : (
