@@ -325,7 +325,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
             {/* 1. Profile & Address (At top) */}
             <div 
               onClick={(e) => { e.stopPropagation(); setShowWalletManager(true); }} 
-              className={`absolute inset-0 flex items-center gap-2 sm:gap-3 cursor-pointer group transition-all duration-300 ${isScrolled ? 'opacity-0 -translate-y-2 pointer-events-none' : 'opacity-100 translate-y-0'}`}
+              className={`absolute left-0 inset-y-0 max-w-full flex items-center gap-2 sm:gap-3 cursor-pointer group transition-all duration-300 ${isScrolled ? 'opacity-0 -translate-y-2 pointer-events-none' : 'opacity-100 translate-y-0'}`}
             >
                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-white/5 overflow-hidden bg-[#121212] flex items-center justify-center shadow-inner group-hover:border-[#089981]/50 transition-colors shrink-0">
                  {displayAvatar ? (
