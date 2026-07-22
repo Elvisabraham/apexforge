@@ -317,9 +317,10 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
       <div className="flex flex-col w-full h-screen overflow-hidden bg-[#030303] text-white selection:bg-[#089981]/30 font-sans relative">
         
         {/* --- HEADER --- */}
-        <header className="flex-none z-40 bg-[#030303]/90 backdrop-blur-3xl px-4 sm:px-6 py-3 border-b border-white/[0.02] flex items-center justify-between sticky top-0 relative">
+        <header className="flex-none z-40 bg-[#030303]/90 backdrop-blur-3xl px-4 sm:px-6 py-3 border-b border-white/[0.02] flex items-center justify-between sticky top-0 relative overflow-hidden">
           
-          <div className="flex items-center min-w-0 z-10 max-w-[65%] sm:max-w-[50%]">
+          {/* LEFT: Profile & Address (Fades out smoothly on scroll) */}
+          <div className={`flex items-center min-w-0 z-10 max-w-[65%] sm:max-w-[50%] transition-all duration-300 ${isScrolled ? 'opacity-0 -translate-y-2 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
             <div onClick={(e) => { e.stopPropagation(); setShowWalletManager(true); }} className="flex items-center gap-2 sm:gap-3 cursor-pointer group w-full min-w-0">
                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-white/5 overflow-hidden bg-[#121212] flex items-center justify-center shadow-inner group-hover:border-[#089981]/50 transition-colors shrink-0">
                  {displayAvatar ? (
@@ -341,7 +342,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                         className="flex items-center gap-1.5 group/copy hover:bg-white/5 py-1 pr-2 -ml-1 rounded-lg transition-colors cursor-pointer max-w-full"
                         title="Copy Address"
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] shadow-[0_0_5px_#00FF66] animate-pulse shrink-0"></span>
+                        {/* 🚀 FIXED: Removed the pulsing green light entirely */}
                         <span className="text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold truncate tracking-wider transition-colors min-w-0">
                           {shortAddress}
                         </span>
@@ -352,8 +353,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                         )}
                       </button>
                     ) : (
-                      <div className="flex items-center gap-1 w-full min-w-0">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_5px_#f43f5e] shrink-0"></span>
+                      <div className="flex items-center gap-1 w-full min-w-0 mt-1">
                         <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest truncate min-w-0">Disconnected</span>
                       </div>
                     )}
@@ -362,12 +362,14 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
             </div>
           </div>
 
+          {/* CENTER: Balance (Fades in smoothly on scroll) */}
           <div className="absolute inset-x-28 top-0 bottom-0 flex justify-center items-center pointer-events-none z-0">
             <div className={`transition-all duration-300 transform w-full flex justify-center ${isScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-              <span className="text-[13px] font-black text-white tracking-tight truncate block text-center w-full">{isMuted ? '••••••' : displayNetWorth}</span>
+              <span className="text-[15px] sm:text-base font-black text-white tracking-tight truncate block text-center w-full">{isMuted ? '••••••' : displayNetWorth}</span>
             </div>
           </div>
 
+          {/* RIGHT: Menu Button */}
           <div className="flex items-center justify-end z-10 shrink-0 w-12">
             <button 
               onClick={(e) => { e.stopPropagation(); setIsMenuOpen(true); }}
