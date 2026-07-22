@@ -1,4 +1,4 @@
-// 🚀 VERSION 3: HIGH-PERFORMANCE LEADERBOARD WITH ADVANCED STATE FILTERS
+// 🚀 VERSION 4: HIGH-PERFORMANCE LEADERBOARD WITH TIMEFRAMES & SHARE ACTIONS
 import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 
@@ -6,6 +6,7 @@ export default function Ranks({ onOpenProfile }) {
   const { publicKey, connected } = useWallet();
   const [activeTab, setActiveTab] = useState('TRADERS');
   const [searchQuery, setSearchQuery] = useState('');
+  const [timeframe, setTimeframe] = useState('24H'); // 🚀 NEW: 24H, 7D, ALL
   const [followedWallets, setFollowedWallets] = useState({});
 
   // Helper to format short address
@@ -50,6 +51,19 @@ export default function Ranks({ onOpenProfile }) {
     }));
   };
 
+  // 🚀 VIRALITY / GAMIFICATION: Native Share Trigger
+  const handleShareRank = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Apex Forge Leaderboard',
+        text: `I'm currently ranked #24,801 on the Apex Forge Leaderboard in the Apex Tier! 🏆`,
+        url: window.location.href,
+      }).catch(() => {});
+    } else {
+      alert('Rank copied to clipboard! Share it to flex on the timeline. 🚀');
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-screen bg-[#0A0A0B] text-white font-sans overflow-hidden select-none">
       
@@ -90,10 +104,18 @@ export default function Ranks({ onOpenProfile }) {
                 </div>
               </div>
               
-              <div className="flex flex-col items-end z-10">
+              <div className="flex flex-col items-end gap-2 z-10">
                 <span className="text-[10px] font-black tracking-widest text-amber-400 border border-amber-400/30 bg-amber-400/10 rounded px-2.5 py-1 uppercase shadow-sm">
                   Apex Tier
                 </span>
+                {/* 🚀 VIRALITY: Share Button */}
+                <button 
+                  onClick={handleShareRank}
+                  className="flex items-center gap-1.5 text-[9px] font-black text-white bg-white/10 hover:bg-white/20 border border-white/20 px-2.5 py-1 rounded-md uppercase tracking-widest transition-colors active:scale-95"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                  Flex Rank
+                </button>
               </div>
             </div>
 
@@ -112,7 +134,7 @@ export default function Ranks({ onOpenProfile }) {
         </div>
 
         {/* Sticky Controls Panel */}
-        <div className="sticky top-0 z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 pb-3 pt-1 border-b border-white/[0.04] flex flex-col gap-2">
+        <div className="sticky top-0 z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 pb-3 pt-1 border-b border-white/[0.04] flex flex-col gap-3">
           {/* Tabs */}
           <div className="flex gap-2 w-full bg-[#131722] p-1.5 rounded-xl border border-white/5 shadow-inner">
             {['TRADERS', 'CREATORS'].map(tab => (
@@ -133,18 +155,37 @@ export default function Ranks({ onOpenProfile }) {
             ))}
           </div>
 
-          {/* 🚀 LIVE SEARCH BAR */}
-          <div className="relative w-full">
-            <input 
-              type="text"
-              placeholder={`Search ${activeTab.toLowerCase()} by handle...`}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#131722] border border-white/5 rounded-xl pl-9 pr-4 py-2 text-xs font-medium text-white placeholder-zinc-600 outline-none focus:border-[#089981]/30 transition-colors"
-            />
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+          {/* 🚀 UPGRADED: LIVE SEARCH BAR + TIMEFRAME TOGGLE */}
+          <div className="flex gap-2 w-full">
+            <div className="relative flex-1">
+              <input 
+                type="text"
+                placeholder={`Search ${activeTab.toLowerCase()} by handle...`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-full bg-[#131722] border border-white/5 rounded-xl pl-9 pr-4 py-2 text-xs font-medium text-white placeholder-zinc-600 outline-none focus:border-[#089981]/30 transition-colors"
+              />
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+
+            {/* Timeframe Filter */}
+            <div className="flex bg-[#131722] border border-white/5 rounded-xl p-1 shrink-0">
+              {['24H', '7D', 'ALL'].map(tf => (
+                <button
+                  key={tf}
+                  onClick={() => setTimeframe(tf)}
+                  className={`px-2.5 py-1 text-[9px] font-black rounded-lg transition-colors ${
+                    timeframe === tf 
+                      ? 'bg-white/10 text-white' 
+                      : 'text-zinc-600 hover:text-zinc-300'
+                  }`}
+                >
+                  {tf}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
