@@ -64,7 +64,7 @@ export default function MediaUploader({ onMediaSelected, mediaType = 'image' }) 
     <div className="flex flex-col gap-3 w-full">
       <div 
         onClick={() => fileInputRef.current?.click()}
-        className="border-2 border-dashed border-white/15 hover:border-[#089981]/60 bg-black/40 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all group relative overflow-hidden min-h-[160px]"
+        className="border-2 border-dashed border-white/15 hover:border-[#089981]/60 bg-[#121212] rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all group relative overflow-hidden min-h-[160px] shadow-inner"
       >
         <input 
           type="file" 
@@ -98,11 +98,14 @@ export default function MediaUploader({ onMediaSelected, mediaType = 'image' }) 
           </div>
         ) : (
           <div className="flex flex-col items-center text-center">
-            <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 group-hover:text-[#089981] group-hover:border-[#089981]/40 transition-all mb-2">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+            {/* 🚀 FIXED: Pristine Cloud Upload Icon */}
+            <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 group-hover:text-[#089981] group-hover:border-[#089981]/40 transition-all mb-3 shadow-sm">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+              </svg>
             </div>
-            <span className="text-xs font-black text-white uppercase tracking-wider">Drop Token Media (Image or Video)</span>
-            <span className="text-[10px] text-zinc-500 mt-1">Videos automatically generate static logo thumbnails for bonding charts ⚡</span>
+            <span className="text-sm font-bold text-zinc-500 group-hover:text-[#089981] transition-colors">Tap to upload media</span>
+            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mt-1 opacity-50">Videos generate static logo thumbnails ⚡</span>
           </div>
         )}
       </div>
