@@ -1,58 +1,53 @@
 import React, { useState } from 'react';
+import NotificationCenter from './NotificationCenter'; // 🚀 IMPORT NOTIFICATION CENTER
 
 export default function Home({ tokens = [], trendingTokens = [], graduatedTokens = [], onTokenClick, setActivePage, userProfile, onOpenAccountDrawer }) {
-  // 🚀 FIXED: Set the default tab to EXPLORE for maximum user retention
   const [activeTab, setActiveTab] = useState('EXPLORE');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // 🚀 NOTIFICATION STATES
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: '🚀 Token Graduated', message: '$APEX hit the bonding curve and graduated to Raydium!', time: '2m ago', read: false },
+    { id: 2, title: '🔥 Volume Spike', message: '$NEURO volume surged +500% in the last hour.', time: '15m ago', read: false },
+    { id: 3, title: '✅ Deposit Confirmed', message: 'Successfully credited 5.00 SOL to your vault.', time: '1h ago', read: true }
+  ]);
 
-  // We still enrich the tokens with visual elements (sparklines)
+  const hasUnread = notifications.some(n => !n.read);
+
+  const markAsRead = (id) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
+  };
+
   const enrichedTokens = tokens.map(t => {
     const trend = t.trend || Array.from({length: 12}, () => Math.random() * 100);
     const mcapValue = parseFloat((t.mcap || t.marketCap || '$1M').replace(/[^0-9.]/g, ''));
     const isPositive = (t.change || '').includes('+') || parseFloat(t.change || 0) >= 0;
-    
     return { ...t, trend, mcapValue, isPositive };
   });
 
-  // 🚀 UPGRADED: Added the EXPLORE logic to show everything
   const displayedTokens = enrichedTokens.filter(t => {
-    // 1. If searching, override the tabs and search ALL tokens
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return t.name.toLowerCase().includes(query) || 
              t.symbol.toLowerCase().includes(query) || 
              (t.mintAddress && t.mintAddress.toLowerCase().includes(query));
     }
-    
-    // 2. Strict Tab Routing
-    if (activeTab === 'EXPLORE') {
-      return true; // The Infinite Scroll: Shows every single token
-    }
-
-    if (activeTab === 'GRADUATED') {
-      return t.isGraduated === true || t.progress >= 100;
-    }
-    
-    if (activeTab === 'TRENDING') {
-      // Must have at least 5% progress to be considered "Trending"
-      return !t.isGraduated && t.progress >= 5 && t.progress < 100;
-    }
-
-    if (activeTab === 'NEW') {
-      // Newly forged tokens (under 5% progress) stay here
-      return !t.isGraduated && (!t.progress || t.progress < 5);
-    }
-    
+    if (activeTab === 'EXPLORE') return true;
+    if (activeTab === 'GRADUATED') return t.isGraduated === true || t.progress >= 100;
+    if (activeTab === 'TRENDING') return !t.isGraduated && t.progress >= 5 && t.progress < 100;
+    if (activeTab === 'NEW') return !t.isGraduated && (!t.progress || t.progress < 5);
     return true; 
   });
 
-  // Spotlight token can just be the highest mcap in the array
   const spotlightToken = [...enrichedTokens].sort((a, b) => b.mcapValue - a.mcapValue)[0];
 
   const handleTokenClick = (tokenData) => {
-    if (onTokenClick) {
-      onTokenClick(tokenData);
-    }
+    if (onTokenClick) onTokenClick(tokenData);
   };
 
   const renderSparkline = (trendData, isPositive) => {
@@ -60,7 +55,6 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
     const min = Math.min(...trendData);
     const range = max - min || 1;
     const color = isPositive ? '#089981' : '#F23645';
-    
     const points = trendData.map((val, idx) => {
       const x = (idx / (trendData.length - 1)) * 100;
       const y = 100 - (((val - min) / range) * 100);
@@ -76,13 +70,15 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
   };
 
   return (
-    <div className="flex flex-col w-full h-screen bg-[#0A0A0B] text-white font-sans overflow-hidden select-none">
+    <div className="flex flex-col w-full h-screen bg-[#0A0A0B] text-white font-sans overflow-hidden select-none relative">
       
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes slideDown { 0% { opacity: 0; transform: translateY(-10px); } 100% { opacity: 1; transform: translateY(0); } }
         .animate-slideDown { animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes slideInRight { 0% { transform: translateX(100%); } 100% { transform: translateX(0); } }
+        .animate-slideInRight { animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
       `}</style>
 
       {/* --- UNMOVABLE HEADER --- */}
@@ -91,9 +87,7 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
           
           <div className="flex items-center gap-3">
             <div 
-              onClick={() => {
-                if (onOpenAccountDrawer) onOpenAccountDrawer();
-              }} 
+              onClick={() => { if (onOpenAccountDrawer) onOpenAccountDrawer(); }} 
               className="w-8 h-8 rounded-full border border-white/10 hover:border-[#089981]/50 bg-[#121212] flex items-center justify-center overflow-hidden cursor-pointer transition-colors shadow-inner"
             >
               {userProfile?.avatar ? (
@@ -115,15 +109,19 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
           <div className="flex items-center gap-2 sm:gap-3">
             <button 
               onClick={() => setActivePage && setActivePage('earn')}
-              className="flex items-center gap-1.5 bg-[#089981]/10 hover:bg-[#089981]/20 border border-[#089981]/30 px-3 py-1.5 rounded-xl transition-all shadow-inner"
+              className="flex items-center gap-1.5 bg-[#089981]/10 hover:bg-[#089981]/20 border border-[#089981]/30 px-3 py-1.5 rounded-xl transition-all shadow-inner cursor-pointer"
             >
               <span className="w-1.5 h-1.5 bg-[#089981] rounded-full animate-pulse"></span>
               <span className="text-[9px] font-black text-[#089981] uppercase tracking-[0.15em]">Earn</span>
             </button>
 
-            <button className="relative p-2 text-zinc-400 hover:text-white transition-colors">
+            {/* 🚀 WIRED NOTIFICATION BELL */}
+            <button 
+              onClick={() => setShowNotifications(true)}
+              className="relative p-2 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#F23645] rounded-full border border-[#0A0A0B]"></span>
+              {hasUnread && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#F23645] rounded-full border border-[#0A0A0B]"></span>}
             </button>
           </div>
         </div>
@@ -143,7 +141,6 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
       {/* --- SCROLLABLE FEED --- */}
       <div className="flex-1 overflow-y-auto no-scrollbar relative pb-32">
         
-        {/* STEALTH MONETIZATION: SPOTLIGHT BANNER */}
         {spotlightToken && !searchQuery && (activeTab === 'TRENDING' || activeTab === 'EXPLORE') && (
           <div className="px-4 pt-4 pb-2">
             <div 
@@ -186,12 +183,11 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
 
         <div className="sticky top-0 z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04]">
           <div className="flex gap-2 w-full overflow-x-auto no-scrollbar bg-[#131722] p-1.5 rounded-xl border border-white/5">
-            {/* 🚀 UPGRADED: Added EXPLORE to the tab navigation */}
             {['EXPLORE', 'TRENDING', 'NEW', 'GRADUATED'].map(tab => (
               <button 
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 min-w-[70px] py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                className={`flex-1 min-w-[70px] py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
                   activeTab === tab 
                     ? 'bg-[#089981] text-white shadow-md' 
                     : 'bg-transparent text-zinc-500 hover:text-white'
@@ -247,6 +243,16 @@ export default function Home({ tokens = [], trendingTokens = [], graduatedTokens
           )}
         </div>
       </div>
+
+      {/* 🚀 NOTIFICATION CENTER MODAL DRAWER */}
+      <NotificationCenter 
+        isOpen={showNotifications} 
+        onClose={() => setShowNotifications(false)} 
+        notifications={notifications}
+        onMarkAsRead={markAsRead}
+        onClearAll={clearAllNotifications}
+      />
+
     </div>
   );
 }
