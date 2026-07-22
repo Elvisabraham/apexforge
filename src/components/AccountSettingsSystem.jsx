@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-// Language Dataset Matrix (Untouched, exactly as requested)
+// Language Dataset Matrix (Untouched)
 const V1_POPULAR_LOCALES = [
   { code: 'en', flag: 'US', native: 'English', english: 'English' },
   { code: 'es', flag: 'ES', native: 'Español', english: 'Spanish' },
@@ -44,7 +44,7 @@ export default function AccountSettingsSystem({
   setUserProfile 
 }) {
   
-  // Navigation State Matrix
+  // Navigation State
   const startingView = view || initialView || 'wallet_drawer';
   const closeScreen = onClose || onCloseSettings;
   const normalizedInitView = startingView === 'settings' ? 'main' : startingView;
@@ -67,16 +67,16 @@ export default function AccountSettingsSystem({
     { username: 'turbosharkpious', address: 'FihWW...fgskM', balance: '$0.07', avatar: '🦈' }
   ];
 
-  // 🚀 UPGRADED: Security & Alerts State (Pump.fun style settings)
+  // Security & Alerts State
   const [biometricAuth, setBiometricAuth] = useState(true);
   const [cloudBackupActive, setCloudBackupActive] = useState(false);
   const [launchFrequency, setLaunchFrequency] = useState('light'); // none | light | heavy
-  const [mentionsAlert, setMentionsAlert] = useState(true); // Required
-  const [securityAlert, setSecurityAlert] = useState(true); // Required
+  const [mentionsAlert, setMentionsAlert] = useState(true); 
+  const [securityAlert, setSecurityAlert] = useState(true); 
   const [priceAlerts, setPriceAlerts] = useState(false);
   const [stakingYieldAlerts, setStakingYieldAlerts] = useState(true);
   
-  // Execution Engine Settings
+  // Trading Settings
   const [routingMode, setRoutingMode] = useState('smart');
   const [priceToleranceMode, setPriceToleranceMode] = useState('auto');
   const [priceTolerance, setPriceTolerance] = useState(15);
@@ -91,7 +91,7 @@ export default function AccountSettingsSystem({
   // Support Chat
   const [supportInput, setSupportInput] = useState('');
   const [supportMessages, setSupportMessages] = useState([
-    { id: 1, sender: 'ForgeAI Concierge', text: 'Welcome to Apex Forge Core Support. Secure terminal connected.', isAgent: true, time: 'Just now' }
+    { id: 1, sender: 'Support Team', text: 'Hi! How can we help you today?', isAgent: true, time: 'Just now' }
   ]);
 
   const handleSaveProfile = () => {
@@ -118,7 +118,7 @@ export default function AccountSettingsSystem({
     setSupportMessages(prev => [...prev, { id: userMsgId, sender: 'You', text: textToSend, isAgent: false, time: 'Just now' }]);
     setSupportInput('');
     setTimeout(() => {
-      setSupportMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ForgeAI Concierge', text: "Query indexed. Routing to live on-chain data engineers.", isAgent: true, time: 'Just now' }]);
+      setSupportMessages(prev => [...prev, { id: Date.now() + 1, sender: 'Support Team', text: "Thanks for reaching out. We will look into this and get back to you shortly.", isAgent: true, time: 'Just now' }]);
     }, 1000);
   };
 
@@ -152,17 +152,17 @@ export default function AccountSettingsSystem({
     setActiveView(menuMap[activeView] || normalizedInitView);
   };
 
-  // --- REUSABLE GLASSMORPHIC COMPONENTS ---
-  function MenuItem({ icon, label, value, onClick, highlight }) {
+  // --- FLAT WEB2 COMPONENTS ---
+  function MenuItem({ icon, label, value, onClick }) {
     return (
-      <button onClick={onClick} className={`w-full flex items-center justify-between p-4 transition-all group border-b border-white/[0.04] last:border-none ${highlight ? 'bg-[#089981]/10 hover:bg-[#089981]/20' : 'bg-black/20 hover:bg-white/5'}`}>
-        <div className="flex items-center space-x-4">
-          <span className="text-xl w-6 flex justify-center drop-shadow-md">{icon}</span>
-          <span className={`font-black text-xs uppercase tracking-widest transition-colors ${highlight ? 'text-[#089981] drop-shadow-[0_0_8px_rgba(8,153,129,0.5)]' : 'text-zinc-300 group-hover:text-white'}`}>{label}</span>
-        </div>
+      <button onClick={onClick} className="w-full flex items-center justify-between py-4 px-4 bg-[#0A0A0A] hover:bg-[#1A1A1A] transition-colors border-b border-white/5 last:border-none">
         <div className="flex items-center space-x-3">
-          {value && <span className="text-[10px] text-zinc-500 font-mono font-bold uppercase tracking-wider">{value}</span>}
-          <span className="text-zinc-600 group-hover:text-[#089981] transition-transform group-hover:translate-x-1">›</span>
+          <span className="text-xl w-6 flex justify-center text-zinc-400">{icon}</span>
+          <span className="font-medium text-[15px] text-white">{label}</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          {value && <span className="text-sm text-zinc-500">{value}</span>}
+          <span className="text-zinc-500 text-lg leading-none">›</span>
         </div>
       </button>
     );
@@ -170,208 +170,156 @@ export default function AccountSettingsSystem({
 
   function ToggleItem({ label, description, enabled, onToggle, locked = false }) {
     return (
-      <div onClick={locked ? null : onToggle} className={`flex items-center justify-between p-4 border-b border-white/[0.04] last:border-none transition-colors ${locked ? 'opacity-80 cursor-not-allowed' : 'cursor-pointer hover:bg-white/[0.02]'}`}>
+      <div onClick={locked ? null : onToggle} className={`flex items-center justify-between p-4 bg-[#0A0A0A] border-b border-white/5 last:border-none ${locked ? 'opacity-70' : 'cursor-pointer hover:bg-[#1A1A1A] transition-colors'}`}>
         <div className="flex-1 pr-4 text-left">
-          <p className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+          <p className="text-[15px] font-medium text-white flex items-center gap-2">
             {label}
-            {locked && <span className="text-[8px] bg-[#089981]/20 text-[#089981] px-1.5 py-0.5 rounded tracking-widest border border-[#089981]/30">REQ</span>}
+            {locked && <span className="text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded uppercase font-bold">Required</span>}
           </p>
-          {description && <p className="text-[10px] font-medium text-zinc-500 mt-1 leading-relaxed">{description}</p>}
+          {description && <p className="text-xs text-zinc-500 mt-1">{description}</p>}
         </div>
-        <div className={`w-11 h-6 rounded-full p-1 flex items-center transition-colors shadow-inner ${enabled ? 'bg-[#089981] justify-end' : 'bg-[#1A1A24] justify-start border border-white/5'}`}>
-          <div className="w-4 h-4 bg-white rounded-full shadow-md" />
+        <div className={`w-12 h-7 rounded-full p-1 flex items-center transition-colors ${enabled ? 'bg-[#089981] justify-end' : 'bg-zinc-800 justify-start'}`}>
+          <div className="w-5 h-5 bg-white rounded-full shadow" />
         </div>
-      </div>
-    );
-  }
-
-  function LegalItem({ label, onClick }) {
-    return (
-      <button onClick={onClick} className="w-full flex items-center justify-between p-5 hover:bg-white/5 border-b border-white/[0.04] last:border-none transition-all group">
-        <span className="text-xs font-black uppercase tracking-widest text-zinc-300 group-hover:text-white transition-colors">{label}</span>
-        <span className="text-zinc-600 group-hover:text-[#089981] font-mono text-sm transition-transform group-hover:translate-x-1">↗</span>
-      </button>
-    );
-  }
-
-  function LegalTextBody({ title, content }) {
-    return (
-      <div className="w-full animate-fadeIn space-y-4 text-left flex flex-col h-full">
-        <h3 className="text-xs font-black text-[#089981] font-mono uppercase tracking-widest border-b border-white/10 pb-3">Protocol manifest // {title}</h3>
-        <div className="flex-1 bg-[#0A0A0C]/80 border border-white/5 rounded-2xl p-6 overflow-y-auto text-xs text-zinc-400 leading-loose font-medium shadow-inner no-scrollbar">
-          {content.split('\n\n').map((para, i) => <p key={i} className="mb-4 text-justify">{para}</p>)}
-        </div>
-        <button onClick={() => setActiveView('legal')} className="w-full bg-[#121214] hover:bg-[#1A1A1E] border border-white/10 text-white py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-colors shadow-[0_4px_15px_rgba(0,0,0,0.5)]">Acknowledge & Return</button>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col w-full h-screen bg-[#030303] text-white font-sans overflow-hidden animate-fadeIn relative">
+    <div className="flex flex-col w-full h-screen bg-[#050505] text-white font-sans overflow-hidden animate-fadeIn">
       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
 
-      {/* --- PREMIUM BLOOMBERG HEADER --- */}
-      <header className="flex-none z-50 bg-[#050505]/80 backdrop-blur-2xl pt-4 pb-3 px-5 border-b border-white/[0.06] flex items-center justify-between shadow-[0_4px_30px_rgba(0,0,0,0.8)]">
-        <div className="flex items-center gap-3">
-          <button onClick={handleBackNavigation} className="p-2 -ml-2 text-zinc-400 hover:text-white transition-colors active:scale-95 shrink-0 hover:bg-white/5 rounded-full">
+      {/* --- STANDARD APP HEADER --- */}
+      <header className="flex-none z-50 bg-[#050505] pt-4 pb-3 px-4 border-b border-white/10 flex items-center justify-between sticky top-0">
+        <div className="flex items-center gap-2">
+          <button onClick={handleBackNavigation} className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors active:scale-95">
             {activeView === normalizedInitView ? (
-              <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             ) : (
-              <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
             )}
           </button>
-          <div className="flex flex-col">
-            <h1 className="text-sm font-black tracking-widest text-white uppercase drop-shadow-md">
-              {activeView === 'wallet_drawer' ? 'Identity Matrix' :
-               activeView === 'main' ? 'Terminal Settings' :
-               activeView === 'editProfile' ? 'Profile Data' :
-               activeView === 'security' ? 'Vault Security' :
-               activeView === 'notifications' ? 'Alert Feeds' :
-               activeView === 'execution' ? 'Execution Engine' :
-               activeView === 'language' ? 'Localization' :
-               activeView === 'support' ? 'Core Support' :
-               activeView === 'legal' ? 'Compliance Hub' :
-               activeView === 'faqs' ? 'Knowledge Base' :
-               activeView === 'community' ? 'Social Anchors' :
-               activeView === 'appearance' ? 'Interface Mode' : 'Document View'}
-            </h1>
-            <span className="text-[8px] font-mono font-bold text-[#089981] tracking-widest uppercase mt-0.5">Apex Forge Secure Link</span>
-          </div>
+          <h1 className="text-lg font-bold text-white">
+            {activeView === 'wallet_drawer' ? 'Accounts' :
+             activeView === 'main' ? 'Settings' :
+             activeView === 'editProfile' ? 'Edit Profile' :
+             activeView === 'security' ? 'Security' :
+             activeView === 'notifications' ? 'Notifications' :
+             activeView === 'execution' ? 'Trading' :
+             activeView === 'language' ? 'Language' :
+             activeView === 'support' ? 'Support' :
+             activeView === 'legal' ? 'Legal' :
+             activeView === 'faqs' ? 'FAQs' :
+             activeView === 'community' ? 'Social Links' :
+             activeView === 'appearance' ? 'Appearance' : 'Document'}
+          </h1>
         </div>
       </header>
 
-      {/* --- SCROLLABLE CONTENT --- */}
-      <div className="flex-1 overflow-y-auto no-scrollbar relative pb-32">
-        <div className="flex flex-col px-5 pt-6 gap-6 max-w-2xl mx-auto h-full">
+      {/* --- SCROLLABLE CONTENT (Full Width) --- */}
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
+        <div className="flex flex-col w-full">
         
           {/* ==================================================== */}
-          {/* VIEW 0: THE IDENTITY MATRIX (WALLET DRAWER) */}
+          {/* VIEW: ACCOUNTS (WALLET DRAWER) */}
           {/* ==================================================== */}
           {activeView === 'wallet_drawer' && (
             <div className="w-full animate-fadeIn duration-200">
-              {/* Main Wallet Card */}
-              <div onClick={() => { if(closeScreen) closeScreen(); }} className="bg-gradient-to-br from-[#121214] to-[#080808] border border-[#089981]/40 rounded-[2rem] p-6 shadow-[0_10px_40px_rgba(8,153,129,0.15)] relative overflow-hidden flex flex-col mb-8 cursor-pointer hover:border-[#089981]/80 hover:shadow-[0_10px_50px_rgba(8,153,129,0.25)] transition-all group">
-                {/* Glow effect */}
-                <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-[#089981]/20 rounded-full blur-[60px] pointer-events-none group-hover:bg-[#089981]/30 transition-colors"></div>
-                
-                <div className="flex justify-between items-start z-10 w-full mb-8">
-                  <div className="w-16 h-16 bg-black border-2 border-[#089981] rounded-full flex items-center justify-center overflow-hidden shrink-0 shadow-[0_0_15px_rgba(8,153,129,0.4)]">
-                     {editAvatar ? <img src={editAvatar} alt="You" className="w-full h-full object-cover" /> : <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${editUsername}`} alt="You" className="w-full h-full object-cover" />}
-                  </div>
-                  <button onClick={(e) => { e.stopPropagation(); setActiveView('editProfile'); }} className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full transition-colors text-white shadow-sm">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                    <span className="text-[9px] font-black uppercase tracking-widest">Edit</span>
-                  </button>
+              
+              {/* Primary Account Area */}
+              <div className="bg-[#0A0A0A] p-6 border-b border-white/5 flex flex-col items-center justify-center text-center">
+                <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center overflow-hidden mb-4">
+                   {editAvatar ? <img src={editAvatar} alt="You" className="w-full h-full object-cover" /> : <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${editUsername}`} alt="You" className="w-full h-full object-cover" />}
                 </div>
-                
-                <div className="flex justify-between items-end z-10 w-full">
-                  <div className="flex flex-col">
-                    <span className="text-2xl font-black text-white leading-tight drop-shadow-md">{editUsername.replace('@', '')}</span>
-                    <span className="text-xs font-mono font-bold text-[#089981] mt-1 tracking-wider bg-[#089981]/10 px-2 py-0.5 rounded border border-[#089981]/20 w-fit">FzVQv...9xCuH</span>
-                  </div>
-                  <span className="text-3xl font-black text-white font-mono tracking-tighter drop-shadow-lg">{primaryWalletBalance}</span>
+                <h2 className="text-2xl font-bold text-white">{primaryWalletBalance}</h2>
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <span className="text-sm font-medium text-zinc-400">{editUsername}</span>
+                  <span className="text-xs bg-white/10 px-2 py-1 rounded text-zinc-400 font-mono">FzVQ...xCuH</span>
                 </div>
-              </div>
-
-              {/* Multi-Account Divider */}
-              <div className="flex items-center justify-center mb-6 opacity-60">
-                <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent w-full"></div>
-                <span className="px-4 text-[9px] font-black text-zinc-400 uppercase tracking-widest whitespace-nowrap">Connected Vaults</span>
-                <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent w-full"></div>
-              </div>
-
-              {/* Sub Accounts */}
-              <div className="flex flex-col gap-3 mb-8">
-                {otherAccounts.map((acc, idx) => (
-                  <div key={idx} className="bg-[#0A0A0C] border border-white/5 rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:bg-[#121214] hover:border-white/10 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.5)] group">
-                    <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 bg-black border border-white/10 rounded-full flex items-center justify-center text-xl overflow-hidden shadow-inner group-hover:border-[#089981]/50 transition-colors">{acc.avatar}</div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-black text-white tracking-wide">{acc.username}</span>
-                        <span className="text-[10px] font-mono font-bold text-zinc-500 tracking-wider">{acc.address}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-base font-black text-white font-mono">{acc.balance}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <button className="w-full bg-[#089981]/10 border border-[#089981]/30 hover:bg-[#089981]/20 hover:border-[#089981]/50 text-[#089981] font-black text-xs uppercase py-4 rounded-xl tracking-widest shadow-[0_0_15px_rgba(8,153,129,0.1)] transition-all flex items-center justify-center gap-2">
-                <span className="text-lg leading-none mb-0.5">+</span> Deploy Burner Wallet
-              </button>
-
-              <button onClick={() => setActiveView('main')} className="w-full flex justify-between items-center p-5 mt-6 border border-white/5 bg-[#0A0A0C] rounded-2xl group hover:border-white/10 transition-all shadow-inner">
-                <div className="flex items-center gap-3">
-                  <span className="text-zinc-500 group-hover:text-[#089981] transition-colors">⚙️</span>
-                  <span className="text-xs font-black uppercase tracking-widest text-zinc-300 group-hover:text-white transition-colors">Terminal Settings</span>
-                </div>
-                <span className="text-zinc-600 group-hover:text-[#089981] transition-transform group-hover:translate-x-1">›</span>
-              </button>
-            </div>
-          )}
-
-          {/* ==================================================== */}
-          {/* VIEW 1: MAIN DASHBOARD (FULL PLATFORM MANAGEMENT) */}
-          {/* ==================================================== */}
-          {activeView === 'main' && (
-            <div className="w-full animate-fadeIn duration-200">
-              <div className="bg-[#0A0A0C]/80 backdrop-blur-xl rounded-3xl overflow-hidden border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
-                <MenuItem icon="🪪" label="Profile Data" highlight={true} onClick={() => setActiveView('editProfile')} />
-                <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-50" />
-                <MenuItem icon="🛡️" label="Vault Security" onClick={() => setActiveView('security')} />
-                <MenuItem icon="⚡" label="Execution Engine" onClick={() => setActiveView('execution')} />
-                <MenuItem icon="🌐" label="Social Anchors" onClick={() => setActiveView('community')} />
-                <MenuItem icon="🔔" label="Alert Feeds" onClick={() => setActiveView('notifications')} />
-                <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-50" />
-                <MenuItem icon="🎨" label="Interface Mode" value={appearanceMode} onClick={() => setActiveView('appearance')} />
-                <MenuItem icon="文" label="Localization" value={appLanguage} onClick={() => setActiveView('language')} />
-                <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-50" />
-                <MenuItem icon="📚" label="Knowledge Base" onClick={() => setActiveView('faqs')} />
-                <MenuItem icon="⚖️" label="Compliance Hub" onClick={() => setActiveView('legal')} />
-                
-                <button onClick={() => setActiveView('support')} className="w-full flex items-center justify-between p-5 bg-[#089981]/5 hover:bg-[#089981]/15 transition-all group border-t border-white/5">
-                  <div className="flex items-center space-x-4">
-                    <span className="text-[#089981] text-xl w-6 flex justify-center drop-shadow-[0_0_10px_rgba(8,153,129,0.8)]">🎧</span>
-                    <span className="text-[#089981] font-black text-xs tracking-widest uppercase drop-shadow-md">Connect Live Support</span>
-                  </div>
-                  <span className="text-[#089981] font-mono group-hover:translate-x-1 transition-transform">→</span>
+                <button onClick={() => setActiveView('editProfile')} className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-full transition-colors">
+                  Edit Profile
                 </button>
               </div>
 
-              {/* Footer Metrics */}
-              <div className="mt-8 flex flex-col items-center space-y-4">
-                <p className="text-[9px] text-zinc-500 uppercase tracking-widest font-black">Verified Network Links</p>
-                <div className="flex space-x-3">
-                  {['𝕏', '✈️', '👾'].map((ch, idx) => (
-                    <button key={idx} className="w-12 h-12 rounded-full border border-white/10 bg-[#0A0A0C] flex items-center justify-center text-xl text-zinc-400 hover:text-[#089981] hover:border-[#089981]/50 hover:bg-[#089981]/10 transition-all shadow-inner">{ch}</button>
-                  ))}
-                </div>
-                <div className="text-center pt-2">
-                  <p className="text-[10px] text-zinc-500 font-mono tracking-widest font-bold">APEX FORGE CORE V2.4</p>
-                  <p className="text-[8px] text-[#089981] font-mono mt-1 opacity-70">MAINNET BETA DEPLOYED</p>
-                </div>
+              {/* Other Accounts List */}
+              <div className="px-4 py-3">
+                <span className="text-xs font-bold text-zinc-500 uppercase">Other Accounts</span>
+              </div>
+              <div className="bg-[#0A0A0A] border-y border-white/5">
+                {otherAccounts.map((acc, idx) => (
+                  <div key={idx} className="p-4 border-b border-white/5 last:border-none flex items-center justify-between cursor-pointer hover:bg-[#1A1A1A] transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center text-lg">{acc.avatar}</div>
+                      <div className="flex flex-col">
+                        <span className="text-[15px] font-medium text-white">{acc.username}</span>
+                        <span className="text-xs text-zinc-500 font-mono">{acc.address}</span>
+                      </div>
+                    </div>
+                    <span className="text-[15px] font-medium text-white">{acc.balance}</span>
+                  </div>
+                ))}
+                
+                <button className="w-full p-4 flex items-center gap-3 text-[#089981] hover:bg-[#1A1A1A] transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-[#089981]/10 flex items-center justify-center text-xl">+</div>
+                  <span className="text-[15px] font-medium">Add New Wallet</span>
+                </button>
+              </div>
+
+              <div className="p-4 mt-4">
+                <button onClick={() => setActiveView('main')} className="w-full p-4 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[15px] font-medium transition-colors flex justify-between items-center">
+                  <span>Settings</span>
+                  <span className="text-zinc-500 text-lg">›</span>
+                </button>
               </div>
             </div>
           )}
 
           {/* ==================================================== */}
-          {/* VIEW: NOTIFICATIONS (Pump.fun Logic Installed) */}
+          {/* VIEW: MAIN SETTINGS (FLAT LIST) */}
+          {/* ==================================================== */}
+          {activeView === 'main' && (
+            <div className="w-full animate-fadeIn duration-200">
+              <div className="px-4 py-3"><span className="text-xs font-bold text-zinc-500 uppercase">Account</span></div>
+              <div className="border-y border-white/5">
+                <MenuItem icon="👤" label="Profile" onClick={() => setActiveView('editProfile')} />
+                <MenuItem icon="🛡️" label="Security" onClick={() => setActiveView('security')} />
+              </div>
+
+              <div className="px-4 py-3 mt-4"><span className="text-xs font-bold text-zinc-500 uppercase">App Settings</span></div>
+              <div className="border-y border-white/5">
+                <MenuItem icon="⚡" label="Trading" onClick={() => setActiveView('execution')} />
+                <MenuItem icon="🔔" label="Notifications" onClick={() => setActiveView('notifications')} />
+                <MenuItem icon="🌐" label="Community Links" onClick={() => setActiveView('community')} />
+              </div>
+
+              <div className="px-4 py-3 mt-4"><span className="text-xs font-bold text-zinc-500 uppercase">Preferences</span></div>
+              <div className="border-y border-white/5">
+                <MenuItem icon="🎨" label="Appearance" value={appearanceMode} onClick={() => setActiveView('appearance')} />
+                <MenuItem icon="🌐" label="Language" value={appLanguage} onClick={() => setActiveView('language')} />
+              </div>
+
+              <div className="px-4 py-3 mt-4"><span className="text-xs font-bold text-zinc-500 uppercase">More</span></div>
+              <div className="border-y border-white/5">
+                <MenuItem icon="❓" label="Help & FAQs" onClick={() => setActiveView('faqs')} />
+                <MenuItem icon="🎧" label="Contact Support" onClick={() => setActiveView('support')} />
+                <MenuItem icon="📄" label="Legal" onClick={() => setActiveView('legal')} />
+              </div>
+              
+              <div className="p-6 mt-4 flex justify-center text-center">
+                <p className="text-xs text-zinc-600">Apex Forge App v2.4</p>
+              </div>
+            </div>
+          )}
+
+          {/* ==================================================== */}
+          {/* VIEW: NOTIFICATIONS */}
           {/* ==================================================== */}
           {activeView === 'notifications' && (
-            <div className="w-full animate-fadeIn duration-200 space-y-5">
-              
-              {/* Launch Frequency Panel */}
-              <div className="bg-[#0A0A0C] border border-[#089981]/30 rounded-2xl p-5 shadow-[0_8px_30px_rgba(8,153,129,0.05)]">
-                <div className="flex flex-col mb-4">
-                  <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
-                    🚀 New Token Deployments
-                  </span>
-                  <span className="text-[10px] text-zinc-400 mt-1 leading-relaxed">Adjust how often new bonding curve deployments push to your screen.</span>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-2 bg-[#030303] p-1.5 rounded-xl border border-white/5 shadow-inner">
+            <div className="w-full animate-fadeIn duration-200">
+              <div className="px-4 py-3"><span className="text-xs font-bold text-zinc-500 uppercase">New Token Alerts</span></div>
+              <div className="bg-[#0A0A0A] p-4 border-y border-white/5">
+                <p className="text-[15px] font-medium text-white mb-3">Launch Frequency</p>
+                <div className="flex bg-black rounded-lg p-1 border border-white/10">
                   {[
                     { id: 'none', label: 'None' },
                     { id: 'light', label: 'Light' },
@@ -380,98 +328,68 @@ export default function AccountSettingsSystem({
                     <button
                       key={tier.id}
                       onClick={() => setLaunchFrequency(tier.id)}
-                      className={`py-3 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all shadow-sm ${
-                        launchFrequency === tier.id
-                          ? 'bg-[#089981] text-white shadow-[0_0_15px_rgba(8,153,129,0.3)]'
-                          : 'text-zinc-500 hover:text-white hover:bg-white/5'
+                      className={`flex-1 py-2 rounded text-sm font-medium transition-colors ${
+                        launchFrequency === tier.id ? 'bg-[#089981] text-white' : 'text-zinc-500 hover:text-white'
                       }`}
                     >
                       {tier.label}
                     </button>
                   ))}
                 </div>
-                {launchFrequency === 'light' && <p className="text-[9px] text-[#089981] font-mono mt-3 text-center uppercase tracking-wider">Showing only your deployments & graduations</p>}
-                {launchFrequency === 'heavy' && <p className="text-[9px] text-amber-500 font-mono mt-3 text-center uppercase tracking-wider">Warning: High volume firehose activated</p>}
+                <p className="text-xs text-zinc-500 mt-3 text-center">
+                  {launchFrequency === 'none' && 'You will not receive any new token alerts.'}
+                  {launchFrequency === 'light' && 'Showing only top launches and graduations.'}
+                  {launchFrequency === 'heavy' && 'Showing all token deployments.'}
+                </p>
               </div>
 
-              {/* Toggles Container */}
-              <div className="bg-[#0A0A0C] border border-white/5 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.5)] overflow-hidden">
-                <ToggleItem 
-                  label="Mentions & @Tags" 
-                  description="Social tags in the trollbox." 
-                  enabled={mentionsAlert} 
-                  locked={true} 
-                />
-                <ToggleItem 
-                  label="Security & Wallets" 
-                  description="Critical transaction failures & alerts." 
-                  enabled={securityAlert} 
-                  locked={true} 
-                />
-                <ToggleItem 
-                  label="Price Action Triggers" 
-                  description="Target alerts when assets pump." 
-                  enabled={priceAlerts} 
-                  onToggle={() => setPriceAlerts(!priceAlerts)} 
-                />
-                <ToggleItem 
-                  label="Yield & Staking" 
-                  description="Notifications when vault rewards are ready." 
-                  enabled={stakingYieldAlerts} 
-                  onToggle={() => setStakingYieldAlerts(!stakingYieldAlerts)} 
-                />
+              <div className="px-4 py-3 mt-4"><span className="text-xs font-bold text-zinc-500 uppercase">Account Alerts</span></div>
+              <div className="border-y border-white/5">
+                <ToggleItem label="Mentions & Tags" description="When someone tags you in chat." enabled={mentionsAlert} locked={true} />
+                <ToggleItem label="Security" description="Failed transactions and security alerts." enabled={securityAlert} locked={true} />
+                <ToggleItem label="Price Alerts" description="When tokens you watch go up." enabled={priceAlerts} onToggle={() => setPriceAlerts(!priceAlerts)} />
+                <ToggleItem label="Yield & Staking" description="When rewards are ready to claim." enabled={stakingYieldAlerts} onToggle={() => setStakingYieldAlerts(!stakingYieldAlerts)} />
               </div>
-
             </div>
           )}
 
           {/* ==================================================== */}
-          {/* VIEW: EXECUTION (TRADE SETTINGS) */}
+          {/* VIEW: EXECUTION (TRADING) */}
           {/* ==================================================== */}
           {activeView === 'execution' && (
-            <div className="w-full animate-fadeIn duration-200 space-y-6">
-              <div className="flex p-1.5 bg-[#0A0A0C] border border-white/10 rounded-2xl font-sans shadow-inner">
-                <button onClick={() => setRoutingMode('smart')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm ${routingMode === 'smart' ? 'bg-[#089981] text-white shadow-[0_0_15px_rgba(8,153,129,0.3)]' : 'text-zinc-500 hover:text-white hover:bg-white/5'}`}>Auto Routing</button>
-                <button onClick={() => setRoutingMode('expert')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm ${routingMode === 'expert' ? 'bg-white/10 text-white border border-white/5' : 'text-zinc-500 hover:text-white hover:bg-white/5'}`}>Custom Mode</button>
+            <div className="w-full animate-fadeIn duration-200">
+              <div className="px-4 py-4">
+                <div className="flex bg-[#0A0A0A] rounded-lg p-1 border border-white/10">
+                  <button onClick={() => setRoutingMode('smart')} className={`flex-1 py-2 text-sm font-medium rounded transition-colors ${routingMode === 'smart' ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-white'}`}>Auto Mode</button>
+                  <button onClick={() => setRoutingMode('expert')} className={`flex-1 py-2 text-sm font-medium rounded transition-colors ${routingMode === 'expert' ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-white'}`}>Custom Mode</button>
+                </div>
               </div>
 
               {routingMode === 'smart' ? (
-                <div className="bg-[#089981]/5 border border-[#089981]/20 rounded-2xl p-6 space-y-3 shadow-inner">
-                   <p className="text-sm font-black text-[#089981] flex items-center gap-2 tracking-wider"><span>⚡</span> Apex Engine Active</p>
-                   <p className="text-xs font-medium text-zinc-400 leading-relaxed text-justify">The default for a reason. The Forge dynamically handles MEV protection, gas spikes, and optimal slippage windows to guarantee sniper-fast execution without failed transactions.</p>
+                <div className="px-4 py-2">
+                   <div className="bg-[#0A0A0A] border border-white/5 rounded-xl p-4">
+                     <p className="text-[15px] font-medium text-white mb-2">Auto Routing Active</p>
+                     <p className="text-sm text-zinc-400">We automatically handle slippage and gas to ensure your trades go through fast and safe without errors.</p>
+                   </div>
                 </div>
               ) : (
-                <div className="space-y-6 pb-8">
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-5 flex items-start gap-4 shadow-inner">
-                     <span className="text-amber-500 text-lg mt-0.5 drop-shadow-md">⚠️</span>
-                     <div>
-                       <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">Manual Override Danger</p>
-                       <p className="text-[11px] font-medium text-amber-500/80 mt-1 leading-relaxed text-justify">Tightening slippage during high-velocity token launches will result in dropped blocks. You assume full risk.</p>
-                     </div>
-                  </div>
-                  
-                  {/* Slippage */}
-                  <div className="bg-[#0A0A0C] border border-white/5 rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.5)] space-y-5">
-                    <div className="flex justify-between items-center">
-                      <div className="pr-4">
-                        <p className="text-xs font-black text-white uppercase tracking-wider">Slippage Tolerance</p>
-                        <p className="text-[10px] font-medium text-zinc-500 mt-1 leading-relaxed">Expected vs actual execution price</p>
-                      </div>
-                      <div className="flex bg-[#030303] rounded-lg border border-white/5 p-1 shadow-inner shrink-0">
-                        <button onClick={() => setPriceToleranceMode('auto')} className={`px-4 py-2 text-[9px] font-black uppercase tracking-wider rounded transition-all ${priceToleranceMode === 'auto' ? 'bg-[#089981] text-white shadow-sm' : 'text-zinc-500 hover:text-white'}`}>Auto</button>
-                        <button onClick={() => setPriceToleranceMode('manual')} className={`px-4 py-2 text-[9px] font-black uppercase tracking-wider rounded transition-all ${priceToleranceMode === 'manual' ? 'bg-white/10 text-white shadow-sm' : 'text-zinc-500 hover:text-white'}`}>Fixed</button>
-                      </div>
+                <div className="w-full">
+                  <div className="px-4 py-3"><span className="text-xs font-bold text-zinc-500 uppercase">Slippage Tolerance</span></div>
+                  <div className="bg-[#0A0A0A] p-4 border-y border-white/5 space-y-4">
+                    <div className="flex bg-black rounded-lg border border-white/5 p-1 w-full max-w-[200px]">
+                      <button onClick={() => setPriceToleranceMode('auto')} className={`flex-1 py-1.5 text-sm font-medium rounded transition-colors ${priceToleranceMode === 'auto' ? 'bg-white/10 text-white' : 'text-zinc-500'}`}>Auto</button>
+                      <button onClick={() => setPriceToleranceMode('manual')} className={`flex-1 py-1.5 text-sm font-medium rounded transition-colors ${priceToleranceMode === 'manual' ? 'bg-white/10 text-white' : 'text-zinc-500'}`}>Custom</button>
                     </div>
                     
                     {priceToleranceMode === 'manual' && (
-                      <div className="space-y-4 animate-fadeIn border-t border-white/5 pt-5">
-                        <div className="bg-[#030303] border border-white/5 rounded-xl p-4 flex justify-between items-center shadow-inner">
-                          <input type="number" value={priceTolerance} onChange={(e) => setPriceTolerance(Number(e.target.value))} className="bg-transparent text-[#089981] text-lg font-black font-mono outline-none text-left w-full" />
-                          <span className="text-zinc-500 font-black text-lg">%</span>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <input type="number" value={priceTolerance} onChange={(e) => setPriceTolerance(Number(e.target.value))} className="w-24 bg-black border border-white/10 rounded-lg px-3 py-2 text-white font-medium outline-none" />
+                          <span className="text-zinc-400">%</span>
                         </div>
                         <div className="flex gap-2">
                           {[1, 3, 5, 10].map(val => (
-                            <button key={val} onClick={() => setPriceTolerance(val)} className={`flex-1 py-3 rounded-xl text-xs font-black transition-all shadow-sm ${priceTolerance === val ? 'bg-[#089981] text-white' : 'bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10'}`}>{val}%</button>
+                            <button key={val} onClick={() => setPriceTolerance(val)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${priceTolerance === val ? 'bg-[#089981] border-[#089981] text-white' : 'bg-transparent border-white/10 text-zinc-400'}`}>{val}%</button>
                           ))}
                         </div>
                       </div>
@@ -483,113 +401,158 @@ export default function AccountSettingsSystem({
           )}
 
           {/* ==================================================== */}
-          {/* VIEW: SUPPORT CHAT */}
+          {/* VIEW: SUPPORT */}
           {/* ==================================================== */}
           {activeView === 'support' && (
-            <div className="w-full h-full animate-fadeIn duration-200 flex flex-col justify-between pt-2">
-              <div className="bg-[#089981]/10 border border-[#089981]/20 p-4 rounded-2xl flex items-start gap-4 mb-4 shadow-inner">
-                 <span className="text-[#089981] text-lg mt-0.5 drop-shadow-md">🛡️</span>
-                 <p className="text-[10px] font-medium text-zinc-300 leading-relaxed text-justify">This secure channel is protected by <span className="text-[#089981] font-black uppercase tracking-widest">Apex AI</span>. Support engineers will never ask for your recovery phrase.</p>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto space-y-5 mb-4 pr-2 text-left no-scrollbar">
+            <div className="w-full flex flex-col h-[calc(100vh-80px)] animate-fadeIn duration-200 bg-[#050505]">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
                 {supportMessages.map((msg) => (
                   <div key={msg.id} className={`flex flex-col ${msg.isAgent ? 'items-start' : 'items-end'}`}>
-                    <p className={`text-[8px] font-black uppercase tracking-widest ${msg.isAgent ? 'text-[#089981]' : 'text-zinc-500'} mb-2`}>{msg.sender}</p>
-                    <div className={`p-4 rounded-2xl max-w-[85%] text-xs font-medium leading-relaxed shadow-md ${msg.isAgent ? 'bg-[#0A0A0C] border border-white/10 text-zinc-300 rounded-tl-sm' : 'bg-[#089981] text-black font-bold rounded-tr-sm'}`}>{msg.text}</div>
+                    <div className={`p-3 rounded-2xl max-w-[85%] text-sm ${msg.isAgent ? 'bg-[#1A1A1A] text-white rounded-tl-sm' : 'bg-[#089981] text-white rounded-tr-sm'}`}>{msg.text}</div>
+                    <p className="text-[10px] text-zinc-500 mt-1">{msg.time}</p>
                   </div>
                 ))}
               </div>
 
-              <div className="space-y-3 mb-4">
-                 <div className="flex flex-wrap gap-2">
-                   <button onClick={() => handleSendSupport("Transaction Pending / Stalled")} className="bg-[#0A0A0C] border border-white/10 text-zinc-300 hover:text-white hover:border-white/20 px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm">⏳ Trade Pending</button>
-                   <button onClick={() => handleSendSupport("Deployment Disruption Exception")} className="bg-[#0A0A0C] border border-white/10 text-zinc-300 hover:text-white hover:border-white/20 px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm">🚀 Deploy Error</button>
-                   <button onClick={() => handleSendSupport("Connect Live Core Engineer")} className="bg-amber-500/10 border border-amber-500/30 text-amber-500 hover:bg-amber-500/20 px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm">👨‍💻 Escalate</button>
+              <div className="p-4 bg-[#0A0A0A] border-t border-white/5">
+                 <div className="flex gap-2 overflow-x-auto no-scrollbar mb-3 pb-1">
+                   <button onClick={() => handleSendSupport("My trade is pending")} className="bg-white/5 text-zinc-300 hover:bg-white/10 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-colors">My trade is pending</button>
+                   <button onClick={() => handleSendSupport("Error deploying coin")} className="bg-white/5 text-zinc-300 hover:bg-white/10 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-colors">Error deploying coin</button>
+                   <button onClick={() => handleSendSupport("Talk to a human")} className="bg-white/5 text-zinc-300 hover:bg-white/10 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-colors">Talk to a human</button>
                  </div>
-              </div>
 
-              <form onSubmit={(e) => { e.preventDefault(); handleSendSupport(supportInput); }} className="pt-4 border-t border-white/[0.04] flex gap-3 items-center pb-2">
-                <input type="text" value={supportInput} onChange={(e) => setSupportInput(e.target.value)} placeholder="Enter query..." className="flex-1 bg-[#0A0A0C] border border-white/10 rounded-2xl px-5 py-4 text-xs font-medium text-white outline-none focus:border-[#089981]/70 focus:shadow-[0_0_15px_rgba(8,153,129,0.2)] transition-all shadow-inner" />
-                <button type="submit" className="bg-[#089981] text-black hover:bg-[#06806b] px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-[0_4px_15px_rgba(8,153,129,0.4)] active:scale-95">Send</button>
-              </form>
+                <form onSubmit={(e) => { e.preventDefault(); handleSendSupport(supportInput); }} className="flex gap-2">
+                  <input type="text" value={supportInput} onChange={(e) => setSupportInput(e.target.value)} placeholder="Type a message..." className="flex-1 bg-black border border-white/10 rounded-full px-4 py-2.5 text-sm text-white outline-none focus:border-[#089981]" />
+                  <button type="submit" className="bg-[#089981] text-white px-5 py-2.5 rounded-full text-sm font-medium transition-colors">Send</button>
+                </form>
+              </div>
             </div>
           )}
 
           {/* ==================================================== */}
-          {/* THE REMAINING STANDARD VIEWS (Language, Appearance, Legal, Edit Profile) */}
+          {/* VIEW: EDIT PROFILE */}
           {/* ==================================================== */}
-          
           {activeView === 'editProfile' && (
-            <div className="w-full animate-fadeIn duration-200 space-y-6 text-left pt-2">
-              <div className="flex flex-col items-center justify-center p-8 bg-[#0A0A0C] border border-white/5 rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.5)] mb-2 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#089981]/50 to-transparent"></div>
-                <div className="w-28 h-28 bg-[#030303] border-2 border-[#089981]/50 rounded-full flex items-center justify-center overflow-hidden relative group cursor-pointer shadow-[0_0_30px_rgba(8,153,129,0.2)] mb-5">
+            <div className="w-full animate-fadeIn duration-200">
+              <div className="p-6 flex flex-col items-center justify-center border-b border-white/5">
+                <div className="w-24 h-24 bg-zinc-900 rounded-full flex items-center justify-center overflow-hidden relative cursor-pointer mb-2">
                   <input type="file" accept="image/*" onChange={handleAvatarChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
                   {editAvatar ? <img src={editAvatar} alt="Preview" className="w-full h-full object-cover z-10" /> : <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${editUsername}`} alt="Preview" className="w-full h-full object-cover z-10" />}
-                  <div className="absolute inset-0 bg-black/80 hidden group-hover:flex items-center justify-center text-[10px] font-black text-white uppercase tracking-widest transition-all z-10 pointer-events-none">Change</div>
+                  <div className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center text-xs font-bold text-white z-10 pointer-events-none">Change</div>
                 </div>
-                <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Tap visual to alter</p>
+                <span className="text-sm text-[#089981] font-medium">Change Photo</span>
               </div>
 
-              <div className="space-y-5 bg-[#0A0A0C] border border-white/5 rounded-[2rem] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.5)]">
+              <div className="p-4 space-y-4">
                 <div>
-                  <label className="text-[9px] text-[#089981] uppercase font-black tracking-widest pl-2">Social Handle</label>
-                  <input type="text" value={editUsername} onChange={(e) => setEditUsername(e.target.value)} className="w-full bg-[#030303] border border-white/10 rounded-xl px-5 py-4 text-sm text-white font-black outline-none focus:border-[#089981] transition-all shadow-inner mt-2" />
+                  <label className="text-sm text-zinc-400 ml-1">Username</label>
+                  <input type="text" value={editUsername} onChange={(e) => setEditUsername(e.target.value)} className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] outline-none mt-1" />
                 </div>
                 <div>
-                  <label className="text-[9px] text-[#089981] uppercase font-black tracking-widest pl-2">Public Manifest</label>
-                  <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} maxLength={250} className="w-full h-28 bg-[#030303] border border-white/10 rounded-xl p-5 text-sm font-medium mt-2 text-white outline-none focus:border-[#089981] transition-all resize-none shadow-inner" placeholder="Broadcast your intent..." />
-                  
-                  <div className="flex justify-between items-start mt-3 px-2">
-                    <p className="text-[8px] font-medium text-zinc-500 max-w-[75%] leading-relaxed uppercase tracking-wider">
-                      Modifying data accepts <button onClick={() => setActiveView('legal_terms')} className="text-[#089981] hover:underline font-black">TOS Terms</button>.
-                    </p>
-                    <div className="text-right text-[10px] text-zinc-500 font-mono font-bold shrink-0">{editBio.length}/250</div>
-                  </div>
+                  <label className="text-sm text-zinc-400 ml-1">Bio</label>
+                  <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} maxLength={250} className="w-full h-24 bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] outline-none mt-1 resize-none" placeholder="Write something about yourself..." />
+                  <div className="text-right text-xs text-zinc-500 mt-1">{editBio.length}/250</div>
                 </div>
               </div>
 
-              <div className="pt-2 space-y-3">
-                <button onClick={handleSaveProfile} className="w-full bg-[#089981] hover:bg-[#06806b] text-black font-black text-xs uppercase py-4 rounded-xl tracking-widest shadow-[0_4px_15px_rgba(8,153,129,0.3)] active:scale-95 transition-all">Write to State</button>
-                <button onClick={() => alert("Are you sure? This will disconnect the wallet.")} className="w-full border border-rose-500/20 text-rose-500 hover:bg-rose-500/10 font-black text-[10px] uppercase py-4 rounded-xl tracking-widest transition-all">Sever Connection</button>
+              <div className="p-4 mt-4 space-y-3">
+                <button onClick={handleSaveProfile} className="w-full bg-white text-black font-bold text-[15px] py-3.5 rounded-xl transition-opacity hover:opacity-90">Save Changes</button>
+                <button onClick={() => alert("Wallet disconnected.")} className="w-full text-rose-500 font-bold text-[15px] py-3.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 transition-colors">Disconnect Wallet</button>
               </div>
             </div>
           )}
 
+          {/* ==================================================== */}
+          {/* VIEW: LANGUAGE */}
+          {/* ==================================================== */}
           {activeView === 'language' && (
-            <div className="w-full animate-fadeIn duration-200 bg-[#0A0A0C] rounded-3xl border border-white/10 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.5)]">
-              {V1_POPULAR_LOCALES.map((loc) => (
-                <button key={loc.code} onClick={() => { setAppLanguage(loc.native); setActiveView('main'); }} className="w-full flex items-center justify-between p-5 border-b border-white/[0.04] hover:bg-white/5 transition-colors group">
-                  <div className="flex items-center gap-5">
-                    <span className="text-2xl drop-shadow-md group-hover:scale-110 transition-transform">{loc.flag}</span>
-                    <div className="text-left">
-                      <p className="text-sm font-bold text-white group-hover:text-[#089981] transition-colors">{loc.native}</p>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mt-1">{loc.english}</p>
+            <div className="w-full animate-fadeIn duration-200">
+              <div className="border-y border-white/5 bg-[#0A0A0A]">
+                {V1_POPULAR_LOCALES.map((loc) => (
+                  <button key={loc.code} onClick={() => { setAppLanguage(loc.native); setActiveView('main'); }} className="w-full flex items-center justify-between px-4 py-4 border-b border-white/5 last:border-none hover:bg-[#1A1A1A] transition-colors">
+                    <div className="flex items-center gap-4">
+                      <span className="text-2xl">{loc.flag}</span>
+                      <div className="text-left">
+                        <p className="text-[15px] font-medium text-white">{loc.native}</p>
+                        <p className="text-xs text-zinc-500">{loc.english}</p>
+                      </div>
                     </div>
-                  </div>
-                  {appLanguage === loc.native && <span className="w-6 h-6 rounded-full bg-[#089981] flex items-center justify-center text-black text-xs font-black shadow-[0_0_10px_rgba(8,153,129,0.5)]">✓</span>}
+                    {appLanguage === loc.native && <span className="text-[#089981] font-bold text-lg">✓</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ==================================================== */}
+          {/* VIEW: APPEARANCE */}
+          {/* ==================================================== */}
+          {activeView === 'appearance' && (
+            <div className="w-full animate-fadeIn duration-200 px-4 py-4 space-y-3">
+              {['Dark', 'Light', 'System'].map((mode) => (
+                <button key={mode} onClick={() => setAppearanceMode(mode)} className={`w-full flex items-center justify-between p-4 rounded-xl border transition-colors ${appearanceMode === mode ? 'bg-[#089981]/10 border-[#089981]' : 'bg-[#0A0A0A] border-white/10 hover:bg-[#1A1A1A]'}`}>
+                  <span className={`text-[15px] font-medium ${appearanceMode === mode ? 'text-white' : 'text-zinc-400'}`}>{mode}</span>
+                  {appearanceMode === mode && <span className="text-[#089981] font-bold">✓</span>}
                 </button>
               ))}
             </div>
           )}
 
-          {/* Legal / FAQs Data (Unchanged content, upgraded design via LegalTextBody/FaqItem) */}
+          {/* ==================================================== */}
+          {/* VIEW: LEGAL & FAQS (Flat Layout) */}
+          {/* ==================================================== */}
           {activeView === 'legal' && (
-            <div className="w-full animate-fadeIn duration-200">
-              <div className="bg-[#0A0A0C] border border-white/10 rounded-3xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.5)]">
-                <LegalItem label="Terms & Conditions" onClick={() => setActiveView('legal_terms')} />
-                <LegalItem label="Privacy Architecture" onClick={() => setActiveView('legal_privacy')} />
-                <LegalItem label="Livestream Constraints" onClick={() => setActiveView('legal_livestream')} />
-                <LegalItem label="Execution Fee Schedule" onClick={() => setActiveView('legal_fees')} />
+            <div className="w-full animate-fadeIn duration-200 border-y border-white/5 bg-[#0A0A0A]">
+              {[
+                { id: 'legal_terms', title: 'Terms of Service' },
+                { id: 'legal_privacy', title: 'Privacy Policy' },
+                { id: 'legal_livestream', title: 'Community Guidelines' },
+                { id: 'legal_fees', title: 'Fees & Pricing' }
+              ].map(item => (
+                <button key={item.id} onClick={() => setActiveView(item.id)} className="w-full flex items-center justify-between p-4 hover:bg-[#1A1A1A] border-b border-white/5 last:border-none transition-colors">
+                  <span className="text-[15px] font-medium text-white">{item.title}</span>
+                  <span className="text-zinc-500 text-lg leading-none">›</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {['legal_terms', 'legal_privacy', 'legal_livestream', 'legal_fees'].includes(activeView) && (
+            <div className="w-full animate-fadeIn duration-200 p-4">
+              <h2 className="text-lg font-bold text-white mb-4">
+                {activeView === 'legal_terms' ? 'Terms of Service' :
+                 activeView === 'legal_privacy' ? 'Privacy Policy' :
+                 activeView === 'legal_livestream' ? 'Community Guidelines' : 'Fees & Pricing'}
+              </h2>
+              <div className="text-[15px] text-zinc-400 leading-relaxed space-y-4">
+                {activeView === 'legal_terms' && <><p>By using our service, you agree to these terms.</p><p>We provide a decentralized platform. You are responsible for your own wallet and funds.</p></>}
+                {activeView === 'legal_privacy' && <><p>We do not store your private keys or track your personal information.</p><p>Public blockchain data is visible to everyone.</p></>}
+                {activeView === 'legal_livestream' && <><p>Keep the community safe. No illegal, hateful, or abusive content is allowed on the platform.</p></>}
+                {activeView === 'legal_fees' && <><p>Network fee: 0.05 SOL to create a token.</p><p>Trading fee: 0.5% per transaction.</p></>}
               </div>
             </div>
           )}
-          {activeView === 'legal_terms' && <LegalTextBody title="Terms and Conditions" content="Welcome to Apex Forge Terminal. By interacting with our non-custodial deployment parameters, you explicitly confirm that you understand the speculative risks inherent to on-chain decentralized market setups.\n\nApex Forge acts strictly as an open-source, decentralized portal interface layer. We do not assume authority, custody, or control over token architectures, liquidity pools, or user funds deployed using this system.\n\nCryptographic assets are subject to extreme market volatility. The protocol does not guarantee any financial return, stability, or liquidity. By connecting your wallet, you agree that you are accessing the blockchain at your own absolute risk and hold Apex Forge blameless for any network-level exploits, slippage losses, or smart contract anomalies.\n\nUsers are strictly prohibited from utilizing the Apex Forge infrastructure to facilitate illegal transactions, launder funds, or bypass international financial sanctions. Any detection of such activities will result in immediate frontend blacklisting and termination of interface access." />}
-          {activeView === 'legal_privacy' && <LegalTextBody title="Privacy Policy" content="Data collection parameters within Apex Forge are zero-footprint structures. Your RPC endpoints, wallet signatures, and balance arrays are gathered dynamically from the Solana public mainnet telemetry for your local viewing only.\n\nWe do not utilize tracking cookies, and absolutely no client profiling or physical operational metrics are logged to remote centralized storage modules. Your private keys and seed phrases are generated locally and never leave your secure device environment.\n\nAny information shared in the public Trollbox or community channels is permanently recorded on decentralized ledgers or public databases. Exercise extreme caution and never share personally identifiable information (PII). Apex Forge engineers, admins, and support staff will never request your private keys or seed phrases under any circumstances." />}
-          {activeView === 'legal_livestream' && <LegalTextBody title="Livestream Policy" content="Broadcast arrays tied to token deployment profiles must maintain community standards. Explicit, toxic, or malicious deployment broadcasts will result in community moderation filter blacklists.\n\nMaintain system-wide integrity across all asset display layers. Any streams attempting to bypass these parameters via alternative routing networks will be severed." />}
-          {activeView === 'legal_fees' && <LegalTextBody title="Fee Schedule" content="Deployment parameters match the global V1 specification metrics:\n\n1. Initial Deploy Protocol Fee: Fixed at 0.05 SOL. This guarantees execution space on the blockchain and initializes the metadata parameters.\n\n2. Inbound/Outbound Liquidity Swaps Platform Fee: Variable balance matching exactly 0.5% of total transaction payload value to sustain the portal infrastructure." />}
-          
+
+          {activeView === 'faqs' && (
+            <div className="w-full animate-fadeIn duration-200 border-y border-white/5 bg-[#0A0A0A]">
+              {[
+                { q: "What is Apex Forge?", a: "Apex Forge is a platform that lets anyone easily launch and trade tokens." },
+                { q: "How much does it cost?", a: "It costs a flat 0.05 SOL network fee to launch a new token." },
+                { q: "Are my funds safe?", a: "Yes. The platform is non-custodial, meaning you hold your own funds at all times." }
+              ].map((item, idx) => (
+                <details key={idx} className="group border-b border-white/5 last:border-none">
+                  <summary className="w-full flex justify-between items-center p-4 cursor-pointer list-none">
+                    <span className="text-[15px] font-medium text-white">{item.q}</span>
+                    <span className="text-zinc-500 font-bold group-open:rotate-45 transition-transform">+</span>
+                  </summary>
+                  <div className="px-4 pb-4 text-[15px] text-zinc-400">
+                    {item.a}
+                  </div>
+                </details>
+              ))}
+            </div>
+          )}
+
         </div>
       </div>
     </div>
