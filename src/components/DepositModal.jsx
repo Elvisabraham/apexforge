@@ -27,8 +27,18 @@ export default function DepositModal({
   const activeFiatConfig = fiatProviders.find(p => p.id === selectedFiatProvider);
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-[#000000]/80 backdrop-blur-3xl animate-fadeIn overflow-y-auto">
-      <div className="bg-[#050505] border border-white/[0.05] rounded-[2.5rem] w-full max-w-[420px] p-6 sm:p-8 relative shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col h-auto max-h-[95vh] overflow-y-auto scrollbar-hide my-auto">
+    // 🚀 FIXED: Upgraded to a tap-to-close backdrop that anchors to the bottom on mobile
+    <div 
+      className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md animate-fadeIn" 
+      onClick={onClose}
+    >
+      {/* 🚀 FIXED: Bottom-sheet slide-up design for mobile, floating card for desktop */}
+      <div 
+        className="w-full max-w-[420px] bg-[#050505] border-t sm:border border-white/10 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 relative shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col h-auto max-h-[90vh] overflow-y-auto scrollbar-hide animate-slideUpNative" 
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* iOS-style drag handle for mobile */}
+        <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-6 sm:hidden"></div>
         
         {/* --- MODAL HEADER --- */}
         <div className="flex justify-between items-center mb-8 relative">
@@ -63,16 +73,16 @@ export default function DepositModal({
               <button 
                 key={method.id} 
                 onClick={() => { setDepositMethod(method.id); setDepositStep(2); }} 
-                className="w-full flex items-center gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/[0.02] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 text-left shadow-lg group"
+                className="w-full flex items-center gap-4 p-5 rounded-2xl bg-[#121212] border border-white/5 hover:bg-[#1A1A24] hover:border-white/10 transition-all duration-300 text-left shadow-lg group"
               >
-                <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center text-xl border border-white/5 group-hover:border-white/20 transition-all duration-300 shadow-inner shrink-0">
+                <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center text-xl border border-white/5 group-hover:border-[#089981]/50 transition-all duration-300 shadow-inner shrink-0 group-hover:shadow-[0_0_15px_rgba(8,153,129,0.2)]">
                   <span className="text-center drop-shadow-md">{method.icon}</span>
                 </div>
                 <div className="flex flex-col min-w-0 flex-1">
                   <span className="font-black text-sm text-zinc-200 group-hover:text-white tracking-wide transition-colors truncate">{method.label}</span>
                   <span className="text-[10px] text-zinc-500 font-semibold tracking-wide mt-1 truncate">{method.sub}</span>
                 </div>
-                <div className="ml-auto text-zinc-700 group-hover:text-white transition-colors duration-300 shrink-0">
+                <div className="ml-auto text-zinc-700 group-hover:text-[#089981] transition-colors duration-300 shrink-0">
                   <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </div>
               </button>
@@ -88,7 +98,7 @@ export default function DepositModal({
                 <div className="w-56 h-56 bg-white rounded-3xl p-4 flex flex-col items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.1)] mb-6 border-4 border-[#111]">
                   <div className="w-full h-full bg-zinc-50 rounded-2xl flex items-center justify-center border border-zinc-200 text-zinc-400 font-black uppercase tracking-[0.2em] text-[10px]">QR CODE</div>
                 </div>
-                <div className="w-full bg-white/[0.02] border border-white/[0.04] rounded-2xl p-4 flex flex-col gap-4 shadow-lg backdrop-blur-sm">
+                <div className="w-full bg-[#121212] border border-white/5 rounded-2xl p-4 flex flex-col gap-4 shadow-lg">
                   <div className="flex justify-between items-center text-zinc-500 text-[10px] font-black uppercase tracking-[0.15em]">
                     <span>Network</span>
                     <span className="text-[#089981]">Solana</span>
@@ -100,9 +110,9 @@ export default function DepositModal({
                     </div>
                     <button onClick={(e) => handleCopyAddress(e)} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:border-white/20 transition-all shrink-0">
                       {copied ? (
-                        <svg className="w-4 h-4 text-[#00FF66] shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        <svg className="w-4 h-4 text-[#00FF66] shrink-0" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                       ) : (
-                        <svg className="w-4 h-4 text-zinc-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                        <svg className="w-4 h-4 text-[#089981] shrink-0 group-hover:text-[#00FF66] transition-colors" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                       )}
                     </button>
                   </div>
@@ -111,10 +121,10 @@ export default function DepositModal({
               </div>
             ) : (
               <div className="flex flex-col">
-                <div className="relative mb-6">
-                  <button onClick={() => setShowFiatDropdown(!showFiatDropdown)} className="w-full bg-[#121212] border border-white/10 rounded-2xl p-4 flex items-center justify-between hover:border-[#089981]/50 transition-colors">
+                <div className="relative mb-6 z-50">
+                  <button onClick={() => setShowFiatDropdown(!showFiatDropdown)} className="w-full bg-[#121212] border border-white/5 rounded-2xl p-4 flex items-center justify-between hover:border-[#089981]/50 transition-colors shadow-lg">
                     <div className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-bold text-sm shrink-0">{activeFiatConfig?.icon}</span>
+                      <span className="w-8 h-8 rounded-full bg-black/50 flex items-center justify-center font-bold text-sm shrink-0 border border-white/5">{activeFiatConfig?.icon}</span>
                       <div className="flex flex-col items-start">
                         <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Provider</span>
                         <span className="text-sm font-bold text-white">{activeFiatConfig?.label}</span>
@@ -123,10 +133,10 @@ export default function DepositModal({
                     <svg className="w-5 h-5 text-zinc-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                   </button>
                   {showFiatDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-[#1A1A1A] border border-white/10 rounded-2xl overflow-hidden z-20 shadow-2xl">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-[#1A1A1A] border border-white/10 rounded-2xl overflow-hidden z-50 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
                       {fiatProviders.map(provider => (
                         <button key={provider.id} onClick={() => { setSelectedFiatProvider(provider.id); setShowFiatDropdown(false); }} className="w-full p-4 flex items-center gap-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 text-left">
-                          <span className="w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-sm shrink-0">{provider.icon}</span>
+                          <span className="w-8 h-8 rounded-full bg-black/50 border border-white/5 flex items-center justify-center text-sm shrink-0">{provider.icon}</span>
                           <span className="font-bold text-sm text-white">{provider.label}</span>
                         </button>
                       ))}
@@ -143,17 +153,17 @@ export default function DepositModal({
                     value={depositAmount} 
                     onChange={(e) => setDepositAmount(formatNumber(e.target.value.replace(/[^0-9.]/g, '')))}
                     placeholder="0" 
-                    className="bg-transparent text-5xl font-sans font-bold text-white text-center w-full outline-none mt-2 placeholder:text-zinc-600" 
+                    className="bg-transparent text-5xl font-sans font-black text-white text-center w-full outline-none mt-2 placeholder:text-zinc-800" 
                   />
                 </div>
 
                 <div className="grid grid-cols-4 gap-2 mb-8">
                   {[50, 100, 250, 500].map(amt => (
-                    <button key={amt} onClick={() => setDepositAmount(formatNumber(amt))} className="py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-xs font-black text-zinc-300 transition-colors">${amt}</button>
+                    <button key={amt} onClick={() => setDepositAmount(formatNumber(amt))} className="py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-[#089981]/20 hover:border-[#089981]/50 hover:text-[#089981] text-xs font-black text-zinc-400 transition-all shadow-sm">${amt}</button>
                   ))}
                 </div>
 
-                <button onClick={handleExecuteDeposit} className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${depositAmount && depositAmount !== '0' ? 'bg-[#00FF66] text-black hover:bg-[#00cc52] shadow-[0_0_20px_rgba(0,255,102,0.3)]' : 'bg-white/10 text-zinc-500 cursor-not-allowed'}`}>
+                <button onClick={handleExecuteDeposit} className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg ${depositAmount && depositAmount !== '0' ? 'bg-gradient-to-r from-[#00FF66] to-emerald-500 text-black hover:scale-[1.02] shadow-[0_0_20px_rgba(0,255,102,0.3)]' : 'bg-white/5 text-zinc-600 cursor-not-allowed'}`}>
                   Proceed to Payment
                 </button>
               </div>
