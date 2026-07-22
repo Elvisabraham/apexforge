@@ -4,12 +4,11 @@ export default function NotificationCenter({ isOpen, onClose, notifications = []
   const [activeCategory, setActiveCategory] = useState('ALL');
   const [isSettingsView, setIsSettingsView] = useState(false);
 
-  // 🚀 Notification On/Off Preferences (Now including New Token Deployments)
+  // 🚀 Pump.fun Style Settings: Launch Frequency & User Preferences
   const [preferences, setPreferences] = useState({
-    tokenDeployments: true, // 🚀 Forced / Default ON for launch momentum
-    graduations: true,      // Required / Forced ON
-    mentions: true,         // Required / Forced ON
-    security: true,         // Required / Forced ON
+    launchFrequency: 'light', // 'none' | 'light' (Curated/Graduations) | 'heavy' (Full Firehose)
+    mentions: true,         // Required social trigger
+    security: true,         // Required security trigger
     priceAlerts: false,     // User toggle
     stakingYield: false     // User toggle
   });
@@ -19,17 +18,28 @@ export default function NotificationCenter({ isOpen, onClose, notifications = []
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
-  }, []);
+  }, [], );
 
   if (!isOpen) return null;
 
   const togglePreference = (key) => {
-    // Keep critical security and core launch metrics locked to true
-    if (['tokenDeployments', 'graduations', 'mentions', 'security'].includes(key)) return;
     setPreferences(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const filteredNotifications = notifications.filter(notif => {
+  const setLaunchFrequency = (freq) => {
+    setPreferences(prev => ({ ...prev, launchFrequency: freq }));
+  };
+
+  // ⏳ 30-Day Auto-Purge Filter (EARN category items stay permanently)
+  const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+  const persistentNotifications = notifications.filter(notif => {
+    if (notif.category === 'EARN') return true; // Staking & Vault records stay forever
+    const itemTimestamp = notif.timestamp || Date.now();
+    return itemTimestamp > thirtyDaysAgo;
+  });
+
+  // Category filter
+  const filteredNotifications = persistentNotifications.filter(notif => {
     if (activeCategory === 'ALL') return true;
     return notif.category === activeCategory;
   });
@@ -73,33 +83,38 @@ export default function NotificationCenter({ isOpen, onClose, notifications = []
           /* --- SETTINGS TOGGLE PANEL --- */
           <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
             <div className="flex flex-col gap-1">
-              <h3 className="text-xs font-black text-white uppercase tracking-wider">Push Notification Preferences</h3>
-              <p className="text-[11px] text-zinc-400">Control what pops up on your device screen and notification center.</p>
+              <h3 className="text-xs font-black text-white uppercase tracking-wider">Push & Alert Preferences</h3>
+              <p className="text-[11px] text-zinc-400">Configure your alert feeds and platform notification volume.</p>
             </div>
 
-            <div className="flex flex-col gap-3">
-              {/* 🚀 NEW TOKEN DEPLOYMENTS (Added & Locked for Launch Momentum) */}
-              <div className="p-4 rounded-2xl bg-[#131722] border border-[#089981]/30 flex items-center justify-between">
-                <div className="flex flex-col pr-4">
+            <div className="flex flex-col gap-4">
+              {/* 🚀 LAUNCH FREQUENCY SELECTOR (Pump.fun Style) */}
+              <div className="p-4 rounded-2xl bg-[#131722] border border-[#089981]/30 flex flex-col gap-3">
+                <div className="flex flex-col">
                   <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-                    🚀 New Token Deployments <span className="text-[8px] bg-[#089981]/20 text-[#089981] px-1.5 py-0.2 rounded">Required</span>
+                    🚀 New Token Launch Alerts
                   </span>
-                  <span className="text-[10px] text-zinc-400 mt-0.5">Instant alerts when a new asset goes live on Forge.</span>
+                  <span className="text-[10px] text-zinc-400 mt-0.5">Control how many deployment pushes hit your device.</span>
                 </div>
-                <div className="w-10 h-6 bg-[#089981] rounded-full p-1 flex items-center justify-end cursor-not-allowed opacity-90">
-                  <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#131722] border border-[#089981]/30 flex items-center justify-between">
-                <div className="flex flex-col pr-4">
-                  <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-                    📈 Token Graduations <span className="text-[8px] bg-[#089981]/20 text-[#089981] px-1.5 py-0.2 rounded">Required</span>
-                  </span>
-                  <span className="text-[10px] text-zinc-400 mt-0.5">Alerts when tokens hit 100% and deploy to Raydium.</span>
-                </div>
-                <div className="w-10 h-6 bg-[#089981] rounded-full p-1 flex items-center justify-end cursor-not-allowed opacity-90">
-                  <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
+                
+                <div className="grid grid-cols-3 gap-2 bg-black/40 p-1 rounded-xl border border-white/5">
+                  {[
+                    { id: 'none', label: 'None' },
+                    { id: 'light', label: 'Light' },
+                    { id: 'heavy', label: 'Heavy' }
+                  ].map(tier => (
+                    <button
+                      key={tier.id}
+                      onClick={() => setLaunchFrequency(tier.id)}
+                      className={`py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                        preferences.launchFrequency === tier.id
+                          ? 'bg-[#089981] text-white shadow-sm'
+                          : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      {tier.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -147,7 +162,7 @@ export default function NotificationCenter({ isOpen, onClose, notifications = []
               >
                 <div className="flex flex-col pr-4">
                   <span className="text-xs font-black text-white uppercase tracking-wider">💰 Staking & Yield Harvests</span>
-                  <span className="text-[10px] text-zinc-400 mt-0.5">Rewards ready for claim in your vaults.</span>
+                  <span className="text-[10px] text-zinc-400 mt-0.5">Rewards ready for claim in your vaults (Permanent Log).</span>
                 </div>
                 <div className={`w-10 h-6 rounded-full p-1 flex items-center transition-colors ${preferences.stakingYield ? 'bg-[#089981] justify-end' : 'bg-zinc-800 justify-start'}`}>
                   <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
@@ -183,7 +198,7 @@ export default function NotificationCenter({ isOpen, onClose, notifications = []
               </div>
             </div>
 
-            {/* NOTIFICATION LIST (Persistent History) */}
+            {/* NOTIFICATION LIST (30-Day Auto Purge with Permanent Earn Retention) */}
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
               {filteredNotifications.length > 0 ? (
                 filteredNotifications.map((notif) => (
