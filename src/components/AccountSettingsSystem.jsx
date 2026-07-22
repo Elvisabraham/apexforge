@@ -402,8 +402,15 @@ export default function AccountSettingsSystem({
                 </div>
                 <div>
                   <label className="text-[10px] text-zinc-500 uppercase font-black tracking-widest pl-1">Bio Manifest</label>
-                  <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} maxLength={250} className="w-full h-24 bg-[#121212] border border-white/5 rounded-xl p-4 text-sm font-medium mt-1.5 text-white outline-none focus:border-[#089981]/50 transition-colors resize-none shadow-inner" />
-                  <div className="text-right text-[10px] text-zinc-500 font-bold mt-1 pr-1">{editBio.length} / 250</div>
+                  <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} maxLength={250} className="w-full h-24 bg-[#121212] border border-white/5 rounded-xl p-4 text-sm font-medium mt-1.5 text-white outline-none focus:border-[#089981]/50 transition-colors resize-none shadow-inner" placeholder="Tell the community about yourself..." />
+                  
+                  {/* APP STORE SAFETY COMPLIANCE DISCLAIMER */}
+                  <div className="flex justify-between items-start mt-2 px-1">
+                    <p className="text-[9px] font-medium text-zinc-500 max-w-[80%] leading-relaxed">
+                      By saving, you agree to our <button onClick={() => setActiveView('legal_terms')} className="text-[#089981] hover:underline">Terms of Service</button>. Harmful, explicit, or abusive content is strictly prohibited and will result in immediate account termination.
+                    </p>
+                    <div className="text-right text-[10px] text-zinc-500 font-bold shrink-0">{editBio.length} / 250</div>
+                  </div>
                 </div>
               </div>
 
