@@ -2,6 +2,16 @@ import React, { useState, useEffect } from 'react';
 
 export default function NotificationCenter({ isOpen, onClose, notifications = [], onMarkAsRead }) {
   const [activeCategory, setActiveCategory] = useState('ALL');
+  const [isSettingsView, setIsSettingsView] = useState(false);
+
+  // 🚀 Notification On/Off Preferences (Matching your iron-clad and user-choice rules)
+  const [preferences, setPreferences] = useState({
+    graduations: true,  // Iron-clad / Forced ON
+    mentions: true,     // Iron-clad / Forced ON
+    security: true,     // Iron-clad / Forced ON
+    priceAlerts: false, // User toggle
+    stakingYield: false // User toggle
+  });
 
   // Request browser native push permission on mount
   useEffect(() => {
@@ -12,7 +22,12 @@ export default function NotificationCenter({ isOpen, onClose, notifications = []
 
   if (!isOpen) return null;
 
-  // Filter notifications based on the selected category tab
+  const togglePreference = (key) => {
+    // Keep iron-clad critical alerts locked to true for safety/retention
+    if (['graduations', 'mentions', 'security'].includes(key)) return;
+    setPreferences(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
   const filteredNotifications = notifications.filter(notif => {
     if (activeCategory === 'ALL') return true;
     return notif.category === activeCategory;
@@ -27,76 +42,171 @@ export default function NotificationCenter({ isOpen, onClose, notifications = []
         <div className="p-5 flex justify-between items-center border-b border-white/5">
           <div className="flex items-center gap-2">
             <span className="text-xl">🔔</span>
-            <h2 className="text-xs font-black uppercase tracking-widest text-white">Notification Center</h2>
+            <h2 className="text-xs font-black uppercase tracking-widest text-white">
+              {isSettingsView ? 'Notification Settings' : 'Notification Center'}
+            </h2>
           </div>
-          <button 
-            onClick={onClose} 
-            className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors cursor-pointer"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* CATEGORY FILTER PILLS */}
-        <div className="px-4 py-3 border-b border-white/5 bg-[#121212]/50">
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
-            {[
-              { id: 'ALL', label: 'All' },
-              { id: 'ALERTS', label: 'Alerts' },
-              { id: 'SOCIAL', label: 'Social' },
-              { id: 'FORGE', label: 'Forge' },
-              { id: 'EARN', label: 'Earn' }
-            ].map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${
-                  activeCategory === cat.id
-                    ? 'bg-[#089981] text-white shadow-sm'
-                    : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
+          
+          <div className="flex items-center gap-2">
+            {/* SETTINGS GEAR TOGGLE */}
+            <button 
+              onClick={() => setIsSettingsView(!isSettingsView)}
+              className={`p-2 rounded-full transition-colors cursor-pointer ${
+                isSettingsView ? 'bg-[#089981] text-white' : 'bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white'
+              }`}
+              title="Notification Settings"
+            >
+              ⚙️
+            </button>
+            
+            <button 
+              onClick={onClose} 
+              className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            >
+              ✕
+            </button>
           </div>
         </div>
 
-        {/* NOTIFICATION LIST (Persistent History - No Clear All Wipe) */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-          {filteredNotifications.length > 0 ? (
-            filteredNotifications.map((notif) => (
-              <div 
-                key={notif.id} 
-                onClick={() => onMarkAsRead && onMarkAsRead(notif.id)}
-                className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
-                  notif.read 
-                    ? 'bg-black/30 border-white/5 opacity-60' 
-                    : 'bg-[#131722] border-[#089981]/30 shadow-[0_0_15px_rgba(8,153,129,0.05)] hover:border-[#089981]/60'
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[8px] bg-white/5 text-zinc-400 px-1.5 py-0.5 rounded font-black tracking-wider uppercase border border-white/5">
-                      {notif.category || 'SYSTEM'}
-                    </span>
-                    <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-                      {!notif.read && <span className="w-2 h-2 rounded-full bg-[#089981] animate-pulse"></span>}
-                      {notif.title}
-                    </span>
-                  </div>
-                  <span className="text-[9px] font-mono text-zinc-500">{notif.time}</span>
-                </div>
-                <p className="text-[11px] text-zinc-400 leading-relaxed font-medium">{notif.message}</p>
-              </div>
-            ))
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center py-12">
-              <span className="text-3xl mb-3 opacity-40">📭</span>
-              <span className="text-xs font-black text-zinc-500 uppercase tracking-widest">No notifications in this category</span>
+        {isSettingsView ? (
+          /* --- SETTINGS TOGGLE PANEL --- */
+          <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
+            <div className="flex flex-col gap-1">
+              <h3 className="text-xs font-black text-white uppercase tracking-wider">Push Notification Preferences</h3>
+              <p className="text-[11px] text-zinc-400">Control what pops up on your device screen and notification center.</p>
             </div>
-          )}
-        </div>
+
+            <div className="flex flex-col gap-3">
+              {/* Iron-Clad / Forced Toggles */}
+              <div className="p-4 rounded-2xl bg-[#131722] border border-[#089981]/30 flex items-center justify-between">
+                <div className="flex flex-col pr-4">
+                  <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                    🚀 Token Graduations <span className="text-[8px] bg-[#089981]/20 text-[#089981] px-1.5 py-0.2 rounded">Required</span>
+                  </span>
+                  <span className="text-[10px] text-zinc-400 mt-0.5">Alerts when tokens hit 100% and deploy to Raydium.</span>
+                </div>
+                <div className="w-10 h-6 bg-[#089981] rounded-full p-1 flex items-center justify-end cursor-not-allowed opacity-90">
+                  <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#131722] border border-[#089981]/30 flex items-center justify-between">
+                <div className="flex flex-col pr-4">
+                  <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                    💬 Chat Mentions & Tags <span className="text-[8px] bg-[#089981]/20 text-[#089981] px-1.5 py-0.2 rounded">Required</span>
+                  </span>
+                  <span className="text-[10px] text-zinc-400 mt-0.5">Alerts when someone tags you in trollbox chat.</span>
+                </div>
+                <div className="w-10 h-6 bg-[#089981] rounded-full p-1 flex items-center justify-end cursor-not-allowed opacity-90">
+                  <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#131722] border border-[#089981]/30 flex items-center justify-between">
+                <div className="flex flex-col pr-4">
+                  <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                    🛡️ Security & Wallet <span className="text-[8px] bg-[#089981]/20 text-[#089981] px-1.5 py-0.2 rounded">Required</span>
+                  </span>
+                  <span className="text-[10px] text-zinc-400 mt-0.5">Critical transaction and vault protection updates.</span>
+                </div>
+                <div className="w-10 h-6 bg-[#089981] rounded-full p-1 flex items-center justify-end cursor-not-allowed opacity-90">
+                  <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
+                </div>
+              </div>
+
+              {/* User-Choice Toggles */}
+              <div 
+                onClick={() => togglePreference('priceAlerts')}
+                className="p-4 rounded-2xl bg-black/30 border border-white/5 flex items-center justify-between cursor-pointer hover:border-white/10 transition-colors"
+              >
+                <div className="flex flex-col pr-4">
+                  <span className="text-xs font-black text-white uppercase tracking-wider">📈 Price & Volume Triggers</span>
+                  <span className="text-[10px] text-zinc-400 mt-0.5">General pumps and target price notifications.</span>
+                </div>
+                <div className={`w-10 h-6 rounded-full p-1 flex items-center transition-colors ${preferences.priceAlerts ? 'bg-[#089981] justify-end' : 'bg-zinc-800 justify-start'}`}>
+                  <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
+                </div>
+              </div>
+
+              <div 
+                onClick={() => togglePreference('stakingYield')}
+                className="p-4 rounded-2xl bg-black/30 border border-white/5 flex items-center justify-between cursor-pointer hover:border-white/10 transition-colors"
+              >
+                <div className="flex flex-col pr-4">
+                  <span className="text-xs font-black text-white uppercase tracking-wider">💰 Staking & Yield Harvests</span>
+                  <span className="text-[10px] text-zinc-400 mt-0.5">Rewards ready for claim in your vaults.</span>
+                </div>
+                <div className={`w-10 h-6 rounded-full p-1 flex items-center transition-colors ${preferences.stakingYield ? 'bg-[#089981] justify-end' : 'bg-zinc-800 justify-start'}`}>
+                  <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* --- NOTIFICATION FEED VIEW --- */
+          <>
+            {/* CATEGORY FILTER PILLS */}
+            <div className="px-4 py-3 border-b border-white/5 bg-[#121212]/50">
+              <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+                {[
+                  { id: 'ALL', label: 'All' },
+                  { id: 'ALERTS', label: 'Alerts' },
+                  { id: 'SOCIAL', label: 'Social' },
+                  { id: 'FORGE', label: 'Forge' },
+                  { id: 'EARN', label: 'Earn' }
+                ].map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${
+                      activeCategory === cat.id
+                        ? 'bg-[#089981] text-white shadow-sm'
+                        : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* NOTIFICATION LIST (Persistent History) */}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+              {filteredNotifications.length > 0 ? (
+                filteredNotifications.map((notif) => (
+                  <div 
+                    key={notif.id} 
+                    onClick={() => onMarkAsRead && onMarkAsRead(notif.id)}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
+                      notif.read 
+                        ? 'bg-black/30 border-white/5 opacity-60' 
+                        : 'bg-[#131722] border-[#089981]/30 shadow-[0_0_15px_rgba(8,153,129,0.05)] hover:border-[#089981]/60'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[8px] bg-white/5 text-zinc-400 px-1.5 py-0.5 rounded font-black tracking-wider uppercase border border-white/5">
+                          {notif.category || 'SYSTEM'}
+                        </span>
+                        <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                          {!notif.read && <span className="w-2 h-2 rounded-full bg-[#089981] animate-pulse"></span>}
+                          {notif.title}
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-mono text-zinc-500">{notif.time}</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400 leading-relaxed font-medium">{notif.message}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                  <span className="text-3xl mb-3 opacity-40">📭</span>
+                  <span className="text-xs font-black text-zinc-500 uppercase tracking-widest">No notifications in this category</span>
+                </div>
+              )}
+            </div>
+          </>
+        )}
         
       </div>
     </div>
