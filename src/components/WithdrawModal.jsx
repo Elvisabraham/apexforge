@@ -152,7 +152,7 @@ export default function WithdrawModal({
                 </div>
                 {/* 🚀 FIXED: Bulletproof Wrapper for Chevron */}
                 <div className="ml-auto text-zinc-700 group-hover:text-white transition-colors duration-300 shrink-0 w-6 h-6 flex items-center justify-center">
-                  <svg className="w-5 h-5 min-w-[20px] min-h-[20px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7-7" /></svg>
+                  <svg className="w-5 h-5 min-w-[20px] min-h-[20px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </div>
               </button>
             ))}
