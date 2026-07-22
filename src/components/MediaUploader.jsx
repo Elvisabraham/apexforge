@@ -3,9 +3,8 @@ import React, { useState, useRef } from 'react';
 export default function MediaUploader({ onMediaSelected, mediaType = 'image' }) {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [extractedThumbnail, setExtractedThumbnail] = useState(null);
-  const [uploadType, setUploadType] = useState(mediaType); // 'image' or 'video'
+  const [uploadType, setUploadType] = useState(mediaType);
   const fileInputRef = useRef(null);
-  const videoRef = useRef(null);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -14,50 +13,76 @@ export default function MediaUploader({ onMediaSelected, mediaType = 'image' }) 
     const isVideo = file.type.startsWith('video/');
     setUploadType(isVideo ? 'video' : 'image');
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target.result;
-      setPreviewUrl(result);
+    if (isVideo) {
+      // 🚀 CRITICAL FIX: Use Blob URL instead of Base64 to prevent localStorage crashes
+      const videoBlobUrl = URL.createObjectURL(file);
+      setPreviewUrl(videoBlobUrl);
 
-      if (isVideo) {
-        // Extract first frame as thumbnail for token logo
-        const videoElement = document.createElement('video');
-        videoElement.src = result;
-        videoElement.crossOrigin = 'anonymous';
-        videoElement.currentTime = 0.5; // grab frame at 0.5s
+      const videoElement = document.createElement('video');
+      videoElement.src = videoBlobUrl;
+      videoElement.muted = true;
+      videoElement.playsInline = true;
+      videoElement.crossOrigin = 'anonymous';
+      
+      // Wait for video data to load to grab a frame
+      videoElement.onloadeddata = () => {
+        videoElement.currentTime = 1.0; 
+      };
 
-        videoElement.onloadeddata = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = videoElement.videoWidth || 320;
-          canvas.height = videoElement.videoHeight || 320;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-          const thumbnailUrl = canvas.toDataURL('image/jpeg');
-          setExtractedThumbnail(thumbnailUrl);
+      videoElement.onseeked = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 300; // Small dimensions for localStorage safety
+        canvas.height = 300;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        
+        // Heavy compression for the static thumbnail
+        const safeThumbnailUrl = canvas.toDataURL('image/jpeg', 0.5);
+        setExtractedThumbnail(safeThumbnailUrl);
 
-          // Pass media back to parent form
-          if (onMediaSelected) {
-            onMediaSelected({
-              file,
-              previewUrl: result,
-              thumbnailUrl,
-              type: 'video'
-            });
-          }
-        };
-      } else {
-        setExtractedThumbnail(result);
         if (onMediaSelected) {
           onMediaSelected({
             file,
-            previewUrl: result,
-            thumbnailUrl: result,
-            type: 'image'
+            previewUrl: videoBlobUrl, // Tiny blob string (safe!)
+            thumbnailUrl: safeThumbnailUrl, // Safe compressed Base64
+            type: 'video'
           });
         }
-      }
-    };
-    reader.readAsDataURL(file);
+      };
+    } else {
+      // For images, we auto-compress them to keep localStorage happy
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target.result;
+        
+        const img = new Image();
+        img.src = result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 400;
+          const scaleSize = MAX_WIDTH / img.width;
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scaleSize;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          
+          const safeImageUrl = canvas.toDataURL('image/jpeg', 0.7);
+          
+          setPreviewUrl(safeImageUrl);
+          setExtractedThumbnail(safeImageUrl);
+
+          if (onMediaSelected) {
+            onMediaSelected({
+              file,
+              previewUrl: safeImageUrl,
+              thumbnailUrl: safeImageUrl,
+              type: 'image'
+            });
+          }
+        };
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -98,7 +123,6 @@ export default function MediaUploader({ onMediaSelected, mediaType = 'image' }) 
           </div>
         ) : (
           <div className="flex flex-col items-center text-center">
-            {/* 🚀 FIXED: Pristine Cloud Upload Icon */}
             <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 group-hover:text-[#089981] group-hover:border-[#089981]/40 transition-all mb-3 shadow-sm">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
