@@ -338,21 +338,22 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                     {connected ? (
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleCopyAddress(e); }}
-                        className="flex items-center gap-1.5 group/copy hover:bg-white/5 px-1.5 py-0.5 -ml-1.5 rounded-md transition-colors cursor-pointer max-w-full"
+                        className="flex items-center gap-1.5 group/copy hover:bg-white/5 py-1 px-2 -ml-2 rounded-lg transition-colors cursor-pointer w-fit max-w-full"
                         title="Copy Address"
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] shadow-[0_0_5px_#00FF66] animate-pulse shrink-0"></span>
-                        <span className="text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold truncate tracking-wider transition-colors">
+                        
+                        {/* 🚀 FIXED: Added min-w-0 so the text takes the hit if the screen gets too small, saving the icon! */}
+                        <span className="text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold truncate tracking-wider transition-colors min-w-0">
                           {shortAddress}
                         </span>
-                        {/* 🚀 FIXED: Copy icon protected by min-w-[12px] and shrink-0 */}
-                        <div className="shrink-0 flex items-center justify-center">
-                          {copied ? (
-                            <svg className="w-3 h-3 min-w-[12px] min-h-[12px] shrink-0 text-[#00FF66]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                          ) : (
-                            <svg className="w-3 h-3 min-w-[12px] min-h-[12px] shrink-0 text-zinc-600 group-hover/copy:text-[#089981] transition-colors" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                          )}
-                        </div>
+                        
+                        {/* 🚀 FIXED: Removed the buggy wrapper div and attached shrink-0 directly to the SVG */}
+                        {copied ? (
+                          <svg className="w-3.5 h-3.5 min-w-[14px] min-h-[14px] shrink-0 text-[#00FF66]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        ) : (
+                          <svg className="w-3.5 h-3.5 min-w-[14px] min-h-[14px] shrink-0 text-zinc-500 group-hover/copy:text-[#089981] transition-colors" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                        )}
                       </button>
                     ) : (
                       <div className="flex items-center gap-1 w-full min-w-0">
