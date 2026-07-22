@@ -174,7 +174,6 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
     setSwapReceiveAsset(temp);
   };
 
-  // 🚀 FIXED: Properly hooks into your main application settings via onOpenSettings prop
   const handleOpenSettings = () => {
     setShowWalletManager(false);
     setIsMenuOpen(false);
@@ -261,7 +260,6 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
     setActiveTab('activity');
   };
 
-  // 🚀 FIXED: Ignore input elements so it never double-types on Android
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!activeModal) return;
@@ -351,7 +349,6 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                           {shortAddress}
                         </span>
                         
-                        {/* 🚀 FIXED: The actual FULL drawings this time! */}
                         <div className="flex-none w-[14px] h-[14px] flex items-center justify-center">
                           {copied ? (
                             <svg className="w-full h-full text-[#00FF66]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
@@ -424,7 +421,6 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
               <div className="flex items-center justify-center gap-2 mb-3 z-10 w-full px-4">
                 <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] truncate shrink">Estimated Net Worth</p>
                 <button onClick={() => setIsMuted(!isMuted)} className="text-zinc-500 hover:text-white transition-colors shrink-0 flex items-center justify-center outline-none">
-                  {/* 🚀 FIXED: Premium Eye SVG protected by shrink-0 and min-width */}
                   {isMuted ? (
                     <svg className="w-[18px] h-[18px] min-w-[18px] min-h-[18px] shrink-0 text-zinc-500 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
                   ) : (
@@ -469,13 +465,18 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
               </div>
             </section>
 
+            {/* 🚀 UPGRADED TABS BAR */}
             <div ref={tabsRef} className="px-4 mb-4 scroll-mt-24">
-              <div className="flex bg-[#0A0A0A] border border-white/[0.04] p-1.5 rounded-2xl w-full max-w-[420px] mx-auto shadow-inner">
+              <div className="flex bg-[#121212] border border-white/5 p-1 rounded-2xl w-full max-w-[420px] mx-auto">
                 {['assets', 'activity', 'created'].map((tab) => (
                   <button 
                     key={tab}
                     onClick={() => setActiveTab(tab)} 
-                    className={`flex-1 py-3 text-xs font-black uppercase tracking-[0.15em] rounded-xl transition-all duration-300 ${activeTab === tab ? 'bg-[#089981] text-white shadow-[0_0_20px_rgba(8,153,129,0.3)]' : 'text-zinc-500 hover:text-zinc-200'}`}
+                    className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-[0.15em] rounded-xl transition-all duration-300 ${
+                      activeTab === tab 
+                        ? 'bg-[#089981] text-white shadow-[0_4px_12px_rgba(8,153,129,0.2)]' 
+                        : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
+                    }`}
                   >
                     {tab}
                   </button>
