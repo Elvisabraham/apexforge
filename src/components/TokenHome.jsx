@@ -8,13 +8,14 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const [isFavorited, setIsFavorited] = useState(false);
   const [isReported, setIsReported] = useState(false);
   
-  // Modals
+  // Modals & Filters
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [showAllTrades, setShowAllTrades] = useState(false);
+  const [tradeFilter, setTradeFilter] = useState('all'); // 'all' | 'buys' | 'sells' | 'whales'
   
   const [tradeMode, setTradeMode] = useState('buy');
   const [tradeAmount, setTradeAmount] = useState('');
@@ -70,17 +71,17 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     return 0;
   });
 
-  // Persistent Trades Logic
+  // Persistent Trades Logic with TxHashes & Whale tagging
   const [recentTrades, setRecentTrades] = useState(() => {
     const cachedTrades = localStorage.getItem(`${localCacheKey}_trades`);
     if (cachedTrades) return JSON.parse(cachedTrades);
     return [
-      { id: 1, type: 'sell', amountToken: '12.4M', amountSol: '0.85', price: `$${initialBasePrice.toFixed(7)}`, time: '28m ago', user: 'sold' },
-      { id: 2, type: 'buy', amountToken: '2.1M', amountSol: '0.15', price: `$${initialBasePrice.toFixed(7)}`, time: '31m ago', user: 'bought' },
-      { id: 3, type: 'buy', amountToken: '5.0M', amountSol: '0.35', price: `$${(initialBasePrice * 0.98).toFixed(7)}`, time: '45m ago', user: 'bought' },
-      { id: 4, type: 'sell', amountToken: '1.2M', amountSol: '0.08', price: `$${(initialBasePrice * 0.95).toFixed(7)}`, time: '1h ago', user: 'sold' },
-      { id: 5, type: 'buy', amountToken: '15.0M', amountSol: '1.10', price: `$${(initialBasePrice * 0.92).toFixed(7)}`, time: '2h ago', user: 'bought' },
-      { id: 6, type: 'buy', amountToken: '8.5M', amountSol: '0.60', price: `$${(initialBasePrice * 0.89).toFixed(7)}`, time: '3h ago', user: 'bought' },
+      { id: 1, type: 'buy', amountToken: '25.0M', amountSol: '1.85', price: `$${initialBasePrice.toFixed(7)}`, time: '5m ago', user: 'Whale_0x', txHash: '5K2a...9x1Z' },
+      { id: 2, type: 'sell', amountToken: '12.4M', amountSol: '0.85', price: `$${initialBasePrice.toFixed(7)}`, time: '28m ago', user: 'sold', txHash: '3F1b...8y2Y' },
+      { id: 3, type: 'buy', amountToken: '2.1M', amountSol: '0.15', price: `$${initialBasePrice.toFixed(7)}`, time: '31m ago', user: 'bought', txHash: '9L4c...1z3W' },
+      { id: 4, type: 'buy', amountToken: '18.0M', amountSol: '1.25', price: `$${(initialBasePrice * 0.98).toFixed(7)}`, time: '45m ago', user: 'AlphaTrader', txHash: '2M8d...4w5V' },
+      { id: 5, type: 'sell', amountToken: '1.2M', amountSol: '0.08', price: `$${(initialBasePrice * 0.95).toFixed(7)}`, time: '1h ago', user: 'sold', txHash: '7P3e...6v7U' },
+      { id: 6, type: 'buy', amountToken: '15.0M', amountSol: '1.10', price: `$${(initialBasePrice * 0.92).toFixed(7)}`, time: '2h ago', user: 'bought', txHash: '4R9f...2u8T' },
     ];
   });
 
@@ -118,9 +119,13 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
 
   const handleExecuteTrade = () => {
     const amount = parseFloat(tradeAmount);
+    if (!amount || amount <= 0) return;
     
+    // Generate mock transaction signature
+    const randomTxHash = `${Math.random().toString(36).substring(2, 6)}...${Math.random().toString(36).substring(2, 6)}`;
+
     if (tradeMode === 'buy') {
-      if (!amount || amount <= 0 || amount > userBalanceSol) return;
+      if (amount > userBalanceSol) return;
 
       const platformFeePercent = displayToken.isGraduated ? 0.005 : 0; 
       const feeAmount = amount * platformFeePercent;
@@ -146,7 +151,14 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       setCurveState({ price: newPrice, mcap: newMcap, progress: newProgress.toFixed(1), solInCurve: newSolInCurve });
 
       setRecentTrades(prev => [{
-        id: Date.now(), type: 'buy', amountToken: `${tokensReceived.toFixed(1)}M`, amountSol: netSolAmount.toFixed(2), price: `$${newPrice.toFixed(7)}`, time: 'Just now', user: 'You'
+        id: Date.now(), 
+        type: 'buy', 
+        amountToken: `${tokensReceived.toFixed(1)}M`, 
+        amountSol: netSolAmount.toFixed(2), 
+        price: `$${newPrice.toFixed(7)}`, 
+        time: 'Just now', 
+        user: 'You',
+        txHash: randomTxHash
       }, ...prev].slice(0, 50));
 
       if (displayToken.isGraduated) {
@@ -155,7 +167,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
 
     } else if (tradeMode === 'sell') {
       const tokenQuantity = amount * 1000000;
-      if (!amount || amount <= 0 || tokenQuantity > userTokenBalance) return;
+      if (tokenQuantity > userTokenBalance) return;
 
       const currentPrice = curveState.price;
       const grossSolReceived = (tokenQuantity * currentPrice);
@@ -181,7 +193,14 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       setCurveState({ price: newPrice, mcap: newMcap, progress: newProgress.toFixed(1), solInCurve: newSolInCurve });
 
       setRecentTrades(prev => [{
-        id: Date.now(), type: 'sell', amountToken: `${amount.toFixed(1)}M`, amountSol: netSolReceived.toFixed(2), price: `$${newPrice.toFixed(7)}`, time: 'Just now', user: 'You'
+        id: Date.now(), 
+        type: 'sell', 
+        amountToken: `${amount.toFixed(1)}M`, 
+        amountSol: netSolReceived.toFixed(2), 
+        price: `$${newPrice.toFixed(7)}`, 
+        time: 'Just now', 
+        user: 'You',
+        txHash: randomTxHash
       }, ...prev].slice(0, 50));
 
       if (displayToken.isGraduated) {
@@ -235,6 +254,17 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     }
   };
 
+  // Filtered trades generator
+  const getFilteredTrades = () => {
+    return recentTrades.filter(trade => {
+      const isWhale = parseFloat(trade.amountSol) >= 1.0;
+      if (tradeFilter === 'buys') return trade.type === 'buy';
+      if (tradeFilter === 'sells') return trade.type === 'sell';
+      if (tradeFilter === 'whales') return isWhale;
+      return true;
+    });
+  };
+
   useEffect(() => {
     if (!chartContainerRef.current) return;
     const showGrid = chartType === 'candle';
@@ -284,7 +314,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const formatLink = (url) => url.startsWith('http') ? url : `https://${url}`;
 
   return (
-    // 🚀 FIXED 1: Swapped `h-screen` for `h-[100dvh]` to account for dynamic mobile viewports
     <div className="flex flex-col w-full min-h-screen h-[100dvh] bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative">
       
       <style>{`
@@ -411,7 +440,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                 </div>
               </div>
               <div className="flex gap-3 w-full">
-                {/* 🚀 FIXED 2: Actionable Deposit & Alerts */}
                 <button onClick={() => setIsDepositOpen(true)} className="flex-1 py-3.5 rounded-xl border border-white/10 bg-[#1A1A24] hover:bg-white/10 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-colors shadow-sm">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> Deposit
                 </button>
@@ -461,7 +489,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
               </div>
             </div>
 
-            {/* RECENT TRADES */}
+            {/* 🚀 UPGRADED RECENT TRADES (WITH WHALE BADGES & ON-CHAIN EXPLORER LINK) */}
             <div className="flex flex-col w-full mt-4">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-black">Recent Trades</h2>
@@ -471,40 +499,57 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                 </div>
               </div>
               
-              <div className="flex flex-col">
-                {/* 🚀 FIXED 3: Hard limit the active view to 5 trades max */}
-                {recentTrades.slice(0, 5).map((trade, index) => (
-                  <div key={trade.id} className={`flex justify-between items-center py-3 ${index !== 4 && index !== recentTrades.length - 1 ? 'border-b border-white/[0.03]' : ''} animate-fadeIn`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${trade.type === 'buy' ? 'bg-[#089981]/10 text-[#089981]' : 'bg-[#F23645]/10 text-[#F23645]'}`}>
-                        {trade.type}
+              <div className="flex flex-col gap-2">
+                {recentTrades.slice(0, 5).map((trade) => {
+                  const isWhale = parseFloat(trade.amountSol) >= 1.0;
+                  return (
+                    <div key={trade.id} className={`flex justify-between items-center p-3 rounded-xl transition-all ${isWhale ? 'bg-gradient-to-r from-[#089981]/10 to-[#121212] border border-[#089981]/30 shadow-[0_0_15px_rgba(8,153,129,0.1)]' : 'bg-[#121212]/60 border border-white/[0.03]'}`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${trade.type === 'buy' ? 'bg-[#089981]/20 text-[#089981]' : 'bg-[#F23645]/20 text-[#F23645]'}`}>
+                          {trade.type}
+                        </div>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-[13px] text-white">
+                              {trade.user}
+                            </span>
+                            {trade.user === 'You' && <span className="bg-white/10 text-zinc-400 text-[8px] px-1 py-0.5 rounded font-black uppercase">Me</span>}
+                            {isWhale && <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[8px] px-1.5 py-0.5 rounded uppercase font-black tracking-wider">🐋 WHALE</span>}
+                          </div>
+                          <span className="text-[11px] font-mono text-[#787B86] mt-0.5">{trade.amountToken} TKN</span>
+                        </div>
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-[13px] text-white flex items-center gap-1.5">
-                          {trade.user} 
-                          {trade.user === 'You' && <span className="bg-white/10 text-zinc-400 text-[8px] px-1 py-0.5 rounded font-black uppercase">Me</span>}
-                        </span>
-                        <span className="text-[11px] font-mono text-[#787B86] mt-0.5">{trade.amountToken} TKN</span>
+                      
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-end">
+                          <span className="text-[12px] font-mono font-bold text-white">◎ {trade.amountSol}</span>
+                          <span className={`text-[10px] font-mono mt-0.5 ${trade.type === 'buy' ? 'text-[#089981]' : 'text-zinc-500'}`}>{trade.time}</span>
+                        </div>
+                        {/* On-Chain Explorer Verification Link */}
+                        <a 
+                          href={`https://solscan.io/tx/${trade.txHash || '5K2a'}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="p-1.5 text-zinc-500 hover:text-white bg-white/5 rounded-lg transition-colors shrink-0"
+                          title="Verify on Solscan"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        </a>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end">
-                      <span className="text-[12px] font-mono font-bold text-white">◎ {trade.amountSol}</span>
-                      <span className={`text-[10px] font-mono mt-0.5 ${trade.type === 'buy' ? 'text-[#089981]' : 'text-zinc-500'}`}>{trade.time}</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               
               {/* Expand Trades Button */}
               {recentTrades.length > 5 && (
-                <button onClick={() => setShowAllTrades(true)} className="w-full mt-2 py-3.5 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-zinc-400 transition-colors shadow-sm">
-                  View All {recentTrades.length} Trades
+                <button onClick={() => setShowAllTrades(true)} className="w-full mt-3 py-3.5 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-colors shadow-sm">
+                  View All {recentTrades.length} Trades & Filters
                 </button>
               )}
             </div>
 
             <div className="flex flex-col items-center gap-4 pt-8 border-t border-white/[0.05]">
-              {/* 🚀 FIXED 4: Require a reason to report to make it actionable */}
               <button onClick={() => setIsReportModalOpen(true)} className={`text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-1.5 py-2 px-4 rounded-full border ${isReported ? 'border-rose-500/50 text-rose-400 bg-rose-500/10' : 'border-white/10 text-zinc-500 hover:text-rose-400 hover:border-rose-500/30'}`}>
                 🚩 {isReported ? 'Flagged for Auditing' : 'Report Token'}
               </button>
@@ -517,39 +562,83 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
         </div>
       </div>
 
-      {/* --- ALL TRADES MODAL (LEDGER ROOM) --- */}
+      {/* --- 🚀 UPGRADED ALL TRADES MODAL (LEDGER ROOM WITH FILTERS) --- */}
       {showAllTrades && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="absolute inset-0" onClick={() => setShowAllTrades(false)}></div>
-          <div className="bg-[#050505] border-t border-white/10 rounded-t-3xl w-full h-[85vh] p-6 relative z-10 animate-slideUpNative flex flex-col">
-            <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
-              <h3 className="text-lg font-black text-white uppercase tracking-widest">Transaction Ledger</h3>
+          <div className="bg-[#050505] border-t border-white/10 rounded-t-3xl w-full max-w-xl h-[85vh] p-6 relative z-10 animate-slideUpNative flex flex-col">
+            
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4 border-b border-white/5 pb-4">
+              <div>
+                <h3 className="text-lg font-black text-white uppercase tracking-widest">Transaction Ledger</h3>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mt-0.5">Live On-Chain Telemetry</p>
+              </div>
               <button onClick={() => setShowAllTrades(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg></button>
             </div>
-            <div className="flex-1 overflow-y-auto no-scrollbar pb-6">
-              <div className="flex flex-col gap-2">
-                {recentTrades.map((trade) => (
-                  <div key={trade.id} className="bg-[#121212] border border-white/5 p-3 rounded-xl flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <div className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${trade.type === 'buy' ? 'bg-[#089981]/10 text-[#089981]' : 'bg-[#F23645]/10 text-[#F23645]'}`}>
-                        {trade.type}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-[13px] text-white flex items-center gap-1.5">
-                          {trade.user} 
-                          {trade.user === 'You' && <span className="bg-white/10 text-zinc-400 text-[8px] px-1 py-0.5 rounded font-black uppercase">Me</span>}
-                        </span>
-                        <span className="text-[11px] font-mono text-[#787B86] mt-0.5">{trade.amountToken} TKN</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <span className="text-[12px] font-mono font-bold text-white">◎ {trade.amountSol}</span>
-                      <span className={`text-[10px] font-mono mt-0.5 ${trade.type === 'buy' ? 'text-[#089981]' : 'text-zinc-500'}`}>{trade.time}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+
+            {/* 🚀 Filter Pills Bar */}
+            <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-1">
+              {[
+                { id: 'all', label: 'All Trades' },
+                { id: 'buys', label: '🟢 Buys Only' },
+                { id: 'sells', label: '🔴 Sells Only' },
+                { id: 'whales', label: '🐋 Whales (≥1 SOL)' },
+              ].map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setTradeFilter(f.id)}
+                  className={`px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0 border ${tradeFilter === f.id ? 'bg-[#089981] text-white border-[#089981]' : 'bg-[#121212] text-zinc-400 border-white/5 hover:text-white'}`}
+                >
+                  {f.label}
+                </button>
+              ))}
             </div>
+
+            {/* Scrollable Trades List */}
+            <div className="flex-1 overflow-y-auto no-scrollbar pb-6 space-y-2">
+              {getFilteredTrades().length === 0 ? (
+                <div className="text-center py-12 text-zinc-600 text-xs font-bold uppercase tracking-widest">No matching transactions found</div>
+              ) : (
+                getFilteredTrades().map((trade) => {
+                  const isWhale = parseFloat(trade.amountSol) >= 1.0;
+                  return (
+                    <div key={trade.id} className={`bg-[#121212] border p-3 rounded-xl flex justify-between items-center ${isWhale ? 'border-amber-500/30 bg-amber-500/5' : 'border-white/5'}`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${trade.type === 'buy' ? 'bg-[#089981]/20 text-[#089981]' : 'bg-[#F23645]/20 text-[#F23645]'}`}>
+                          {trade.type}
+                        </div>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-[13px] text-white">{trade.user}</span>
+                            {trade.user === 'You' && <span className="bg-white/10 text-zinc-400 text-[8px] px-1 py-0.5 rounded font-black uppercase">Me</span>}
+                            {isWhale && <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[8px] px-1.5 py-0.5 rounded uppercase font-black tracking-wider">🐋 WHALE</span>}
+                          </div>
+                          <span className="text-[11px] font-mono text-[#787B86] mt-0.5">{trade.amountToken} TKN</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-end">
+                          <span className="text-[12px] font-mono font-bold text-white">◎ {trade.amountSol}</span>
+                          <span className={`text-[10px] font-mono mt-0.5 ${trade.type === 'buy' ? 'text-[#089981]' : 'text-zinc-500'}`}>{trade.time}</span>
+                        </div>
+                        <a 
+                          href={`https://solscan.io/tx/${trade.txHash || '5K2a'}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="p-1.5 text-zinc-500 hover:text-white bg-white/5 rounded-lg transition-colors shrink-0"
+                          title="Verify on Solscan"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
           </div>
         </div>
       )}
