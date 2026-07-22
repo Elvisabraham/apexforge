@@ -319,9 +319,14 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
         {/* --- HEADER --- */}
         <header className="flex-none z-40 bg-[#030303]/90 backdrop-blur-3xl px-4 sm:px-6 py-3 border-b border-white/[0.02] flex items-center justify-between sticky top-0 relative overflow-hidden">
           
-          {/* LEFT: Profile & Address (Fades out smoothly on scroll) */}
-          <div className={`flex items-center min-w-0 z-10 max-w-[65%] sm:max-w-[50%] transition-all duration-300 ${isScrolled ? 'opacity-0 -translate-y-2 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
-            <div onClick={(e) => { e.stopPropagation(); setShowWalletManager(true); }} className="flex items-center gap-2 sm:gap-3 cursor-pointer group w-full min-w-0">
+          {/* LEFT: Profile (When at top) OR Balance (When scrolled) */}
+          <div className="flex items-center min-w-0 z-10 flex-1 relative h-10">
+            
+            {/* 1. Profile View (Fades out on scroll) */}
+            <div 
+              onClick={(e) => { e.stopPropagation(); setShowWalletManager(true); }} 
+              className={`absolute inset-0 flex items-center gap-3 cursor-pointer group transition-all duration-300 ${isScrolled ? 'opacity-0 -translate-y-2 pointer-events-none' : 'opacity-100 translate-y-0'}`}
+            >
                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-white/5 overflow-hidden bg-[#121212] flex items-center justify-center shadow-inner group-hover:border-[#089981]/50 transition-colors shrink-0">
                  {displayAvatar ? (
                    <img src={displayAvatar} alt="Profile" className="w-full h-full object-cover" />
@@ -330,47 +335,27 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
                  )}
                </div>
                
-               <div className="flex flex-col min-w-0 justify-center flex-1">
+               <div className="flex flex-col min-w-0 justify-center">
                   <span className="text-[13px] sm:text-sm font-black text-white tracking-wide truncate group-hover:text-[#089981] transition-colors leading-tight">
                     {displayUsername}
                   </span>
-                  
-                  <div className="flex items-center mt-0.5 w-full min-w-0">
-                    {connected ? (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleCopyAddress(e); }}
-                        className="flex items-center gap-1.5 group/copy hover:bg-white/5 py-1 pr-2 -ml-1 rounded-lg transition-colors cursor-pointer max-w-full"
-                        title="Copy Address"
-                      >
-                        {/* 🚀 FIXED: Removed the pulsing green light entirely */}
-                        <span className="text-[10px] text-zinc-400 group-hover/copy:text-white font-mono font-bold truncate tracking-wider transition-colors min-w-0">
-                          {shortAddress}
-                        </span>
-                        {copied ? (
-                          <svg className="w-3.5 h-3.5 shrink-0 text-[#00FF66]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        ) : (
-                          <svg className="w-3.5 h-3.5 shrink-0 text-zinc-500 group-hover/copy:text-[#089981] transition-colors" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                        )}
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-1 w-full min-w-0 mt-1">
-                        <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest truncate min-w-0">Disconnected</span>
-                      </div>
-                    )}
-                  </div>
+                  <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">
+                    {connected ? 'Connected' : 'Disconnected'}
+                  </span>
                </div>
             </div>
-          </div>
 
-          {/* CENTER: Balance (Fades in smoothly on scroll) */}
-          <div className="absolute inset-x-28 top-0 bottom-0 flex justify-center items-center pointer-events-none z-0">
-            <div className={`transition-all duration-300 transform w-full flex justify-center ${isScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-              <span className="text-[15px] sm:text-base font-black text-white tracking-tight truncate block text-center w-full">{isMuted ? '••••••' : displayNetWorth}</span>
+            {/* 2. Scrolled Balance View (Fades in on left where avatar was) */}
+            <div className={`absolute inset-0 flex items-center transition-all duration-300 ${isScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
+              <span className="text-lg sm:text-xl font-black text-white tracking-tight truncate">
+                {isMuted ? '••••••' : displayNetWorth}
+              </span>
             </div>
+
           </div>
 
           {/* RIGHT: Menu Button */}
-          <div className="flex items-center justify-end z-10 shrink-0 w-12">
+          <div className="flex items-center justify-end z-10 shrink-0 w-12 ml-4">
             <button 
               onClick={(e) => { e.stopPropagation(); setIsMenuOpen(true); }}
               className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-zinc-400 hover:text-white transition-all shadow-md group relative cursor-pointer"
