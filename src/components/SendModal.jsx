@@ -90,9 +90,20 @@ export default function SendModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-[#000000]/80 backdrop-blur-3xl animate-fadeIn overflow-y-auto">
-      <div className="bg-[#050505] border border-white/[0.05] rounded-[2.5rem] w-full max-w-[420px] p-6 sm:p-8 relative shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col h-auto max-h-[95vh] overflow-y-auto scrollbar-hide my-auto">
+    // 🚀 FIXED: Upgraded to a tap-to-close backdrop that anchors to the bottom on mobile
+    <div 
+      className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md animate-fadeIn"
+      onClick={handleClose}
+    >
+      {/* 🚀 FIXED: Bottom-sheet slide-up design for mobile, floating card for desktop */}
+      <div 
+        className="w-full max-w-[420px] bg-[#050505] border-t sm:border border-white/10 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 relative shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col h-auto max-h-[90vh] overflow-y-auto scrollbar-hide animate-slideUpNative"
+        onClick={(e) => e.stopPropagation()}
+      >
         
+        {/* iOS-style drag handle for mobile */}
+        <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-6 sm:hidden"></div>
+
         {/* --- MODAL HEADER --- */}
         <div className="flex justify-between items-center mb-6 relative">
           <div className="w-9 shrink-0"></div>
@@ -114,7 +125,7 @@ export default function SendModal({
         {/* --- 🎥 CAMERA SCANNER OVERLAY VIEW --- */}
         {isScanning ? (
           <div className="flex flex-col items-center animate-fadeIn">
-            <div className="w-full bg-[#111] rounded-3xl p-3 border border-white/10 relative overflow-hidden flex flex-col items-center">
+            <div className="w-full bg-[#121212] rounded-3xl p-3 border border-white/5 shadow-lg relative overflow-hidden flex flex-col items-center">
               <div id="qr-reader" className="w-full rounded-2xl overflow-hidden"></div>
               
               {cameraError && (
@@ -124,7 +135,7 @@ export default function SendModal({
 
             <button 
               onClick={stopScanner}
-              className="mt-4 py-3 px-6 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-black uppercase tracking-widest text-zinc-300 transition-colors"
+              className="mt-6 py-3 px-6 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-black uppercase tracking-widest text-zinc-300 transition-colors shadow-sm"
             >
               Cancel Camera Scan
             </button>
@@ -134,14 +145,14 @@ export default function SendModal({
           <div className="flex flex-col animate-fadeIn h-full">
             
             {/* Recipient Address Input Block with Camera Trigger */}
-            <div className="w-full bg-[#121212] border border-white/10 rounded-2xl p-4 flex flex-col gap-1 mb-4 focus-within:border-[#089981]/50 transition-colors">
+            <div className="w-full bg-[#121212] border border-white/5 shadow-lg rounded-2xl p-4 flex flex-col gap-1 mb-4 focus-within:border-[#089981]/50 transition-colors">
               <div className="flex justify-between items-center mb-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">To Address</span>
                 
                 {/* 📷 QR CAMERA SCAN BUTTON */}
                 <button 
                   onClick={startScanner}
-                  className="flex items-center gap-1.5 text-[#089981] hover:text-emerald-400 text-[10px] font-black uppercase tracking-wider bg-[#089981]/10 px-2 py-1 rounded-lg transition-colors shrink-0"
+                  className="flex items-center gap-1.5 text-[#089981] hover:text-[#00FF66] text-[10px] font-black uppercase tracking-wider bg-[#089981]/10 px-2 py-1.5 rounded-lg border border-[#089981]/20 transition-colors shrink-0"
                 >
                   <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h3.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0113.07 4h1.86a2 2 0 011.664.89l.812 1.22A2 2 0 0019.07 7H21a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -156,12 +167,12 @@ export default function SendModal({
                 value={sendAddress} 
                 onChange={(e) => setSendAddress(e.target.value)} 
                 placeholder="Solana Address" 
-                className="bg-transparent text-sm font-mono font-bold text-white outline-none w-full placeholder:text-zinc-700" 
+                className="bg-transparent text-sm font-mono font-bold text-white outline-none w-full placeholder:text-zinc-700 mt-1" 
               />
             </div>
 
             {/* Amount Display with Mobile-friendly Typing */}
-            <div className="text-center mb-6 mt-2">
+            <div className="text-center mb-6 mt-4">
               <div className="flex justify-center items-center gap-2">
                 <input 
                   type="text" 
@@ -169,9 +180,9 @@ export default function SendModal({
                   value={sendAmount} 
                   onChange={(e) => setSendAmount(formatNumber(e.target.value.replace(/[^0-9.]/g, '')))}
                   placeholder="0" 
-                  className="bg-transparent text-5xl font-sans font-bold text-white text-center w-full max-w-[200px] outline-none placeholder:text-zinc-600" 
+                  className="bg-transparent text-5xl font-sans font-black text-white text-center w-full max-w-[200px] outline-none placeholder:text-zinc-800" 
                 />
-                <span className="text-xl font-bold text-zinc-500 mt-2">SOL</span>
+                <span className="text-xl font-black text-zinc-500 mt-2">SOL</span>
               </div>
               <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mt-4">
                 Balance: {formatBalance(solBalance)} SOL
@@ -184,7 +195,7 @@ export default function SendModal({
                 <button 
                   key={pct} 
                   onClick={() => handleCryptoPercentage(pct, true)} 
-                  className="py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-xs font-black text-zinc-300 transition-colors"
+                  className="py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-[#089981]/20 hover:border-[#089981]/50 hover:text-[#089981] text-xs font-black text-zinc-400 transition-all shadow-sm"
                 >
                   {pct}
                 </button>
@@ -194,10 +205,10 @@ export default function SendModal({
             {/* Execute Button */}
             <button 
               onClick={handleExecuteSend} 
-              className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all mt-auto ${
+              className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg mt-auto ${
                 sendAmount && sendAmount !== '0' && sendAddress.length > 10 
-                  ? 'bg-[#089981] text-white hover:bg-emerald-500 shadow-[0_0_20px_rgba(8,153,129,0.3)]' 
-                  : 'bg-white/10 text-zinc-500 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-[#089981] to-emerald-500 text-white hover:scale-[1.02] shadow-[0_0_20px_rgba(8,153,129,0.3)]' 
+                  : 'bg-white/5 text-zinc-600 cursor-not-allowed'
               }`}
             >
               Confirm Send
