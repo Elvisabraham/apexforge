@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createChart, CandlestickSeries, AreaSeries } from 'lightweight-charts';
 
-export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat }) {
+export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
   const chartContainerRef = useRef(null);
   const [chartTimeframe, setChartTimeframe] = useState('1d');
   const [chartType, setChartType] = useState('area'); 
