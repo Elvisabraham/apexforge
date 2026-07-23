@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-// Language Dataset Matrix
+// Full 30 Language Dataset Matrix
 const V1_POPULAR_LOCALES = [
   { code: 'en', flag: 'US', native: 'English', english: 'English' },
   { code: 'es', flag: 'ES', native: 'Español', english: 'Spanish' },
@@ -15,7 +15,23 @@ const V1_POPULAR_LOCALES = [
   { code: 'ko', flag: 'KR', native: '한국어', english: 'Korean' },
   { code: 'ar', flag: 'SA', native: 'العربية', english: 'Arabic' },
   { code: 'tr', flag: 'TR', native: 'Türkçe', english: 'Turkish' },
-  { code: 'hi', flag: 'IN', native: 'हिन्दी', english: 'Hindi' }
+  { code: 'hi', flag: 'IN', native: 'हिन्दी', english: 'Hindi' },
+  { code: 'pl', flag: 'PL', native: 'Polski', english: 'Polish' },
+  { code: 'sv', flag: 'SE', native: 'Svenska', english: 'Swedish' },
+  { code: 'no', flag: 'NO', native: 'Norsk', english: 'Norwegian' },
+  { code: 'da', flag: 'DK', native: 'Dansk', english: 'Danish' },
+  { code: 'fi', flag: 'FI', native: 'Suomi', english: 'Finnish' },
+  { code: 'el', flag: 'GR', native: 'Ελληνικά', english: 'Greek' },
+  { code: 'hu', flag: 'HU', native: 'Magyar', english: 'Hungarian' },
+  { code: 'cs', flag: 'CZ', native: 'Čeština', english: 'Czech' },
+  { code: 'ro', flag: 'RO', native: 'Română', english: 'Romanian' },
+  { code: 'vi', flag: 'VN', native: 'Tiếng Việt', english: 'Vietnamese' },
+  { code: 'id', flag: 'ID', native: 'Bahasa Indonesia', english: 'Indonesian' },
+  { code: 'th', flag: 'TH', native: 'ไทย', english: 'Thai' },
+  { code: 'he', flag: 'IL', native: 'עברית', english: 'Hebrew' },
+  { code: 'uk', flag: 'UA', native: 'Українська', english: 'Ukrainian' },
+  { code: 'fil', flag: 'PH', native: 'Filipino', english: 'Filipino' },
+  { code: 'ms', flag: 'MY', native: 'Bahasa Melayu', english: 'Malay' }
 ];
 
 export default function AccountSettingsSystem({ 
@@ -41,7 +57,9 @@ export default function AccountSettingsSystem({
   // Global App Configurations
   const [appLanguage, setAppLanguage] = useState('English');
   const [appearanceMode, setAppearanceMode] = useState('Dark');
-  
+  const [updateStatus, setUpdateStatus] = useState('v2.4.0 (Latest)');
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+
   // Profile & Wallet State
   const [editUsername, setEditUsername] = useState(userProfile?.username || '@ElvisVision');
   const [editBio, setEditBio] = useState(userProfile?.bio || 'Independent Platform Architect & Web3 Developer.');
@@ -51,7 +69,7 @@ export default function AccountSettingsSystem({
     { username: 'turbosharkpious', address: 'FihWW...fgskM', balance: '$0.07', avatar: '🦈' }
   ];
 
-  // Security & Alerts State
+  // Security, Alerts & Copy States
   const [biometricAuth, setBiometricAuth] = useState(true);
   const [cloudBackupActive, setCloudBackupActive] = useState(false);
   const [launchFrequency, setLaunchFrequency] = useState('light'); 
@@ -59,6 +77,9 @@ export default function AccountSettingsSystem({
   const [securityAlert, setSecurityAlert] = useState(true); 
   const [priceAlerts, setPriceAlerts] = useState(false);
   const [stakingYieldAlerts, setStakingYieldAlerts] = useState(true);
+  
+  const [copiedKey, setCopiedKey] = useState(false);
+  const [copiedSeed, setCopiedSeed] = useState(false);
   
   // Trading Settings
   const [routingMode, setRoutingMode] = useState('smart');
@@ -96,6 +117,15 @@ export default function AccountSettingsSystem({
     }
   };
 
+  const handleCheckUpdate = () => {
+    setIsCheckingUpdate(true);
+    setTimeout(() => {
+      setIsCheckingUpdate(false);
+      setUpdateStatus('v2.4.0 (Latest Version)');
+      alert("Apex Forge is completely up to date!");
+    }, 1200);
+  };
+
   const handleSendSupport = (textToSend) => {
     if (!textToSend.trim()) return;
     const userMsgId = Date.now();
@@ -103,8 +133,19 @@ export default function AccountSettingsSystem({
     setSupportMessages(prev => [...prev, { id: userMsgId, sender: 'You', text: textToSend, isAgent: false, time: timeNow }]);
     setSupportInput('');
     setTimeout(() => {
-      setSupportMessages(prev => [...prev, { id: Date.now() + 1, sender: 'Apex Support', text: "Thanks for reaching out. An agent is reviewing your account and will be with you shortly.", isAgent: true, time: timeNow }]);
+      setSupportMessages(prev => [...prev, { id: Date.now() + 1, sender: 'Apex Support', text: "Thanks for reaching out. An agent is reviewing your request and will respond shortly.", isAgent: true, time: timeNow }]);
     }, 1000);
+  };
+
+  const copyToClipboard = (text, type) => {
+    navigator.clipboard.writeText(text);
+    if (type === 'key') {
+      setCopiedKey(true);
+      setTimeout(() => setCopiedKey(false), 2000);
+    } else {
+      setCopiedSeed(true);
+      setTimeout(() => setCopiedSeed(false), 2000);
+    }
   };
 
   const handleBackNavigation = () => {
@@ -141,14 +182,14 @@ export default function AccountSettingsSystem({
   // --- NATIVE APP COMPONENTS ---
   function MenuItem({ icon, label, value, onClick }) {
     return (
-      <button onClick={onClick} className="w-full flex items-center justify-between py-4 px-4 bg-[#0A0A0A] hover:bg-[#121212] transition-colors border-b border-white/5 last:border-none">
+      <button onClick={onClick} className="w-full flex items-center justify-between py-4 px-4 bg-[#0A0A0A] hover:bg-[#121212] transition-colors border-b border-white/5 last:border-none group">
         <div className="flex items-center space-x-3">
           <span className="text-xl w-6 flex justify-center text-[#089981]">{icon}</span>
-          <span className="font-medium text-[15px] text-white">{label}</span>
+          <span className="font-bold text-[15px] text-white">{label}</span>
         </div>
         <div className="flex items-center space-x-2">
-          {value && <span className="text-sm text-zinc-500">{value}</span>}
-          <span className="text-zinc-500 text-lg leading-none">›</span>
+          {value && <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider">{value}</span>}
+          <span className="text-zinc-500 text-lg leading-none group-hover:text-[#089981] transition-colors">›</span>
         </div>
       </button>
     );
@@ -158,7 +199,7 @@ export default function AccountSettingsSystem({
     return (
       <div onClick={locked ? null : onToggle} className={`flex items-center justify-between p-4 bg-[#0A0A0A] border-b border-white/5 last:border-none ${locked ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:bg-[#121212] transition-colors'}`}>
         <div className="flex-1 pr-4 text-left">
-          <p className="text-[15px] font-medium text-white flex items-center gap-2">
+          <p className="text-[15px] font-bold text-white flex items-center gap-2">
             {label}
             {locked && <span className="text-[10px] bg-white/10 text-zinc-400 px-1.5 py-0.5 rounded uppercase font-bold">Required</span>}
           </p>
@@ -178,7 +219,7 @@ export default function AccountSettingsSystem({
       {/* --- HEADER --- */}
       <header className="flex-none z-50 bg-[#000000] pt-4 pb-3 px-4 border-b border-white/10 flex items-center justify-between sticky top-0">
         <div className="flex items-center gap-2">
-          <button onClick={handleBackNavigation} className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors active:scale-95">
+          <button onClick={handleBackNavigation} className="p-2 -ml-2 text-white hover:text-[#089981] hover:bg-white/10 rounded-full transition-colors active:scale-95">
             {activeView === normalizedInitView ? (
               <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             ) : (
@@ -263,7 +304,7 @@ export default function AccountSettingsSystem({
             <div className="w-full animate-fadeIn duration-200">
               <div className="px-4 py-3"><span className="text-xs font-bold text-zinc-500 uppercase">Account</span></div>
               <div className="border-y border-white/5 bg-[#0A0A0A]">
-                <MenuItem icon="👤" label="Profile Data" onClick={() => setActiveView('editProfile')} />
+                <MenuItem icon="👤" label="Profile" onClick={() => setActiveView('editProfile')} />
                 <MenuItem icon="🛡️" label="Security" onClick={() => setActiveView('security')} />
               </div>
 
@@ -301,13 +342,48 @@ export default function AccountSettingsSystem({
                   <a href="#" className="text-zinc-500 hover:text-white transition-colors"><svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.892-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></a>
                   <a href="#" className="text-zinc-500 hover:text-white transition-colors"><svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg></a>
                 </div>
-                <p className="text-xs text-zinc-600">Apex Forge App v2.4</p>
+                
+                <button onClick={handleCheckUpdate} className="text-xs text-zinc-500 hover:text-[#089981] font-mono transition-colors">
+                  {isCheckingUpdate ? 'Checking for updates...' : updateStatus}
+                </button>
               </div>
             </div>
           )}
 
           {/* ==================================================== */}
-          {/* VIEW: SECURITY */}
+          {/* VIEW: EDIT PROFILE (WEB3 PURE - NO EMAIL) */}
+          {/* ==================================================== */}
+          {activeView === 'editProfile' && (
+            <div className="w-full animate-fadeIn duration-200">
+              <div className="p-6 flex flex-col items-center justify-center border-b border-white/5 bg-[#0A0A0A]">
+                <div className="w-24 h-24 bg-black rounded-full flex items-center justify-center overflow-hidden relative cursor-pointer mb-2 border border-white/10 group">
+                  <input type="file" accept="image/*" onChange={handleAvatarChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
+                  {editAvatar ? <img src={editAvatar} alt="Preview" className="w-full h-full object-cover z-10" /> : <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${editUsername}`} alt="Preview" className="w-full h-full object-cover z-10" />}
+                  <div className="absolute inset-0 bg-black/60 hidden group-hover:flex items-center justify-center text-xs font-bold text-white z-10 pointer-events-none transition-all">Change</div>
+                </div>
+                <span className="text-sm text-[#089981] font-medium">Change Photo</span>
+              </div>
+
+              <div className="p-4 space-y-4">
+                <div>
+                  <label className="text-sm text-zinc-400 ml-1">Username</label>
+                  <input type="text" value={editUsername} onChange={(e) => setEditUsername(e.target.value)} className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] outline-none mt-1 focus:border-[#089981] transition-colors font-bold" />
+                </div>
+                <div>
+                  <label className="text-sm text-zinc-400 ml-1">Bio</label>
+                  <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} maxLength={250} className="w-full h-28 bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] outline-none mt-1 resize-none focus:border-[#089981] transition-colors leading-relaxed" placeholder="Write something about yourself..." />
+                  <div className="text-right text-xs text-zinc-500 mt-1">{editBio.length}/250</div>
+                </div>
+              </div>
+
+              <div className="p-4 mt-2 space-y-3">
+                <button onClick={handleSaveProfile} className="w-full bg-[#089981] text-white font-bold text-[15px] py-4 rounded-xl transition-colors hover:bg-[#06806b]">Save Profile</button>
+              </div>
+            </div>
+          )}
+
+          {/* ==================================================== */}
+          {/* VIEW: SECURITY & EXPORTING (WITH COPY BUTTONS) */}
           {/* ==================================================== */}
           {activeView === 'security' && (
             <div className="w-full animate-fadeIn duration-200">
@@ -330,9 +406,6 @@ export default function AccountSettingsSystem({
             </div>
           )}
 
-          {/* ==================================================== */}
-          {/* VIEW: EXPORT WARNING / REVEAL */}
-          {/* ==================================================== */}
           {activeView === 'export_warning' && (
             <div className="w-full animate-fadeIn duration-200 p-6 flex flex-col items-center text-center">
               <div className="text-amber-500 text-5xl mb-4">⚠️</div>
@@ -351,54 +424,30 @@ export default function AccountSettingsSystem({
               
               <div className="space-y-6">
                 <div>
-                  <p className="text-sm font-bold text-zinc-400 mb-2">Private Key</p>
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-sm font-bold text-zinc-400">Private Key</p>
+                    <button onClick={() => copyToClipboard('4f7a93bd2e1f4c8b9a0e1f2c3d4e5f6a7b8c9d0', 'key')} className="text-[#089981] hover:text-white text-xs font-bold uppercase tracking-wider transition-colors">
+                      {copiedKey ? '✓ Copied' : 'Copy'}
+                    </button>
+                  </div>
                   <div className="bg-[#0A0A0A] border border-white/10 p-4 rounded-xl text-sm font-mono text-white break-all select-all">
-                    4f7a93b...d2e1f4c8b9a0e1f2c3d4e5f6a7b8c9d0
+                    4f7a93bd2e1f4c8b9a0e1f2c3d4e5f6a7b8c9d0
                   </div>
                 </div>
+
                 <div>
-                  <p className="text-sm font-bold text-zinc-400 mb-2">Seed Phrase</p>
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-sm font-bold text-zinc-400">Seed Phrase</p>
+                    <button onClick={() => copyToClipboard('alpha bravo charlie delta echo foxtrot golf hotel india juliet kilo lima', 'seed')} className="text-[#089981] hover:text-white text-xs font-bold uppercase tracking-wider transition-colors">
+                      {copiedSeed ? '✓ Copied' : 'Copy'}
+                    </button>
+                  </div>
                   <div className="bg-[#0A0A0A] border border-white/10 p-4 rounded-xl text-sm font-mono text-white leading-loose select-all">
                     alpha bravo charlie delta echo foxtrot golf hotel india juliet kilo lima
                   </div>
                 </div>
               </div>
               <button onClick={() => setActiveView('security')} className="w-full bg-white/10 hover:bg-white/20 text-white font-bold text-[15px] py-4 rounded-xl transition-colors mt-8">Done</button>
-            </div>
-          )}
-
-          {/* ==================================================== */}
-          {/* VIEW: SOCIAL LINKS / COMMUNITY */}
-          {/* ==================================================== */}
-          {activeView === 'community' && (
-            <div className="w-full animate-fadeIn duration-200">
-              <div className="px-4 py-3"><span className="text-xs font-bold text-zinc-500 uppercase">Project Links</span></div>
-              <div className="bg-[#0A0A0A] border-y border-white/5 p-4 space-y-4">
-                 <div>
-                   <label className="text-sm text-zinc-400 ml-1">X (Twitter) URL</label>
-                   <input type="text" value={twitterLink} onChange={(e) => setTwitterLink(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] outline-none mt-1" />
-                 </div>
-                 <div>
-                   <label className="text-sm text-zinc-400 ml-1">Telegram URL</label>
-                   <input type="text" value={telegramLink} onChange={(e) => setTelegramLink(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] outline-none mt-1" />
-                 </div>
-              </div>
-
-              <div className="px-4 py-3 mt-4"><span className="text-xs font-bold text-zinc-500 uppercase">Trollbox Settings</span></div>
-              <div className="border-y border-white/5 bg-[#0A0A0A]">
-                 <ToggleItem label="Allow GIFs in Chat" description="Let users post animated GIFs." enabled={allowTrollboxGifs} onToggle={() => setAllowTrollboxGifs(!allowTrollboxGifs)} />
-                 <ToggleItem label="Holder-Only Chat" description="Require users to hold your token to speak." enabled={requireHolderVerification} onToggle={() => setRequireHolderVerification(!requireHolderVerification)} />
-                 
-                 {requireHolderVerification && (
-                   <div className="p-4 border-t border-white/5 animate-fadeIn">
-                     <label className="text-sm text-zinc-400 mb-1 block">Minimum Tokens Required</label>
-                     <input type="number" value={minTokensToChat} onChange={(e) => setMinTokensToChat(Number(e.target.value))} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] outline-none" />
-                   </div>
-                 )}
-              </div>
-              <div className="p-4 mt-2">
-                 <button onClick={() => { alert("Saved!"); setActiveView('main'); }} className="w-full bg-[#089981] text-white font-bold text-[15px] py-4 rounded-xl transition-colors">Save Social Settings</button>
-              </div>
             </div>
           )}
 
@@ -445,7 +494,7 @@ export default function AccountSettingsSystem({
           )}
 
           {/* ==================================================== */}
-          {/* VIEW: EXECUTION (TRADING) */}
+          {/* VIEW: TRADING (EXECUTION) */}
           {/* ==================================================== */}
           {activeView === 'execution' && (
             <div className="w-full animate-fadeIn duration-200">
@@ -459,7 +508,7 @@ export default function AccountSettingsSystem({
               {routingMode === 'smart' ? (
                 <div className="px-4 py-2">
                    <div className="bg-[#0A0A0A] border border-white/5 rounded-xl p-4">
-                     <p className="text-[15px] font-medium text-white mb-2">Auto Routing Active</p>
+                     <p className="text-[15px] font-medium text-[#089981] mb-2 flex items-center gap-2"><span>⚡</span> Auto Routing Active</p>
                      <p className="text-sm text-zinc-400">We automatically handle slippage and gas to ensure your trades go through fast and safe without errors.</p>
                    </div>
                 </div>
@@ -492,7 +541,7 @@ export default function AccountSettingsSystem({
           )}
 
           {/* ==================================================== */}
-          {/* VIEW: WORLD-CLASS SUPPORT CHAT */}
+          {/* VIEW: WORLD CLASS SUPPORT CHAT */}
           {/* ==================================================== */}
           {activeView === 'support' && (
             <div className="w-full flex flex-col h-[calc(100vh-80px)] animate-fadeIn duration-200 bg-[#000000]">
@@ -503,7 +552,7 @@ export default function AccountSettingsSystem({
                   <div key={msg.id} className={`flex flex-col w-full ${msg.isAgent ? 'items-start' : 'items-end'}`}>
                     <div className="flex items-end gap-2 max-w-[85%]">
                       {msg.isAgent && (
-                         <div className="w-6 h-6 rounded-full bg-[#089981] flex items-center justify-center text-white text-xs font-bold shrink-0 mb-1">A</div>
+                         <div className="w-7 h-7 rounded-full bg-[#089981] flex items-center justify-center text-black text-xs font-black shrink-0 mb-1">A</div>
                       )}
                       <div className={`p-3.5 text-[15px] rounded-2xl ${msg.isAgent ? 'bg-[#1A1A1A] text-white rounded-bl-sm' : 'bg-[#089981] text-white rounded-br-sm'}`}>
                         {msg.text}
@@ -532,39 +581,64 @@ export default function AccountSettingsSystem({
           )}
 
           {/* ==================================================== */}
-          {/* VIEW: EDIT PROFILE */}
+          {/* VIEW: SOCIAL LINKS (COMMUNITY) */}
           {/* ==================================================== */}
-          {activeView === 'editProfile' && (
+          {activeView === 'community' && (
             <div className="w-full animate-fadeIn duration-200">
-              <div className="p-6 flex flex-col items-center justify-center border-b border-white/5">
-                <div className="w-24 h-24 bg-black rounded-full flex items-center justify-center overflow-hidden relative cursor-pointer mb-2 border border-white/10 group">
-                  <input type="file" accept="image/*" onChange={handleAvatarChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
-                  {editAvatar ? <img src={editAvatar} alt="Preview" className="w-full h-full object-cover z-10" /> : <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${editUsername}`} alt="Preview" className="w-full h-full object-cover z-10" />}
-                  <div className="absolute inset-0 bg-black/60 hidden group-hover:flex items-center justify-center text-xs font-bold text-white z-10 pointer-events-none transition-all">Change</div>
-                </div>
-                <span className="text-sm text-[#089981] font-medium">Change Photo</span>
+              <div className="px-4 py-3"><span className="text-xs font-bold text-zinc-500 uppercase">Project Links</span></div>
+              <div className="bg-[#0A0A0A] border-y border-white/5 p-4 space-y-4">
+                 <div>
+                   <label className="text-sm text-zinc-400 ml-1">X (Twitter) URL</label>
+                   <input type="text" value={twitterLink} onChange={(e) => setTwitterLink(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] outline-none mt-1" />
+                 </div>
+                 <div>
+                   <label className="text-sm text-zinc-400 ml-1">Telegram URL</label>
+                   <input type="text" value={telegramLink} onChange={(e) => setTelegramLink(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] outline-none mt-1" />
+                 </div>
               </div>
 
-              <div className="p-4 space-y-4">
-                <div>
-                  <label className="text-sm text-zinc-400 ml-1">Username</label>
-                  <input type="text" value={editUsername} onChange={(e) => setEditUsername(e.target.value)} className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] outline-none mt-1 focus:border-[#089981] transition-colors" />
-                </div>
-                <div>
-                  <label className="text-sm text-zinc-400 ml-1">Bio</label>
-                  <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} maxLength={250} className="w-full h-24 bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] outline-none mt-1 resize-none focus:border-[#089981] transition-colors" placeholder="Write something about yourself..." />
-                  <div className="text-right text-xs text-zinc-500 mt-1">{editBio.length}/250</div>
-                </div>
+              <div className="px-4 py-3 mt-4"><span className="text-xs font-bold text-zinc-500 uppercase">Trollbox Settings</span></div>
+              <div className="border-y border-white/5 bg-[#0A0A0A]">
+                 <ToggleItem label="Allow GIFs in Chat" description="Let users post animated GIFs." enabled={allowTrollboxGifs} onToggle={() => setAllowTrollboxGifs(!allowTrollboxGifs)} />
+                 <ToggleItem label="Holder-Only Chat" description="Require users to hold your token to speak." enabled={requireHolderVerification} onToggle={() => setRequireHolderVerification(!requireHolderVerification)} />
+                 
+                 {requireHolderVerification && (
+                   <div className="p-4 border-t border-white/5 animate-fadeIn">
+                     <label className="text-sm text-zinc-400 mb-1 block">Minimum Tokens Required</label>
+                     <input type="number" value={minTokensToChat} onChange={(e) => setMinTokensToChat(Number(e.target.value))} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white text-[15px] outline-none" />
+                   </div>
+                 )}
               </div>
-
-              <div className="p-4 mt-2 space-y-3">
-                <button onClick={handleSaveProfile} className="w-full bg-[#089981] text-white font-bold text-[15px] py-4 rounded-xl transition-colors hover:bg-[#06806b]">Save Profile</button>
+              <div className="p-4 mt-2">
+                 <button onClick={() => { alert("Saved!"); setActiveView('main'); }} className="w-full bg-[#089981] text-white font-bold text-[15px] py-4 rounded-xl transition-colors">Save Social Settings</button>
               </div>
             </div>
           )}
 
           {/* ==================================================== */}
-          {/* VIEW: LANGUAGE & APPEARANCE */}
+          {/* VIEW: ABOUT */}
+          {/* ==================================================== */}
+          {activeView === 'about' && (
+            <div className="w-full animate-fadeIn duration-200 p-6 flex flex-col items-center">
+              <div className="w-24 h-24 bg-[#089981] rounded-3xl flex items-center justify-center mb-6 shadow-lg">
+                 <span className="text-5xl text-black font-black">A</span>
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-1">Apex Forge</h2>
+              <p className="text-sm text-zinc-500 mb-6 font-mono font-bold">{updateStatus}</p>
+
+              <button onClick={handleCheckUpdate} className="mb-8 px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-widest rounded-full transition-colors">
+                {isCheckingUpdate ? 'Checking Server...' : 'Check For Updates'}
+              </button>
+              
+              <div className="text-[15px] text-zinc-400 leading-relaxed text-center space-y-4 bg-[#0A0A0A] p-6 rounded-2xl border border-white/5">
+                <p>Apex Forge is a decentralized platform built on Solana that lets anyone easily launch and trade tokens natively without requiring upfront liquidity.</p>
+                <p>Our mission is to eliminate rug-pulls and developer monopolies by providing a secure, non-custodial gateway for both creators and traders, utilizing an automated mathematical bonding curve to ensure fair launches.</p>
+              </div>
+            </div>
+          )}
+
+          {/* ==================================================== */}
+          {/* VIEW: ALL 30 LANGUAGES */}
           {/* ==================================================== */}
           {activeView === 'language' && (
             <div className="w-full animate-fadeIn duration-200">
@@ -585,6 +659,9 @@ export default function AccountSettingsSystem({
             </div>
           )}
 
+          {/* ==================================================== */}
+          {/* VIEW: APPEARANCE */}
+          {/* ==================================================== */}
           {activeView === 'appearance' && (
             <div className="w-full animate-fadeIn duration-200 px-4 py-4 space-y-3">
               {['Dark', 'Light', 'System'].map((mode) => (
@@ -593,24 +670,6 @@ export default function AccountSettingsSystem({
                   {appearanceMode === mode && <span className="text-[#089981] font-bold">✓</span>}
                 </button>
               ))}
-            </div>
-          )}
-
-          {/* ==================================================== */}
-          {/* VIEW: ABOUT */}
-          {/* ==================================================== */}
-          {activeView === 'about' && (
-            <div className="w-full animate-fadeIn duration-200 p-6 flex flex-col items-center">
-              <div className="w-24 h-24 bg-[#089981] rounded-3xl flex items-center justify-center mb-6 shadow-lg">
-                 <span className="text-5xl text-black font-black">A</span>
-              </div>
-              <h2 className="text-2xl font-bold text-white mb-1">Apex Forge</h2>
-              <p className="text-sm text-zinc-500 mb-8 font-mono">Version 2.4.0</p>
-              
-              <div className="text-[15px] text-zinc-400 leading-relaxed text-center space-y-4">
-                <p>Apex Forge is a decentralized platform that lets anyone easily launch and trade tokens natively on the Solana blockchain.</p>
-                <p>Our mission is to eliminate rug-pulls and developer monopolies by providing a secure, non-custodial gateway for both creators and traders, utilizing an automated mathematical bonding curve to ensure fair launches.</p>
-              </div>
             </div>
           )}
 
