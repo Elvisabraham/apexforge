@@ -32,7 +32,6 @@ import LiveModal from './components/LiveModal';
 export default function App() {
   const { connected, publicKey } = useWallet();
 
-  // --- ROUTING & PERSISTENCE STATE ---
   const [activePage, setActivePage] = useState(() => {
     const saved = localStorage.getItem('apex_active_page');
     return saved ? saved : 'home'; 
@@ -45,7 +44,6 @@ export default function App() {
   const [publicProfileView, setPublicProfileView] = useState(null);
   const [isFollowingCurrentView, setIsFollowingCurrentView] = useState(false);
   
-  // --- GLOBAL OVERLAY STATES ---
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -62,7 +60,6 @@ export default function App() {
     setModals(prev => ({ ...prev, [modalName]: isOpen }));
   };
   
-  // --- MOCK DATA STATES ---
   const defaultTokens = [
     { id: '1', name: 'Apex AI', symbol: 'APEX', mintAddress: 'CA: Forge...Solana', icon: '🔥', mcap: '$10.4M', price: '0.0102', change: '+500%', isGraduated: false, progress: 68 },
     { id: '2', name: 'Based Cat', symbol: 'BCAT', mintAddress: 'CA: Meow...Pump', icon: '🐱', mcap: '$1.2M', price: '0.0012', change: '+142.5%', isGraduated: true, progress: 100 },
@@ -99,7 +96,6 @@ export default function App() {
     return savedTxs ? JSON.parse(savedTxs) : [];
   });
 
-  // --- LOCAL STORAGE EFFECTS ---
   useEffect(() => { localStorage.setItem('apex_active_page', activePage); }, [activePage]);
   useEffect(() => { localStorage.setItem('apex_previous_page', previousPage); }, [previousPage]);
   useEffect(() => { localStorage.setItem('apex_global_tokens', JSON.stringify(globalTokens.map(t => ({...t, imagePreview: null})))); }, [globalTokens]);
@@ -107,7 +103,6 @@ export default function App() {
   useEffect(() => { localStorage.setItem('apex_user_profile', JSON.stringify({...userProfile, avatar: null})); }, [userProfile]);
   useEffect(() => { localStorage.setItem('apex_global_transactions', JSON.stringify(globalTransactions)); }, [globalTransactions]);
 
-  // --- LIVE SOLANA BALANCE FETCHING ---
   useEffect(() => {
     if (connected && publicKey) {
       const connection = new Connection(clusterApiUrl('mainnet-beta'));
@@ -139,7 +134,6 @@ export default function App() {
     }
   }, [connected, publicKey]);
   
-  // --- TRADE PORTAL STATE ---
   const [selectedTokenData, setSelectedTokenData] = useState(null); 
   const [isTradePortalOpen, setIsTradePortalOpen] = useState(false);
   const [tradeMode, setTradeMode] = useState('buy');
@@ -147,7 +141,6 @@ export default function App() {
   
   const userSolBalance = userPortfolio.find(t => t.symbol === 'SOL')?.balance || 0;
 
-  // --- HANDLERS ---
   const handleTokenClick = (token) => {
     setPreviousPage(activePage); 
     setSelectedTokenData(token);
@@ -326,7 +319,6 @@ export default function App() {
   const trendingTokens = globalTokens.filter(t => !t.isGraduated && t.progress < 100);
   const graduatedTokens = globalTokens.filter(t => t.isGraduated || t.progress >= 100);
 
-  // --- MAIN ROUTER ---
   const renderContent = () => {
     const openAccountDrawer = () => setIsAccountDrawerOpen(true);
 
@@ -434,17 +426,10 @@ export default function App() {
   };
 
   return (
-    <div className="bg-[#050505] h-[100dvh] text-white flex overflow-hidden w-screen select-none relative">
+    // 🚀 FIXED: locked the app to the screen bounds with fixed inset-0
+    <div className="fixed inset-0 bg-[#050505] text-white flex flex-col overflow-hidden select-none">
       
       <style>{`
-        /* 🚀 GLOBAL NATIVE APP LOCKDOWN 🚀 */
-        html, body {
-          height: 100%;
-          width: 100%;
-          overflow: hidden; 
-          position: fixed; 
-          overscroll-behavior-y: none; 
-        }
         * {
           -webkit-touch-callout: none;
           -webkit-user-select: none;
@@ -468,7 +453,7 @@ export default function App() {
       `}</style>
 
       {/* --- DESKTOP SIDEBAR --- */}
-      <div className="hidden md:block w-[260px] shrink-0 bg-[#0A0A0A] border-r border-white/5 z-40 relative">
+      <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[260px] bg-[#0A0A0A] border-r border-white/5 z-40">
         <Sidebar currentView={activePage} setCurrentView={handleSidebarNavigation} userProfile={userProfile} />
       </div>
 
@@ -487,7 +472,6 @@ export default function App() {
         </div>
       )}
 
-      {/* --- IMPORTED LEFT-ALIGNED ACCOUNT DRAWER --- */}
       <AccountDrawer 
         isOpen={isAccountDrawerOpen} 
         onClose={() => setIsAccountDrawerOpen(false)} 
@@ -505,10 +489,13 @@ export default function App() {
       />
 
       {/* --- MAIN CONTENT AREA --- */}
-      <div className="flex-1 relative h-full overflow-y-auto overflow-x-hidden pb-20 md:pb-0 bg-[#050505]">
-        {renderContent()}
+      <div className="flex-1 relative w-full md:pl-[260px] flex flex-col overflow-hidden">
+        
+        {/* Rendered page handles its own scroll */}
+        <div className="flex-1 w-full h-full relative overflow-hidden">
+          {renderContent()}
+        </div>
 
-        {/* --- TRADE PORTAL OVERLAY --- */}
         {isTradePortalOpen && (
           <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
             <div className="absolute inset-0 z-0" onClick={() => setIsTradePortalOpen(false)}></div>
@@ -603,33 +590,24 @@ export default function App() {
           </div>
         )}
 
-        {/* --- BOTTOM NAVIGATION (HIDDEN ON DESKTOP & SUBPAGES) --- */}
+        {/* --- LOCKED BOTTOM NAVIGATION --- */}
         {activePage !== 'tokenHome' && activePage !== 'tokenChat' && activePage !== 'settings' && activePage !== 'profile' && (
-          <div className="md:hidden z-50">
+          <div className="md:hidden absolute bottom-0 left-0 right-0 z-50 bg-[#050505]">
             <BottomNav activePage={activePage} setActivePage={setActivePage} userProfile={userProfile} />
           </div>
         )}
         
       </div>
 
-      {/* ========================================================= */}
-      {/* 🚀 GLOBAL APP MODALS & DRAWERS (MOUNTED AT ROOT) 🚀 */}
-      {/* ========================================================= */}
-      
-      {/* 1. Global Notification Center */}
       <NotificationCenter 
         isOpen={isNotificationsOpen} 
         onClose={() => setIsNotificationsOpen(false)} 
         notifications={dummyNotifications} 
       />
-
-      {/* 2. Wallet Transaction Modals */}
       {modals.deposit && <DepositModal isOpen={modals.deposit} onClose={() => toggleModal('deposit', false)} />}
       {modals.withdraw && <WithdrawModal isOpen={modals.withdraw} onClose={() => toggleModal('withdraw', false)} />}
       {modals.send && <SendModal isOpen={modals.send} onClose={() => toggleModal('send', false)} />}
       {modals.swap && <SwapModal isOpen={modals.swap} onClose={() => toggleModal('swap', false)} />}
-
-      {/* 3. Real-Time Broadcast & Event Overlay */}
       {modals.live && <LiveModal isOpen={modals.live} onClose={() => toggleModal('live', false)} token={selectedTokenData} />}
 
     </div>
