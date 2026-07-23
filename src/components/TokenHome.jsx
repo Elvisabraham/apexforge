@@ -28,7 +28,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const [headerCopied, setHeaderCopied] = useState(false);
   const [bodyCopied, setBodyCopied] = useState(false);
 
-  // 🚀 SAFETY REDIRECT EFFECT: Auto-exit when token is invalid or missing
+  // 🚀 SAFETY REDIRECT EFFECT: Auto-exit with 500ms Rescue Timer
   useEffect(() => {
     const isInvalid = !token || !token.name || token.name === 'Unknown Token' || (!token.symbol && !token.id);
     if (isInvalid) {
@@ -38,21 +38,24 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       localStorage.removeItem('apex_active_token');
       localStorage.removeItem('apex_current_view');
 
+      // Try smooth SPA exit first
       if (typeof onBack === 'function') {
         onBack();
       }
 
-      // Smooth hash reset
-      if (window.location.hash) {
-        window.location.hash = '';
-      }
+      // If the app is frozen and this component hasn't unmounted after 500ms, force a hard exit to the root origin!
+      const rescueTimer = setTimeout(() => {
+        window.location.href = window.location.origin;
+      }, 500);
+
+      return () => clearTimeout(rescueTimer); // Clears the timer if the smooth exit works
     }
   }, [token, onBack]);
 
   // 🚀 EARLY NULL GUARD: Prevents rendering the "Unknown Token" ghost UI
   if (!token || (!token.name && !token.symbol && !token.id) || token.name === 'Unknown Token') {
     return (
-      <div className="flex flex-col items-center justify-center w-full min-h-screen bg-[#0A0A0B] text-white p-6 text-center">
+      <div className="flex flex-col items-center justify-center w-full min-h-screen bg-[#0A0A0B] text-white p-6 text-center z-[200] absolute inset-0">
         <div className="w-8 h-8 border-2 border-[#089981] border-t-transparent rounded-full animate-spin mb-4" />
         <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Returning to Home Feed...</p>
       </div>
@@ -353,7 +356,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between relative">
         <div className="flex items-center gap-3 min-w-0">
           
-          {/* 🚀 SMOOTH SPA BACK BUTTON */}
           <button 
             onClick={(e) => { 
               e.preventDefault(); 
