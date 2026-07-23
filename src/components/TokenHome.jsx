@@ -28,6 +28,26 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const [headerCopied, setHeaderCopied] = useState(false);
   const [bodyCopied, setBodyCopied] = useState(false);
 
+  // 🚀 HARD EXIT GUARD FOR UNKNOWN / NULL TOKENS
+  useEffect(() => {
+    const isInvalid = !token || !token.name || token.name === 'Unknown Token' || (!token.symbol && !token.id);
+    if (isInvalid) {
+      // Clear out stuck fallback entries from localStorage
+      localStorage.removeItem('apex_mock_state_TKN');
+      localStorage.removeItem('apex_mock_state_TKN_trades');
+      localStorage.removeItem('apex_active_token');
+
+      if (typeof onBack === 'function') {
+        onBack();
+      }
+
+      // Hard reset Chrome browser to root origin bypassing hash URL traps
+      setTimeout(() => {
+        window.location.replace(window.location.origin + window.location.pathname);
+      }, 50);
+    }
+  }, [token, onBack]);
+
   // DATA ENGINE
   const rawProgress = token?.progress || 0;
   const initialMcap = parseFloat((token?.mcap || token?.marketCap || '$10.0K').replace(/[^0-9.]/g, ''));
@@ -86,24 +106,16 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   });
 
   useEffect(() => {
-    localStorage.setItem(localCacheKey, JSON.stringify({ curveState, userBalanceSol, userTokenBalance }));
-  }, [curveState, userBalanceSol, userTokenBalance, localCacheKey]);
-
-  useEffect(() => {
-    localStorage.setItem(`${localCacheKey}_trades`, JSON.stringify(recentTrades));
-  }, [recentTrades, localCacheKey]);
-
-  // 🚀 SAFETY GUARD: Auto-bounce back to feed if token prop is missing/null on refresh
-  useEffect(() => {
-    if (!token || (!token.name && !token.symbol && !token.id)) {
-      if (typeof onBack === 'function') {
-        onBack();
-      } else {
-        window.location.hash = '';
-        window.location.href = '/#/';
-      }
+    if (displayToken.symbol !== 'TKN') {
+      localStorage.setItem(localCacheKey, JSON.stringify({ curveState, userBalanceSol, userTokenBalance }));
     }
-  }, [token, onBack]);
+  }, [curveState, userBalanceSol, userTokenBalance, localCacheKey, displayToken.symbol]);
+
+  useEffect(() => {
+    if (displayToken.symbol !== 'TKN') {
+      localStorage.setItem(`${localCacheKey}_trades`, JSON.stringify(recentTrades));
+    }
+  }, [recentTrades, localCacheKey, displayToken.symbol]);
 
   const dynamicPriceImpact = tradeAmount && parseFloat(tradeAmount) > 0 
     ? (parseFloat(tradeAmount) * (tradeMode === 'buy' ? 0.12 : 0.08)).toFixed(2) 
@@ -133,7 +145,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     const amount = parseFloat(tradeAmount);
     if (!amount || amount <= 0) return;
     
-    // Generate mock transaction signature
     const randomTxHash = `${Math.random().toString(36).substring(2, 6)}...${Math.random().toString(36).substring(2, 6)}`;
 
     if (tradeMode === 'buy') {
@@ -258,7 +269,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     setIsReportModalOpen(false);
   };
 
-  // Filtered trades generator
   const getFilteredTrades = () => {
     return recentTrades.filter(trade => {
       const isWhale = parseFloat(trade.amountSol) >= 1.0;
@@ -338,18 +348,8 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
               e.stopPropagation(); 
               if (typeof onBack === 'function') {
                 onBack();
-              } else {
-                if (window.history.length <= 2) {
-                  // Direct hash route override for Chrome
-                  window.location.href = '/#/';
-                } else {
-                  window.history.back();
-                  // Fallback catch if history.back hangs
-                  setTimeout(() => { 
-                    window.location.href = '/#/'; 
-                  }, 150);
-                }
               }
+              window.location.replace(window.location.origin + window.location.pathname);
             }} 
             className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-4 -ml-4 pr-5 shrink-0 relative z-[100] cursor-pointer"
           >
@@ -509,7 +509,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
               </div>
             </div>
 
-            {/* 🚀 UPGRADED RECENT TRADES (WITH WHALE BADGES & ON-CHAIN EXPLORER LINK) */}
+            {/* RECENT TRADES */}
             <div className="flex flex-col w-full mt-4">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-black">Recent Trades</h2>
@@ -545,7 +545,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                           <span className="text-[12px] font-mono font-bold text-white">◎ {trade.amountSol}</span>
                           <span className={`text-[10px] font-mono mt-0.5 ${trade.type === 'buy' ? 'text-[#089981]' : 'text-zinc-500'}`}>{trade.time}</span>
                         </div>
-                        {/* On-Chain Explorer Verification Link */}
                         <a 
                           href={`https://solscan.io/tx/${trade.txHash || '5K2a'}`} 
                           target="_blank" 
@@ -561,7 +560,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                 })}
               </div>
               
-              {/* Expand Trades Button */}
               {recentTrades.length > 5 && (
                 <button onClick={() => setShowAllTrades(true)} className="w-full mt-3 py-3.5 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-colors shadow-sm">
                   View All {recentTrades.length} Trades & Filters
@@ -582,13 +580,11 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
         </div>
       </div>
 
-      {/* --- 🚀 UPGRADED ALL TRADES MODAL (LEDGER ROOM WITH FILTERS) --- */}
+      {/* --- ALL TRADES MODAL --- */}
       {showAllTrades && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="absolute inset-0" onClick={() => setShowAllTrades(false)}></div>
           <div className="bg-[#050505] border-t border-white/10 rounded-t-3xl w-full max-w-xl h-[85vh] p-6 relative z-10 animate-slideUpNative flex flex-col">
-            
-            {/* Header */}
             <div className="flex justify-between items-center mb-4 border-b border-white/5 pb-4">
               <div>
                 <h3 className="text-lg font-black text-white uppercase tracking-widest">Transaction Ledger</h3>
@@ -597,7 +593,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
               <button onClick={() => setShowAllTrades(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg></button>
             </div>
 
-            {/* 🚀 Filter Pills Bar */}
             <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-1">
               {[
                 { id: 'all', label: 'All Trades' },
@@ -615,7 +610,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
               ))}
             </div>
 
-            {/* Scrollable Trades List */}
             <div className="flex-1 overflow-y-auto no-scrollbar pb-6 space-y-2">
               {getFilteredTrades().length === 0 ? (
                 <div className="text-center py-12 text-zinc-600 text-xs font-bold uppercase tracking-widest">No matching transactions found</div>
@@ -729,12 +723,10 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
           <div className="bg-[#1C1C1E] border-t border-white/10 rounded-t-3xl w-full max-w-lg p-6 relative z-10 animate-slideUpNative flex flex-col">
              <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6"></div>
              
-             {/* SHARE CARD LAYOUT WITH NATIVE QR CODE */}
              <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-5 flex flex-col mb-8 shadow-2xl relative overflow-hidden">
                <div className={`absolute -top-12 -right-12 w-40 h-40 ${trendBgColor} opacity-20 rounded-full blur-3xl pointer-events-none`}></div>
                <div className={`absolute -bottom-12 -left-12 w-40 h-40 ${trendBgColor} opacity-10 rounded-full blur-3xl pointer-events-none`}></div>
                
-               {/* TOP ROW: Token Info & Market Cap */}
                <div className="flex justify-between items-start w-full z-10">
                   <div className="flex items-center gap-3">
                      <div className="w-12 h-12 bg-[#1A1A24] border border-white/5 rounded-full flex items-center justify-center text-2xl overflow-hidden shadow-inner">
@@ -751,13 +743,11 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                   </div>
                </div>
 
-               {/* MIDDLE ROW: Big Price */}
                <div className="flex flex-col mt-6 z-10">
                   <span className="text-4xl font-black text-white tracking-tighter">{formatProPrice(`$${curveState.price.toFixed(7)}`)}</span>
                   <span className={`text-sm font-bold ${trendTextColor} mt-1 tracking-wide`}>{isPositive ? '▲' : '▼'} {displayToken.change}</span>
                </div>
 
-               {/* BOTTOM ROW: Apex Forge Logo + QR Code */}
                <div className="flex justify-between items-end mt-6 pt-4 border-t border-white/10 z-10">
                   <div className="flex items-center gap-2">
                      <div className="relative w-6 h-6 flex items-center justify-center">
@@ -772,7 +762,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                      </div>
                   </div>
                   
-                  {/* IMMUTABLE VECTOR QR CODE */}
                   <div className="bg-white p-1.5 rounded-lg shadow-lg shrink-0 flex items-center justify-center border border-white/20 w-14 h-14">
                     <svg className="w-full h-full text-black" viewBox="0 0 100 100" shapeRendering="crispEdges">
                       <path d="M0 0h30v30H0zm10 10h10v10H10zM70 0h30v30H70zm10 10h10v10H80zM0 70h30v30H0zm10 10h10v10H10z" fill="currentColor" />
@@ -807,14 +796,13 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
         </div>
       )}
 
-      {/* --- THE NEW SWAP/BUY/SELL MODAL --- */}
+      {/* --- SWAP/BUY/SELL MODAL --- */}
       {isBuyModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="absolute inset-0" onClick={() => setIsBuyModalOpen(false)}></div>
           
           <div className={`bg-[#1C1C1E] border-t ${displayToken.isGraduated ? 'border-amber-500/30' : (tradeMode === 'buy' ? 'border-[#089981]/30' : 'border-[#F23645]/30')} rounded-t-3xl w-full max-w-lg p-6 relative z-10 animate-slideUpNative flex flex-col transition-colors duration-300`}>
              
-             {/* HEADER */}
              <div className="flex justify-between items-center mb-6">
                 <div className="flex flex-col">
                   <h3 className="text-lg font-black text-white uppercase tracking-widest flex items-center gap-2">
@@ -826,13 +814,11 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                 <button onClick={() => setIsBuyModalOpen(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg></button>
              </div>
 
-             {/* BUY / SELL TOGGLE SWITCH */}
              <div className="flex p-1 bg-black/40 rounded-xl mb-6 border border-white/5 shadow-inner">
                <button onClick={() => { setTradeMode('buy'); setTradeAmount(''); }} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${tradeMode === 'buy' ? 'bg-[#089981] text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}>Buy</button>
                <button onClick={() => { setTradeMode('sell'); setTradeAmount(''); }} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}>Sell</button>
              </div>
 
-             {/* DYNAMIC INPUT FIELD */}
              <div className={`bg-black/40 border border-white/5 focus-within:border-white/20 rounded-2xl p-4 flex items-center justify-between gap-4 transition-all mb-2`}>
                 <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg shrink-0">
                   {tradeMode === 'buy' ? (
@@ -844,7 +830,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                 <input type="number" value={tradeAmount} onChange={(e) => setTradeAmount(e.target.value)} placeholder="0.00" className="bg-transparent text-right text-3xl font-black text-white w-full focus:outline-none placeholder-zinc-700" />
              </div>
 
-             {/* DYNAMIC BALANCE QUICK SELECT */}
              <div className="flex justify-between items-center px-1 mb-6">
                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
                   Balance: {tradeMode === 'buy' ? `${userBalanceSol.toFixed(2)} SOL` : `${(userTokenBalance / 1000000).toFixed(2)}M ${displayToken.symbol}`}
@@ -855,7 +840,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                 </div>
              </div>
 
-             {/* DYNAMIC ESTIMATES BOX */}
              <div className="flex flex-col gap-2 p-4 bg-[#0A0A0A] border border-white/5 rounded-xl mb-6 shadow-inner">
                <div className="flex justify-between items-center">
                  <span className="text-[10px] font-bold text-zinc-500 uppercase">You Receive (Est.)</span>
@@ -881,7 +865,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                )}
              </div>
 
-             {/* DYNAMIC CONFIRM BUTTON */}
              <button 
                 onClick={handleExecuteTrade}
                 disabled={!tradeAmount || parseFloat(tradeAmount) <= 0}
@@ -893,7 +876,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
         </div>
       )}
 
-      {/* --- 🚀 UPGRADED CONDITIONAL UNMOVABLE BOTTOM BUY MAT (ADDED pb-24 TO CLEAR MOBILE NAV) --- */}
+      {/* --- UNMOVABLE BOTTOM BUY MAT --- */}
       <div className="flex-none bg-[#0E0E14] z-30 pt-4 pb-24 md:pb-6 px-4 border-t border-white/[0.05] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] relative">
         <div className="max-w-4xl mx-auto flex flex-col items-center">
           
