@@ -93,6 +93,18 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     localStorage.setItem(`${localCacheKey}_trades`, JSON.stringify(recentTrades));
   }, [recentTrades, localCacheKey]);
 
+  // 🚀 SAFETY GUARD: Auto-bounce back to feed if token prop is missing/null on refresh
+  useEffect(() => {
+    if (!token || (!token.name && !token.symbol && !token.id)) {
+      if (typeof onBack === 'function') {
+        onBack();
+      } else {
+        window.location.hash = '';
+        window.location.href = '/#/';
+      }
+    }
+  }, [token, onBack]);
+
   const dynamicPriceImpact = tradeAmount && parseFloat(tradeAmount) > 0 
     ? (parseFloat(tradeAmount) * (tradeMode === 'buy' ? 0.12 : 0.08)).toFixed(2) 
     : '0.00';
