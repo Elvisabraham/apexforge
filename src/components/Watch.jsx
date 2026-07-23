@@ -1,4 +1,4 @@
-// 🚀 VERSION 4: FLUID VIDEO AUTOPLAY + Z-INDEX & USERNAMES PRESERVED
+// 🚀 VERSION 5: FLAWLESS MOBILE WATCH FEED PADDING & BUTTON CLEARANCE
 import React, { useState, useEffect, useRef } from 'react';
 
 export default function Watch({ onTokenClick, userProfile }) {
@@ -8,9 +8,8 @@ export default function Watch({ onTokenClick, userProfile }) {
   const [newCommentText, setNewCommentText] = useState('');
   
   const containerRef = useRef(null);
-  const videoRefs = useRef({}); // 🚀 NEW: Reference store for all video elements
+  const videoRefs = useRef({}); 
 
-  // 🚀 TIKTOK-STYLE VIDEO FEED DATA (Now with Video URLs)
   const initialWatchFeed = [
     { 
       id: 'APEX', name: 'Apex AI', symbol: 'APEX', icon: '🔥', mcap: '$10.4M', price: '0.0102', change: '+500%', 
@@ -70,13 +69,12 @@ export default function Watch({ onTokenClick, userProfile }) {
 
   const activeToken = feedData[activeVideoIndex] || feedData[0];
 
-  // 🚀 NEW: Flawless Autoplay Lifecycle Management
   useEffect(() => {
     Object.keys(videoRefs.current).forEach((key) => {
       const vid = videoRefs.current[key];
       if (vid) {
         if (Number(key) === activeVideoIndex) {
-          vid.play().catch(() => {}); // Catch prevents browser autoplay block errors
+          vid.play().catch(() => {}); 
         } else {
           vid.pause();
           vid.currentTime = 0;
@@ -214,7 +212,7 @@ export default function Watch({ onTokenClick, userProfile }) {
       <div 
         ref={containerRef} 
         onScroll={handleScroll} 
-        className={`snap-container no-scrollbar w-full relative pb-20 ${isCommentDrawerOpen ? 'overflow-hidden touch-none' : ''}`}
+        className={`snap-container no-scrollbar w-full relative pb-32 ${isCommentDrawerOpen ? 'overflow-hidden touch-none' : ''}`}
       >
         {feedData.map((token, index) => {
           const isActive = index === activeVideoIndex;
@@ -224,7 +222,7 @@ export default function Watch({ onTokenClick, userProfile }) {
           return (
             <div key={token.id} className="snap-item w-full bg-black">
               
-              {/* 🎬 🚀 NEW: ACTUAL VIDEO BACKGROUND */}
+              {/* VIDEO BACKGROUND */}
               <div className="absolute inset-0 w-full h-full opacity-80">
                 <video 
                   ref={(el) => (videoRefs.current[index] = el)}
@@ -237,8 +235,8 @@ export default function Watch({ onTokenClick, userProfile }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent z-10 pointer-events-none"></div>
               </div>
 
-              {/* ACTION BUTTONS SIDEBAR */}
-              <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-30">
+              {/* ACTION BUTTONS SIDEBAR (🚀 RAISED HIGHER TO CLEAR MOBILE NAV) */}
+              <div className="absolute right-4 bottom-40 flex flex-col items-center gap-6 z-30">
                 
                 {/* LIKE BUTTON */}
                 <div 
@@ -282,8 +280,8 @@ export default function Watch({ onTokenClick, userProfile }) {
                 </div>
               </div>
 
-              {/* BOTTOM PANEL */}
-              <div className="absolute left-0 bottom-24 w-[85%] p-4 flex flex-col z-30">
+              {/* BOTTOM PANEL (🚀 RAISED HIGHER TO CLEAR MOBILE NAV AND BOTTOM BAR) */}
+              <div className="absolute left-0 bottom-32 md:bottom-24 w-[85%] p-4 flex flex-col z-30">
                 <div 
                   onClick={() => handleQuickTrade(token)}
                   className="flex items-center gap-2 mb-2 cursor-pointer group w-max"
@@ -338,20 +336,17 @@ export default function Watch({ onTokenClick, userProfile }) {
         })}
       </div>
 
-      {/* --- 🚀 VERSION 3: OVERLAY DRAWER WITH z-[100] TO CLEAR BOTTOM NAV --- */}
+      {/* --- OVERLAY DRAWER WITH z-[100] TO CLEAR BOTTOM NAV --- */}
       {isCommentDrawerOpen && (
         <div className="fixed inset-0 z-[100] flex flex-col justify-end">
           
-          {/* Backdrop Overlay */}
           <div 
             onClick={() => setIsCommentDrawerOpen(false)}
             className="absolute inset-0 bg-black/60 transition-opacity backdrop-blur-sm"
           />
           
-          {/* Sliding Panel */}
           <div className="relative w-full h-[70vh] bg-[#0E0E10] border-t border-white/10 rounded-t-3xl flex flex-col overflow-hidden animate-slideUpNative shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
             
-            {/* Drawer Handle / Title */}
             <div className="flex-none p-4 border-b border-white/[0.04] flex items-center justify-between relative bg-[#0E0E10]">
               <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-white/20 rounded-full" />
               <span className="text-xs font-black uppercase tracking-widest text-zinc-400 mt-2">
@@ -359,17 +354,15 @@ export default function Watch({ onTokenClick, userProfile }) {
               </span>
               <button 
                 onClick={() => setIsCommentDrawerOpen(false)}
-                className="text-zinc-400 hover:text-white text-sm font-bold mt-2 p-2"
+                className="text-zinc-400 hover:text-white text-sm font-bold mt-2 p-2 cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            {/* List of Comments */}
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 no-scrollbar bg-[#0E0E10]">
               {activeToken.comments.map((comment) => (
                 <div key={comment.id} className="flex flex-col bg-white/[0.02] border border-white/[0.04] p-3 rounded-xl">
-                  {/* Clickable Username! */}
                   <span 
                     onClick={() => alert(`Navigating to @${comment.user}'s profile...`)} 
                     className="text-xs font-black text-[#089981] mb-1 cursor-pointer hover:underline w-max active:scale-95 transition-transform"
@@ -381,7 +374,6 @@ export default function Watch({ onTokenClick, userProfile }) {
               ))}
             </div>
 
-            {/* Input Footer Form */}
             <form 
               onSubmit={handleAddComment}
               className="flex-none p-4 bg-[#131316] border-t border-white/5 flex items-center gap-3 pb-8"
@@ -395,7 +387,7 @@ export default function Watch({ onTokenClick, userProfile }) {
               />
               <button 
                 type="submit"
-                className="bg-[#089981] hover:bg-[#06806b] text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-transform active:scale-95"
+                className="bg-[#089981] hover:bg-[#06806b] text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-transform active:scale-95 cursor-pointer"
               >
                 Send
               </button>
