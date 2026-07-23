@@ -93,18 +93,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     localStorage.setItem(`${localCacheKey}_trades`, JSON.stringify(recentTrades));
   }, [recentTrades, localCacheKey]);
 
-  // 🚀 SAFETY GUARD: Auto-bounce back to feed if token prop is missing/null on refresh
-  useEffect(() => {
-    if (!token || (!token.name && !token.symbol && !token.id)) {
-      if (typeof onBack === 'function') {
-        onBack();
-      } else {
-        window.location.hash = '';
-        window.location.href = '/#/';
-      }
-    }
-  }, [token, onBack]);
-
   const dynamicPriceImpact = tradeAmount && parseFloat(tradeAmount) > 0 
     ? (parseFloat(tradeAmount) * (tradeMode === 'buy' ? 0.12 : 0.08)).toFixed(2) 
     : '0.00';
@@ -258,6 +246,14 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     setIsReportModalOpen(false);
   };
 
+  const executeBackArrow = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      window.history.back();
+    }
+  };
+
   // Filtered trades generator
   const getFilteredTrades = () => {
     return recentTrades.filter(trade => {
@@ -331,31 +327,8 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       {/* --- UNMOVABLE HEADER --- */}
       <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between relative">
         <div className="flex items-center gap-3 min-w-0">
-          
-          <button 
-            onClick={(e) => { 
-              e.preventDefault(); 
-              e.stopPropagation(); 
-              if (typeof onBack === 'function') {
-                onBack();
-              } else {
-                if (window.history.length <= 2) {
-                  // Direct hash route override for Chrome
-                  window.location.href = '/#/';
-                } else {
-                  window.history.back();
-                  // Fallback catch if history.back hangs
-                  setTimeout(() => { 
-                    window.location.href = '/#/'; 
-                  }, 150);
-                }
-              }
-            }} 
-            className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-4 -ml-4 pr-5 shrink-0 relative z-[100] cursor-pointer"
-          >
-            <svg className="w-7 h-7 text-white pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+          <button onClick={executeBackArrow} className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-1 -ml-1 pr-2 shrink-0 relative z-50 cursor-pointer">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
           
           <div className="w-10 h-10 bg-[#1A1A24] border border-white/10 rounded-full flex items-center justify-center text-xl shrink-0 overflow-hidden shadow-inner">
@@ -427,7 +400,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
             
             <button 
               onClick={userTokenBalance > 0 ? onOpenChat : () => alert('You must hold this token to enter the trench chat!')}
-              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${userTokenBalance > 0 ? 'bg-[#089981] text-black hover:bg-[#06806b] hover:shadow-[0_4px_12px_rgba(8,153,129,0.15)] active:scale-95' : 'bg-white/5 text-zinc-500 cursor-not-allowed border border-white/5'}`}
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${userTokenBalance > 0 ? 'bg-[#089981] text-black hover:bg-[#06806b] hover:shadow-[0_0_15px_rgba(8,153,129,0.4)] active:scale-95' : 'bg-white/5 text-zinc-500 cursor-not-allowed border border-white/5'}`}
             >
               {userTokenBalance > 0 ? <>💬 Enter Chat</> : <>🔒 Buy to Chat</>}
             </button>
@@ -523,7 +496,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                 {recentTrades.slice(0, 5).map((trade) => {
                   const isWhale = parseFloat(trade.amountSol) >= 1.0;
                   return (
-                    <div key={trade.id} className={`flex justify-between items-center p-3 rounded-xl transition-all ${isWhale ? 'bg-gradient-to-r from-[#089981]/10 to-[#121212] border border-[#089981]/30 shadow-[0_4px_12px_rgba(8,153,129,0.1)]' : 'bg-[#121212]/60 border border-white/[0.03]'}`}>
+                    <div key={trade.id} className={`flex justify-between items-center p-3 rounded-xl transition-all ${isWhale ? 'bg-gradient-to-r from-[#089981]/10 to-[#121212] border border-[#089981]/30 shadow-[0_0_15px_rgba(8,153,129,0.1)]' : 'bg-[#121212]/60 border border-white/[0.03]'}`}>
                       <div className="flex items-center gap-3">
                         <div className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${trade.type === 'buy' ? 'bg-[#089981]/20 text-[#089981]' : 'bg-[#F23645]/20 text-[#F23645]'}`}>
                           {trade.type}
@@ -716,7 +689,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                   <button key={reason} onClick={() => setReportReason(reason)} className={`w-full py-4 px-5 rounded-xl border text-left text-xs font-black tracking-widest uppercase transition-all ${reportReason === reason ? 'border-rose-500 bg-rose-500/10 text-rose-400' : 'border-white/10 bg-[#0A0A0B] text-zinc-400 hover:border-white/30'}`}>{reason}</button>
                 ))}
              </div>
-             <button onClick={submitReport} className="w-full py-4 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black uppercase tracking-widest text-white shadow-[0_4px_12px_rgba(242,54,69,0.2)]">Submit to Moderation</button>
+             <button onClick={submitReport} className="w-full py-4 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black uppercase tracking-widest text-white shadow-[0_0_20px_rgba(242,54,69,0.3)]">Submit to Moderation</button>
           </div>
         </div>
       )}
@@ -885,7 +858,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
              <button 
                 onClick={handleExecuteTrade}
                 disabled={!tradeAmount || parseFloat(tradeAmount) <= 0}
-                className={`w-full ${displayToken.isGraduated ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-[0_4px_12px_rgba(245,158,11,0.15)]' : (tradeMode === 'buy' ? 'bg-[#089981] hover:bg-[#06806b] shadow-[0_4px_12px_rgba(8,153,129,0.15)]' : 'bg-[#F23645] hover:bg-rose-600 shadow-[0_4px_12px_rgba(242,54,69,0.15)]')} disabled:opacity-50 text-white font-black text-sm py-4 rounded-2xl tracking-[0.2em] uppercase transition-all active:scale-95 flex items-center justify-center gap-2`}
+                className={`w-full ${displayToken.isGraduated ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-[0_0_20px_rgba(245,158,11,0.3)]' : (tradeMode === 'buy' ? 'bg-[#089981] hover:bg-[#06806b] shadow-[0_0_20px_rgba(8,153,129,0.3)]' : 'bg-[#F23645] hover:bg-rose-600 shadow-[0_0_20px_rgba(242,54,69,0.3)]')} disabled:opacity-50 text-white font-black text-sm py-4 rounded-2xl tracking-[0.2em] uppercase transition-all active:scale-95 flex items-center justify-center gap-2`}
              >
                Confirm {tradeMode} ⚡
              </button>
@@ -899,7 +872,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
           
           <button 
             onClick={() => { setTradeMode('buy'); setIsBuyModalOpen(true); }} 
-            className={`w-full ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 text-black shadow-[0_4px_12px_rgba(245,158,11,0.15)]' : 'bg-[#089981] hover:opacity-90 text-white shadow-[0_4px_12px_rgba(8,153,129,0.15)]'} font-black text-lg py-4 rounded-2xl flex items-center justify-center gap-2 transition-transform active:scale-95 uppercase tracking-widest`}
+            className={`w-full ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)]' : 'bg-[#089981] hover:opacity-90 text-white shadow-[0_0_20px_rgba(8,153,129,0.4)]'} font-black text-lg py-4 rounded-2xl flex items-center justify-center gap-2 transition-transform active:scale-95 uppercase tracking-widest`}
           >
             {displayToken.isGraduated ? 'Trade on DEX ⚡' : 'Trade Token'}
           </button>
