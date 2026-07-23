@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import MediaUploader from './MediaUploader'; // 🚀 IMPORTING OUR NEW COMPONENT
+import MediaUploader from './MediaUploader'; 
 
 export default function Launch({ onForgeSuccess }) {
   const { connected, publicKey } = useWallet();
@@ -9,11 +9,10 @@ export default function Launch({ onForgeSuccess }) {
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [description, setDescription] = useState('');
   
-  // 🚀 MEDIA STATES WIRED TO UPLOADER
   const [imagePreview, setImagePreview] = useState(null);
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
-  const [mediaType, setMediaType] = useState('image'); // 'image' or 'video'
-  const [uploaderKey, setUploaderKey] = useState(0); // 🚀 FIX: Forces uploader to reset
+  const [mediaType, setMediaType] = useState('image'); 
+  const [uploaderKey, setUploaderKey] = useState(0); 
   
   const [showSocials, setShowSocials] = useState(false);
   const [twitter, setTwitter] = useState('');
@@ -21,9 +20,8 @@ export default function Launch({ onForgeSuccess }) {
   const [website, setWebsite] = useState('');
   const [initialBuy, setInitialBuy] = useState('');
   
-  // 🚀 APP STORE COMPLIANCE & SECURITY STATE
   const [acceptedDisclaimer, setAcceptedDisclaimer] = useState(false);
-  const [deployedHistory, setDeployedHistory] = useState([]); // 🚀 Duplicate Blocker Memory
+  const [deployedHistory, setDeployedHistory] = useState([]); 
 
   const [isDeploying, setIsDeploying] = useState(false);
   const [deploymentStep, setDeploymentStep] = useState(0);
@@ -53,7 +51,6 @@ export default function Launch({ onForgeSuccess }) {
         setDeploySuccess(true);
         const finalAddress = generateMockAddress();
         
-        // 🚀 Add to local history to prevent duplicates
         setDeployedHistory(prev => [...prev, tokenName.toLowerCase()]);
         
         if (onForgeSuccess) {
@@ -86,18 +83,15 @@ export default function Launch({ onForgeSuccess }) {
     }
   }, [isDeploying, deploymentStep]);
 
-  // 🚀 RECEIVE MEDIA FROM OUR NEW UPLOADER
   const handleMediaSelected = (mediaData) => {
     setImagePreview(mediaData.previewUrl);
     setThumbnailUrl(mediaData.thumbnailUrl);
     setMediaType(mediaData.type);
   };
 
-  // 🚀 APP STORE COMPLIANCE: The Smart Sanitizer
   const handleDescriptionChange = (e) => {
     let val = e.target.value;
     
-    // Prohibited words that get apps banned from Apple/Google
     const bannedWords = [/100x/gi, /guaranteed profit/gi, /rug pull/gi, /moon safe/gi, /financial advice/gi, /risk free/gi];
     let isFlagged = false;
 
@@ -147,7 +141,6 @@ export default function Launch({ onForgeSuccess }) {
       return;
     }
     
-    // 🚀 THE DUPLICATE / RUG BLOCKER
     if (deployedHistory.includes(tokenName.toLowerCase())) {
       alert(`⚠️ Rug Blocker Active: You have already deployed an asset named "${tokenName}". Please choose a unique name to prevent community confusion.`);
       return;
@@ -175,7 +168,7 @@ export default function Launch({ onForgeSuccess }) {
     setDeploySuccess(false);
     setDeploymentStep(0);
     
-    setUploaderKey(prev => prev + 1); // 🚀 FIX: THIS CLEARS THE UPLOADER PREVIEW
+    setUploaderKey(prev => prev + 1); 
   };
 
   return (
@@ -193,7 +186,8 @@ export default function Launch({ onForgeSuccess }) {
       </header>
 
       {/* --- DEPLOYMENT FORM --- */}
-      <div className={`flex-1 overflow-y-auto no-scrollbar pb-32 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
+      {/* 🚀 FIXED: Massive pb-48 padding ensures you can scroll everything above the footer */}
+      <div className={`flex-1 overflow-y-auto no-scrollbar pb-48 md:pb-32 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
         <div className="w-full max-w-2xl mx-auto px-4 pt-6 flex flex-col gap-6">
           
           <div className="flex flex-col gap-1">
@@ -201,7 +195,6 @@ export default function Launch({ onForgeSuccess }) {
             <p className="text-[13px] text-zinc-400 font-medium leading-relaxed">Create and launch a fair-launch token instantly. Liquidity is securely locked.</p>
           </div>
 
-          {/* 🚀 UPGRADED: REPLACED WITH OUR NEW MEDIA UPLOADER */}
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Asset Media (Video/GIF/Image) <span className="text-rose-500">*</span></label>
             <MediaUploader key={uploaderKey} onMediaSelected={handleMediaSelected} />
@@ -298,7 +291,6 @@ export default function Launch({ onForgeSuccess }) {
             </div>
           </div>
 
-          {/* 🚀 MANDATORY APP STORE DISCLAIMER */}
           <div className="flex items-start gap-3 bg-[#121212] border border-white/10 p-4 rounded-xl mt-2 mb-4">
             <input 
               type="checkbox" 
@@ -314,17 +306,17 @@ export default function Launch({ onForgeSuccess }) {
         </div>
       </div>
 
-      {/* 🚀 LIVE SUPPORT WIDGET */}
+      {/* 🚀 FIXED: Raised support widget to avoid footer collision */}
       {!isDeploying && (
         <div 
           onClick={() => alert("Connecting to live Forge Support Agent...")}
-          className="absolute right-4 bottom-28 z-40 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
+          className="absolute right-4 bottom-40 md:bottom-28 z-40 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
         >
           <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
         </div>
       )}
 
-      {/* --- COMPILATION TERMINAL (ACTIVE DURING DEPLOYMENT) --- */}
+      {/* --- COMPILATION TERMINAL --- */}
       {isDeploying && (
         <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-md animate-fadeIn">
           <div className="w-full max-w-lg bg-[#0A0A0A] border border-[#089981]/40 rounded-xl overflow-hidden shadow-[0_0_80px_rgba(8,153,129,0.15)] flex flex-col relative">
@@ -383,9 +375,9 @@ export default function Launch({ onForgeSuccess }) {
         </div>
       )}
 
-      {/* 🚀 COMPACT STICKY FOOTER */}
+      {/* 🚀 FIXED: Raised footer to bottom-20 on mobile to clear global Bottom Nav */}
       {!isDeploying && (
-        <div className="absolute bottom-0 left-0 w-full z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.6)]">
+        <div className="absolute bottom-[80px] md:bottom-0 left-0 w-full z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.6)]">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
             
             <div className="flex flex-col shrink-0">
