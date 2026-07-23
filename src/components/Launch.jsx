@@ -190,8 +190,8 @@ export default function Launch({ onForgeSuccess }) {
         </h1>
       </header>
 
-      {/* --- SCROLLABLE MIDDLE CONTAINER with responsive pb-40 --- */}
-      <div className={`flex-1 overflow-y-auto no-scrollbar px-4 pt-6 pb-40 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
+      {/* --- SCROLLABLE MIDDLE CONTAINER WITH MASSIVE PADDING --- */}
+      <div className={`flex-1 overflow-y-auto no-scrollbar px-4 pt-6 pb-64 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
         <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
           
           <div className="flex flex-col gap-1">
@@ -231,7 +231,7 @@ export default function Launch({ onForgeSuccess }) {
             </div>
           </div>
 
-          {/* SOCIALS */}
+          {/* SOCIALS WITH REAL TELEGRAM LOGO */}
           <div className="flex flex-col bg-[#121212] border border-white/5 rounded-xl overflow-hidden shadow-inner">
             <button onClick={() => setShowSocials(!showSocials)} className="w-full px-4 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors cursor-pointer">
               <span className="text-sm font-bold text-zinc-300 flex items-center gap-2">
@@ -246,10 +246,17 @@ export default function Launch({ onForgeSuccess }) {
                   <span className="pl-3 pr-2 text-zinc-500 font-black">𝕏</span>
                   <input type="text" placeholder="(Optional) Twitter Link" value={twitter} onChange={(e) => setTwitter(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
                 </div>
+                
+                {/* Real Telegram SVG Logo */}
                 <div className="flex items-center bg-[#050505] border border-white/5 rounded-lg overflow-hidden focus-within:border-[#089981]/50 transition-colors shadow-inner">
-                  <span className="pl-3 pr-2 text-zinc-500 font-black">TG</span>
+                  <span className="pl-3 pr-2 text-zinc-400 flex items-center justify-center">
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.481-.428-.009-1.252-.242-1.865-.442-752-.245-1.349-.375-1.297-.789.027-.216.324-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.14.12.098.153.228.166.32.011.082.025.269.011.415z"/>
+                    </svg>
+                  </span>
                   <input type="text" placeholder="(Optional) Telegram Link" value={telegram} onChange={(e) => setTelegram(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
                 </div>
+
                 <div className="flex items-center bg-[#050505] border border-white/5 rounded-lg overflow-hidden focus-within:border-[#089981]/50 transition-colors shadow-inner">
                   <span className="pl-3 pr-2 text-zinc-500 font-black">🌐</span>
                   <input type="text" placeholder="(Optional) Website URL" value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
@@ -310,9 +317,9 @@ export default function Launch({ onForgeSuccess }) {
         </div>
       </div>
 
-      {/* --- PINNED BOTTOM ACTION BAR with responsive mb-20 md:mb-0 --- */}
+      {/* --- PINNED BOTTOM ACTION BAR WITH HIGHER MOBILE CLEARANCE --- */}
       {!isDeploying && (
-        <div className="flex-none z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 mb-20 md:mb-0 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+        <div className="absolute bottom-16 md:bottom-0 left-0 right-0 z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.9)]">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
             
             <div className="flex flex-col shrink-0">
@@ -338,7 +345,7 @@ export default function Launch({ onForgeSuccess }) {
       {!isDeploying && (
         <div 
           onClick={() => alert("Connecting to live Forge Support Agent...")}
-          className="absolute right-4 bottom-36 md:bottom-24 z-40 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
+          className="absolute right-4 bottom-32 md:bottom-24 z-50 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
         >
           <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
         </div>
