@@ -739,6 +739,15 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
         </div>
       )}
 
+      {/* --- LIVE STREAM MODAL --- */}
+      {onOpenLiveModal && (
+        <LiveModal 
+          isOpen={true} 
+          onClose={() => {}} 
+          token={displayToken} 
+        />
+      )}
+
       {/* --- NATIVE SHARE MODAL --- */}
       {isShareOpen && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
