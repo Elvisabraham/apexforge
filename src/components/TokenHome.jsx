@@ -28,20 +28,36 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const [headerCopied, setHeaderCopied] = useState(false);
   const [bodyCopied, setBodyCopied] = useState(false);
 
-  // 🚀 SAFETY GUARD: Smoothly bounce back to feed if token is invalid
+  // 🚀 SAFETY REDIRECT EFFECT: Auto-exit when token is invalid or missing
   useEffect(() => {
-    if (!token || (!token.name && !token.symbol && !token.id)) {
-      // Clear out the stuck fallback entries
+    const isInvalid = !token || !token.name || token.name === 'Unknown Token' || (!token.symbol && !token.id);
+    if (isInvalid) {
+      // Clear stuck fallback state from localStorage
       localStorage.removeItem('apex_mock_state_TKN');
       localStorage.removeItem('apex_mock_state_TKN_trades');
-      
+      localStorage.removeItem('apex_active_token');
+      localStorage.removeItem('apex_current_view');
+
       if (typeof onBack === 'function') {
         onBack();
-      } else {
-        window.location.hash = '/'; // Smooth SPA routing, NO hard reload
+      }
+
+      // Smooth hash reset
+      if (window.location.hash) {
+        window.location.hash = '';
       }
     }
   }, [token, onBack]);
+
+  // 🚀 EARLY NULL GUARD: Prevents rendering the "Unknown Token" ghost UI
+  if (!token || (!token.name && !token.symbol && !token.id) || token.name === 'Unknown Token') {
+    return (
+      <div className="flex flex-col items-center justify-center w-full min-h-screen bg-[#0A0A0B] text-white p-6 text-center">
+        <div className="w-8 h-8 border-2 border-[#089981] border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Returning to Home Feed...</p>
+      </div>
+    );
+  }
 
   // DATA ENGINE
   const rawProgress = token?.progress || 0;
@@ -49,7 +65,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const isActuallyGraduated = token?.isGraduated === true || rawProgress >= 100 || initialMcap >= 69;
 
   const displayToken = {
-    name: token?.name || token?.token || 'Unknown Token',
+    name: token?.name || token?.token || 'Token',
     symbol: token?.symbol || 'TKN',
     change: token?.change || '+0.0%',
     icon: token?.icon || '🪙',
@@ -86,7 +102,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     return 0;
   });
 
-  // Persistent Trades Logic with TxHashes & Whale tagging
+  // Persistent Trades Logic
   const [recentTrades, setRecentTrades] = useState(() => {
     const cachedTrades = localStorage.getItem(`${localCacheKey}_trades`);
     if (cachedTrades) return JSON.parse(cachedTrades);
@@ -337,7 +353,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between relative">
         <div className="flex items-center gap-3 min-w-0">
           
-          {/* 🚀 SMOOTH SPA BACK BUTTON NO HARD REFRESH */}
+          {/* 🚀 SMOOTH SPA BACK BUTTON */}
           <button 
             onClick={(e) => { 
               e.preventDefault(); 
@@ -345,11 +361,16 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
               
               localStorage.removeItem('apex_mock_state_TKN');
               localStorage.removeItem('apex_mock_state_TKN_trades');
+              localStorage.removeItem('apex_active_token');
 
               if (typeof onBack === 'function') {
                 onBack();
               } else {
-                window.location.hash = '/';
+                if (window.history.length > 1) {
+                  window.history.back();
+                } else {
+                  window.location.hash = '';
+                }
               }
             }} 
             className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-4 -ml-4 pr-5 shrink-0 relative z-[100] cursor-pointer"
