@@ -1,4 +1,4 @@
-// 🚀 VERSION 6: FINAL PIXEL-PERFECT MOBILE CLEARANCE FOR WATCH FEED
+// 🚀 VERSION 7: DEFINITIVE MOBILE CLEARANCE FOR WATCH FEED
 import React, { useState, useEffect, useRef } from 'react';
 
 export default function Watch({ onTokenClick, userProfile }) {
@@ -212,7 +212,7 @@ export default function Watch({ onTokenClick, userProfile }) {
       <div 
         ref={containerRef} 
         onScroll={handleScroll} 
-        className={`snap-container no-scrollbar w-full relative pb-32 ${isCommentDrawerOpen ? 'overflow-hidden touch-none' : ''}`}
+        className={`snap-container no-scrollbar w-full relative pb-40 ${isCommentDrawerOpen ? 'overflow-hidden touch-none' : ''}`}
       >
         {feedData.map((token, index) => {
           const isActive = index === activeVideoIndex;
@@ -235,8 +235,8 @@ export default function Watch({ onTokenClick, userProfile }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent z-10 pointer-events-none"></div>
               </div>
 
-              {/* ACTION BUTTONS SIDEBAR (🚀 RAISED TO bottom-36 TO CLEAR MOBILE NAV) */}
-              <div className="absolute right-4 bottom-36 flex flex-col items-center gap-6 z-30">
+              {/* ACTION BUTTONS SIDEBAR (🚀 RAISED TO bottom-44 TO FULLY CLEAR MOBILE NAV) */}
+              <div className="absolute right-4 bottom-44 flex flex-col items-center gap-6 z-30">
                 
                 {/* LIKE BUTTON */}
                 <div 
@@ -280,8 +280,8 @@ export default function Watch({ onTokenClick, userProfile }) {
                 </div>
               </div>
 
-              {/* BOTTOM PANEL (🚀 RAISED TO bottom-28 md:bottom-24 TO FULLY CLEAR MOBILE NAV BAR) */}
-              <div className="absolute left-0 bottom-28 md:bottom-24 w-[85%] p-4 flex flex-col z-30">
+              {/* BOTTOM PANEL (🚀 RAISED TO bottom-36 md:bottom-28 TO FULLY CLEAR MOBILE NAV BAR) */}
+              <div className="absolute left-0 bottom-36 md:bottom-28 w-[85%] p-4 flex flex-col z-30">
                 <div 
                   onClick={() => handleQuickTrade(token)}
                   className="flex items-center gap-2 mb-2 cursor-pointer group w-max"
