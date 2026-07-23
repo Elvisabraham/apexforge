@@ -190,8 +190,8 @@ export default function Launch({ onForgeSuccess }) {
         </h1>
       </header>
 
-      {/* --- SCROLLABLE MIDDLE CONTAINER with massive pb-72 clearance --- */}
-      <div className={`flex-1 overflow-y-auto no-scrollbar px-4 pt-6 pb-72 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
+      {/* --- SCROLLABLE MIDDLE CONTAINER with responsive pb-40 --- */}
+      <div className={`flex-1 overflow-y-auto no-scrollbar px-4 pt-6 pb-40 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
         <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
           
           <div className="flex flex-col gap-1">
@@ -310,9 +310,9 @@ export default function Launch({ onForgeSuccess }) {
         </div>
       </div>
 
-      {/* --- PINNED BOTTOM ACTION BAR --- */}
+      {/* --- PINNED BOTTOM ACTION BAR with responsive mb-20 md:mb-0 --- */}
       {!isDeploying && (
-        <div className="flex-none z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 mb-16 md:mb-0 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+        <div className="flex-none z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 mb-20 md:mb-0 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
             
             <div className="flex flex-col shrink-0">
@@ -334,11 +334,11 @@ export default function Launch({ onForgeSuccess }) {
         </div>
       )}
 
-      {/* 🚀 FIXED: Raised chat widget position to bottom-40 so it stays safely clear above the action bar */}
+      {/* --- LIVE SUPPORT CHAT WIDGET --- */}
       {!isDeploying && (
         <div 
           onClick={() => alert("Connecting to live Forge Support Agent...")}
-          className="absolute right-4 bottom-40 z-40 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
+          className="absolute right-4 bottom-36 md:bottom-24 z-40 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
         >
           <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
         </div>
