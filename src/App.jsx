@@ -1,120 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import Refer from './components/Refer';
-import Wallet from './components/Wallet';
-import Home from './components/Home';
-import Launch from './components/Launch';
-import BottomNav from './components/BottomNav';
-import Sidebar from './components/Sidebar'; 
-import Watch from './components/Watch';
-import TokenHome from './components/TokenHome'; 
-import Ranks from './components/Ranks'; 
-import Profile from './components/Profile'; 
-import AccountSettingsSystem from './components/AccountSettingsSystem';
-import TokenChat from './components/TokenChat';
-import EarnHub from './components/EarnHub'; 
-
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, clusterApiUrl, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
-// --- LEFT-ALIGNED ACCOUNT DRAWER COMPONENT ---
-const AccountDrawer = ({ isOpen, onClose, userProfile, netWorth, onOpenProfile, onOpenSettings }) => {
-  if (!isOpen) return null;
+// --- CORE VIEWS ---
+import Home from './components/Home';
+import Launch from './components/Launch';
+import Wallet from './components/Wallet';
+import Watch from './components/Watch';
+import TokenHome from './components/TokenHome'; 
+import TokenChat from './components/TokenChat';
+import Ranks from './components/Ranks'; 
+import Profile from './components/Profile'; 
+import Refer from './components/Refer';
+import EarnHub from './components/EarnHub'; 
+import SocialHub from './components/SocialHub'; 
+import AccountSettingsSystem from './components/AccountSettingsSystem';
 
-  return (
-    <div className="fixed inset-0 z-[200] flex justify-start" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={onClose}></div>
-      
-      <div 
-        className="w-[300px] sm:w-[320px] h-full bg-[#0A0A0A] border-r border-white/10 shadow-[20px_0_50px_rgba(0,0,0,0.7)] relative z-10 animate-slideRight flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="p-5 flex flex-col flex-1 overflow-y-auto no-scrollbar">
-          
-          <div className="flex justify-between items-center mb-6 shrink-0">
-            <h3 className="text-xs font-black uppercase tracking-wider text-zinc-500">Your Account</h3>
-            <button onClick={onClose} className="p-1.5 text-zinc-400 hover:text-white bg-white/5 rounded-full transition-colors active:scale-95"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
-          </div>
+// --- NAVIGATION & DRAWERS ---
+import BottomNav from './components/BottomNav';
+import Sidebar from './components/Sidebar'; 
+import AccountDrawer from './components/AccountDrawer';
+import NotificationCenter from './components/NotificationCenter';
 
-          <div className="bg-gradient-to-br from-[#121212] to-[#0A0A0A] border border-white/10 rounded-2xl p-5 pb-6 mb-4 shadow-lg relative overflow-hidden flex flex-col gap-4 shrink-0">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#089981]/5 rounded-full blur-3xl pointer-events-none"></div>
-            
-            <div className="flex justify-between items-start relative z-10">
-              <div 
-                onClick={() => { onClose(); onOpenProfile(); }}
-                className="w-14 h-14 bg-black rounded-full border border-white/10 flex items-center justify-center overflow-hidden cursor-pointer hover:border-[#089981]/50 transition-colors shrink-0 shadow-inner"
-              >
-                {userProfile?.avatar ? <img src={userProfile.avatar} className="w-full h-full object-cover" alt="Avatar"/> : '👤'}
-              </div>
-              <button 
-                onClick={() => { onClose(); onOpenProfile(); }}
-                className="text-[9px] font-black uppercase tracking-wider text-white bg-white/10 px-3 py-1.5 rounded-lg hover:bg-white/20 transition-colors border border-white/5"
-              >
-                View Profile
-              </button>
-            </div>
-
-            <div className="flex flex-col relative z-10 pt-1 pb-2">
-              <p className="text-lg font-black text-white truncate">{userProfile?.username || '@degen_trader'}</p>
-            </div>
-
-            <div className="flex items-center gap-5 py-3 border-y border-white/[0.05] relative z-10">
-              <div className="flex items-center gap-1.5 cursor-pointer group">
-                <span className="text-sm font-black text-white group-hover:text-[#089981] transition-colors">340</span>
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Following</span>
-              </div>
-              <div className="flex items-center gap-1.5 cursor-pointer group">
-                <span className="text-sm font-black text-white group-hover:text-[#089981] transition-colors">1,240</span>
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Followers</span>
-              </div>
-            </div>
-
-            <div className="flex flex-col relative z-10 pt-1">
-              <span className="text-[9px] font-black text-zinc-500 uppercase tracking-wider mb-1">Estimated Net Worth</span>
-              <p className="text-2xl font-black text-white font-mono tracking-tight leading-none">{netWorth}</p>
-              
-              <div className="flex items-center gap-2 mt-3">
-                 <span className="text-sm font-black text-[#089981] font-mono leading-none">+$450.00</span>
-                 <span className="text-[9px] font-black bg-[#089981]/10 text-[#089981] px-1.5 py-0.5 rounded uppercase tracking-widest border border-[#089981]/20 shadow-[0_0_10px_rgba(8,153,129,0.1)] leading-none">+2.4% Today</span>
-              </div>
-            </div>
-          </div>
-
-          <button 
-            onClick={() => { onClose(); onOpenSettings(); }}
-            className="w-full py-3 mb-auto rounded-xl text-[10px] font-black uppercase tracking-wider text-zinc-300 bg-white/5 hover:bg-white/10 transition-colors border border-white/5 active:scale-95 flex items-center justify-center gap-2 shadow-sm shrink-0"
-          >
-            <svg className="w-4 h-4 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            Edit Profile & Settings
-          </button>
-
-          <div className="mt-6 pt-6 border-t border-white/5 shrink-0">
-             <button 
-              onClick={() => { onClose(); onOpenSettings(); }}
-              className="w-full flex items-center justify-between px-4 py-3 bg-[#089981]/10 hover:bg-[#089981]/20 border border-[#089981]/20 rounded-xl transition-colors group mb-4 active:scale-95 shadow-inner"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#089981]/20 flex items-center justify-center text-[#089981]">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                </div>
-                <span className="text-[11px] font-bold text-[#089981] group-hover:text-[#00FF66] transition-colors">Live Chat Support</span>
-              </div>
-              <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_8px_rgba(0,255,102,1)]"></span>
-            </button>
-            <button className="w-full text-center text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:text-rose-500 py-2 transition-colors">Disconnect Wallet</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+// --- GLOBAL MODALS ---
+import DepositModal from './components/DepositModal';
+import WithdrawModal from './components/WithdrawModal';
+import SendModal from './components/SendModal';
+import SwapModal from './components/SwapModal';
+import LiveModal from './components/LiveModal';
 
 export default function App() {
   const { connected, publicKey } = useWallet();
 
-  // 🚀 FIXED: Wrapped Active Page in LocalStorage to survive page refreshes
+  // --- ROUTING & PERSISTENCE STATE ---
   const [activePage, setActivePage] = useState(() => {
     const saved = localStorage.getItem('apex_active_page');
-    return saved ? saved : 'home'; // Defaults to Home
+    return saved ? saved : 'home'; 
   }); 
   const [previousPage, setPreviousPage] = useState(() => {
     const saved = localStorage.getItem('apex_previous_page');
@@ -124,13 +45,33 @@ export default function App() {
   const [publicProfileView, setPublicProfileView] = useState(null);
   const [isFollowingCurrentView, setIsFollowingCurrentView] = useState(false);
   
+  // --- GLOBAL OVERLAY STATES ---
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   
+  const [modals, setModals] = useState({
+    deposit: false,
+    withdraw: false,
+    send: false,
+    swap: false,
+    live: false
+  });
+
+  const toggleModal = (modalName, isOpen) => {
+    setModals(prev => ({ ...prev, [modalName]: isOpen }));
+  };
+  
+  // --- MOCK DATA STATES ---
   const defaultTokens = [
     { id: '1', name: 'Apex AI', symbol: 'APEX', mintAddress: 'CA: Forge...Solana', icon: '🔥', mcap: '$10.4M', price: '0.0102', change: '+500%', isGraduated: false, progress: 68 },
     { id: '2', name: 'Based Cat', symbol: 'BCAT', mintAddress: 'CA: Meow...Pump', icon: '🐱', mcap: '$1.2M', price: '0.0012', change: '+142.5%', isGraduated: true, progress: 100 },
     { id: '3', name: 'Solana Yield', symbol: 'SYLD', mintAddress: 'CA: Yield...Vault', icon: '📈', mcap: '$3.4M', price: '0.0034', change: '+24.8%', isGraduated: false, progress: 25 },
+  ];
+
+  const dummyNotifications = [
+    { id: 1, category: 'FORGE', title: 'Token Deployed', message: 'Apex AI is now live on the bonding curve.', time: '2m ago', read: false },
+    { id: 2, category: 'SOCIAL', title: 'New Mention', message: '@turboshark tagged you in based cat chat.', time: '1h ago', read: false },
   ];
 
   const [globalTokens, setGlobalTokens] = useState(() => {
@@ -158,7 +99,7 @@ export default function App() {
     return savedTxs ? JSON.parse(savedTxs) : [];
   });
 
-  // Save current route path and data to storage automatically
+  // --- LOCAL STORAGE EFFECTS ---
   useEffect(() => { localStorage.setItem('apex_active_page', activePage); }, [activePage]);
   useEffect(() => { localStorage.setItem('apex_previous_page', previousPage); }, [previousPage]);
   useEffect(() => { localStorage.setItem('apex_global_tokens', JSON.stringify(globalTokens.map(t => ({...t, imagePreview: null})))); }, [globalTokens]);
@@ -166,6 +107,7 @@ export default function App() {
   useEffect(() => { localStorage.setItem('apex_user_profile', JSON.stringify({...userProfile, avatar: null})); }, [userProfile]);
   useEffect(() => { localStorage.setItem('apex_global_transactions', JSON.stringify(globalTransactions)); }, [globalTransactions]);
 
+  // --- LIVE SOLANA BALANCE FETCHING ---
   useEffect(() => {
     if (connected && publicKey) {
       const connection = new Connection(clusterApiUrl('mainnet-beta'));
@@ -197,6 +139,7 @@ export default function App() {
     }
   }, [connected, publicKey]);
   
+  // --- TRADE PORTAL STATE ---
   const [selectedTokenData, setSelectedTokenData] = useState(null); 
   const [isTradePortalOpen, setIsTradePortalOpen] = useState(false);
   const [tradeMode, setTradeMode] = useState('buy');
@@ -204,6 +147,7 @@ export default function App() {
   
   const userSolBalance = userPortfolio.find(t => t.symbol === 'SOL')?.balance || 0;
 
+  // --- HANDLERS ---
   const handleTokenClick = (token) => {
     setPreviousPage(activePage); 
     setSelectedTokenData(token);
@@ -231,15 +175,9 @@ export default function App() {
     setActivePage('profile');
   };
 
-  const handleOpenMobileSidebar = () => {
-    setIsMobileSidebarOpen(true);
-  };
-
   const handleSidebarNavigation = (page) => {
     setIsMobileSidebarOpen(false);
-    if (page === 'profile') {
-      setPublicProfileView(null); 
-    }
+    if (page === 'profile') setPublicProfileView(null); 
     setActivePage(page);
   };
 
@@ -290,7 +228,7 @@ export default function App() {
         hash: Math.random().toString(36).substring(2, 10)
       }, ...prev]);
 
-      alert(`✅ Trade Executed! You successfully bought ${formatWithCommas(tokensToReceive.toFixed(0))}${selectedTokenData.symbol}. Check your Wallet Portfolio!`);
+      alert(`✅ Trade Executed! You successfully bought ${formatWithCommas(tokensToReceive.toFixed(0))}${selectedTokenData.symbol}.`);
 
     } else {
       const tokenInWallet = userPortfolio.find(t => t.symbol === selectedTokenData.symbol);
@@ -388,6 +326,7 @@ export default function App() {
   const trendingTokens = globalTokens.filter(t => !t.isGraduated && t.progress < 100);
   const graduatedTokens = globalTokens.filter(t => t.isGraduated || t.progress >= 100);
 
+  // --- MAIN ROUTER ---
   const renderContent = () => {
     const openAccountDrawer = () => setIsAccountDrawerOpen(true);
 
@@ -400,11 +339,12 @@ export default function App() {
                  onTokenClick={handleTokenClick} 
                  setActivePage={(page) => { setPreviousPage('home'); setActivePage(page); }} 
                  userProfile={userProfile} 
-                 onOpenSidebar={handleOpenMobileSidebar} 
+                 onOpenSidebar={() => setIsMobileSidebarOpen(true)} 
                  onOpenAccountDrawer={openAccountDrawer} 
+                 onOpenNotifications={() => setIsNotificationsOpen(true)}
                />;
       case 'watch': 
-        return <Watch onTokenClick={handleTokenClick} setActivePage={(page) => { setPreviousPage('watch'); setActivePage(page); }} userProfile={userProfile} onOpenAccountDrawer={openAccountDrawer} />;
+        return <Watch onTokenClick={handleTokenClick} setActivePage={(page) => { setPreviousPage('watch'); setActivePage(page); }} userProfile={userProfile} onOpenAccountDrawer={openAccountDrawer} onOpenNotifications={() => setIsNotificationsOpen(true)} />;
       case 'forge':
       case 'launch': 
         return <Launch onForgeSuccess={handleForgeSuccess} userProfile={userProfile} setActivePage={(page) => { setPreviousPage('forge'); setActivePage(page); }} />;
@@ -414,6 +354,8 @@ export default function App() {
         return <Refer onBack={() => setActivePage(previousPage === 'refer' ? 'wallet' : previousPage)} />;
       case 'earn': 
         return <EarnHub setActivePage={setActivePage} userPortfolio={userPortfolio} previousPage={previousPage} />;
+      case 'social':
+        return <SocialHub setActivePage={setActivePage} onOpenProfile={handleOpenPublicProfile} />;
       case 'wallet': 
         return (
           <Wallet 
@@ -427,6 +369,10 @@ export default function App() {
             onOpenSettings={() => { setPreviousPage('wallet'); setActivePage('settings'); }}
             userProfile={userProfile}
             onOpenAccountDrawer={openAccountDrawer}
+            onOpenDeposit={() => toggleModal('deposit', true)}
+            onOpenWithdraw={() => toggleModal('withdraw', true)}
+            onOpenSend={() => toggleModal('send', true)}
+            onOpenSwap={() => toggleModal('swap', true)}
           />
         );
       case 'profile': 
@@ -443,7 +389,7 @@ export default function App() {
       case 'settings': 
         return (
           <AccountSettingsSystem 
-            initialView="main" // Ensures it always opens cleanly
+            initialView="main" 
             onBack={() => setActivePage(previousPage || 'home')} 
             onCloseSettings={() => setActivePage(previousPage || 'home')} 
             userProfile={userProfile} 
@@ -458,6 +404,7 @@ export default function App() {
             onTradeClick={handleOpenTradePortal}
             onOpenProfile={() => handleOpenPublicProfile({ name: 'Apex Deployer', handle: '@ApexDeployer_0x1', avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=ApexDeployer_0x1` })}
             onOpenChat={() => setActivePage('tokenChat')}
+            onOpenLiveModal={() => toggleModal('live', true)}
           />
         );
       case 'tokenchat':
@@ -479,45 +426,40 @@ export default function App() {
                  onTokenClick={handleTokenClick} 
                  setActivePage={(page) => { setPreviousPage('home'); setActivePage(page); }} 
                  userProfile={userProfile} 
-                 onOpenSidebar={handleOpenMobileSidebar} 
+                 onOpenSidebar={() => setIsMobileSidebarOpen(true)} 
                  onOpenAccountDrawer={openAccountDrawer} 
+                 onOpenNotifications={() => setIsNotificationsOpen(true)}
                />;
     }
   };
 
   return (
-    // 🚀 FIXED: Mobile Jump Bug - changed h-screen to h-[100dvh]
-    <div className="bg-[#050505] h-[100dvh] text-white flex overflow-hidden w-screen select-none">
+    <div className="bg-[#050505] h-[100dvh] text-white flex overflow-hidden w-screen select-none relative">
       
       <style>{`
         /* 🚀 GLOBAL NATIVE APP LOCKDOWN 🚀 */
         html, body {
           height: 100%;
           width: 100%;
-          overflow: hidden; /* Stops whole page scrolling */
-          position: fixed; /* Stops the jumpy address bar bug on iOS/Android Chrome */
-          overscroll-behavior-y: none; /* Stops pull-to-refresh bounce */
+          overflow: hidden; 
+          position: fixed; 
+          overscroll-behavior-y: none; 
         }
-        
         * {
-          -webkit-touch-callout: none; /* Disable iOS Safari Callout */
-          -webkit-user-select: none; /* Safari */
-          -ms-user-select: none; /* Internet Explorer/Edge */
-          user-select: none; /* Standard syntax */
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
         }
-        
-        /* EXCEPTIONS: We MUST allow typing in inputs! */
         input, textarea {
           -webkit-user-select: auto !important;
           user-select: auto !important;
         }
-
         @keyframes slideRight {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(0); }
         }
         .animate-slideRight { animation: slideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-
         @keyframes fadeIn {
           0% { opacity: 0; }
           100% { opacity: 1; }
@@ -526,7 +468,7 @@ export default function App() {
       `}</style>
 
       {/* --- DESKTOP SIDEBAR --- */}
-      <div className="hidden md:block w-[260px] shrink-0 bg-[#0A0A0A] border-r border-white/5 z-50 relative">
+      <div className="hidden md:block w-[260px] shrink-0 bg-[#0A0A0A] border-r border-white/5 z-40 relative">
         <Sidebar currentView={activePage} setCurrentView={handleSidebarNavigation} userProfile={userProfile} />
       </div>
 
@@ -545,7 +487,7 @@ export default function App() {
         </div>
       )}
 
-      {/* --- THE LEFT-ALIGNED ACCOUNT DRAWER --- */}
+      {/* --- IMPORTED LEFT-ALIGNED ACCOUNT DRAWER --- */}
       <AccountDrawer 
         isOpen={isAccountDrawerOpen} 
         onClose={() => setIsAccountDrawerOpen(false)} 
@@ -563,16 +505,14 @@ export default function App() {
       />
 
       {/* --- MAIN CONTENT AREA --- */}
-      {/* 🚀 FIXED: Mobile Jump Bug - changed h-screen to h-full so it fills the strict 100dvh body */}
       <div className="flex-1 relative h-full overflow-y-auto overflow-x-hidden pb-20 md:pb-0 bg-[#050505]">
         {renderContent()}
 
+        {/* --- TRADE PORTAL OVERLAY --- */}
         {isTradePortalOpen && (
           <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
             <div className="absolute inset-0 z-0" onClick={() => setIsTradePortalOpen(false)}></div>
-            
             <div className="bg-[#121212] border-t border-white/10 sm:border rounded-t-3xl sm:rounded-3xl w-full max-w-[400px] p-6 relative z-10 shadow-[0_0_80px_rgba(0,0,0,0.8)] animate-slideUpNative">
-              
               <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 sm:hidden"></div>
 
               <div className="flex justify-between items-start mb-6">
@@ -671,6 +611,27 @@ export default function App() {
         )}
         
       </div>
+
+      {/* ========================================================= */}
+      {/* 🚀 GLOBAL APP MODALS & DRAWERS (MOUNTED AT ROOT) 🚀 */}
+      {/* ========================================================= */}
+      
+      {/* 1. Global Notification Center */}
+      <NotificationCenter 
+        isOpen={isNotificationsOpen} 
+        onClose={() => setIsNotificationsOpen(false)} 
+        notifications={dummyNotifications} 
+      />
+
+      {/* 2. Wallet Transaction Modals */}
+      {modals.deposit && <DepositModal isOpen={modals.deposit} onClose={() => toggleModal('deposit', false)} />}
+      {modals.withdraw && <WithdrawModal isOpen={modals.withdraw} onClose={() => toggleModal('withdraw', false)} />}
+      {modals.send && <SendModal isOpen={modals.send} onClose={() => toggleModal('send', false)} />}
+      {modals.swap && <SwapModal isOpen={modals.swap} onClose={() => toggleModal('swap', false)} />}
+
+      {/* 3. Real-Time Broadcast & Event Overlay */}
+      {modals.live && <LiveModal isOpen={modals.live} onClose={() => toggleModal('live', false)} token={selectedTokenData} />}
+
     </div>
   );
 }
