@@ -860,14 +860,14 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                 disabled={!tradeAmount || parseFloat(tradeAmount) <= 0}
                 className={`w-full ${displayToken.isGraduated ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-[0_0_20px_rgba(245,158,11,0.3)]' : (tradeMode === 'buy' ? 'bg-[#089981] hover:bg-[#06806b] shadow-[0_0_20px_rgba(8,153,129,0.3)]' : 'bg-[#F23645] hover:bg-rose-600 shadow-[0_0_20px_rgba(242,54,69,0.3)]')} disabled:opacity-50 text-white font-black text-sm py-4 rounded-2xl tracking-[0.2em] uppercase transition-all active:scale-95 flex items-center justify-center gap-2`}
              >
-                Confirm {tradeMode} ⚡
+               Confirm {tradeMode} ⚡
              </button>
           </div>
         </div>
       )}
 
-      {/* --- CONDITIONAL UNMOVABLE BOTTOM BUY MAT --- */}
-      <div className="flex-none bg-[#0E0E14] z-30 pt-3 pb-6 md:pb-5 px-4 border-t border-white/[0.05] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] relative">
+      {/* --- 🚀 UPGRADED CONDITIONAL UNMOVABLE BOTTOM BUY MAT (ADDED pb-24 TO CLEAR MOBILE NAV) --- */}
+      <div className="flex-none bg-[#0E0E14] z-30 pt-4 pb-24 md:pb-6 px-4 border-t border-white/[0.05] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] relative">
         <div className="max-w-4xl mx-auto flex flex-col items-center">
           
           <button 
