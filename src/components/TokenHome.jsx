@@ -93,6 +93,18 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     localStorage.setItem(`${localCacheKey}_trades`, JSON.stringify(recentTrades));
   }, [recentTrades, localCacheKey]);
 
+  // 🚀 SAFETY GUARD: Auto-bounce back to feed if token prop is missing/null on refresh
+  useEffect(() => {
+    if (!token || (!token.name && !token.symbol && !token.id)) {
+      if (typeof onBack === 'function') {
+        onBack();
+      } else {
+        window.location.hash = '';
+        window.location.href = '/#/';
+      }
+    }
+  }, [token, onBack]);
+
   const dynamicPriceImpact = tradeAmount && parseFloat(tradeAmount) > 0 
     ? (parseFloat(tradeAmount) * (tradeMode === 'buy' ? 0.12 : 0.08)).toFixed(2) 
     : '0.00';
@@ -415,7 +427,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
             
             <button 
               onClick={userTokenBalance > 0 ? onOpenChat : () => alert('You must hold this token to enter the trench chat!')}
-              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${userTokenBalance > 0 ? 'bg-[#089981] text-black hover:bg-[#06806b] hover:shadow-[0_0_15px_rgba(8,153,129,0.4)] active:scale-95' : 'bg-white/5 text-zinc-500 cursor-not-allowed border border-white/5'}`}
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${userTokenBalance > 0 ? 'bg-[#089981] text-black hover:bg-[#06806b] hover:shadow-[0_4px_12px_rgba(8,153,129,0.15)] active:scale-95' : 'bg-white/5 text-zinc-500 cursor-not-allowed border border-white/5'}`}
             >
               {userTokenBalance > 0 ? <>💬 Enter Chat</> : <>🔒 Buy to Chat</>}
             </button>
