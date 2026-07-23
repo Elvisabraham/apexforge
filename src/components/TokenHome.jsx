@@ -332,9 +332,15 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
             onClick={(e) => { 
               e.preventDefault(); 
               e.stopPropagation(); 
-              executeBackArrow(); 
+              if (typeof onBack === 'function') {
+                onBack();
+              } else {
+                window.history.back();
+                // If history.back fails, force redirect to the main app after 100ms
+                setTimeout(() => { window.location.href = '/'; }, 100);
+              }
             }} 
-            className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-3 -ml-3 pr-4 shrink-0 relative z-[100] cursor-pointer"
+            className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-4 -ml-4 pr-5 shrink-0 relative z-[100] cursor-pointer"
           >
             <svg className="w-7 h-7 text-white pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
