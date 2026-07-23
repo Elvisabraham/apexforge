@@ -9,7 +9,7 @@ export default function Home({
   userProfile, 
   onOpenSidebar,
   onOpenAccountDrawer,
-  onOpenNotifications // 🚀 Triggers the global Notification Center from App.jsx
+  onOpenNotifications 
 }) {
   const [activeTab, setActiveTab] = useState('EXPLORE');
   const [searchQuery, setSearchQuery] = useState('');
@@ -66,15 +66,12 @@ export default function Home({
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes slideDown { 0% { opacity: 0; transform: translateY(-10px); } 100% { opacity: 1; transform: translateY(0); } }
-        .animate-slideDown { animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
       `}</style>
 
       {/* --- UNMOVABLE HEADER --- */}
       <header className="flex-none z-50 bg-[#0A0A0B]/95 backdrop-blur-xl pt-4 pb-3 px-4 border-b border-white/[0.04]">
         <div className="flex items-center justify-between mb-4">
           
-          {/* Left: Mobile Menu & Logo */}
           <div className="flex items-center gap-3">
             <button 
               onClick={onOpenSidebar}
@@ -91,7 +88,6 @@ export default function Home({
             </div>
           </div>
           
-          {/* Right: Earn, Notifications, & 🚀 ENLARGED PROFILE AVATAR */}
           <div className="flex items-center gap-3 sm:gap-4">
             <button 
               onClick={() => setActivePage && setActivePage('earn')}
@@ -101,7 +97,6 @@ export default function Home({
               <span className="text-[10px] font-black text-[#089981] uppercase tracking-[0.15em]">Earn</span>
             </button>
 
-            {/* Notification Bell */}
             <button 
               onClick={onOpenNotifications}
               className="relative p-2 text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
@@ -110,7 +105,6 @@ export default function Home({
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#089981] rounded-full border border-[#0A0A0B]"></span>
             </button>
 
-            {/* Enlarged Right-Aligned Avatar */}
             <div 
               onClick={() => { if (onOpenAccountDrawer) onOpenAccountDrawer(); }} 
               className="w-10 h-10 rounded-full border-2 border-[#089981] hover:border-white bg-[#121212] flex items-center justify-center overflow-hidden cursor-pointer transition-colors shadow-lg shrink-0"
@@ -136,10 +130,9 @@ export default function Home({
         </div>
       </header>
 
-      {/* --- SCROLLABLE FEED --- */}
-      <div className="flex-1 overflow-y-auto no-scrollbar relative pb-32">
+      {/* --- SCROLLABLE FEED (No nested scroll logic to break mobile) --- */}
+      <div className="flex-1 overflow-y-auto no-scrollbar relative pb-20">
         
-        {/* 🚀 ENLARGED SPOTLIGHT TOKEN */}
         {spotlightToken && !searchQuery && (activeTab === 'TRENDING' || activeTab === 'EXPLORE') && (
           <div className="px-4 pt-4 pb-2">
             <div 
@@ -156,7 +149,6 @@ export default function Home({
               </div>
 
               <div className="flex items-center gap-5 relative z-10">
-                {/* 🚀 MASSIVE SPOTLIGHT LOGO */}
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-black border-2 border-[#A855F7]/50 rounded-full flex items-center justify-center text-3xl sm:text-4xl shrink-0 shadow-lg overflow-hidden group-hover:scale-105 transition-transform">
                    {spotlightToken.imagePreview ? <img src={spotlightToken.imagePreview} className="w-full h-full object-cover" alt="icon"/> : spotlightToken.icon}
                 </div>
@@ -212,10 +204,9 @@ export default function Home({
                 <div 
                   key={t.id || index} 
                   onClick={() => handleTokenClick(t)}
-                  className="flex items-center justify-between p-4 sm:p-5 rounded-2xl cursor-pointer hover:bg-[#131722] transition-colors border border-transparent hover:border-white/[0.05] group animate-slideDown shadow-sm"
+                  className="flex items-center justify-between p-4 sm:p-5 rounded-2xl cursor-pointer hover:bg-[#131722] transition-colors border border-transparent hover:border-white/[0.05] group shadow-sm"
                 >
                   <div className="flex items-center gap-4 min-w-0 w-[45%]">
-                    {/* 🚀 ENLARGED FEED LOGO */}
                     <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#1A1A24] border border-white/10 rounded-full flex items-center justify-center text-2xl sm:text-3xl shrink-0 shadow-inner overflow-hidden group-hover:border-[#089981]/50 transition-colors">
                       {t.imagePreview ? <img src={t.imagePreview} alt={t.name} className="w-full h-full object-cover" /> : t.icon}
                     </div>
