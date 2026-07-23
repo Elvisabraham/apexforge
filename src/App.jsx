@@ -410,17 +410,17 @@ export default function App() {
         }
         return (
           <TokenHome 
-            token={selectedTokenData} 
-            onBack={() => {
-              // Ensure we don't loop back to tokenHome
-              const targetPage = (previousPage === 'tokenHome' || previousPage === 'tokenchat') ? 'home' : (previousPage || 'home');
-              setActivePage(targetPage);
-            }} 
-            onTradeClick={handleOpenTradePortal}
-            onOpenProfile={() => handleOpenPublicProfile({ name: 'Apex Deployer', handle: '@ApexDeployer_0x1', avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=ApexDeployer_0x1` })}
-            onOpenChat={() => setActivePage('tokenChat')}
-            onOpenLiveModal={() => toggleModal('live', true)}
-          />
+        token={selectedTokenData} 
+        onBack={() => {
+          // Ensure we don't loop back to tokenHome
+          const targetPage = (previousPage === 'tokenHome' || previousPage === 'tokenchat') ? 'home' : (previousPage || 'home');
+          setActivePage(targetPage);
+        }} 
+        onTradeClick={handleOpenTradePortal}
+        onOpenProfile={() => handleOpenPublicProfile({ name: 'Apex Deployer', handle: '@ApexDeployer_0x1', avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=ApexDeployer_0x1` })}
+        onOpenChat={() => setActivePage('tokenChat')}
+        onOpenLiveModal={() => toggleModal('live', true)}
+      />
         );
       case 'tokenchat':
         // 🚀 FIXED: Hard-stop for chat too!
