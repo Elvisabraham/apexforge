@@ -336,8 +336,11 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                 onBack();
               } else {
                 window.history.back();
-                // If history.back fails, force redirect to the main app after 100ms
-                setTimeout(() => { window.location.href = '/'; }, 100);
+                // If history.back fails, violently strip the URL hash and force a clean reload to the origin
+                setTimeout(() => { 
+                  window.location.hash = '';
+                  window.location.href = window.location.origin; 
+                }, 100);
               }
             }} 
             className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-4 -ml-4 pr-5 shrink-0 relative z-[100] cursor-pointer"
