@@ -179,7 +179,7 @@ export default function Launch({ onForgeSuccess }) {
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      {/* --- 1. PINNED HEADER (Stays fixed at the top) --- */}
+      {/* --- PINNED HEADER --- */}
       <header className="flex-none z-40 bg-[#050505]/95 backdrop-blur-md px-4 py-4 border-b border-white/[0.04] flex items-center justify-center shadow-md">
         <h1 className="text-xl font-black tracking-wide text-white uppercase flex items-center gap-2">
           <svg viewBox="0 0 100 100" className="w-5 h-5 text-[#089981]" fill="currentColor">
@@ -190,8 +190,8 @@ export default function Launch({ onForgeSuccess }) {
         </h1>
       </header>
 
-      {/* --- 2. SCROLLABLE MIDDLE CONTAINER (Scrolls smoothly between header and bottom bar) --- */}
-      <div className={`flex-1 overflow-y-auto no-scrollbar px-4 pt-6 pb-28 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
+      {/* --- SCROLLABLE MIDDLE CONTAINER --- */}
+      <div className={`flex-1 overflow-y-auto no-scrollbar px-4 pt-6 pb-32 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
         <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
           
           <div className="flex flex-col gap-1">
@@ -310,7 +310,7 @@ export default function Launch({ onForgeSuccess }) {
         </div>
       </div>
 
-      {/* --- 3. PINNED BOTTOM ACTION BAR (Stays fixed right above mobile BottomNav) --- */}
+      {/* --- PINNED BOTTOM ACTION BAR --- */}
       {!isDeploying && (
         <div className="flex-none z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 mb-16 md:mb-0 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
@@ -334,11 +334,11 @@ export default function Launch({ onForgeSuccess }) {
         </div>
       )}
 
-      {/* Support Widget */}
+      {/* 🚀 FIXED: Raised chat widget position to bottom-32 so it clears the action bar and bottom nav */}
       {!isDeploying && (
         <div 
           onClick={() => alert("Connecting to live Forge Support Agent...")}
-          className="absolute right-4 bottom-24 z-40 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
+          className="absolute right-4 bottom-32 z-40 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
         >
           <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
         </div>
