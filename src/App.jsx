@@ -89,7 +89,7 @@ const AccountDrawer = ({ isOpen, onClose, userProfile, netWorth, onOpenProfile, 
 
           <div className="mt-6 pt-6 border-t border-white/5 shrink-0">
              <button 
-              onClick={() => alert('Live Chat initiated.')}
+              onClick={() => { onClose(); onOpenSettings(); }}
               className="w-full flex items-center justify-between px-4 py-3 bg-[#089981]/10 hover:bg-[#089981]/20 border border-[#089981]/20 rounded-xl transition-colors group mb-4 active:scale-95 shadow-inner"
             >
               <div className="flex items-center gap-3">
@@ -111,8 +111,16 @@ const AccountDrawer = ({ isOpen, onClose, userProfile, netWorth, onOpenProfile, 
 export default function App() {
   const { connected, publicKey } = useWallet();
 
-  const [activePage, setActivePage] = useState('wallet'); 
-  const [previousPage, setPreviousPage] = useState('home'); 
+  // 🚀 FIXED: Wrapped Active Page in LocalStorage to survive page refreshes
+  const [activePage, setActivePage] = useState(() => {
+    const saved = localStorage.getItem('apex_active_page');
+    return saved ? saved : 'home'; // Defaults to Home
+  }); 
+  const [previousPage, setPreviousPage] = useState(() => {
+    const saved = localStorage.getItem('apex_previous_page');
+    return saved ? saved : 'home';
+  }); 
+  
   const [publicProfileView, setPublicProfileView] = useState(null);
   const [isFollowingCurrentView, setIsFollowingCurrentView] = useState(false);
   
@@ -150,6 +158,9 @@ export default function App() {
     return savedTxs ? JSON.parse(savedTxs) : [];
   });
 
+  // Save current route path and data to storage automatically
+  useEffect(() => { localStorage.setItem('apex_active_page', activePage); }, [activePage]);
+  useEffect(() => { localStorage.setItem('apex_previous_page', previousPage); }, [previousPage]);
   useEffect(() => { localStorage.setItem('apex_global_tokens', JSON.stringify(globalTokens.map(t => ({...t, imagePreview: null})))); }, [globalTokens]);
   useEffect(() => { localStorage.setItem('apex_user_portfolio', JSON.stringify(userPortfolio.map(t => ({...t, imagePreview: null})))); }, [userPortfolio]);
   useEffect(() => { localStorage.setItem('apex_user_profile', JSON.stringify({...userProfile, avatar: null})); }, [userProfile]);
@@ -432,6 +443,7 @@ export default function App() {
       case 'settings': 
         return (
           <AccountSettingsSystem 
+            initialView="main" // Ensures it always opens cleanly
             onBack={() => setActivePage(previousPage || 'home')} 
             onCloseSettings={() => setActivePage(previousPage || 'home')} 
             userProfile={userProfile} 
@@ -473,12 +485,20 @@ export default function App() {
     }
   };
 
-  // 🚀 ADDED: select-none to absolute root wrapper
   return (
-    <div className="bg-[#050505] h-screen text-white flex overflow-hidden w-screen select-none">
+    // 🚀 FIXED: Mobile Jump Bug - changed h-screen to h-[100dvh]
+    <div className="bg-[#050505] h-[100dvh] text-white flex overflow-hidden w-screen select-none">
       
       <style>{`
         /* 🚀 GLOBAL NATIVE APP LOCKDOWN 🚀 */
+        html, body {
+          height: 100%;
+          width: 100%;
+          overflow: hidden; /* Stops whole page scrolling */
+          position: fixed; /* Stops the jumpy address bar bug on iOS/Android Chrome */
+          overscroll-behavior-y: none; /* Stops pull-to-refresh bounce */
+        }
+        
         * {
           -webkit-touch-callout: none; /* Disable iOS Safari Callout */
           -webkit-user-select: none; /* Safari */
@@ -490,11 +510,6 @@ export default function App() {
         input, textarea {
           -webkit-user-select: auto !important;
           user-select: auto !important;
-        }
-
-        /* 🚀 STOPS THE BROWSER SCROLL BOUNCE/JUMP 🚀 */
-        body {
-          overscroll-behavior-y: none;
         }
 
         @keyframes slideRight {
@@ -530,7 +545,7 @@ export default function App() {
         </div>
       )}
 
-      {/* --- THE NEW LEFT-ALIGNED ACCOUNT DRAWER --- */}
+      {/* --- THE LEFT-ALIGNED ACCOUNT DRAWER --- */}
       <AccountDrawer 
         isOpen={isAccountDrawerOpen} 
         onClose={() => setIsAccountDrawerOpen(false)} 
@@ -548,7 +563,8 @@ export default function App() {
       />
 
       {/* --- MAIN CONTENT AREA --- */}
-      <div className="flex-1 relative h-screen overflow-y-auto overflow-x-hidden pb-20 md:pb-0 bg-[#050505]">
+      {/* 🚀 FIXED: Mobile Jump Bug - changed h-screen to h-full so it fills the strict 100dvh body */}
+      <div className="flex-1 relative h-full overflow-y-auto overflow-x-hidden pb-20 md:pb-0 bg-[#050505]">
         {renderContent()}
 
         {isTradePortalOpen && (
@@ -647,6 +663,7 @@ export default function App() {
           </div>
         )}
 
+        {/* --- BOTTOM NAVIGATION (HIDDEN ON DESKTOP & SUBPAGES) --- */}
         {activePage !== 'tokenHome' && activePage !== 'tokenChat' && activePage !== 'settings' && activePage !== 'profile' && (
           <div className="md:hidden z-50">
             <BottomNav activePage={activePage} setActivePage={setActivePage} userProfile={userProfile} />
