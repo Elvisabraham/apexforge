@@ -28,23 +28,18 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const [headerCopied, setHeaderCopied] = useState(false);
   const [bodyCopied, setBodyCopied] = useState(false);
 
-  // 🚀 HARD EXIT GUARD FOR UNKNOWN / NULL TOKENS
+  // 🚀 SAFETY GUARD: Smoothly bounce back to feed if token is invalid
   useEffect(() => {
-    const isInvalid = !token || !token.name || token.name === 'Unknown Token' || (!token.symbol && !token.id);
-    if (isInvalid) {
-      // Clear out stuck fallback entries from localStorage
+    if (!token || (!token.name && !token.symbol && !token.id)) {
+      // Clear out the stuck fallback entries
       localStorage.removeItem('apex_mock_state_TKN');
       localStorage.removeItem('apex_mock_state_TKN_trades');
-      localStorage.removeItem('apex_active_token');
-
+      
       if (typeof onBack === 'function') {
         onBack();
+      } else {
+        window.location.hash = '/'; // Smooth SPA routing, NO hard reload
       }
-
-      // Hard reset Chrome browser to root origin bypassing hash URL traps
-      setTimeout(() => {
-        window.location.replace(window.location.origin + window.location.pathname);
-      }, 50);
     }
   }, [token, onBack]);
 
@@ -342,14 +337,20 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between relative">
         <div className="flex items-center gap-3 min-w-0">
           
+          {/* 🚀 SMOOTH SPA BACK BUTTON NO HARD REFRESH */}
           <button 
             onClick={(e) => { 
               e.preventDefault(); 
               e.stopPropagation(); 
+              
+              localStorage.removeItem('apex_mock_state_TKN');
+              localStorage.removeItem('apex_mock_state_TKN_trades');
+
               if (typeof onBack === 'function') {
                 onBack();
+              } else {
+                window.location.hash = '/';
               }
-              window.location.replace(window.location.origin + window.location.pathname);
             }} 
             className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-4 -ml-4 pr-5 shrink-0 relative z-[100] cursor-pointer"
           >
