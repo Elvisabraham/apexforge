@@ -46,8 +46,8 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes scaleUp { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
-        .animate-scaleUp { animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes slideUpNative { 0% { transform: translateY(100%); } 100% { transform: translateY(0); } }
+        .animate-slideUpNative { animation: slideUpNative 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
       `}</style>
 
       {/* --- HEADER --- */}
@@ -193,14 +193,17 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
         </div>
       </div>
 
-      {/* --- STAKING MODAL (🚀 FIXED: CENTERED OVERLAY POPUP SO BUTTON IS NEVER CLIPPED) --- */}
+      {/* --- STAKING MODAL (🚀 RESTORED BOTTOM-SHEET WITH SAFE PADDING FOR BUTTON) --- */}
       {activeVault && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+        <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="absolute inset-0 z-0" onClick={() => setActiveVault(null)}></div>
           
-          <div className="bg-[#121212] border border-[#089981]/40 rounded-3xl w-full max-w-[420px] p-6 relative z-10 shadow-[0_0_50px_rgba(8,153,129,0.2)] animate-scaleUp flex flex-col">
+          <div className="bg-[#121212] border-t border-[#089981]/30 rounded-t-3xl w-full max-w-lg p-6 pb-14 relative z-10 shadow-[0_-20px_50px_rgba(8,153,129,0.15)] animate-slideUpNative flex flex-col max-h-[85vh] overflow-y-auto no-scrollbar">
             
-            <div className="flex justify-between items-center mb-5">
+            {/* Grab Bar */}
+            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-5 shrink-0"></div>
+
+            <div className="flex justify-between items-center mb-5 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-black border border-white/10 flex items-center justify-center text-lg overflow-hidden shadow-inner">
                   {activeVault.icon.startsWith('http') ? <img src={activeVault.icon} className="w-full h-full object-cover p-1.5" alt="icon"/> : activeVault.icon}
@@ -215,7 +218,7 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
               </button>
             </div>
 
-            <div className="bg-[#050505] border border-white/5 focus-within:border-[#089981]/50 rounded-2xl p-4 flex items-center justify-between gap-4 transition-all mb-3 shadow-inner">
+            <div className="bg-[#050505] border border-white/5 focus-within:border-[#089981]/50 rounded-2xl p-4 flex items-center justify-between gap-4 transition-all mb-3 shadow-inner shrink-0">
               <input 
                 type="number" 
                 value={stakeAmount} 
@@ -226,7 +229,7 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
               <span className="text-sm font-black text-zinc-500 pr-2">{activeVault.symbol}</span>
             </div>
 
-            <div className="flex justify-between items-center px-1 mb-5">
+            <div className="flex justify-between items-center px-1 mb-5 shrink-0">
               <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
                 Balance: {activeVault.symbol === 'SOL' ? formatWithCommas(userSolBalance) : '0.00'} {activeVault.symbol}
               </span>
@@ -246,7 +249,7 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 p-4 bg-[#0A0A0A] border border-white/5 rounded-xl mb-6 shadow-inner">
+            <div className="flex flex-col gap-3 p-4 bg-[#0A0A0A] border border-white/5 rounded-xl mb-6 shadow-inner shrink-0">
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Lockup Period</span>
                 <span className="text-[10px] font-black text-white">{activeVault.lockup || 'Flexible'}</span>
@@ -259,10 +262,11 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
               </div>
             </div>
 
+            {/* Confirm Button fully guaranteed to clear bottom nav & safe areas */}
             <button 
               onClick={handleExecuteStake}
               disabled={!stakeAmount || parseFloat(stakeAmount) <= 0}
-              className="w-full bg-[#089981] hover:bg-[#06806b] disabled:bg-zinc-800 disabled:text-zinc-500 text-white font-black text-sm py-4 rounded-2xl tracking-[0.2em] uppercase shadow-[0_0_20px_rgba(8,153,129,0.3)] disabled:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full bg-[#089981] hover:bg-[#06806b] disabled:bg-zinc-800 disabled:text-zinc-500 text-white font-black text-sm py-4 rounded-2xl tracking-[0.2em] uppercase shadow-[0_0_20px_rgba(8,153,129,0.3)] disabled:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2 shrink-0 cursor-pointer mb-2"
             >
               Confirm Stake 🔒
             </button>
