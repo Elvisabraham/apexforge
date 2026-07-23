@@ -1,4 +1,4 @@
-// 🚀 VERSION 7.2: DESKTOP HEADER COLLISION FIX
+// 🚀 VERSION 7.3: RESTORED MOBILE "WATCH" HEADER & RESPONSIVE LAYOUT
 import React, { useState, useEffect, useRef } from 'react';
 
 export default function Watch({ onTokenClick, userProfile }) {
@@ -173,8 +173,8 @@ export default function Watch({ onTokenClick, userProfile }) {
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      {/* --- FLOATING HEADER (🚀 HIDDEN ON DESKTOP TO PREVENT SIDEBAR CLASH) --- */}
-      <header className="fixed top-0 left-0 md:left-64 w-[calc(100%-16rem)] hidden md:flex z-40 px-6 py-6 items-center justify-between pointer-events-none">
+      {/* --- DESKTOP FLOATING HEADER (Shifted right to avoid sidebar clash) --- */}
+      <header className="fixed top-0 left-64 w-[calc(100%-16rem)] hidden md:flex z-40 px-6 py-6 items-center justify-between pointer-events-none">
         <div className="flex items-center gap-2 drop-shadow-md pointer-events-auto">
            <h1 className="text-xl font-black tracking-widest text-white uppercase">Watch Feed</h1>
         </div>
@@ -204,21 +204,34 @@ export default function Watch({ onTokenClick, userProfile }) {
         </div>
       </header>
 
-      {/* Mobile-only header top tabs */}
-      <div className="absolute top-4 right-4 flex md:hidden items-center gap-4 z-40">
-        <span 
-          onClick={() => setCurrentFeedTab('FOLLOWING')}
-          className={`text-xs font-black cursor-pointer ${currentFeedTab === 'FOLLOWING' ? 'text-white underline decoration-[#089981] decoration-2' : 'text-zinc-400'}`}
-        >
-          Following
-        </span>
-        <span 
-          onClick={() => setCurrentFeedTab('FOR_YOU')}
-          className={`text-xs font-black cursor-pointer ${currentFeedTab === 'FOR_YOU' ? 'text-white underline decoration-[#089981] decoration-2' : 'text-zinc-400'}`}
-        >
-          For You
-        </span>
-      </div>
+      {/* --- MOBILE FLOATING HEADER (Restored "WATCH" title & tabs cleanly) --- */}
+      <header className="fixed top-0 left-0 w-full flex md:hidden z-40 px-4 py-5 items-center justify-between pointer-events-none bg-gradient-to-b from-black/80 to-transparent">
+        <div className="flex items-center gap-2 drop-shadow-md pointer-events-auto">
+           <svg viewBox="0 0 100 100" className="w-5 h-5 text-[#089981]" fill="currentColor">
+              <path d="M 50 10 L 10 90 L 30 90 L 50 45 L 70 90 L 90 90 Z" fill="#FFFFFF" />
+              <path d="M 50 45 C 35 70, 35 85, 50 45 Z" fill="#089981" />
+           </svg>
+           <h1 className="text-lg font-black tracking-widest text-white uppercase">Watch</h1>
+        </div>
+        <div className="flex items-center gap-4 drop-shadow-md pointer-events-auto">
+          <span 
+            onClick={() => setCurrentFeedTab('FOLLOWING')}
+            className={`text-xs font-black cursor-pointer transition-colors duration-200 ${
+              currentFeedTab === 'FOLLOWING' ? 'text-white underline decoration-[#089981] decoration-2' : 'text-zinc-400'
+            }`}
+          >
+            Following
+          </span>
+          <span 
+            onClick={() => setCurrentFeedTab('FOR_YOU')}
+            className={`text-xs font-black cursor-pointer transition-colors duration-200 ${
+              currentFeedTab === 'FOR_YOU' ? 'text-white underline decoration-[#089981] decoration-2' : 'text-zinc-400'
+            }`}
+          >
+            For You
+          </span>
+        </div>
+      </header>
 
       {/* --- SCROLL-SNAPPING FEED --- */}
       <div 
