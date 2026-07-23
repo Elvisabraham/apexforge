@@ -327,8 +327,18 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       {/* --- UNMOVABLE HEADER --- */}
       <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between relative">
         <div className="flex items-center gap-3 min-w-0">
-          <button onClick={executeBackArrow} className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-1 -ml-1 pr-2 shrink-0 relative z-50 cursor-pointer">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          
+          <button 
+            onClick={(e) => { 
+              e.preventDefault(); 
+              e.stopPropagation(); 
+              executeBackArrow(); 
+            }} 
+            className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-3 -ml-3 pr-4 shrink-0 relative z-[100] cursor-pointer"
+          >
+            <svg className="w-7 h-7 text-white pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
           </button>
           
           <div className="w-10 h-10 bg-[#1A1A24] border border-white/10 rounded-full flex items-center justify-center text-xl shrink-0 overflow-hidden shadow-inner">
