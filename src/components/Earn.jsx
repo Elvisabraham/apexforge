@@ -65,7 +65,7 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
           
           <button 
             onClick={onBack ? onBack : () => setActivePage('wallet')} 
-            className="w-10 h-10 bg-white/5 border border-white/10 hover:bg-white/10 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-colors active:scale-95 shadow-inner"
+            className="w-10 h-10 bg-white/5 border border-white/10 hover:bg-white/10 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-colors active:scale-95 shadow-inner cursor-pointer"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
@@ -92,7 +92,7 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
                   + ${formatWithCommas(totalEarnedUSD)}
                 </span>
               </div>
-              <button className="bg-[#089981] hover:bg-[#06806b] text-black px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(8,153,129,0.3)] active:scale-95 transition-all">
+              <button className="bg-[#089981] hover:bg-[#06806b] text-black px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(8,153,129,0.3)] active:scale-95 transition-all cursor-pointer">
                 Claim All
               </button>
             </div>
@@ -106,7 +106,7 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-[0.15em] rounded-xl transition-all duration-300 ${
+                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-[0.15em] rounded-xl transition-all duration-300 cursor-pointer ${
                   activeTab === tab
                     ? 'bg-[#089981] text-white shadow-[0_4px_15px_rgba(8,153,129,0.3)]'
                     : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
@@ -142,7 +142,6 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
                     </div>
                   </div>
                   
-                  {/* Lockup Status */}
                   <div className="w-full flex justify-between items-center pt-3 border-t border-white/5 text-[9px] font-black uppercase tracking-widest text-zinc-500">
                     <span>Current APY: <strong className="text-[#089981]">{pos.apy}</strong></span>
                     <span>Lock: {pos.lockup || 'Flexible'}</span>
@@ -194,15 +193,15 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
         </div>
       </div>
 
-      {/* --- STAKING MODAL --- */}
+      {/* --- STAKING MODAL (FIXED WITH SCROLL & PADDING SO BUTTON IS VISIBLE) --- */}
       {activeVault && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="absolute inset-0 z-0" onClick={() => setActiveVault(null)}></div>
           
-          <div className="bg-[#121212] border-t border-[#089981]/30 rounded-t-3xl w-full max-w-lg p-6 relative z-10 shadow-[0_-20px_50px_rgba(8,153,129,0.1)] animate-slideUpNative flex flex-col">
-            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6"></div>
+          <div className="bg-[#121212] border-t border-[#089981]/30 rounded-t-3xl w-full max-w-lg p-6 pb-10 relative z-10 shadow-[0_-20px_50px_rgba(8,153,129,0.1)] animate-slideUpNative flex flex-col max-h-[90vh] overflow-y-auto no-scrollbar">
+            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0"></div>
 
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-6 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-black border border-white/10 flex items-center justify-center text-lg overflow-hidden shadow-inner">
                   {activeVault.icon.startsWith('http') ? <img src={activeVault.icon} className="w-full h-full object-cover p-1.5" alt="icon"/> : activeVault.icon}
@@ -212,12 +211,12 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
                   <span className="text-[10px] text-[#089981] font-black tracking-widest">Current APY: {activeVault.apy}</span>
                 </div>
               </div>
-              <button onClick={() => setActiveVault(null)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors">
+              <button onClick={() => setActiveVault(null)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
 
-            <div className="bg-[#050505] border border-white/5 focus-within:border-[#089981]/50 rounded-2xl p-4 flex items-center justify-between gap-4 transition-all mb-3 shadow-inner">
+            <div className="bg-[#050505] border border-white/5 focus-within:border-[#089981]/50 rounded-2xl p-4 flex items-center justify-between gap-4 transition-all mb-3 shadow-inner shrink-0">
               <input 
                 type="number" 
                 value={stakeAmount} 
@@ -228,27 +227,27 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
               <span className="text-sm font-black text-zinc-500 pr-2">{activeVault.symbol}</span>
             </div>
 
-            <div className="flex justify-between items-center px-1 mb-6">
+            <div className="flex justify-between items-center px-1 mb-6 shrink-0">
               <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
                 Balance: {activeVault.symbol === 'SOL' ? formatWithCommas(userSolBalance) : '0.00'} {activeVault.symbol}
               </span>
               <div className="flex gap-2">
                 <button 
                   onClick={() => setStakeAmount(activeVault.symbol === 'SOL' ? (userSolBalance * 0.5).toFixed(2) : '0')} 
-                  className="text-[9px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1.5 rounded-lg transition-colors border border-white/5 active:scale-95"
+                  className="text-[9px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1.5 rounded-lg transition-colors border border-white/5 active:scale-95 cursor-pointer"
                 >
                   Half
                 </button>
                 <button 
                   onClick={() => setStakeAmount(activeVault.symbol === 'SOL' ? formatWithCommas(userSolBalance).replace(/,/g, '') : '0')} 
-                  className="text-[9px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1.5 rounded-lg transition-colors border border-white/5 active:scale-95"
+                  className="text-[9px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1.5 rounded-lg transition-colors border border-white/5 active:scale-95 cursor-pointer"
                 >
                   Max
                 </button>
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 p-4 bg-[#0A0A0A] border border-white/5 rounded-xl mb-6 shadow-inner">
+            <div className="flex flex-col gap-3 p-4 bg-[#0A0A0A] border border-white/5 rounded-xl mb-6 shadow-inner shrink-0">
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Lockup Period</span>
                 <span className="text-[10px] font-black text-white">{activeVault.lockup || 'Flexible'}</span>
@@ -261,10 +260,11 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
               </div>
             </div>
 
+            {/* 🚀 FIXED: Added safety margin and shrink-0 to guarantee button visibility */}
             <button 
               onClick={handleExecuteStake}
               disabled={!stakeAmount || parseFloat(stakeAmount) <= 0}
-              className="w-full bg-[#089981] hover:bg-[#06806b] disabled:bg-zinc-800 disabled:text-zinc-500 text-white font-black text-sm py-4 rounded-2xl tracking-[0.2em] uppercase shadow-[0_0_20px_rgba(8,153,129,0.3)] disabled:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2"
+              className="w-full bg-[#089981] hover:bg-[#06806b] disabled:bg-zinc-800 disabled:text-zinc-500 text-white font-black text-sm py-4 rounded-2xl tracking-[0.2em] uppercase shadow-[0_0_20px_rgba(8,153,129,0.3)] disabled:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2 shrink-0 cursor-pointer mb-4"
             >
               Confirm Stake 🔒
             </button>
