@@ -59,7 +59,7 @@ export default function Launch({ onForgeSuccess }) {
             name: tokenName,
             symbol: tokenSymbol,
             description: description, 
-            links: {                  
+            links: {                 
               twitter: twitter,
               telegram: telegram,
               website: website
@@ -172,7 +172,7 @@ export default function Launch({ onForgeSuccess }) {
   };
 
   return (
-    <div className="flex flex-col w-full h-screen bg-[#050505] text-white font-sans overflow-hidden relative select-none">
+    <div className="flex flex-col w-full h-full bg-[#050505] text-white font-sans overflow-hidden relative select-none">
       
       {/* --- HEADER --- */}
       <header className="flex-none z-40 bg-[#050505]/95 backdrop-blur-md px-4 py-4 border-b border-white/[0.04] flex items-center justify-center shadow-md relative">
@@ -185,9 +185,8 @@ export default function Launch({ onForgeSuccess }) {
         </h1>
       </header>
 
-      {/* --- DEPLOYMENT FORM --- */}
-      {/* 🚀 FIXED: Massive pb-48 padding ensures you can scroll everything above the footer */}
-      <div className={`flex-1 overflow-y-auto no-scrollbar pb-48 md:pb-32 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
+      {/* --- DEPLOYMENT FORM CONTAINER (🚀 FIXED: Massive pb-56 padding so everything clears the mobile bottom nav) --- */}
+      <div className={`flex-1 overflow-y-auto no-scrollbar pb-56 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
         <div className="w-full max-w-2xl mx-auto px-4 pt-6 flex flex-col gap-6">
           
           <div className="flex flex-col gap-1">
@@ -229,7 +228,7 @@ export default function Launch({ onForgeSuccess }) {
 
           {/* SOCIALS */}
           <div className="flex flex-col bg-[#121212] border border-white/5 rounded-xl overflow-hidden shadow-inner">
-            <button onClick={() => setShowSocials(!showSocials)} className="w-full px-4 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
+            <button onClick={() => setShowSocials(!showSocials)} className="w-full px-4 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors cursor-pointer">
               <span className="text-sm font-bold text-zinc-300 flex items-center gap-2">
                 <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                 Add Social Links (Optional)
@@ -268,7 +267,7 @@ export default function Launch({ onForgeSuccess }) {
             </p>
             
             <div className="flex items-center bg-[#050505] border border-white/10 rounded-2xl px-5 py-2 focus-within:border-[#089981]/80 transition-colors shadow-inner relative z-10">
-               <input type="text" inputMode="decimal" placeholder="0.00" value={initialBuy} onChange={handleInitialBuyChange} className="w-full bg-transparent text-4xl font-black text-white outline-none py-3 placeholder-zinc-700" />
+               <input type="text" inputMode="decimal" placeholder="0.00" value={initialBuy} onChange={handleInitialBuyChange} className="w-full bg-transparent text-4xl font-black text-white outline-none py-3 placeholder-zinc-700 font-mono" />
                <div className="flex flex-col items-end shrink-0">
                  <span className="text-lg font-black text-[#089981]">SOL</span>
                </div>
@@ -276,7 +275,7 @@ export default function Launch({ onForgeSuccess }) {
             
             <div className="flex gap-2 mt-4 w-full relative z-10">
                {['0.5', '1.0', '2.5', '5.0'].map(amt => (
-                 <button key={amt} onClick={() => setInitialBuy(amt)} className="flex-1 py-3 bg-white/5 hover:bg-[#089981]/20 rounded-xl text-xs font-black text-zinc-300 hover:text-[#089981] transition-colors border border-white/5 active:scale-95 shadow-sm">{amt}</button>
+                 <button key={amt} onClick={() => setInitialBuy(amt)} className="flex-1 py-3 bg-white/5 hover:bg-[#089981]/20 rounded-xl text-xs font-black text-zinc-300 hover:text-[#089981] transition-colors border border-white/5 active:scale-95 shadow-sm cursor-pointer">{amt}</button>
                ))}
             </div>
 
@@ -291,7 +290,7 @@ export default function Launch({ onForgeSuccess }) {
             </div>
           </div>
 
-          <div className="flex items-start gap-3 bg-[#121212] border border-white/10 p-4 rounded-xl mt-2 mb-4">
+          <div className="flex items-start gap-3 bg-[#121212] border border-white/10 p-4 rounded-xl mt-2 mb-6">
             <input 
               type="checkbox" 
               checked={acceptedDisclaimer} 
@@ -303,14 +302,35 @@ export default function Launch({ onForgeSuccess }) {
             </p>
           </div>
 
+          {/* 🚀 FIXED: Integrated Deployment Bar directly inside scroll flow with massive spacing above bottom nav */}
+          {!isDeploying && (
+            <div className="bg-[#121212] border border-white/10 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-xl mb-12">
+              <div className="flex flex-col shrink-0">
+                <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Network Cost</span>
+                <span className="text-sm font-black text-white font-mono">0.05 SOL</span>
+              </div>
+
+              <button 
+                onClick={startMockDeployment} 
+                className={`flex-1 py-4 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(8,153,129,0.3)] ${
+                  acceptedDisclaimer 
+                    ? 'bg-[#089981] hover:bg-[#06806b] text-white active:scale-95 cursor-pointer' 
+                    : 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50'
+                }`}
+              >
+                Initialize Contract 🚀
+              </button>
+            </div>
+          )}
+
         </div>
       </div>
 
-      {/* 🚀 FIXED: Raised support widget to avoid footer collision */}
+      {/* Support Widget */}
       {!isDeploying && (
         <div 
           onClick={() => alert("Connecting to live Forge Support Agent...")}
-          className="absolute right-4 bottom-40 md:bottom-28 z-40 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
+          className="absolute right-4 bottom-24 z-40 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
         >
           <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
         </div>
@@ -359,7 +379,7 @@ export default function Launch({ onForgeSuccess }) {
                   <div className="bg-black border border-white/10 px-4 py-2 rounded-lg">
                     <span className="text-[#089981] font-bold select-all">{mockTokenAddress}</span>
                   </div>
-                  <button onClick={resetForge} className="mt-4 px-6 py-3 bg-[#089981] text-black font-black uppercase tracking-widest text-xs rounded-lg hover:bg-[#06806b] transition-colors">
+                  <button onClick={resetForge} className="mt-4 px-6 py-3 bg-[#089981] text-black font-black uppercase tracking-widest text-xs rounded-lg hover:bg-[#06806b] transition-colors cursor-pointer">
                     Deploy Another
                   </button>
                 </div>
@@ -371,30 +391,6 @@ export default function Launch({ onForgeSuccess }) {
                 <div className="h-full bg-[#089981] transition-all duration-300" style={{ width: `${(deploymentStep / deploymentStages.length) * 100}%` }}></div>
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* 🚀 FIXED: Raised footer to bottom-20 on mobile to clear global Bottom Nav */}
-      {!isDeploying && (
-        <div className="absolute bottom-[80px] md:bottom-0 left-0 w-full z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.6)]">
-          <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
-            
-            <div className="flex flex-col shrink-0">
-              <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Network Cost</span>
-              <span className="text-sm font-black text-white">0.05 SOL</span>
-            </div>
-
-            <button 
-              onClick={startMockDeployment} 
-              className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(8,153,129,0.3)] ${
-                acceptedDisclaimer 
-                  ? 'bg-[#089981] hover:bg-[#06806b] text-white active:scale-95 cursor-pointer' 
-                  : 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50'
-              }`}
-            >
-              Initialize Contract 🚀
-            </button>
           </div>
         </div>
       )}
