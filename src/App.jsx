@@ -96,12 +96,27 @@ export default function App() {
     return savedTxs ? JSON.parse(savedTxs) : [];
   });
 
+  // 🚀 FIXED: Persist the selected token data so it survives browser refreshes!
+  const [selectedTokenData, setSelectedTokenData] = useState(() => {
+    const savedToken = localStorage.getItem('apex_selected_token_data');
+    return savedToken ? JSON.parse(savedToken) : null;
+  });
+
   useEffect(() => { localStorage.setItem('apex_active_page', activePage); }, [activePage]);
   useEffect(() => { localStorage.setItem('apex_previous_page', previousPage); }, [previousPage]);
   useEffect(() => { localStorage.setItem('apex_global_tokens', JSON.stringify(globalTokens.map(t => ({...t, imagePreview: null})))); }, [globalTokens]);
   useEffect(() => { localStorage.setItem('apex_user_portfolio', JSON.stringify(userPortfolio.map(t => ({...t, imagePreview: null})))); }, [userPortfolio]);
   useEffect(() => { localStorage.setItem('apex_user_profile', JSON.stringify({...userProfile, avatar: null})); }, [userProfile]);
   useEffect(() => { localStorage.setItem('apex_global_transactions', JSON.stringify(globalTransactions)); }, [globalTransactions]);
+  
+  // 🚀 FIXED: Sync selected token to local storage
+  useEffect(() => { 
+    if (selectedTokenData) {
+      localStorage.setItem('apex_selected_token_data', JSON.stringify(selectedTokenData)); 
+    } else {
+      localStorage.removeItem('apex_selected_token_data');
+    }
+  }, [selectedTokenData]);
 
   useEffect(() => {
     if (connected && publicKey) {
@@ -134,7 +149,6 @@ export default function App() {
     }
   }, [connected, publicKey]);
   
-  const [selectedTokenData, setSelectedTokenData] = useState(null); 
   const [isTradePortalOpen, setIsTradePortalOpen] = useState(false);
   const [tradeMode, setTradeMode] = useState('buy');
   const [tradeAmount, setTradeAmount] = useState('');
@@ -389,10 +403,19 @@ export default function App() {
           />
         );
       case 'tokenhome': 
+        // 🚀 FIXED: Hard-stop to prevent rendering an empty token screen on refresh!
+        if (!selectedTokenData) {
+          setTimeout(() => setActivePage('home'), 0);
+          return null;
+        }
         return (
           <TokenHome 
             token={selectedTokenData} 
-            onBack={() => setActivePage(previousPage || 'home')} 
+            onBack={() => {
+              // Ensure we don't loop back to tokenHome
+              const targetPage = (previousPage === 'tokenHome' || previousPage === 'tokenchat') ? 'home' : (previousPage || 'home');
+              setActivePage(targetPage);
+            }} 
             onTradeClick={handleOpenTradePortal}
             onOpenProfile={() => handleOpenPublicProfile({ name: 'Apex Deployer', handle: '@ApexDeployer_0x1', avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=ApexDeployer_0x1` })}
             onOpenChat={() => setActivePage('tokenChat')}
@@ -400,6 +423,11 @@ export default function App() {
           />
         );
       case 'tokenchat':
+        // 🚀 FIXED: Hard-stop for chat too!
+        if (!selectedTokenData) {
+          setTimeout(() => setActivePage('home'), 0);
+          return null;
+        }
         return (
           <TokenChat 
             token={selectedTokenData}
@@ -426,7 +454,6 @@ export default function App() {
   };
 
   return (
-    // 🚀 FIXED: locked the app to the screen bounds with fixed inset-0
     <div className="fixed inset-0 bg-[#050505] text-white flex flex-col overflow-hidden select-none">
       
       <style>{`
