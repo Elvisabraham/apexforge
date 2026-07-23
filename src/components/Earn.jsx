@@ -120,7 +120,6 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
 
         <div className="flex flex-col px-4 gap-6 pt-2">
           
-          {/* ACTIVE POSITIONS SECTION */}
           {activePositions.length > 0 && (
             <div className="flex flex-col gap-3">
               <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 pl-1">Your Active Vaults</h3>
@@ -151,7 +150,6 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
             </div>
           )}
 
-          {/* AVAILABLE POOLS SECTION */}
           <div className="flex flex-col gap-3">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 pl-1 mt-2">Available Vaults</h3>
             
@@ -193,12 +191,12 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
         </div>
       </div>
 
-      {/* --- STAKING MODAL (🚀 RESTORED BOTTOM-SHEET WITH SAFE PADDING FOR BUTTON) --- */}
+      {/* --- STAKING MODAL (🚀 FIXED WITH mb-24 PADDING TO CLEAR BOTTOM NAV) --- */}
       {activeVault && (
         <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="absolute inset-0 z-0" onClick={() => setActiveVault(null)}></div>
           
-          <div className="bg-[#121212] border-t border-[#089981]/30 rounded-t-3xl w-full max-w-lg p-6 pb-14 relative z-10 shadow-[0_-20px_50px_rgba(8,153,129,0.15)] animate-slideUpNative flex flex-col max-h-[85vh] overflow-y-auto no-scrollbar">
+          <div className="bg-[#121212] border-t border-[#089981]/30 rounded-t-3xl w-full max-w-lg p-6 pb-24 mb-16 relative z-10 shadow-[0_-20px_50px_rgba(8,153,129,0.15)] animate-slideUpNative flex flex-col max-h-[80vh] overflow-y-auto no-scrollbar">
             
             {/* Grab Bar */}
             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-5 shrink-0"></div>
@@ -262,7 +260,7 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
               </div>
             </div>
 
-            {/* Confirm Button fully guaranteed to clear bottom nav & safe areas */}
+            {/* Fully pushed above the bottom nav bar */}
             <button 
               onClick={handleExecuteStake}
               disabled={!stakeAmount || parseFloat(stakeAmount) <= 0}
