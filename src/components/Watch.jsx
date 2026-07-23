@@ -1,4 +1,4 @@
-// 🚀 VERSION 7: DEFINITIVE MOBILE CLEARANCE FOR WATCH FEED
+// 🚀 VERSION 7.1: PREFERRED VERSION WITH MOBILE NAV CLEARANCE LOCK
 import React, { useState, useEffect, useRef } from 'react';
 
 export default function Watch({ onTokenClick, userProfile }) {
@@ -280,8 +280,8 @@ export default function Watch({ onTokenClick, userProfile }) {
                 </div>
               </div>
 
-              {/* BOTTOM PANEL (🚀 RAISED TO bottom-36 md:bottom-28 TO FULLY CLEAR MOBILE NAV BAR) */}
-              <div className="absolute left-0 bottom-36 md:bottom-28 w-[85%] p-4 flex flex-col z-30">
+              {/* BOTTOM PANEL (🚀 ADDED mb-16 TO CLEAR MOBILE NAV BAR COMPLETELY) */}
+              <div className="absolute left-0 bottom-32 md:bottom-24 mb-16 md:mb-0 w-[85%] p-4 flex flex-col z-30">
                 <div 
                   onClick={() => handleQuickTrade(token)}
                   className="flex items-center gap-2 mb-2 cursor-pointer group w-max"
