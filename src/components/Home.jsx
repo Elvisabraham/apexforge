@@ -72,26 +72,33 @@ export default function Home({
       <header className="flex-none z-50 bg-[#0A0A0B]/95 backdrop-blur-xl pt-4 pb-3 px-4 border-b border-white/[0.04]">
         <div className="flex items-center justify-between mb-4">
           
+          {/* 🚀 LEFT SIDE: PROFILE AVATAR + DIRECTORY TITLE */}
           <div className="flex items-center gap-3">
-            <button 
-              onClick={onOpenSidebar}
-              className="md:hidden p-2 -ml-2 text-zinc-400 hover:text-white bg-white/5 rounded-xl transition-colors"
+            <div 
+              onClick={() => { if (onOpenAccountDrawer) onOpenAccountDrawer(); }} 
+              className="w-10 h-10 rounded-full border-2 border-[#089981] hover:border-white bg-[#121212] flex items-center justify-center overflow-hidden cursor-pointer transition-colors shadow-lg shrink-0"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
-            </button>
+              {userProfile?.avatar ? (
+                <img src={userProfile.avatar} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile?.username || 'Elvis'}`} alt="Avatar" className="w-full h-full object-cover" />
+              )}
+            </div>
+
             <div className="flex items-center gap-2">
-              <svg viewBox="0 0 100 100" className="w-6 h-6 text-[#089981]" fill="currentColor">
+              <svg viewBox="0 0 100 100" className="w-5 h-5 sm:w-6 sm:h-6 text-[#089981]" fill="currentColor">
                 <path d="M 50 10 L 10 90 L 30 90 L 50 45 L 70 90 L 90 90 Z" fill="#FFFFFF" />
                 <path d="M 50 45 C 35 70, 35 85, 50 45 Z" fill="#089981" />
               </svg>
-              <h1 className="text-lg font-black tracking-widest text-white uppercase mt-0.5">Directory</h1>
+              <h1 className="text-base sm:text-lg font-black tracking-widest text-white uppercase mt-0.5">Directory</h1>
             </div>
           </div>
           
-          <div className="flex items-center gap-3 sm:gap-4">
+          {/* 🚀 RIGHT SIDE: EARN BUTTON (VISIBLE ON MOBILE) + NOTIFICATIONS */}
+          <div className="flex items-center gap-3">
             <button 
               onClick={() => setActivePage && setActivePage('earn')}
-              className="hidden sm:flex items-center gap-1.5 bg-[#089981]/10 hover:bg-[#089981]/20 border border-[#089981]/30 px-3 py-1.5 rounded-xl transition-all shadow-inner cursor-pointer"
+              className="flex items-center gap-1.5 bg-[#089981]/10 hover:bg-[#089981]/20 border border-[#089981]/30 px-3 py-1.5 rounded-xl transition-all shadow-inner cursor-pointer"
             >
               <span className="w-1.5 h-1.5 bg-[#089981] rounded-full animate-pulse"></span>
               <span className="text-[10px] font-black text-[#089981] uppercase tracking-[0.15em]">Earn</span>
@@ -104,17 +111,6 @@ export default function Home({
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#089981] rounded-full border border-[#0A0A0B]"></span>
             </button>
-
-            <div 
-              onClick={() => { if (onOpenAccountDrawer) onOpenAccountDrawer(); }} 
-              className="w-10 h-10 rounded-full border-2 border-[#089981] hover:border-white bg-[#121212] flex items-center justify-center overflow-hidden cursor-pointer transition-colors shadow-lg shrink-0"
-            >
-              {userProfile?.avatar ? (
-                <img src={userProfile.avatar} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile?.username || 'Elvis'}`} alt="Avatar" className="w-full h-full object-cover" />
-              )}
-            </div>
           </div>
         </div>
 
@@ -130,7 +126,7 @@ export default function Home({
         </div>
       </header>
 
-      {/* --- SCROLLABLE FEED (No nested scroll logic to break mobile) --- */}
+      {/* --- SCROLLABLE FEED --- */}
       <div className="flex-1 overflow-y-auto no-scrollbar relative pb-20">
         
         {spotlightToken && !searchQuery && (activeTab === 'TRENDING' || activeTab === 'EXPLORE') && (
