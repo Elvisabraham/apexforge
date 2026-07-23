@@ -1,4 +1,4 @@
-// 🚀 VERSION 7.1: PREFERRED VERSION WITH MOBILE NAV CLEARANCE LOCK
+// 🚀 VERSION 7.2: DESKTOP HEADER COLLISION FIX
 import React, { useState, useEffect, useRef } from 'react';
 
 export default function Watch({ onTokenClick, userProfile }) {
@@ -173,14 +173,10 @@ export default function Watch({ onTokenClick, userProfile }) {
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      {/* --- FLOATING HEADER --- */}
-      <header className="fixed top-0 left-0 w-full z-40 px-4 py-6 flex items-center justify-between pointer-events-none">
+      {/* --- FLOATING HEADER (🚀 HIDDEN ON DESKTOP TO PREVENT SIDEBAR CLASH) --- */}
+      <header className="fixed top-0 left-0 md:left-64 w-[calc(100%-16rem)] hidden md:flex z-40 px-6 py-6 items-center justify-between pointer-events-none">
         <div className="flex items-center gap-2 drop-shadow-md pointer-events-auto">
-           <svg viewBox="0 0 100 100" className="w-6 h-6 text-[#089981]" fill="currentColor">
-              <path d="M 50 10 L 10 90 L 30 90 L 50 45 L 70 90 L 90 90 Z" fill="#FFFFFF" />
-              <path d="M 50 45 C 35 70, 35 85, 50 45 Z" fill="#089981" />
-           </svg>
-           <h1 className="text-xl font-black tracking-widest text-white uppercase">Watch</h1>
+           <h1 className="text-xl font-black tracking-widest text-white uppercase">Watch Feed</h1>
         </div>
         <div className="flex items-center gap-5 drop-shadow-md z-40 pointer-events-auto">
           <span 
@@ -207,6 +203,22 @@ export default function Watch({ onTokenClick, userProfile }) {
           </span>
         </div>
       </header>
+
+      {/* Mobile-only header top tabs */}
+      <div className="absolute top-4 right-4 flex md:hidden items-center gap-4 z-40">
+        <span 
+          onClick={() => setCurrentFeedTab('FOLLOWING')}
+          className={`text-xs font-black cursor-pointer ${currentFeedTab === 'FOLLOWING' ? 'text-white underline decoration-[#089981] decoration-2' : 'text-zinc-400'}`}
+        >
+          Following
+        </span>
+        <span 
+          onClick={() => setCurrentFeedTab('FOR_YOU')}
+          className={`text-xs font-black cursor-pointer ${currentFeedTab === 'FOR_YOU' ? 'text-white underline decoration-[#089981] decoration-2' : 'text-zinc-400'}`}
+        >
+          For You
+        </span>
+      </div>
 
       {/* --- SCROLL-SNAPPING FEED --- */}
       <div 
@@ -235,7 +247,7 @@ export default function Watch({ onTokenClick, userProfile }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent z-10 pointer-events-none"></div>
               </div>
 
-              {/* ACTION BUTTONS SIDEBAR (🚀 RAISED TO bottom-44 TO FULLY CLEAR MOBILE NAV) */}
+              {/* ACTION BUTTONS SIDEBAR */}
               <div className="absolute right-4 bottom-44 flex flex-col items-center gap-6 z-30">
                 
                 {/* LIKE BUTTON */}
@@ -280,7 +292,7 @@ export default function Watch({ onTokenClick, userProfile }) {
                 </div>
               </div>
 
-              {/* BOTTOM PANEL (🚀 ADDED mb-16 TO CLEAR MOBILE NAV BAR COMPLETELY) */}
+              {/* BOTTOM PANEL */}
               <div className="absolute left-0 bottom-32 md:bottom-24 mb-16 md:mb-0 w-[85%] p-4 flex flex-col z-30">
                 <div 
                   onClick={() => handleQuickTrade(token)}
