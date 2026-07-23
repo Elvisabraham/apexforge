@@ -174,8 +174,13 @@ export default function Launch({ onForgeSuccess }) {
   return (
     <div className="flex flex-col w-full h-full bg-[#050505] text-white font-sans overflow-hidden relative select-none">
       
-      {/* --- HEADER --- */}
-      <header className="flex-none z-40 bg-[#050505]/95 backdrop-blur-md px-4 py-4 border-b border-white/[0.04] flex items-center justify-center shadow-md relative">
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+
+      {/* --- 1. PINNED HEADER (Stays fixed at the top) --- */}
+      <header className="flex-none z-40 bg-[#050505]/95 backdrop-blur-md px-4 py-4 border-b border-white/[0.04] flex items-center justify-center shadow-md">
         <h1 className="text-xl font-black tracking-wide text-white uppercase flex items-center gap-2">
           <svg viewBox="0 0 100 100" className="w-5 h-5 text-[#089981]" fill="currentColor">
             <path d="M 50 10 L 10 90 L 30 90 L 50 45 L 70 90 L 90 90 Z" fill="#FFFFFF" />
@@ -185,9 +190,9 @@ export default function Launch({ onForgeSuccess }) {
         </h1>
       </header>
 
-      {/* --- DEPLOYMENT FORM CONTAINER (🚀 FIXED: Massive pb-56 padding so everything clears the mobile bottom nav) --- */}
-      <div className={`flex-1 overflow-y-auto no-scrollbar pb-56 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
-        <div className="w-full max-w-2xl mx-auto px-4 pt-6 flex flex-col gap-6">
+      {/* --- 2. SCROLLABLE MIDDLE CONTAINER (Scrolls smoothly between header and bottom bar) --- */}
+      <div className={`flex-1 overflow-y-auto no-scrollbar px-4 pt-6 pb-28 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
+        <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
           
           <div className="flex flex-col gap-1">
             <h2 className="text-3xl font-black text-white tracking-tight">Deploy Asset</h2>
@@ -290,7 +295,7 @@ export default function Launch({ onForgeSuccess }) {
             </div>
           </div>
 
-          <div className="flex items-start gap-3 bg-[#121212] border border-white/10 p-4 rounded-xl mt-2 mb-6">
+          <div className="flex items-start gap-3 bg-[#121212] border border-white/10 p-4 rounded-xl mt-2 mb-2">
             <input 
               type="checkbox" 
               checked={acceptedDisclaimer} 
@@ -302,29 +307,32 @@ export default function Launch({ onForgeSuccess }) {
             </p>
           </div>
 
-          {/* 🚀 FIXED: Integrated Deployment Bar directly inside scroll flow with massive spacing above bottom nav */}
-          {!isDeploying && (
-            <div className="bg-[#121212] border border-white/10 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-xl mb-12">
-              <div className="flex flex-col shrink-0">
-                <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Network Cost</span>
-                <span className="text-sm font-black text-white font-mono">0.05 SOL</span>
-              </div>
-
-              <button 
-                onClick={startMockDeployment} 
-                className={`flex-1 py-4 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(8,153,129,0.3)] ${
-                  acceptedDisclaimer 
-                    ? 'bg-[#089981] hover:bg-[#06806b] text-white active:scale-95 cursor-pointer' 
-                    : 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50'
-                }`}
-              >
-                Initialize Contract 🚀
-              </button>
-            </div>
-          )}
-
         </div>
       </div>
+
+      {/* --- 3. PINNED BOTTOM ACTION BAR (Stays fixed right above mobile BottomNav) --- */}
+      {!isDeploying && (
+        <div className="flex-none z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 mb-16 md:mb-0 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+          <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+            
+            <div className="flex flex-col shrink-0">
+              <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Network Cost</span>
+              <span className="text-sm font-black text-white font-mono">0.05 SOL</span>
+            </div>
+
+            <button 
+              onClick={startMockDeployment} 
+              className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(8,153,129,0.3)] ${
+                acceptedDisclaimer 
+                  ? 'bg-[#089981] hover:bg-[#06806b] text-white active:scale-95 cursor-pointer' 
+                  : 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50'
+              }`}
+            >
+              Initialize Contract 🚀
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Support Widget */}
       {!isDeploying && (
