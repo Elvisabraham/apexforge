@@ -317,9 +317,9 @@ export default function Launch({ onForgeSuccess }) {
         </div>
       </div>
 
-      {/* --- PINNED BOTTOM ACTION BAR RAISED HIGHER FOR MOBILE NAVIGATION CLEARANCE --- */}
+      {/* --- 🚀 FIXED: PINNED BOTTOM ACTION BAR AT bottom-[90px] TO CLEAR GLOBAL NAV --- */}
       {!isDeploying && (
-        <div className="absolute bottom-[68px] md:bottom-0 left-0 right-0 z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.9)]">
+        <div className="absolute bottom-[90px] md:bottom-0 left-0 right-0 z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.9)]">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
             
             <div className="flex flex-col shrink-0">
@@ -341,11 +341,11 @@ export default function Launch({ onForgeSuccess }) {
         </div>
       )}
 
-      {/* --- LIVE SUPPORT CHAT WIDGET --- */}
+      {/* --- 🚀 FIXED: LIVE SUPPORT CHAT WIDGET AT bottom-[170px] TO CLEAR THE ACTION BAR --- */}
       {!isDeploying && (
         <div 
           onClick={() => alert("Connecting to live Forge Support Agent...")}
-          className="absolute right-4 bottom-[125px] md:bottom-24 z-50 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
+          className="absolute right-4 bottom-[170px] md:bottom-24 z-50 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
         >
           <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
         </div>
