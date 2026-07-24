@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Connection, clusterApiUrl, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 // --- CORE VIEWS ---
 import Home from './components/Home';
@@ -96,7 +96,6 @@ export default function App() {
     return savedTxs ? JSON.parse(savedTxs) : [];
   });
 
-  // 🚀 FIXED: Persist the selected token data so it survives browser refreshes!
   const [selectedTokenData, setSelectedTokenData] = useState(() => {
     const savedToken = localStorage.getItem('apex_selected_token_data');
     return savedToken ? JSON.parse(savedToken) : null;
@@ -109,7 +108,6 @@ export default function App() {
   useEffect(() => { localStorage.setItem('apex_user_profile', JSON.stringify({...userProfile, avatar: null})); }, [userProfile]);
   useEffect(() => { localStorage.setItem('apex_global_transactions', JSON.stringify(globalTransactions)); }, [globalTransactions]);
   
-  // 🚀 FIXED: Sync selected token to local storage
   useEffect(() => { 
     if (selectedTokenData) {
       localStorage.setItem('apex_selected_token_data', JSON.stringify(selectedTokenData)); 
@@ -120,7 +118,9 @@ export default function App() {
 
   useEffect(() => {
     if (connected && publicKey) {
-      const connection = new Connection(clusterApiUrl('mainnet-beta'));
+      // ✅ Replaced public clusterApiUrl with fast public endpoint
+      const connection = new Connection('https://rpc.ankr.com/solana');
+      
       const fetchLiveBalance = async () => {
         try {
           const lamports = await connection.getBalance(publicKey);
@@ -403,27 +403,24 @@ export default function App() {
           />
         );
       case 'tokenhome': 
-        // 🚀 FIXED: Hard-stop to prevent rendering an empty token screen on refresh!
         if (!selectedTokenData) {
           setTimeout(() => setActivePage('home'), 0);
           return null;
         }
         return (
           <TokenHome 
-        token={selectedTokenData} 
-        onBack={() => {
-          // Ensure we don't loop back to tokenHome
-          const targetPage = (previousPage === 'tokenHome' || previousPage === 'tokenchat') ? 'home' : (previousPage || 'home');
-          setActivePage(targetPage);
-        }} 
-        onTradeClick={handleOpenTradePortal}
-        onOpenProfile={() => handleOpenPublicProfile({ name: 'Apex Deployer', handle: '@ApexDeployer_0x1', avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=ApexDeployer_0x1` })}
-        onOpenChat={() => setActivePage('tokenChat')}
-        onOpenLiveModal={() => toggleModal('live', true)}
-      />
+            token={selectedTokenData} 
+            onBack={() => {
+              const targetPage = (previousPage === 'tokenHome' || previousPage === 'tokenchat') ? 'home' : (previousPage || 'home');
+              setActivePage(targetPage);
+            }} 
+            onTradeClick={handleOpenTradePortal}
+            onOpenProfile={() => handleOpenPublicProfile({ name: 'Apex Deployer', handle: '@ApexDeployer_0x1', avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=ApexDeployer_0x1` })}
+            onOpenChat={() => setActivePage('tokenChat')}
+            onOpenLiveModal={() => toggleModal('live', true)}
+          />
         );
       case 'tokenchat':
-        // 🚀 FIXED: Hard-stop for chat too!
         if (!selectedTokenData) {
           setTimeout(() => setActivePage('home'), 0);
           return null;
@@ -437,7 +434,7 @@ export default function App() {
             onOpenProfile={handleOpenPublicProfile} 
             onOpenTrade={handleOpenTradePortal} 
           />
-        )
+        );
       default: 
         return <Home 
                  tokens={globalTokens} 
@@ -518,7 +515,6 @@ export default function App() {
       {/* --- MAIN CONTENT AREA --- */}
       <div className="flex-1 relative w-full md:pl-[260px] flex flex-col overflow-hidden">
         
-        {/* Rendered page handles its own scroll */}
         <div className="flex-1 w-full h-full relative overflow-hidden">
           {renderContent()}
         </div>
