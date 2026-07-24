@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
+// --- GLOBAL STREAM CONTEXT & FLOATING PLAYER ---
+import { StreamProvider, useStream } from './components/StreamProvider';
+import ActiveTvStream from './components/ActiveTvStream';
+
 // --- CORE VIEWS ---
 import Home from './components/Home';
 import Launch from './components/Launch';
@@ -29,8 +33,9 @@ import SendModal from './components/SendModal';
 import SwapModal from './components/SwapModal';
 import LiveModal from './components/LiveModal';
 
-export default function App() {
+function AppContent() {
   const { connected, publicKey } = useWallet();
+  const { activeStreamUrl, stopStream } = useStream();
 
   const [activePage, setActivePage] = useState(() => {
     const saved = localStorage.getItem('apex_active_page');
@@ -118,7 +123,6 @@ export default function App() {
 
   useEffect(() => {
     if (connected && publicKey) {
-      // ✅ Replaced public clusterApiUrl with fast public endpoint
       const connection = new Connection('https://rpc.ankr.com/solana');
       
       const fetchLiveBalance = async () => {
@@ -476,6 +480,9 @@ export default function App() {
         .animate-fadeIn { animation: fadeIn 0.2s ease-out forwards; }
       `}</style>
 
+      {/* --- FLOATING TV STREAM WIDGET --- */}
+      <ActiveTvStream streamUrl={activeStreamUrl} closeStream={stopStream} />
+
       {/* --- DESKTOP SIDEBAR --- */}
       <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[260px] bg-[#0A0A0A] border-r border-white/5 z-40">
         <Sidebar currentView={activePage} setCurrentView={handleSidebarNavigation} userProfile={userProfile} />
@@ -634,5 +641,13 @@ export default function App() {
       {modals.live && <LiveModal isOpen={modals.live} onClose={() => toggleModal('live', false)} token={selectedTokenData} />}
 
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <StreamProvider>
+      <AppContent />
+    </StreamProvider>
   );
 }
