@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useStream } from './StreamProvider'; // 🚀 Brings in the global brain
+import { supabase } from './supabaseClient'; // 🚀 Connects to global database
 
 export default function LiveModal({ isOpen, onClose, token = { symbol: 'FORGE', name: 'Apex Forge' } }) {
   const { startStream } = useStream(); // 🚀 Grab the global start function
   const [streamUrl, setStreamUrl] = useState('');
   const [embedUrl, setEmbedUrl] = useState(null);
   const [error, setError] = useState('');
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
 
   // 🚀 SMART PARSER: Twitch, YouTube, and Kick links
   useEffect(() => {
@@ -50,13 +52,27 @@ export default function LiveModal({ isOpen, onClose, token = { symbol: 'FORGE', 
     }
   }, [streamUrl]);
 
-  const handleGoLive = () => {
+  const handleGoLive = async () => {
     if (embedUrl) {
-      // 🚀 Fire the global stream instead of local state!
+      setIsBroadcasting(true);
+
+      // 1. Broadcast globally to Supabase Realtime table for everyone
+      if (supabase) {
+        try {
+          await supabase
+            .from('active_streams')
+            .insert([{ stream_url: embedUrl, created_at: new Date().toISOString() }]);
+        } catch (err) {
+          console.error("Supabase sync issue:", err);
+        }
+      }
+
+      // 2. Fire the global stream locally
       startStream(embedUrl);
       
       // Clear input and close modal
       setStreamUrl('');
+      setIsBroadcasting(false);
       if (onClose) onClose();
     }
   };
@@ -122,10 +138,10 @@ export default function LiveModal({ isOpen, onClose, token = { symbol: 'FORGE', 
         {/* Launch Stream CTA */}
         <button 
           onClick={handleGoLive}
-          disabled={!embedUrl}
+          disabled={!embedUrl || isBroadcasting}
           className="w-full bg-[#089981] disabled:opacity-40 hover:bg-[#06806b] text-black py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_25px_rgba(8,153,129,0.3)] active:scale-95 flex items-center justify-center gap-2"
         >
-          <span>📺</span> Launch TV Broadcast
+          <span>📺</span> {isBroadcasting ? 'Broadcasting Globally...' : 'Launch TV Broadcast'}
         </button>
       </div>
     </div>
