@@ -16,6 +16,14 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const myAvatar = userProfile?.avatar;
   const tokenSymbol = token?.symbol || 'TKN';
 
+  // 🚀 FORMATTER HELPER: Adds thousand commas while preserving decimals
+  const formatInputWithCommas = (val) => {
+    if (!val && val !== 0) return '';
+    const parts = val.toString().replace(/,/g, '').split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
+  };
+
   // PERMANENT MEMORY CACHE
   const rawProgress = token?.progress || 0;
   const initialMcap = parseFloat((token?.mcap || token?.marketCap || '$10.0K').replace(/[^0-9.]/g, ''));
@@ -60,9 +68,12 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const userPnlPercent = userTokenBalance > 0 ? '+14.2%' : '0.0%';
   const isPnlPositive = !userPnlPercent.includes('-');
 
-  const dynamicPriceImpact = tradeAmount && parseFloat(tradeAmount) > 0 
-    ? (parseFloat(tradeAmount) * (tradeMode === 'buy' ? 0.12 : 0.08)).toFixed(2) 
-    : '0.00';
+  // 🚀 SANITIZED PRICE IMPACT: Strips commas before running float calculations
+  const cleanNumericAmount = tradeAmount ? parseFloat(tradeAmount.toString().replace(/,/g, '')) : 0;
+  const rawImpact = !isNaN(cleanNumericAmount) && cleanNumericAmount > 0 
+    ? (cleanNumericAmount * (tradeMode === 'buy' ? 0.12 : 0.08)) 
+    : 0;
+  const dynamicPriceImpact = Math.min(99.99, Math.max(0, rawImpact)).toFixed(2);
 
   const formatProPrice = (val) => {
     if (!val && val !== 0) return '';
@@ -117,7 +128,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     scrollToBottom();
   }, [messages]);
 
-  // 🚀 FIXED: Dynamic Contrast Cashtag Formatter
   const renderFormattedText = (text, isMe) => {
     if (!text) return '';
     const parts = text.split(/(\$[A-Za-z0-9]+)/g);
@@ -140,7 +150,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     });
   };
 
-  // 🚀 NATIVE IMAGE UPLOADER (Safely extracted to the top level)
   const fileInputRef = useRef(null);
 
   const handleImageUpload = (e) => {
@@ -165,7 +174,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     }
   };
 
-  // 🚀 MOCK GIF SENDER
   const handleSendMockGif = () => {
     const newMsg = {
       id: Date.now().toString(),
@@ -181,7 +189,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     setMessages(prev => [...prev, newMsg]);
   };
 
-  // 🚀 STANDARD TEXT MESSAGE SENDER
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!inputText.trim()) return;
@@ -214,7 +221,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   };
 
   const handleExecuteTrade = () => {
-    const amount = parseFloat(tradeAmount);
+    const amount = parseFloat(tradeAmount.toString().replace(/,/g, ''));
     if (!amount || amount <= 0) return;
 
     if (tradeMode === 'buy') {
@@ -266,9 +273,24 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   };
 
   return (
-    // 🚀 FIXED: Mobile Locked Layout (100dvh + flex-col lock)
     <div className="flex flex-col w-full h-[100dvh] bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative z-50">
       
+      <style>{`
+        * { -webkit-tap-highlight-color: transparent !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 🚀 HIDE DESKTOP BROWSER SPINNER ARROWS */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        input[type=number] { 
+          -moz-appearance: textfield; 
+        }
+      `}</style>
+
       {/* --- HEADER --- */}
       <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
@@ -280,7 +302,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
               <span className="text-lg font-black text-white uppercase">{tokenSymbol} HQ</span>
             </div>
             
-            {/* 🚀 FIXED: Cleaned up Header Badges */}
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_5px_#00FF66]"></span>
               <span className="text-[10px] font-black text-[#00FF66] uppercase tracking-widest">1,420 Online</span>
@@ -314,7 +335,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
         <div className="flex gap-4 overflow-x-auto no-scrollbar pb-1">
           {topHolders.map((whale, idx) => (
             <div key={whale.id} onClick={() => onOpenProfile ? onOpenProfile(whale.name) : setIsHoldersModalOpen(true)} className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group">
-              {/* 🚀 FIXED: Miniaturized Holders (w-7 h-7) */}
               <div className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-transform group-hover:scale-105 ${idx === 0 ? 'border-amber-400' : 'border-white/10'}`}>
                 <img src={whale.avatar} alt={whale.name} className="w-full h-full object-cover" />
               </div>
@@ -350,7 +370,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
             <div key={msg.id} className={`flex w-full ${msg.isMe ? 'justify-end' : 'justify-start'} mb-1`}>
               <div className={`flex flex-col max-w-[85%] ${msg.isMe ? 'items-end' : 'items-start'} group relative`}>
                 
-                {/* 🚀 FIXED: "Near Aside" Compact Profile Row */}
                 <div className={`flex items-center gap-1.5 mb-1 ${msg.isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                   {!msg.isMe && (
                     <div 
@@ -373,7 +392,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
                 </div>
 
                 <div className="relative cursor-pointer w-full" onMouseEnter={() => setActiveReactionId(msg.id)} onClick={(e) => { e.stopPropagation(); setActiveReactionId(msg.id); }}>
-                  {/* Floating Reaction Bar */}
                   <div className={`absolute ${msg.isMe ? '-top-10 right-0' : '-top-10 left-0'} bg-[#121212] border border-white/10 rounded-full px-2 py-1.5 flex items-center gap-2 shadow-xl z-10 transition-all ${activeReactionId === msg.id ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}>
                     {['🚀', '💎', '🐳', '🔥'].map(emoji => (
                       <button key={emoji} onClick={() => handleAddReaction(msg.id, emoji)} className="hover:scale-125 transition-transform text-sm">{emoji}</button>
@@ -381,14 +399,12 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
                   </div>
 
                   <div className={`rounded-2xl text-sm shadow-md flex flex-col ${msg.isDev ? 'bg-gradient-to-r from-amber-500/20 to-[#1A1A24] border border-amber-500/40 text-amber-100 rounded-bl-sm shadow-[0_0_15px_rgba(251,191,36,0.15)]' : msg.isMe ? 'bg-[#089981] text-white rounded-br-sm' : 'bg-[#1A1A24] border border-white/5 text-zinc-200 rounded-bl-sm'} ${msg.text ? 'px-4 py-2.5' : 'p-1'}`}>
-                    {/* 🖼️ RENDER UPLOADED IMAGE OR GIF */}
                     {msg.image && (
                       <img src={msg.image} alt="attachment" className="max-w-[200px] sm:max-w-[250px] rounded-xl object-cover" />
                     )}
                     {msg.text && renderFormattedText(msg.text, msg.isMe)}
                   </div>
 
-                  {/* Reaction Badges Footer */}
                   {msg.reactions && Object.keys(msg.reactions).length > 0 && (
                     <div className={`flex flex-wrap gap-1 mt-1.5 ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
                       {Object.entries(msg.reactions).map(([emoji, count]) => (
@@ -407,12 +423,10 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
       </div>
 
       {/* --- INPUT AREA --- */}
-      {/* 🚀 FIXED: Dynamic SafeArea padding (pb-safe equivalent) to stop mobile keyboards hiding the input */}
       <div className="flex-none bg-[#0E0E14] border-t border-white/[0.05] p-3 pb-[max(12px,env(safe-area-inset-bottom))] shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
         <form onSubmit={handleSendMessage} className="flex items-end gap-1.5 bg-black border border-white/10 focus-within:border-[#089981]/50 rounded-3xl p-1.5 transition-all shadow-inner">
           
           <div className="flex items-center shrink-0">
-            {/* 🚀 FIXED: Hidden file input triggered by the button */}
             <input 
               type="file" 
               accept="image/*" 
@@ -509,7 +523,21 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
                     <><div className="w-4 h-4 rounded-full bg-black overflow-hidden flex items-center justify-center text-[8px]">{displayToken.imagePreview ? <img src={displayToken.imagePreview} className="w-full h-full object-cover" alt="TKN"/> : displayToken.icon}</div><span className="text-xs font-black text-white">{displayToken.symbol}</span></>
                   )}
                 </div>
-                <input type="number" value={tradeAmount} onChange={(e) => setTradeAmount(e.target.value)} placeholder="0.00" className="bg-transparent text-right text-3xl font-black text-white w-full focus:outline-none placeholder-zinc-700" />
+
+                {/* 🚀 FORMATTED INPUT: Shows live commas (e.g. 28,978) as user types */}
+                <input 
+                  type="text" 
+                  inputMode="decimal"
+                  value={tradeAmount ? formatInputWithCommas(tradeAmount) : ''} 
+                  onChange={(e) => {
+                    const rawVal = e.target.value.replace(/,/g, '');
+                    if (rawVal === '' || /^\d*\.?\d*$/.test(rawVal)) {
+                      setTradeAmount(rawVal);
+                    }
+                  }} 
+                  placeholder="0.00" 
+                  className="bg-transparent text-right text-3xl font-black text-white w-full focus:outline-none placeholder-zinc-700 font-mono" 
+                />
              </div>
 
              <div className="flex justify-between items-center px-1 mb-6">
@@ -526,10 +554,10 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
                <div className="flex justify-between items-center">
                  <span className="text-[10px] font-bold text-zinc-500 uppercase">You Receive (Est.)</span>
                  <span className={`text-sm font-black ${displayToken.isGraduated ? 'text-amber-500' : (tradeMode === 'buy' ? 'text-[#089981]' : 'text-[#00FF66]')}`}>
-                   {tradeAmount && parseFloat(tradeAmount) > 0 ? (
+                   {cleanNumericAmount > 0 ? (
                      tradeMode === 'buy' 
-                       ? `${(((parseFloat(tradeAmount) * (displayToken.isGraduated ? 0.995 : 1)) / curveState.price) / 1000000).toFixed(2)}M ${displayToken.symbol}`
-                       : `${((parseFloat(tradeAmount) * 1000000 * curveState.price) * (displayToken.isGraduated ? 0.995 : 1)).toFixed(4)} SOL`
+                       ? `${(((cleanNumericAmount * (displayToken.isGraduated ? 0.995 : 1)) / curveState.price) / 1000000).toFixed(2)}M ${displayToken.symbol}`
+                       : `${((cleanNumericAmount * 1000000 * curveState.price) * (displayToken.isGraduated ? 0.995 : 1)).toFixed(4)} SOL`
                    ) : '0.00'}
                  </span>
                </div>
@@ -549,7 +577,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
              <button 
                 onClick={handleExecuteTrade}
-                disabled={!tradeAmount || parseFloat(tradeAmount) <= 0}
+                disabled={!cleanNumericAmount || cleanNumericAmount <= 0}
                 className={`w-full ${displayToken.isGraduated ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-[0_0_20px_rgba(245,158,11,0.3)]' : (tradeMode === 'buy' ? 'bg-[#089981] hover:bg-[#06806b] shadow-[0_0_20px_rgba(8,153,129,0.3)]' : 'bg-[#F23645] hover:bg-rose-600 shadow-[0_0_20px_rgba(242,54,69,0.3)]')} disabled:opacity-50 text-white font-black text-sm py-4 rounded-2xl tracking-[0.2em] uppercase transition-all active:scale-95 flex items-center justify-center gap-2`}
              >
                Confirm {tradeMode} ⚡
