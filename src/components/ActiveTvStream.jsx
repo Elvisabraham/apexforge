@@ -5,38 +5,50 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, closeStream }
   const [streamUrl, setStreamUrl] = useState(propStreamUrl);
 
   useEffect(() => {
-    // If no prop is passed, fetch the current active stream from Supabase
     const fetchActiveStream = async () => {
-      if (!propStreamUrl) {
-        const { data, error } = await supabase
-          .from('active_streams')
-          .select('stream_url')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-        
-        if (data && data.stream_url) {
-          setStreamUrl(data.stream_url);
+      if (!propStreamUrl && supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('active_streams')
+            .select('stream_url')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+          
+          if (data && data.stream_url) {
+            setStreamUrl(data.stream_url);
+          }
+        } catch (err) {
+          // Table might not exist yet, fallback gracefully
+          console.log("Stream table not initialized yet");
         }
-      } else {
+      } else if (propStreamUrl) {
         setStreamUrl(propStreamUrl);
       }
     };
 
     fetchActiveStream();
 
-    // Subscribe to Supabase Realtime for global stream updates
-    const channel = supabase
-      .channel('public:active_streams')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'active_streams' }, (payload) => {
-        if (payload.new && payload.new.stream_url) {
-          setStreamUrl(payload.new.stream_url);
-        }
-      })
-      .subscribe();
+    let channel = null;
+    if (supabase) {
+      try {
+        channel = supabase
+          .channel('public:active_streams')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'active_streams' }, (payload) => {
+            if (payload.new && payload.new.stream_url) {
+              setStreamUrl(payload.new.stream_url);
+            }
+          })
+          .subscribe();
+      } catch (err) {
+        console.log("Realtime setup skipped");
+      }
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel && supabase) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [propStreamUrl]);
 
