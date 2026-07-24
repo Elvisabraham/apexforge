@@ -1,29 +1,33 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { supabase } from './supabaseClient';
 
 export default function ActiveTvStream({ streamUrl: propStreamUrl, closeStream }) {
   const [streamUrl, setStreamUrl] = useState(propStreamUrl);
 
+  // Keep state in sync with incoming prop
+  useEffect(() => {
+    setStreamUrl(propStreamUrl);
+  }, [propStreamUrl]);
+
+  // Fetch active stream and set up Supabase Realtime listener
   useEffect(() => {
     const fetchActiveStream = async () => {
       if (!propStreamUrl && supabase) {
         try {
-          const { data, error } = await supabase
+          const { data } = await supabase
             .from('active_streams')
             .select('stream_url')
             .order('created_at', { ascending: false })
             .limit(1)
             .single();
-          
+
           if (data && data.stream_url) {
             setStreamUrl(data.stream_url);
           }
         } catch (err) {
-          // Table might not exist yet, fallback gracefully
-          console.log("Stream table not initialized yet");
+          console.log("Stream table waiting for broadcast...");
         }
-      } else if (propStreamUrl) {
-        setStreamUrl(propStreamUrl);
       }
     };
 
@@ -52,10 +56,22 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, closeStream }
     };
   }, [propStreamUrl]);
 
+  // Fix Close Button Handler
+  const handleClose = (e) => {
+    e.stopPropagation();
+    setStreamUrl(null);
+    if (closeStream) closeStream();
+  };
+
   if (!streamUrl) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-80 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden">
+    <motion.div 
+      drag
+      dragMomentum={false}
+      dragElastic={0.05}
+      className="fixed bottom-20 right-4 z-[999] w-80 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing touch-none select-none"
+    >
       {/* Header Bar */}
       <div className="flex justify-between items-center px-4 py-2 bg-gray-800">
         <div className="flex items-center gap-2">
@@ -63,8 +79,8 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, closeStream }
           <span className="text-xs font-bold text-white uppercase tracking-wider">Live Broadcast</span>
         </div>
         <button 
-          onClick={closeStream}
-          className="text-gray-400 hover:text-white transition-colors"
+          onClick={handleClose}
+          className="text-gray-400 hover:text-white p-1 rounded-full transition-colors z-50 cursor-pointer"
         >
           ✕
         </button>
@@ -74,11 +90,11 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, closeStream }
       <div className="relative pt-[56.25%] w-full bg-black">
         <iframe
           src={streamUrl}
-          className="absolute top-0 left-0 w-full h-full"
+          className="absolute top-0 left-0 w-full h-full pointer-events-auto"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
         ></iframe>
       </div>
-    </div>
+    </motion.div>
   );
 }
