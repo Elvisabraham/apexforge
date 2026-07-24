@@ -136,14 +136,10 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     }
   }, [recentTrades, localCacheKey, displayToken.symbol]);
 
-  // 🚀 BULLETPROOF SANITIZER: Strips commas and non-numeric junk before calculating
-  const cleanAmount = tradeAmount ? parseFloat(tradeAmount.toString().replace(/,/g, '')) : 0;
-
-  const rawImpact = !isNaN(cleanAmount) && cleanAmount > 0 
-    ? (cleanAmount * (tradeMode === 'buy' ? 0.12 : 0.08)) 
+  // 🚀 FIXED: Capped Price Impact to eliminate negative overflow readouts
+  const rawImpact = tradeAmount && parseFloat(tradeAmount) > 0 
+    ? (parseFloat(tradeAmount) * (tradeMode === 'buy' ? 0.12 : 0.08)) 
     : 0;
-
-  // Caps cleanly between 0.00% and 99.99%
   const dynamicPriceImpact = Math.min(99.99, Math.max(0, rawImpact)).toFixed(2);
 
   const isPositive = displayToken.change.includes('+') || parseFloat(displayToken.change) >= 0;
