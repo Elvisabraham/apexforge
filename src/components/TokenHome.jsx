@@ -347,7 +347,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const formatLink = (url) => url.startsWith('http') ? url : `https://${url}`;
 
   return (
-    <div className="flex flex-col w-full min-h-screen h-[100dvh] bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative">
+    <div className="w-full h-full flex flex-col bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative">
       
       <style>{`
         * { -webkit-tap-highlight-color: transparent !important; }
@@ -426,7 +426,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
 
       {/* --- SCROLLABLE CONTENT --- */}
       <div className="flex-1 overflow-y-auto no-scrollbar relative">
-        <div className="flex flex-col w-full pb-20">
+        <div className="flex flex-col w-full pb-8">
           
           <div className="flex flex-col px-4 pt-4 pb-2">
             <span className="text-[38px] sm:text-[44px] font-black tracking-tighter leading-none">{formatProPrice(`$${curveState.price.toFixed(7)}`)}</span>
@@ -919,24 +919,24 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
         </div>
       )}
 
-      {/* --- UNMOVABLE BOTTOM BUY MAT (FLUSH MOBILE FIT) --- */}
-      <div className="flex-none bg-[#0E0E14] z-30 pt-3 pb-3 sm:pb-4 px-4 border-t border-white/[0.05] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] relative">
+      {/* --- UNMOVABLE BOTTOM BUY MAT (FLUSH MOBILE & PWA FIT) --- */}
+      <div className="flex-none bg-[#0E0E14] z-30 pt-2.5 pb-[max(12px,env(safe-area-inset-bottom))] px-4 border-t border-white/[0.05] shadow-[0_-10px_30px_rgba(0,0,0,0.8)] relative">
         <div className="max-w-4xl mx-auto flex flex-col items-center">
           
           <button 
             onClick={() => { setTradeMode('buy'); setIsBuyModalOpen(true); }} 
-            className={`w-full ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 text-black shadow-[0_4px_12px_rgba(245,158,11,0.15)]' : 'bg-[#089981] hover:opacity-90 text-white shadow-[0_4px_12px_rgba(8,153,129,0.15)]'} font-black text-lg py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-transform active:scale-95 uppercase tracking-widest`}
+            className={`w-full ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 text-black shadow-[0_4px_12px_rgba(245,158,11,0.15)]' : 'bg-[#089981] hover:opacity-90 text-white shadow-[0_4px_12px_rgba(8,153,129,0.15)]'} font-black text-base py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-transform active:scale-95 uppercase tracking-widest`}
           >
             {displayToken.isGraduated ? 'Trade on DEX ⚡' : 'Trade Token'}
           </button>
           
           {displayToken.isGraduated ? (
-            <div className="flex items-center justify-center gap-1.5 mt-2">
+            <div className="flex items-center justify-center gap-1.5 mt-1.5">
               <span className="text-amber-500 text-[10px]">🔒</span>
               <span className="text-[10px] font-bold text-zinc-400 tracking-wide">Liquidity pool burned & locked on Raydium.</span>
             </div>
           ) : (
-            <div className="flex items-center justify-center gap-1.5 mt-2">
+            <div className="flex items-center justify-center gap-1.5 mt-1.5">
               <span className="text-amber-500 text-[10px]">⚠️</span>
               <span className="text-[10px] font-medium text-amber-500/90 tracking-wide">This coin is new and may be volatile.</span>
             </div>
