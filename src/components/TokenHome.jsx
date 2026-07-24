@@ -754,19 +754,32 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
              <p className="text-[11px] font-medium text-zinc-400 mb-6 text-center">Get notified instantly when {displayToken.symbol} hits your target.</p>
              <div className="bg-[#0A0A0B] border border-white/10 rounded-xl p-4 flex items-center justify-between gap-4 mb-6">
                 <span className="text-xl font-bold text-white">$</span>
+                {/* 🚀 FORMATTED INPUT: Shows live commas (e.g. 859,898) as user types */}
                 <input 
-                  type="number" 
-                  min="0"
-                  value={alertPrice} 
+                  type="text" 
+                  inputMode="decimal"
+                  value={alertPrice ? formatInputWithCommas(alertPrice) : ''} 
                   onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '' || parseFloat(val) >= 0) setAlertPrice(val);
+                    const rawVal = e.target.value.replace(/,/g, '');
+                    if (rawVal === '' || /^\d*\.?\d*$/.test(rawVal)) {
+                      setAlertPrice(rawVal);
+                    }
                   }} 
                   placeholder={curveState.price.toFixed(7)} 
-                  className="bg-transparent text-right text-3xl font-black text-white w-full focus:outline-none placeholder-zinc-700" 
+                  className="bg-transparent text-right text-3xl font-black text-white w-full focus:outline-none placeholder-zinc-700 font-mono" 
                 />
              </div>
-             <button onClick={() => { alert(`Alert set for $${alertPrice}!`); setIsAlertsOpen(false); }} disabled={!alertPrice} className="w-full py-4 bg-[#089981] hover:bg-[#06806b] disabled:opacity-50 rounded-xl text-xs font-black uppercase tracking-widest text-white shadow-sm">Confirm Target</button>
+             <button 
+               onClick={() => { 
+                 const formattedDisplay = alertPrice ? formatInputWithCommas(alertPrice) : alertPrice;
+                 alert(`Alert set for $${formattedDisplay}!`); 
+                 setIsAlertsOpen(false); 
+               }} 
+               disabled={!alertPrice} 
+               className="w-full py-4 bg-[#089981] hover:bg-[#06806b] disabled:opacity-50 rounded-xl text-xs font-black uppercase tracking-widest text-white shadow-sm transition-colors active:scale-95"
+             >
+               Confirm Target
+             </button>
           </div>
         </div>
       )}
