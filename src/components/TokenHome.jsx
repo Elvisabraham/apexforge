@@ -358,8 +358,8 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       `}</style>
 
       {/* --- UNMOVABLE HEADER --- */}
-      <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between relative">
-        <div className="flex items-center gap-3 min-w-0">
+      <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-3 sm:px-4 py-2.5 border-b border-white/[0.04] flex items-center justify-between relative gap-1.5">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
           
           <button 
             onClick={(e) => { 
@@ -380,55 +380,57 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                 }
               }
             }} 
-            className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-4 -ml-4 pr-5 shrink-0 relative z-[100] cursor-pointer"
+            className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-1 -ml-1 shrink-0 relative z-[100] cursor-pointer"
           >
-            <svg className="w-7 h-7 text-white pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-white pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           
-          <div className="w-10 h-10 bg-[#1A1A24] border border-white/10 rounded-full flex items-center justify-center text-xl shrink-0 overflow-hidden shadow-inner">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#1A1A24] border border-white/10 rounded-full flex items-center justify-center text-lg sm:text-xl shrink-0 overflow-hidden shadow-inner">
             {displayToken.imagePreview ? <img src={displayToken.imagePreview} className="w-full h-full object-cover" alt="icon" /> : <span className="select-none">{displayToken.icon}</span>}
           </div>
           <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-2">
-               <span className="text-lg font-black text-white leading-tight tracking-wide truncate">{displayToken.name}</span>
+            <div className="flex items-center gap-1.5">
+               <span className="text-base sm:text-lg font-black text-white leading-tight tracking-wide truncate">{displayToken.name}</span>
                {displayToken.isGraduated && <span className="bg-amber-400/10 text-amber-400 border border-amber-400/20 text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-widest font-black shrink-0">Graduated</span>}
             </div>
             
-            <div onClick={() => handleCopyCA('header')} className="flex items-center gap-1.5 text-[12px] font-bold text-zinc-400 mt-0.5 cursor-pointer hover:text-white transition-colors">
-              <span className="font-mono tracking-tight">{displayToken.symbol}</span><span className="text-zinc-600">|</span><span className="font-mono tracking-tight">{shortCA}</span>
-              {headerCopied ? <span className="text-[#089981] text-[10px] font-black tracking-wider ml-1">COPIED</span> : <svg className="w-3.5 h-3.5 shrink-0 opacity-70 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeWidth="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeWidth="2"></path></svg>}
+            <div onClick={() => handleCopyCA('header')} className="flex items-center gap-1 text-[11px] sm:text-[12px] font-bold text-zinc-400 mt-0.5 cursor-pointer hover:text-white transition-colors">
+              <span className="font-mono tracking-tight">{displayToken.symbol}</span>
+              <span className="text-zinc-600">|</span>
+              <span className="font-mono tracking-tight truncate max-w-[70px] sm:max-w-none">{shortCA}</span>
+              {headerCopied ? <span className="text-[#089981] text-[9px] font-black tracking-wider ml-1">COPIED</span> : <svg className="w-3 h-3 shrink-0 opacity-70 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeWidth="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeWidth="2"></path></svg>}
             </div>
           </div>
         </div>
         
-        <div className="flex items-center gap-2.5 shrink-0">
-          {/* 📺 HIGH WORLD CLASS LIVE BROADCAST BUTTON */}
+        {/* RIGHT ACTION BUTTONS */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <button 
             onClick={() => onOpenLiveModal && onOpenLiveModal()} 
-            className="px-2.5 py-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-500 text-[10px] font-black uppercase tracking-widest rounded-xl flex items-center gap-1.5 hover:bg-rose-500/20 transition-all active:scale-95 shadow-sm cursor-pointer"
+            className="px-2 py-1 sm:px-2.5 sm:py-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-500 text-[10px] font-black uppercase tracking-widest rounded-xl flex items-center gap-1 hover:bg-rose-500/20 transition-all active:scale-95 shadow-sm cursor-pointer shrink-0"
             title="Launch TV Stream"
           >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
             </span>
-            <span>📺 LIVE</span>
+            <span>LIVE</span>
           </button>
 
           <button onClick={() => setIsShareOpen(true)} className="text-white hover:text-zinc-300 transition-colors p-1"><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-4-6l-4-4-4 4m4-4v13" /></svg></button>
-          <button onClick={() => setIsFavorited(!isFavorited)} className="transition-colors p-1"><svg className={`w-6 h-6 ${isFavorited ? 'text-amber-400 fill-amber-400' : 'text-white'}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg></button>
+          <button onClick={() => setIsFavorited(!isFavorited)} className="transition-colors p-1"><svg className={`w-5 h-5 sm:w-6 sm:h-6 ${isFavorited ? 'text-amber-400 fill-amber-400' : 'text-white'}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg></button>
         </div>
       </header>
 
       {/* --- SCROLLABLE CONTENT --- */}
       <div className="flex-1 overflow-y-auto no-scrollbar relative">
-        <div className="flex flex-col w-full pb-32">
+        <div className="flex flex-col w-full pb-20">
           
           <div className="flex flex-col px-4 pt-4 pb-2">
-            <span className="text-[44px] font-black tracking-tighter leading-none">{formatProPrice(`$${curveState.price.toFixed(7)}`)}</span>
-            <span className={`${trendTextColor} font-bold text-sm mt-1.5 tracking-wide flex items-center gap-1`}>{isPositive ? '▲' : '▼'} {formatProPrice(displayToken.change)} <span className="text-[#787B86] font-medium ml-1">{timeframeLabels[chartTimeframe]}</span></span>
+            <span className="text-[38px] sm:text-[44px] font-black tracking-tighter leading-none">{formatProPrice(`$${curveState.price.toFixed(7)}`)}</span>
+            <span className={`${trendTextColor} font-bold text-xs sm:text-sm mt-1.5 tracking-wide flex items-center gap-1`}>{isPositive ? '▲' : '▼'} {formatProPrice(displayToken.change)} <span className="text-[#787B86] font-medium ml-1">{timeframeLabels[chartTimeframe]}</span></span>
           </div>
 
           <div className="w-full relative bg-[#0A0A0B] border-y border-white/[0.05]">
@@ -525,7 +527,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
               <p className="text-[13px] font-medium text-zinc-400 leading-relaxed mb-5 whitespace-pre-wrap">{displayToken.description}</p>
               
               <div className="flex flex-wrap gap-2">
-
                 {displayToken.links.twitter && <a href={formatLink(displayToken.links.twitter)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner"><span className="font-black text-sm text-zinc-500">𝕏</span> Twitter</a>}
                 {displayToken.links.telegram && <a href={formatLink(displayToken.links.telegram)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner"><span className="text-zinc-500">✈</span> Telegram</a>}
                 {displayToken.links.website && <a href={formatLink(displayToken.links.website)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner"><span className="text-zinc-500">🌐</span> Website</a>}
@@ -918,26 +919,26 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
         </div>
       )}
 
-      {/* --- UNMOVABLE BOTTOM BUY MAT --- */}
-      <div className="flex-none bg-[#0E0E14] z-30 pt-4 pb-24 md:pb-6 px-4 border-t border-white/[0.05] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] relative">
+      {/* --- UNMOVABLE BOTTOM BUY MAT (FLUSH MOBILE FIT) --- */}
+      <div className="flex-none bg-[#0E0E14] z-30 pt-3 pb-3 sm:pb-4 px-4 border-t border-white/[0.05] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] relative">
         <div className="max-w-4xl mx-auto flex flex-col items-center">
           
           <button 
             onClick={() => { setTradeMode('buy'); setIsBuyModalOpen(true); }} 
-            className={`w-full ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 text-black shadow-[0_4px_12px_rgba(245,158,11,0.15)]' : 'bg-[#089981] hover:opacity-90 text-white shadow-[0_4px_12px_rgba(8,153,129,0.15)]'} font-black text-lg py-4 rounded-2xl flex items-center justify-center gap-2 transition-transform active:scale-95 uppercase tracking-widest`}
+            className={`w-full ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 text-black shadow-[0_4px_12px_rgba(245,158,11,0.15)]' : 'bg-[#089981] hover:opacity-90 text-white shadow-[0_4px_12px_rgba(8,153,129,0.15)]'} font-black text-lg py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-transform active:scale-95 uppercase tracking-widest`}
           >
             {displayToken.isGraduated ? 'Trade on DEX ⚡' : 'Trade Token'}
           </button>
           
           {displayToken.isGraduated ? (
-            <div className="flex items-center justify-center gap-1.5 mt-3">
+            <div className="flex items-center justify-center gap-1.5 mt-2">
               <span className="text-amber-500 text-[10px]">🔒</span>
-              <span className="text-[11px] font-bold text-zinc-400 tracking-wide">Liquidity pool burned & locked on Raydium.</span>
+              <span className="text-[10px] font-bold text-zinc-400 tracking-wide">Liquidity pool burned & locked on Raydium.</span>
             </div>
           ) : (
-            <div className="flex items-center justify-center gap-1.5 mt-3">
+            <div className="flex items-center justify-center gap-1.5 mt-2">
               <span className="text-amber-500 text-[10px]">⚠️</span>
-              <span className="text-[11px] font-medium text-amber-500/90 tracking-wide">This coin is new and may be volatile.</span>
+              <span className="text-[10px] font-medium text-amber-500/90 tracking-wide">This coin is new and may be volatile.</span>
             </div>
           )}
 
