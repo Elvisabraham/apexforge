@@ -136,9 +136,11 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     }
   }, [recentTrades, localCacheKey, displayToken.symbol]);
 
-  const dynamicPriceImpact = tradeAmount && parseFloat(tradeAmount) > 0 
-    ? (parseFloat(tradeAmount) * (tradeMode === 'buy' ? 0.12 : 0.08)).toFixed(2) 
-    : '0.00';
+  // 🚀 FIXED: Capped Price Impact to eliminate negative overflow readouts
+  const rawImpact = tradeAmount && parseFloat(tradeAmount) > 0 
+    ? (parseFloat(tradeAmount) * (tradeMode === 'buy' ? 0.12 : 0.08)) 
+    : 0;
+  const dynamicPriceImpact = Math.min(99.99, Math.max(0, rawImpact)).toFixed(2);
 
   const isPositive = displayToken.change.includes('+') || parseFloat(displayToken.change) >= 0;
   const trendColorHex = isPositive ? '#089981' : '#F23645'; 
@@ -355,6 +357,16 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
         .animate-slideUpNative { animation: slideUpNative 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 🚀 HIDE DESKTOP BROWSER SPINNER ARROWS */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        input[type=number] { 
+          -moz-appearance: textfield; 
+        }
       `}</style>
 
       {/* --- UNMOVABLE HEADER --- */}
@@ -733,7 +745,18 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
              <p className="text-[11px] font-medium text-zinc-400 mb-6 text-center">Get notified instantly when {displayToken.symbol} hits your target.</p>
              <div className="bg-[#0A0A0B] border border-white/10 rounded-xl p-4 flex items-center justify-between gap-4 mb-6">
                 <span className="text-xl font-bold text-white">$</span>
-                <input type="number" value={alertPrice} onChange={(e) => setAlertPrice(e.target.value)} placeholder={curveState.price.toFixed(7)} className="bg-transparent text-right text-3xl font-black text-white w-full focus:outline-none placeholder-zinc-700" />
+                {/* 🚀 GUARDED INPUT: Rejects negative values & hides stepper arrows */}
+                <input 
+                  type="number" 
+                  min="0"
+                  value={alertPrice} 
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || parseFloat(val) >= 0) setAlertPrice(val);
+                  }} 
+                  placeholder={curveState.price.toFixed(7)} 
+                  className="bg-transparent text-right text-3xl font-black text-white w-full focus:outline-none placeholder-zinc-700" 
+                />
              </div>
              <button onClick={() => { alert(`Alert set for $${alertPrice}!`); setIsAlertsOpen(false); }} disabled={!alertPrice} className="w-full py-4 bg-[#089981] hover:bg-[#06806b] disabled:opacity-50 rounded-xl text-xs font-black uppercase tracking-widest text-white shadow-sm">Confirm Target</button>
           </div>
@@ -870,7 +893,19 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                     <><div className="w-4 h-4 rounded-full bg-black overflow-hidden flex items-center justify-center text-[8px]">{displayToken.imagePreview ? <img src={displayToken.imagePreview} className="w-full h-full object-cover" alt="TKN"/> : displayToken.icon}</div><span className="text-xs font-black text-white">{displayToken.symbol}</span></>
                   )}
                 </div>
-                <input type="number" value={tradeAmount} onChange={(e) => setTradeAmount(e.target.value)} placeholder="0.00" className="bg-transparent text-right text-3xl font-black text-white w-full focus:outline-none placeholder-zinc-700 font-mono" />
+
+                {/* 🚀 GUARDED INPUT: Rejects negative numbers & removes desktop spinner arrows */}
+                <input 
+                  type="number" 
+                  min="0"
+                  value={tradeAmount} 
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || parseFloat(val) >= 0) setTradeAmount(val);
+                  }} 
+                  placeholder="0.00" 
+                  className="bg-transparent text-right text-3xl font-black text-white w-full focus:outline-none placeholder-zinc-700 font-mono" 
+                />
              </div>
 
              <div className="flex justify-between items-center px-1 mb-6">
