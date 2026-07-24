@@ -1,162 +1,122 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
-export default function LiveModal({ isOpen, onClose, token = { symbol: 'FORGE', name: 'Apex Forge' } }) {
-  const [streamUrl, setStreamUrl] = useState('');
-  const [embedUrl, setEmbedUrl] = useState(null);
-  const [isLive, setIsLive] = useState(false);
-  const [error, setError] = useState('');
+export default function TokenHome({ 
+  token, 
+  onBack, 
+  onTradeClick, 
+  onOpenProfile, 
+  onOpenChat, 
+  onOpenLiveModal 
+}) {
+  const [activeTab, setActiveTab] = useState('chart');
 
-  // 🚀 SMART PARSER: Automatically formats Twitch, YouTube, and Kick links into embeddable iframes
-  useEffect(() => {
-    if (!streamUrl) {
-      setEmbedUrl(null);
-      setError('');
-      return;
-    }
-
-    try {
-      const urlStr = streamUrl.toLowerCase();
-      let parsedUrl = null;
-
-      if (urlStr.includes('twitch.tv')) {
-        // Handle Twitch
-        const channel = streamUrl.split('/').filter(Boolean).pop();
-        const parentDomain = window.location.hostname || 'localhost';
-        parsedUrl = `https://player.twitch.tv/?channel=${channel}&parent=${parentDomain}&autoplay=true`;
-      } 
-      else if (urlStr.includes('youtube.com/watch?v=')) {
-        // Handle YouTube standard
-        const videoId = new URL(streamUrl).searchParams.get('v');
-        parsedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-      } 
-      else if (urlStr.includes('youtu.be/')) {
-        // Handle YouTube short link
-        const videoId = streamUrl.split('youtu.be/')[1].split('?')[0];
-        parsedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-      } 
-      else if (urlStr.includes('kick.com/')) {
-        // Handle Kick
-        const channel = streamUrl.split('kick.com/')[1].split('/')[0].split('?')[0];
-        parsedUrl = `https://player.kick.com/${channel}`;
-      } 
-      else {
-        setError('Unsupported platform. Please use Twitch, YouTube, or Kick.');
-        setEmbedUrl(null);
-        return;
-      }
-
-      setError('');
-      setEmbedUrl(parsedUrl);
-    } catch (err) {
-      setError('Invalid URL format.');
-      setEmbedUrl(null);
-    }
-  }, [streamUrl]);
-
-  const handleGoLive = () => {
-    if (embedUrl) setIsLive(true);
-  };
-
-  const handleEndStream = () => {
-    setIsLive(false);
-    setStreamUrl('');
-    setEmbedUrl(null);
-  };
-
-  if (!isOpen) return null;
+  // Safely guard token data to avoid undefined errors
+  const tokenName = token?.tokenName || token?.name || 'Unknown Token';
+  const tokenSymbol = token?.symbol || 'TOKEN';
+  const mintAddress = token?.mintAddress || token?.address || 'CA: Pending...';
+  const icon = token?.icon || '🪙';
+  const imagePreview = token?.imagePreview || null;
+  const price = token?.price || '0.00';
+  const mcap = token?.mcap || '$0';
+  const change = token?.change || '+0.0%';
+  const isGraduated = token?.isGraduated || false;
+  const progress = token?.progress || 0;
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn p-4">
-      {/* Click outside to close (only if not actively live) */}
-      <div className="absolute inset-0" onClick={!isLive ? onClose : undefined}></div>
+    <div className="w-full h-full flex flex-col bg-[#050505] text-white overflow-y-auto">
       
-      <div className={`bg-[#121212] border border-white/10 rounded-3xl w-full ${isLive ? 'max-w-3xl' : 'max-w-lg'} p-6 relative z-10 animate-slideUpNative flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.8)] transition-all duration-300`}>
+      {/* Header Bar */}
+      <div className="sticky top-0 z-30 bg-[#050505]/90 backdrop-blur-md border-b border-white/5 p-4 flex justify-between items-center">
+        <button 
+          onClick={() => onBack && onBack()} 
+          className="flex items-center gap-2 text-xs font-bold text-zinc-400 hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded-lg border border-white/5"
+        >
+          ← Back
+        </button>
+
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => onOpenLiveModal && onOpenLiveModal()} 
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-500 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-all"
+          >
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+            Go Live
+          </button>
+          
+          <button 
+            onClick={() => onOpenChat && onOpenChat()} 
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#089981]/10 border border-[#089981]/30 text-[#089981] rounded-lg text-xs font-bold hover:bg-[#089981]/20 transition-all"
+          >
+            💬 Chat
+          </button>
+        </div>
+      </div>
+
+      {/* Main Container */}
+      <div className="p-4 md:p-6 max-w-5xl mx-auto w-full flex flex-col gap-6">
         
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-2">
-            <span className={`w-2.5 h-2.5 rounded-full ${isLive ? 'bg-[#089981] shadow-[0_0_10px_rgba(8,153,129,0.8)] animate-pulse' : 'bg-rose-500'}`}></span>
-            <h3 className="text-sm font-black text-white uppercase tracking-widest">
-              {isLive ? 'Live Broadcast Active' : 'Broadcast to Token Page'}
-            </h3>
+        {/* Token Overview Card */}
+        <div className="bg-[#0A0A0A] border border-white/5 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-[#121212] border border-white/10 rounded-2xl flex items-center justify-center text-3xl overflow-hidden shrink-0">
+              {imagePreview ? (
+                <img src={imagePreview} alt={tokenName} className="w-full h-full object-cover" />
+              ) : (
+                icon
+              )}
+            </div>
+
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-black text-white">{tokenName}</h1>
+                <span className="text-xs font-black text-[#089981] bg-[#089981]/10 border border-[#089981]/20 px-2 py-0.5 rounded">
+                  ${tokenSymbol}
+                </span>
+              </div>
+              <span className="text-xs font-mono text-zinc-500 mt-1">{mintAddress}</span>
+            </div>
           </div>
-          {!isLive && (
-            <button onClick={onClose} className="p-2 text-zinc-400 hover:text-white transition-colors bg-white/5 rounded-full">
-              ✕
-            </button>
-          )}
+
+          <div className="flex items-center gap-6 w-full md:w-auto justify-between border-t md:border-t-0 border-white/5 pt-4 md:pt-0">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase text-zinc-500 font-bold tracking-wider">Price</span>
+              <span className="text-lg font-black text-white font-mono">${price}</span>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase text-zinc-500 font-bold tracking-wider">Market Cap</span>
+              <span className="text-lg font-black text-white font-mono">{mcap}</span>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase text-zinc-500 font-bold tracking-wider">24h Change</span>
+              <span className="text-lg font-black text-[#00FF66] font-mono">{change}</span>
+            </div>
+          </div>
         </div>
 
-        {/* Content */}
-        {!isLive ? (
-          <>
-            <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
-              Embed your external stream directly onto the <strong className="text-white">${token.symbol}</strong> trading page. We currently support Twitch, YouTube, and Kick URLs.
-            </p>
-
-            {/* Input URL */}
-            <div className="flex flex-col gap-2 mb-6">
-              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Stream URL</label>
-              <input 
-                type="text" 
-                placeholder="https://twitch.tv/yourchannel"
-                value={streamUrl}
-                onChange={(e) => setStreamUrl(e.target.value)}
-                className="w-full bg-[#050505] border border-white/10 focus:border-[#089981]/50 rounded-xl px-4 py-3 text-sm text-white font-mono outline-none transition-colors shadow-inner"
-              />
-              {error && <span className="text-[10px] font-bold text-rose-500 mt-1">{error}</span>}
-              {!error && embedUrl && <span className="text-[10px] font-bold text-[#089981] mt-1">Valid link detected. Ready to broadcast.</span>}
-            </div>
-
-            {/* Supported Platforms Badges */}
-            <div className="flex gap-3 justify-center mb-8">
-               <span className="text-[10px] font-bold px-2.5 py-1 bg-white/5 rounded text-zinc-400 border border-white/5">Twitch</span>
-               <span className="text-[10px] font-bold px-2.5 py-1 bg-white/5 rounded text-zinc-400 border border-white/5">YouTube</span>
-               <span className="text-[10px] font-bold px-2.5 py-1 bg-white/5 rounded text-zinc-400 border border-white/5">Kick</span>
-            </div>
-
-            {/* Action Button */}
-            <button 
-              onClick={handleGoLive}
-              disabled={!embedUrl}
-              className="w-full bg-[#089981] disabled:opacity-50 disabled:hover:bg-[#089981] hover:bg-[#06806b] text-black py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(8,153,129,0.3)] active:scale-95"
-            >
-              Start Embedding Stream
-            </button>
-          </>
-        ) : (
-          // ACTIVE LIVE STATE (Embedded iFrame)
-          <div className="flex flex-col w-full">
-            
-            {/* The actual video player */}
-            <div className="w-full aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 shadow-2xl relative mb-6">
-              <iframe 
-                src={embedUrl} 
-                className="w-full h-full absolute inset-0"
-                frameBorder="0" 
-                allowFullScreen 
-                allow="autoplay; fullscreen"
-                title="Live Stream"
-              ></iframe>
-            </div>
-
-            {/* Stream Info & Controls */}
-            <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-white/5">
-               <div className="flex flex-col">
-                 <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Broadcasting to</span>
-                 <span className="text-sm font-black text-white">{token.name} ({token.symbol}) Holders</span>
-               </div>
-               
-               <button 
-                onClick={handleEndStream}
-                className="px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(244,63,94,0.3)] active:scale-95"
-              >
-                End Stream
-              </button>
-            </div>
-            
+        {/* Bonding Curve Progress */}
+        <div className="bg-[#0A0A0A] border border-white/5 rounded-2xl p-4 flex flex-col gap-2">
+          <div className="flex justify-between items-center text-xs font-bold">
+            <span className="text-zinc-400">Bonding Curve Progress</span>
+            <span className="text-[#089981] font-mono">{isGraduated ? '100% (Graduated)' : `${progress}%`}</span>
           </div>
-        )}
+          <div className="w-full bg-[#121212] h-2.5 rounded-full overflow-hidden border border-white/5">
+            <div 
+              className="bg-gradient-to-r from-[#089981] to-[#00FF66] h-full transition-all duration-500" 
+              style={{ width: `${isGraduated ? 100 : progress}%` }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Trade CTA Button */}
+        <button 
+          onClick={() => onTradeClick && onTradeClick(token)} 
+          className="w-full py-4 bg-[#089981] hover:bg-[#06806b] text-black text-sm font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(8,153,129,0.3)] active:scale-[0.98]"
+        >
+          Trade ${tokenSymbol}
+        </button>
+
       </div>
     </div>
   );
