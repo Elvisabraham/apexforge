@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 
 export default function ActiveTvStream({ streamUrl: propStreamUrl, closeStream }) {
   const [streamUrl, setStreamUrl] = useState(propStreamUrl);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const isDragging = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0 });
 
-  // Keep state in sync with incoming prop
+  // Sync internal state with prop
   useEffect(() => {
     setStreamUrl(propStreamUrl);
   }, [propStreamUrl]);
 
-  // Fetch active stream and set up Supabase Realtime listener
+  // Fetch active stream and subscribe to Supabase Realtime
   useEffect(() => {
     const fetchActiveStream = async () => {
       if (!propStreamUrl && supabase) {
@@ -56,7 +58,31 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, closeStream }
     };
   }, [propStreamUrl]);
 
-  // Fix Close Button Handler
+  // --- Drag Logic (Touch & Mouse) ---
+  const handlePointerDown = (e) => {
+    // Don't trigger drag when clicking close button
+    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+    
+    isDragging.current = true;
+    dragStart.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    };
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDragging.current) return;
+    setPosition({
+      x: e.clientX - dragStart.current.x,
+      y: e.clientY - dragStart.current.y
+    });
+  };
+
+  const handlePointerUp = () => {
+    isDragging.current = false;
+  };
+
+  // Close Button Handler
   const handleClose = (e) => {
     e.stopPropagation();
     setStreamUrl(null);
@@ -66,15 +92,20 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, closeStream }
   if (!streamUrl) return null;
 
   return (
-    <motion.div 
-      drag
-      dragMomentum={false}
-      dragElastic={0.05}
-      className="fixed bottom-20 right-4 z-[999] w-80 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing touch-none select-none"
+    <div 
+      style={{
+        transform: `translate(${position.x}px, ${position.y}px)`,
+        touchAction: 'none'
+      }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      className="fixed bottom-20 right-4 z-[999] w-80 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden select-none cursor-grab active:cursor-grabbing"
     >
       {/* Header Bar */}
-      <div className="flex justify-between items-center px-4 py-2 bg-gray-800">
-        <div className="flex items-center gap-2">
+      <div className="flex justify-between items-center px-4 py-2 bg-gray-800 border-b border-gray-700">
+        <div className="flex items-center gap-2 pointer-events-none">
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
           <span className="text-xs font-bold text-white uppercase tracking-wider">Live Broadcast</span>
         </div>
@@ -87,14 +118,14 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, closeStream }
       </div>
 
       {/* Video Container */}
-      <div className="relative pt-[56.25%] w-full bg-black">
+      <div className="relative pt-[56.25%] w-full bg-black pointer-events-auto">
         <iframe
           src={streamUrl}
-          className="absolute top-0 left-0 w-full h-full pointer-events-auto"
+          className="absolute top-0 left-0 w-full h-full"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
         ></iframe>
       </div>
-    </motion.div>
+    </div>
   );
 }
