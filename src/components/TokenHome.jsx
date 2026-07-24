@@ -28,6 +28,14 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const [headerCopied, setHeaderCopied] = useState(false);
   const [bodyCopied, setBodyCopied] = useState(false);
 
+  // 🚀 FORMATTER HELPER: Adds thousand commas while preserving decimals
+  const formatInputWithCommas = (val) => {
+    if (!val && val !== 0) return '';
+    const parts = val.toString().replace(/,/g, '').split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
+  };
+
   // 🚀 SAFETY REDIRECT EFFECT: Auto-exit with 500ms Rescue Timer
   useEffect(() => {
     const isInvalid = !token || !token.name || token.name === 'Unknown Token' || (!token.symbol && !token.id);
@@ -136,9 +144,10 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     }
   }, [recentTrades, localCacheKey, displayToken.symbol]);
 
-  // 🚀 FIXED: Capped Price Impact to eliminate negative overflow readouts
-  const rawImpact = tradeAmount && parseFloat(tradeAmount) > 0 
-    ? (parseFloat(tradeAmount) * (tradeMode === 'buy' ? 0.12 : 0.08)) 
+  // 🚀 SANITIZED PRICE IMPACT: Strips commas before running float calculations
+  const cleanNumericAmount = tradeAmount ? parseFloat(tradeAmount.toString().replace(/,/g, '')) : 0;
+  const rawImpact = !isNaN(cleanNumericAmount) && cleanNumericAmount > 0 
+    ? (cleanNumericAmount * (tradeMode === 'buy' ? 0.12 : 0.08)) 
     : 0;
   const dynamicPriceImpact = Math.min(99.99, Math.max(0, rawImpact)).toFixed(2);
 
@@ -163,7 +172,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   };
 
   const handleExecuteTrade = () => {
-    const amount = parseFloat(tradeAmount);
+    const amount = parseFloat(tradeAmount.toString().replace(/,/g, ''));
     if (!amount || amount <= 0) return;
     
     const randomTxHash = `${Math.random().toString(36).substring(2, 6)}...${Math.random().toString(36).substring(2, 6)}`;
@@ -745,7 +754,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
              <p className="text-[11px] font-medium text-zinc-400 mb-6 text-center">Get notified instantly when {displayToken.symbol} hits your target.</p>
              <div className="bg-[#0A0A0B] border border-white/10 rounded-xl p-4 flex items-center justify-between gap-4 mb-6">
                 <span className="text-xl font-bold text-white">$</span>
-                {/* 🚀 GUARDED INPUT: Rejects negative values & hides stepper arrows */}
                 <input 
                   type="number" 
                   min="0"
@@ -894,14 +902,16 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                   )}
                 </div>
 
-                {/* 🚀 GUARDED INPUT: Rejects negative numbers & removes desktop spinner arrows */}
+                {/* 🚀 FORMATTED INPUT: Shows live commas (e.g. 85,849) as user types */}
                 <input 
-                  type="number" 
-                  min="0"
-                  value={tradeAmount} 
+                  type="text" 
+                  inputMode="decimal"
+                  value={tradeAmount ? formatInputWithCommas(tradeAmount) : ''} 
                   onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '' || parseFloat(val) >= 0) setTradeAmount(val);
+                    const rawVal = e.target.value.replace(/,/g, '');
+                    if (rawVal === '' || /^\d*\.?\d*$/.test(rawVal)) {
+                      setTradeAmount(rawVal);
+                    }
                   }} 
                   placeholder="0.00" 
                   className="bg-transparent text-right text-3xl font-black text-white w-full focus:outline-none placeholder-zinc-700 font-mono" 
@@ -922,10 +932,10 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                <div className="flex justify-between items-center">
                  <span className="text-[10px] font-bold text-zinc-500 uppercase">You Receive (Est.)</span>
                  <span className={`text-sm font-black ${displayToken.isGraduated ? 'text-amber-500' : (tradeMode === 'buy' ? 'text-[#089981]' : 'text-[#00FF66]')}`}>
-                   {tradeAmount && parseFloat(tradeAmount) > 0 ? (
+                   {cleanNumericAmount > 0 ? (
                      tradeMode === 'buy' 
-                       ? `${(((parseFloat(tradeAmount) * (displayToken.isGraduated ? 0.995 : 1)) / curveState.price) / 1000000).toFixed(2)}M ${displayToken.symbol}`
-                       : `${((parseFloat(tradeAmount) * 1000000 * curveState.price) * (displayToken.isGraduated ? 0.995 : 1)).toFixed(4)} SOL`
+                       ? `${(((cleanNumericAmount * (displayToken.isGraduated ? 0.995 : 1)) / curveState.price) / 1000000).toFixed(2)}M ${displayToken.symbol}`
+                       : `${((cleanNumericAmount * 1000000 * curveState.price) * (displayToken.isGraduated ? 0.995 : 1)).toFixed(4)} SOL`
                    ) : '0.00'}
                  </span>
                </div>
@@ -945,7 +955,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
 
              <button 
                 onClick={handleExecuteTrade}
-                disabled={!tradeAmount || parseFloat(tradeAmount) <= 0}
+                disabled={!cleanNumericAmount || cleanNumericAmount <= 0}
                 className={`w-full ${displayToken.isGraduated ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-[0_4px_12px_rgba(245,158,11,0.15)]' : (tradeMode === 'buy' ? 'bg-[#089981] hover:bg-[#06806b] shadow-[0_4px_12px_rgba(8,153,129,0.15)]' : 'bg-[#F23645] hover:bg-rose-600 shadow-[0_4px_12px_rgba(242,54,69,0.15)]')} disabled:opacity-50 text-white font-black text-sm py-4 rounded-2xl tracking-[0.2em] uppercase transition-all active:scale-95 flex items-center justify-center gap-2`}
              >
                Confirm {tradeMode} ⚡
