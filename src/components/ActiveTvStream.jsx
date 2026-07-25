@@ -6,10 +6,8 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
   const { publicKey } = useWallet();
   const [streamData, setStreamData] = useState({ url: propStreamUrl, symbol: currentTokenSymbol });
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDraggingState, setIsDraggingState] = useState(false);
-  const isDragging = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
-  const containerRef = useRef(null);
 
   const connectedAddress = publicKey ? publicKey.toBase58() : null;
   const isCreator = !creatorAddress || (connectedAddress && connectedAddress.toLowerCase() === creatorAddress.toLowerCase());
@@ -69,40 +67,26 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
     };
   }, [currentTokenSymbol, propStreamUrl]);
 
-  // 🚀 SMOOTH DRAG LOGIC (Disables Iframe Events During Drag)
-  const handlePointerDown = (e) => {
-    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-    
-    isDragging.current = true;
-    setIsDraggingState(true);
+  // 🚀 FIXED DRAG HANDLERS (Touch & Mouse)
+  const handleStartDrag = (clientX, clientY, target) => {
+    if (target.tagName === 'BUTTON' || target.closest('button')) return;
+    setIsDragging(true);
     dragStart.current = {
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
+      x: clientX - position.x,
+      y: clientY - position.y
     };
-
-    if (containerRef.current) {
-      containerRef.current.setPointerCapture(e.pointerId);
-    }
   };
 
-  const handlePointerMove = (e) => {
-    if (!isDragging.current) return;
+  const handleMoveDrag = (clientX, clientY) => {
+    if (!isDragging) return;
     setPosition({
-      x: e.clientX - dragStart.current.x,
-      y: e.clientY - dragStart.current.y
+      x: clientX - dragStart.current.x,
+      y: clientY - dragStart.current.y
     });
   };
 
-  const handlePointerUp = (e) => {
-    isDragging.current = false;
-    setIsDraggingState(false);
-    if (containerRef.current && e.pointerId) {
-      try {
-        containerRef.current.releasePointerCapture(e.pointerId);
-      } catch (err) {
-        // Pointer capture release safety
-      }
-    }
+  const handleEndDrag = () => {
+    setIsDragging(false);
   };
 
   const handleCloseLocal = (e) => {
@@ -129,12 +113,17 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
     if (closeStream) closeStream();
   };
 
-  // 🚀 GUARDS:
+  // 🚀 STRICT TOKEN-HOME-ONLY SCOPE GUARD:
   if (!streamData.url) return null;
 
-  const isGlobalTab = ['earn', 'profile', 'ranks', 'wallet', 'home', 'directory'].includes(activePage?.toLowerCase());
-  if (isGlobalTab) return null;
+  // Normalize page name check (only allow token home views like 'trade', 'token', 'tokenhome')
+  const validTokenPages = ['trade', 'token', 'tokenhome', 'token_home'];
+  const isTokenHome = activePage && validTokenPages.includes(activePage.toLowerCase());
 
+  // Hide completely if NOT strictly inside the token home view
+  if (!isTokenHome) return null;
+
+  // Flexible Symbol Match Check
   const isSymbolMatching = 
     !currentTokenSymbol || 
     !streamData.symbol || 
@@ -144,7 +133,7 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
 
   if (!isSymbolMatching) return null;
 
-  // 🚀 IF CLOSED LOCALLY: Show floating button so creator/trader can bring player back anytime
+  // If minimized locally on token page, show restore pill
   if (streamData.closedLocally) {
     return (
       <button
@@ -159,15 +148,16 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
 
   return (
     <div 
-      ref={containerRef}
       style={{
         transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
         touchAction: 'none'
       }}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
+      onMouseDown={(e) => handleStartDrag(e.clientX, e.clientY, e.target)}
+      onMouseMove={(e) => handleMoveDrag(e.clientX, e.clientY)}
+      onMouseUp={handleEndDrag}
+      onTouchStart={(e) => handleStartDrag(e.touches[0].clientX, e.touches[0].clientY, e.target)}
+      onTouchMove={(e) => handleMoveDrag(e.touches[0].clientX, e.touches[0].clientY)}
+      onTouchEnd={handleEndDrag}
       className="fixed bottom-20 right-4 z-[999] w-80 sm:w-96 bg-[#0c0c0e] border border-rose-500/30 rounded-2xl shadow-[0_0_50px_rgba(225,29,72,0.3)] overflow-hidden select-none cursor-grab active:cursor-grabbing animate-slideUpNative"
     >
       {/* Header Bar - Drag Handle */}
@@ -201,11 +191,11 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
         </div>
       </div>
 
-      {/* Video Frame - Pointer Events Disabled During Dragging */}
-      <div className={`relative pt-[56.25%] w-full bg-black ${isDraggingState ? 'pointer-events-none' : 'pointer-events-auto'}`}>
+      {/* Video Container - Pointer Events Completely Disabled While Dragging */}
+      <div className={`relative pt-[56.25%] w-full bg-black ${isDragging ? 'pointer-events-none' : 'pointer-events-auto'}`}>
         <iframe
           src={streamData.url}
-          className="absolute top-0 left-0 w-full h-full border-0"
+          className="absolute top-0 left-0 w-full h-full border-0 pointer-events-auto"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           title="Creator Live Stream"
