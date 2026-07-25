@@ -125,8 +125,9 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
   // 1. Must have active stream URL
   if (!streamData.url) return null;
 
-  // 2. Hide if user is NOT inside a active token/trading view
-  if (activePage && activePage !== 'trade' && activePage !== 'token') return null;
+  // 2. Hide ONLY if user explicitly navigates to non-token global sections
+  const isGlobalTab = ['earn', 'profile', 'ranks', 'wallet', 'home', 'directory'].includes(activePage?.toLowerCase());
+  if (isGlobalTab) return null;
 
   // 3. Flexible Symbol Matching (Case-Insensitive & Partial Match)
   const isSymbolMatching = 
