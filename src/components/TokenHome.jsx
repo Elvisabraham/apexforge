@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createChart, CandlestickSeries, AreaSeries } from 'lightweight-charts';
+import { useWallet } from '@solana/wallet-adapter-react'; // 👈 Added
 import ActiveTvStream from './ActiveTvStream';
 
 export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
