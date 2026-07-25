@@ -5,12 +5,13 @@ import { supabase } from './supabaseClient';
 export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, closeStream }) {
   const { publicKey } = useWallet();
   const [streamData, setStreamData] = useState({ url: null, symbol: currentTokenSymbol, closedLocally: false });
-  
-  const [pos, setPos] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  
+
+  // Direct DOM Refs for high-performance direct transform
+  const modalRef = useRef(null);
   const isDraggingRef = useRef(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
+  const currentPosRef = useRef({ x: 0, y: 0 });
 
   const connectedAddress = publicKey ? publicKey.toBase58() : null;
   const isCreator = !creatorAddress || (connectedAddress && connectedAddress.toLowerCase() === creatorAddress.toLowerCase());
@@ -57,7 +58,7 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
           })
           .subscribe();
       } catch (err) {
-        console.log("Realtime subscription error");
+        console.log("Realtime error");
       }
     }
 
@@ -68,26 +69,63 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
     };
   }, [currentTokenSymbol]);
 
-  // 🚀 TOUCH & MOUSE DRAG ENGINE
-  const startDrag = (clientX, clientY, target) => {
-    if (target.tagName === 'BUTTON' || target.closest('button')) return;
+  // 🚀 DIRECT HARDWARE DOM DRAG ENGINE (Native Touch & Mouse)
+  const handleTouchStart = (e) => {
+    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+    const touch = e.touches[0];
     isDraggingRef.current = true;
     setIsDragging(true);
+
     dragStartRef.current = {
-      x: clientX - pos.x,
-      y: clientY - pos.y
+      x: touch.clientX - currentPosRef.current.x,
+      y: touch.clientY - currentPosRef.current.y
     };
   };
 
-  const moveDrag = (clientX, clientY) => {
+  const handleTouchMove = (e) => {
     if (!isDraggingRef.current) return;
-    setPos({
-      x: clientX - dragStartRef.current.x,
-      y: clientY - dragStartRef.current.y
-    });
+    const touch = e.touches[0];
+    
+    const newX = touch.clientX - dragStartRef.current.x;
+    const newY = touch.clientY - dragStartRef.current.y;
+
+    currentPosRef.current = { x: newX, y: newY };
+
+    if (modalRef.current) {
+      modalRef.current.style.transform = `translate3d(${newX}px, ${newY}px, 0px)`;
+    }
   };
 
-  const endDrag = () => {
+  const handleTouchEnd = () => {
+    isDraggingRef.current = false;
+    setIsDragging(false);
+  };
+
+  // Mouse handlers for desktop browser fallback
+  const handleMouseDown = (e) => {
+    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+    isDraggingRef.current = true;
+    setIsDragging(true);
+
+    dragStartRef.current = {
+      x: e.clientX - currentPosRef.current.x,
+      y: e.clientY - currentPosRef.current.y
+    };
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDraggingRef.current) return;
+    const newX = e.clientX - dragStartRef.current.x;
+    const newY = e.clientY - dragStartRef.current.y;
+
+    currentPosRef.current = { x: newX, y: newY };
+
+    if (modalRef.current) {
+      modalRef.current.style.transform = `translate3d(${newX}px, ${newY}px, 0px)`;
+    }
+  };
+
+  const handleMouseUp = () => {
     isDraggingRef.current = false;
     setIsDragging(false);
   };
@@ -118,7 +156,6 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
 
   if (!streamData.url) return null;
 
-  // Restore Pill when closed locally
   if (streamData.closedLocally) {
     return (
       <button
@@ -133,32 +170,29 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
 
   return (
     <>
-      {/* 🚀 INVISIBLE DRAG SHIELD: Blocks YouTube/Chart from stealing finger input during drag */}
+      {/* Invisible Screen Overlay when actively dragging */}
       {isDragging && (
         <div 
-          onMouseMove={(e) => moveDrag(e.clientX, e.clientY)}
-          onMouseUp={endDrag}
-          onTouchMove={(e) => moveDrag(e.touches[0].clientX, e.touches[0].clientY)}
-          onTouchEnd={endDrag}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
           className="fixed inset-0 z-[999998] bg-transparent cursor-grabbing select-none touch-none" 
         />
       )}
 
       <div 
-        style={{
-          transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
-          touchAction: 'none'
-        }}
-        className="fixed bottom-20 right-4 z-[999999] w-80 sm:w-96 bg-[#0c0c0e] border border-rose-500/30 rounded-2xl shadow-[0_0_50px_rgba(225,29,72,0.3)] overflow-hidden select-none animate-slideUpNative pointer-events-auto"
+        ref={modalRef}
+        className="fixed bottom-20 right-4 z-[999999] w-80 sm:w-96 bg-[#0c0c0e] border border-rose-500/30 rounded-2xl shadow-[0_0_50px_rgba(225,29,72,0.3)] overflow-hidden select-none animate-slideUpNative pointer-events-auto touch-none"
       >
         {/* DRAGGABLE HEADER BAR */}
         <div 
-          onMouseDown={(e) => startDrag(e.clientX, e.clientY, e.target)}
-          onMouseMove={(e) => moveDrag(e.clientX, e.clientY)}
-          onMouseUp={endDrag}
-          onTouchStart={(e) => startDrag(e.touches[0].clientX, e.touches[0].clientY, e.target)}
-          onTouchMove={(e) => moveDrag(e.touches[0].clientX, e.touches[0].clientY)}
-          onTouchEnd={endDrag}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
           className="flex justify-between items-center px-4 py-3 bg-[#121217] border-b border-white/10 cursor-grab active:cursor-grabbing select-none pointer-events-auto touch-none"
         >
           <div className="flex items-center gap-2 pointer-events-none">
