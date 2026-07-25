@@ -5,7 +5,7 @@ import { supabase } from './supabaseClient';
 
 export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, closeStream }) {
   const { publicKey } = useWallet();
-  const [streamData, setStreamData] = useState({ url: null, symbol: currentTokenSymbol });
+  const [streamData, setStreamData] = useState({ url: null, symbol: currentTokenSymbol, closedLocally: false });
   
   const modalRef = useRef(null);
   const handleRef = useRef(null);
@@ -32,12 +32,12 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
             .maybeSingle();
 
           if (!error && data && data.stream_url) {
-            setStreamData({ url: data.stream_url, symbol: data.token_symbol });
+            setStreamData({ url: data.stream_url, symbol: data.token_symbol, closedLocally: false });
           } else {
-            setStreamData({ url: null, symbol: null });
+            setStreamData({ url: null, symbol: null, closedLocally: false });
           }
         } catch (err) {
-          setStreamData({ url: null, symbol: null });
+          setStreamData({ url: null, symbol: null, closedLocally: false });
         }
       }
     };
@@ -51,9 +51,9 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
           .channel(`token_stream_${currentTokenSymbol}`)
           .on('postgres_changes', { event: '*', schema: 'public', table: 'active_streams' }, (payload) => {
             if (payload.eventType === 'DELETE') {
-              setStreamData({ url: null, symbol: null });
+              setStreamData({ url: null, symbol: null, closedLocally: false });
             } else if (payload.new && payload.new.stream_url) {
-              setStreamData({ url: payload.new.stream_url, symbol: payload.new.token_symbol });
+              setStreamData({ url: payload.new.stream_url, symbol: payload.new.token_symbol, closedLocally: false });
             }
           })
           .subscribe();
@@ -72,12 +72,10 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
   // 🚀 BULLETPROOF NATIVE TOUCH & MOUSE DRAG ENGINE
   useEffect(() => {
     const handleEl = handleRef.current;
-    if (!handleEl || !streamData.url) return;
+    if (!handleEl || !streamData.url || streamData.closedLocally) return;
 
     const onTouchStart = (e) => {
       if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-      
-      // Stop screen scrolling while dragging
       e.preventDefault(); 
       e.stopPropagation();
 
@@ -92,7 +90,7 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
 
     const onTouchMove = (e) => {
       if (!isDraggingRef.current) return;
-      e.preventDefault(); // CRITICAL: Overrides mobile browser pull-to-refresh & screen scroll
+      e.preventDefault(); 
       e.stopPropagation();
 
       const touch = e.touches[0];
@@ -110,7 +108,6 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
       isDraggingRef.current = false;
     };
 
-    // Mouse handlers for desktop browser
     const onMouseDown = (e) => {
       if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
       isDraggingRef.current = true;
@@ -136,7 +133,6 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
       isDraggingRef.current = false;
     };
 
-    // Attach non-passive native listeners
     handleEl.addEventListener('touchstart', onTouchStart, { passive: false });
     window.addEventListener('touchmove', onTouchMove, { passive: false });
     window.addEventListener('touchend', onTouchEnd);
@@ -156,12 +152,16 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
     };
-  }, [streamData.url]);
+  }, [streamData.url, streamData.closedLocally]);
 
-  const handleCloseLocal = (e) => {
+  const handleMinimizeLocal = (e) => {
     e.stopPropagation();
-    setStreamData({ url: null, symbol: null });
-    if (closeStream) closeStream();
+    setStreamData(prev => ({ ...prev, closedLocally: true }));
+  };
+
+  const handleRestoreLocal = (e) => {
+    e.stopPropagation();
+    setStreamData(prev => ({ ...prev, closedLocally: false }));
   };
 
   const handleEndBroadcastGlobal = async (e) => {
@@ -173,16 +173,34 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
         console.error("Error ending broadcast:", err);
       }
     }
-    setStreamData({ url: null, symbol: null });
+    setStreamData({ url: null, symbol: null, closedLocally: false });
     if (closeStream) closeStream();
   };
 
   if (!streamData.url) return null;
 
+  // 🔴 RESTORE LIVE VIEW PILL BUTTON
+  if (streamData.closedLocally) {
+    return ReactDOM.createPortal(
+      <button
+        onClick={handleRestoreLocal}
+        className="fixed bottom-24 right-4 z-[9999999] bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] uppercase tracking-wider px-3.5 py-2.5 rounded-full shadow-[0_0_25px_rgba(225,29,72,0.6)] flex items-center gap-2 animate-bounce border border-white/20 cursor-pointer pointer-events-auto"
+      >
+        <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
+        <span>🔴 Restore Live View</span>
+      </button>,
+      document.body
+    );
+  }
+
+  // 📺 EXPANDED FLOATING PLAYER
   return ReactDOM.createPortal(
     <div 
       ref={modalRef}
-      style={{ touchAction: 'none' }}
+      style={{ 
+        transform: `translate3d(${posRef.current.x}px, ${posRef.current.y}px, 0px)`,
+        touchAction: 'none' 
+      }}
       className="fixed bottom-20 right-4 z-[9999999] w-80 sm:w-96 bg-[#0c0c0e] border border-rose-500/30 rounded-2xl shadow-[0_0_50px_rgba(225,29,72,0.3)] overflow-hidden select-none pointer-events-auto"
     >
       {/* DRAGGABLE HEADER BAR */}
@@ -210,9 +228,9 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
             </button>
           )}
           <button 
-            onClick={handleCloseLocal}
+            onClick={handleMinimizeLocal}
             className="text-zinc-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-            title="Close Stream"
+            title="Minimize Stream View"
           >
             ✕
           </button>
