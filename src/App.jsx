@@ -481,7 +481,13 @@ function AppContent() {
       `}</style>
 
       {/* --- FLOATING TV STREAM WIDGET --- */}
-      <ActiveTvStream streamUrl={activeStreamUrl} closeStream={stopStream} />
+      <ActiveTvStream 
+  streamUrl={activeStreamUrl} 
+  currentTokenSymbol={selectedToken?.symbol || activeToken?.symbol} 
+  activePage={activePage}
+  creatorAddress={selectedToken?.creatorAddress || selectedToken?.creator || selectedToken?.deployer}
+  closeStream={stopStream} 
+/>
 
       {/* --- DESKTOP SIDEBAR --- */}
       <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[260px] bg-[#0A0A0A] border-r border-white/5 z-40">
