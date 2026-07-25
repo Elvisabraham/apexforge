@@ -74,21 +74,24 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const isActuallyGraduated = token?.isGraduated === true || rawProgress >= 100 || initialMcap >= 69;
 
   const displayToken = {
-    name: token?.name || token?.token || 'Token',
-    symbol: token?.symbol || 'TKN',
-    change: token?.change || '+0.0%',
-    icon: token?.icon || '🪙',
-    imagePreview: token?.imagePreview || token?.image || null, 
-    mintAddress: token?.mintAddress || '8AVmX9aQwZoonSolanaNet11oHEZforge',
-    description: token?.description || `A community-driven asset deployed fairly on the Apex Forge platform. Smart contract initialized.`,
-    links: { twitter: token?.links?.twitter || '', telegram: token?.links?.telegram || '', website: token?.links?.website || '' },
-    creator: token?.creatorAddress || token?.creator || 'ApexDeployer_0x1',
-    holders: '1,204',
-    supply: '1.0B',
-    createdTime: 'Just now',
-    isGraduated: isActuallyGraduated,
-    progress: rawProgress
-  };
+  name: token?.name || token?.token || 'Token',
+  symbol: token?.symbol || 'TKN',
+  change: token?.change || '+0.0%',
+  icon: token?.icon || '🪙',
+  imagePreview: token?.imagePreview || token?.image || null, 
+  mintAddress: token?.mintAddress || '8AVmX9aQwZoonSolanaNet11oHEZforge',
+  description: token?.description || `A community-driven asset deployed fairly on the Apex Forge platform. Smart contract initialized.`,
+  links: { twitter: token?.links?.twitter || '', telegram: token?.links?.telegram || '', website: token?.links?.website || '' },
+  
+  // 🚀 FALLBACK TO CONNECTED WALLET OR SUPABASE CREATOR
+  creator: token?.creatorAddress || token?.creator || token?.deployer || connectedAddress || '47ZT1q3mR...',
+  
+  holders: '1,204',
+  supply: '1.0B',
+  createdTime: 'Just now',
+  isGraduated: isActuallyGraduated,
+  progress: rawProgress
+};
 
   const localCacheKey = `apex_mock_state_${displayToken.symbol}`;
   const initialBasePrice = parseFloat(token?.price || '0.0000100');
