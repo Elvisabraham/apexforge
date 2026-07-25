@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { supabase } from './supabaseClient';
 
-export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenSymbol, creatorAddress, closeStream }) {
+export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenSymbol, activePage, creatorAddress, closeStream }) {
   const { publicKey } = useWallet();
-  const [streamUrl, setStreamUrl] = useState(propStreamUrl);
+  const [streamData, setStreamData] = useState({ url: propStreamUrl, symbol: currentTokenSymbol });
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const isDragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -12,15 +12,10 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
   const connectedAddress = publicKey ? publicKey.toBase58() : null;
   const isCreator = !creatorAddress || (connectedAddress && connectedAddress.toLowerCase() === creatorAddress.toLowerCase());
 
-  // Sync internal state with prop
-  useEffect(() => {
-    setStreamUrl(propStreamUrl);
-  }, [propStreamUrl]);
-
-  // Fetch active stream and subscribe to Supabase Realtime
+  // Fetch active stream & subscribe via Supabase
   useEffect(() => {
     const fetchActiveStream = async () => {
-      if (!propStreamUrl && supabase) {
+      if (supabase) {
         try {
           let query = supabase
             .from('active_streams')
@@ -35,10 +30,10 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
           const { data } = await query.single();
 
           if (data && data.stream_url) {
-            setStreamUrl(data.stream_url);
+            setStreamData({ url: data.stream_url, symbol: data.token_symbol });
           }
         } catch (err) {
-          console.log("Stream table waiting for broadcast...");
+          console.log("No active broadcast for this route.");
         }
       }
     };
@@ -52,12 +47,9 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
           .channel('public:active_streams')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'active_streams' }, (payload) => {
             if (payload.eventType === 'DELETE') {
-              // Stream ended by creator -> clear player globally
-              setStreamUrl(null);
+              setStreamData({ url: null, symbol: null });
             } else if (payload.new && payload.new.stream_url) {
-              if (!currentTokenSymbol || payload.new.token_symbol === currentTokenSymbol) {
-                setStreamUrl(payload.new.stream_url);
-              }
+              setStreamData({ url: payload.new.stream_url, symbol: payload.new.token_symbol });
             }
           })
           .subscribe();
@@ -71,70 +63,54 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
         supabase.removeChannel(channel);
       }
     };
-  }, [propStreamUrl, currentTokenSymbol]);
+  }, [currentTokenSymbol]);
 
-  // --- Drag Logic (Touch & Mouse) ---
+  // Drag Handlers
   const handlePointerDown = (e) => {
     if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-    
     isDragging.current = true;
-    dragStart.current = {
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
-    };
+    dragStart.current = { x: e.clientX - position.x, y: e.clientY - position.y };
   };
 
   const handlePointerMove = (e) => {
     if (!isDragging.current) return;
-    setPosition({
-      x: e.clientX - dragStart.current.x,
-      y: e.clientY - dragStart.current.y
-    });
+    setPosition({ x: e.clientX - dragStart.current.x, y: e.clientY - dragStart.current.y });
   };
 
-  const handlePointerUp = () => {
-    isDragging.current = false;
-  };
+  const handlePointerUp = () => { isDragging.current = false; };
 
-  // Close Local Window (Trader view)
   const handleCloseLocal = (e) => {
     e.stopPropagation();
-    setStreamUrl(null);
+    setStreamData({ url: null, symbol: null });
     if (closeStream) closeStream();
   };
 
-  // End Broadcast Globally (Creator only)
   const handleEndBroadcastGlobal = async (e) => {
     e.stopPropagation();
-
     if (supabase) {
       try {
-        let deleteQuery = supabase.from('active_streams').delete();
-        
-        if (currentTokenSymbol) {
-          deleteQuery = deleteQuery.eq('token_symbol', currentTokenSymbol);
-        } else {
-          deleteQuery = deleteQuery.neq('id', 0); // Clear active stream
-        }
-
-        await deleteQuery;
+        await supabase.from('active_streams').delete().eq('token_symbol', streamData.symbol);
       } catch (err) {
         console.error("Error ending broadcast:", err);
       }
     }
-
-    setStreamUrl(null);
+    setStreamData({ url: null, symbol: null });
     if (closeStream) closeStream();
   };
 
-  if (!streamUrl) return null;
+  // 🚀 PAGE & TOKEN SCOPE GUARD:
+  // 1. Hide if there is no active stream URL
+  if (!streamData.url) return null;
+
+  // 2. Hide if trader leaves the trading view (e.g., browsing 'home', 'earn', 'profile', 'ranks')
+  if (activePage && activePage !== 'trade' && activePage !== 'token') return null;
+
+  // 3. Hide if trader switches to a DIFFERENT token page than the stream's token
+  if (currentTokenSymbol && streamData.symbol && currentTokenSymbol !== streamData.symbol) return null;
 
   return (
     <div 
-      style={{
-        transform: `translate(${position.x}px, ${position.y}px)`,
-        touchAction: 'none'
-      }}
+      style={{ transform: `translate(${position.x}px, ${position.y}px)`, touchAction: 'none' }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -148,22 +124,20 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
           </span>
-          <span className="text-[10px] font-black text-rose-400 uppercase tracking-wider">Creator Live</span>
+          <span className="text-[10px] font-black text-rose-400 uppercase tracking-wider">
+            {streamData.symbol ? `$${streamData.symbol} LIVE` : 'Creator Live'}
+          </span>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Creator End Stream Button */}
           {isCreator && (
             <button 
               onClick={handleEndBroadcastGlobal}
               className="bg-rose-600 hover:bg-rose-700 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg transition-colors shadow-sm"
-              title="End stream globally for all traders"
             >
               End Broadcast
             </button>
           )}
-
-          {/* Regular Close Button (minimizes/closes local view) */}
           <button 
             onClick={handleCloseLocal}
             className="text-zinc-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
@@ -173,10 +147,10 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
         </div>
       </div>
 
-      {/* Video Container */}
+      {/* Video Frame */}
       <div className="relative pt-[56.25%] w-full bg-black pointer-events-auto">
         <iframe
-          src={streamUrl}
+          src={streamData.url}
           className="absolute top-0 left-0 w-full h-full border-0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
