@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
 
 export default function Home({ 
   tokens = [], 
@@ -13,12 +14,51 @@ export default function Home({
 }) {
   const [activeTab, setActiveTab] = useState('EXPLORE');
   const [searchQuery, setSearchQuery] = useState('');
+  const [liveSymbols, setLiveSymbols] = useState(new Set());
+
+  // 🚀 Fetch & Subscribe to Active Streams in Supabase for Live Badges
+  useEffect(() => {
+    if (!supabase) return;
+
+    // 1. Initial check for all active stream symbols
+    const fetchActiveStreams = async () => {
+      const { data, error } = await supabase
+        .from('active_streams')
+        .select('token_symbol');
+
+      if (!error && data) {
+        const symbols = new Set(data.map(item => item.token_symbol).filter(Boolean));
+        setLiveSymbols(symbols);
+      }
+    };
+
+    fetchActiveStreams();
+
+    // 2. Realtime listener for new streams
+    const channel = supabase
+      .channel('home_live_badges')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'active_streams' },
+        (payload) => {
+          if (payload.new && payload.new.token_symbol) {
+            setLiveSymbols(prev => new Set([...prev, payload.new.token_symbol]));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const enrichedTokens = tokens.map(t => {
     const trend = t.trend || Array.from({length: 12}, () => Math.random() * 100);
     const mcapValue = parseFloat((t.mcap || t.marketCap || '$1M').replace(/[^0-9.]/g, ''));
     const isPositive = (t.change || '').includes('+') || parseFloat(t.change || 0) >= 0;
-    return { ...t, trend, mcapValue, isPositive };
+    const isLive = liveSymbols.has(t.symbol);
+    return { ...t, trend, mcapValue, isPositive, isLive };
   });
 
   const displayedTokens = enrichedTokens.filter(t => {
@@ -94,7 +134,7 @@ export default function Home({
             </div>
           </div>
           
-          {/* 🚀 RIGHT SIDE: EARN BUTTON (VISIBLE ON MOBILE) + NOTIFICATIONS */}
+          {/* 🚀 RIGHT SIDE: EARN BUTTON + NOTIFICATIONS */}
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setActivePage && setActivePage('earn')}
@@ -145,9 +185,22 @@ export default function Home({
               </div>
 
               <div className="flex items-center gap-5 relative z-10">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-black border-2 border-[#A855F7]/50 rounded-full flex items-center justify-center text-3xl sm:text-4xl shrink-0 shadow-lg overflow-hidden group-hover:scale-105 transition-transform">
-                   {spotlightToken.imagePreview ? <img src={spotlightToken.imagePreview} className="w-full h-full object-cover" alt="icon"/> : spotlightToken.icon}
+                
+                {/* Spotlight Logo with Animated Live Ring if Live */}
+                <div className="relative shrink-0">
+                  {spotlightToken.isLive && (
+                    <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-rose-500 via-red-500 to-pink-500 animate-pulse blur-[2px]" />
+                  )}
+                  <div className={`w-16 h-16 sm:w-20 sm:h-20 bg-black border-2 ${spotlightToken.isLive ? 'border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.8)]' : 'border-[#A855F7]/50'} rounded-full flex items-center justify-center text-3xl sm:text-4xl shrink-0 shadow-lg overflow-hidden group-hover:scale-105 transition-transform relative z-10`}>
+                     {spotlightToken.imagePreview ? <img src={spotlightToken.imagePreview} className="w-full h-full object-cover" alt="icon"/> : spotlightToken.icon}
+                  </div>
+                  {spotlightToken.isLive && (
+                    <span className="absolute -bottom-1 -right-1 z-20 bg-rose-600 border border-black text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full tracking-wider animate-bounce shadow-md">
+                      LIVE
+                    </span>
+                  )}
                 </div>
+
                 <div className="flex flex-col min-w-0">
                   <h2 className="text-2xl sm:text-3xl font-black text-white truncate">{spotlightToken.name}</h2>
                   <span className="text-sm font-mono font-bold text-zinc-400 mt-1">{spotlightToken.symbol}</span>
@@ -203,8 +256,20 @@ export default function Home({
                   className="flex items-center justify-between p-4 sm:p-5 rounded-2xl cursor-pointer hover:bg-[#131722] transition-colors border border-transparent hover:border-white/[0.05] group shadow-sm"
                 >
                   <div className="flex items-center gap-4 min-w-0 w-[45%]">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#1A1A24] border border-white/10 rounded-full flex items-center justify-center text-2xl sm:text-3xl shrink-0 shadow-inner overflow-hidden group-hover:border-[#089981]/50 transition-colors">
-                      {t.imagePreview ? <img src={t.imagePreview} alt={t.name} className="w-full h-full object-cover" /> : t.icon}
+                    
+                    {/* Token Logo with Animated Live Ring */}
+                    <div className="relative shrink-0">
+                      {t.isLive && (
+                        <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-rose-500 via-red-500 to-pink-500 animate-pulse blur-[2px]" />
+                      )}
+                      <div className={`w-12 h-12 sm:w-14 sm:h-14 bg-[#1A1A24] border ${t.isLive ? 'border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.8)]' : 'border-white/10'} rounded-full flex items-center justify-center text-2xl sm:text-3xl shrink-0 shadow-inner overflow-hidden group-hover:border-[#089981]/50 transition-colors relative z-10`}>
+                        {t.imagePreview ? <img src={t.imagePreview} alt={t.name} className="w-full h-full object-cover" /> : t.icon}
+                      </div>
+                      {t.isLive && (
+                        <span className="absolute -bottom-1 -right-1 z-20 bg-rose-600 border border-black text-white text-[7px] font-black uppercase px-1.5 py-0.5 rounded-full tracking-wider animate-bounce shadow-md">
+                          LIVE
+                        </span>
+                      )}
                     </div>
                     
                     <div className="flex flex-col min-w-0 pr-2">
