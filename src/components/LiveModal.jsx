@@ -1,26 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react'; // 🚀 Connected wallet hook
-import { useStream } from './StreamProvider'; // 🚀 Global stream context
-import { supabase } from './supabaseClient'; // 🚀 Supabase database connection
+import { useWallet } from '@solana/wallet-adapter-react';
+import { supabase } from './supabaseClient';
 
 export default function LiveModal({ isOpen, onClose, token = { symbol: 'FORGE', name: 'Apex Forge', creatorAddress: '' } }) {
-  const { publicKey } = useWallet(); // 🚀 Grab connected user wallet address
-  const { startStream } = useStream();
+  const { publicKey } = useWallet();
   const [streamUrl, setStreamUrl] = useState('');
   const [embedUrl, setEmbedUrl] = useState(null);
   const [error, setError] = useState('');
   const [isBroadcasting, setIsBroadcasting] = useState(false);
 
-  // Determine current connected address
   const connectedAddress = publicKey ? publicKey.toBase58() : null;
-
-  // Find creator address from prop variations
   const creatorAddr = token.creatorAddress || token.creator || token.deployer || '';
-
-  // Creator Verification: If no creator address on token object, default allow; otherwise match wallet
   const isCreator = !creatorAddr || (connectedAddress && connectedAddress.toLowerCase() === creatorAddr.toLowerCase());
 
-  // 🚀 SMART PARSER: Twitch, YouTube, and Kick links
+  // Smart Parser for Twitch, YouTube, and Kick
   useEffect(() => {
     if (!streamUrl) {
       setEmbedUrl(null);
@@ -73,7 +66,7 @@ export default function LiveModal({ isOpen, onClose, token = { symbol: 'FORGE', 
 
     setIsBroadcasting(true);
 
-    // 1. Broadcast globally to Supabase Realtime table with token_symbol and creator_address
+    // Broadcast globally to Supabase. Realtime syncs this automatically!
     if (supabase) {
       try {
         await supabase
@@ -89,10 +82,7 @@ export default function LiveModal({ isOpen, onClose, token = { symbol: 'FORGE', 
       }
     }
 
-    // 2. Fire the global stream locally
-    startStream(embedUrl);
-    
-    // Clear input and close modal
+    // Clear input & close modal (Supabase Realtime will trigger the stream display)
     setStreamUrl('');
     setIsBroadcasting(false);
     if (onClose) onClose();
