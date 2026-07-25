@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createChart, CandlestickSeries, AreaSeries } from 'lightweight-charts';
+import ActiveTvStream from './ActiveTvStream';
 
 export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
   const chartContainerRef = useRef(null);
@@ -81,7 +82,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     mintAddress: token?.mintAddress || '8AVmX9aQwZoonSolanaNet11oHEZforge',
     description: token?.description || `A community-driven asset deployed fairly on the Apex Forge platform. Smart contract initialized.`,
     links: { twitter: token?.links?.twitter || '', telegram: token?.links?.telegram || '', website: token?.links?.website || '' },
-    creator: 'ApexDeployer_0x1',
+    creator: token?.creatorAddress || token?.creator || 'ApexDeployer_0x1',
     holders: '1,204',
     supply: '1.0B',
     createdTime: 'Just now',
@@ -936,8 +937,8 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                   Balance: {tradeMode === 'buy' ? `${userBalanceSol.toFixed(2)} SOL` : `${(userTokenBalance / 1000000).toFixed(2)}M ${displayToken.symbol}`}
                 </span>
                 <div className="flex gap-2">
-                  <button onClick={() => setTradeAmount(tradeMode === 'buy' ? (userBalanceSol * 0.5).toFixed(2) : ((userTokenBalance * 0.5) / 1000000).toFixed(2))} className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors">Half</button>
-                  <button onClick={() => setTradeAmount(tradeMode === 'buy' ? userBalanceSol.toFixed(2) : (userTokenBalance / 1000000).toFixed(2))} className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors">Max</button>
+                  <button onClick={() => setTradeAmount(tradeMode === 'buy' ? (userBalanceSol * 0.5).toFixed(2) : ((userTokenBalance * 0.5) / 1000000).toFixed(2))} className="text-[10px] font-black uppercase tracking-widest bg-[#121212] hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors">Half</button>
+                  <button onClick={() => setTradeAmount(tradeMode === 'buy' ? userBalanceSol.toFixed(2) : (userTokenBalance / 1000000).toFixed(2))} className="text-[10px] font-black uppercase tracking-widest bg-[#121212] hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors">Max</button>
                 </div>
              </div>
 
@@ -971,11 +972,17 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                 disabled={!cleanNumericAmount || cleanNumericAmount <= 0}
                 className={`w-full ${displayToken.isGraduated ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-[0_4px_12px_rgba(245,158,11,0.15)]' : (tradeMode === 'buy' ? 'bg-[#089981] hover:bg-[#06806b] shadow-[0_4px_12px_rgba(8,153,129,0.15)]' : 'bg-[#F23645] hover:bg-rose-600 shadow-[0_4px_12px_rgba(242,54,69,0.15)]')} disabled:opacity-50 text-white font-black text-sm py-4 rounded-2xl tracking-[0.2em] uppercase transition-all active:scale-95 flex items-center justify-center gap-2`}
              >
-               Confirm {tradeMode} ⚡
+                Confirm {tradeMode} ⚡
              </button>
           </div>
         </div>
       )}
+
+      {/* 🚀 MOUNT LIVE STREAM PLAYER SPECIFICALLY INSIDE THIS TOKEN PAGE VIEW */}
+      <ActiveTvStream 
+        currentTokenSymbol={displayToken.symbol} 
+        creatorAddress={displayToken.creator}
+      />
 
       {/* --- UNMOVABLE BOTTOM BUY MAT (FLUSH MOBILE & PWA FIT) --- */}
       <div className="flex-none bg-[#0E0E14] z-30 pt-2.5 pb-[max(12px,env(safe-area-inset-bottom))] px-4 border-t border-white/[0.05] shadow-[0_-10px_30px_rgba(0,0,0,0.8)] relative">
