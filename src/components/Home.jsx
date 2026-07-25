@@ -15,12 +15,89 @@ export default function Home({
   const [activeTab, setActiveTab] = useState('EXPLORE');
   const [searchQuery, setSearchQuery] = useState('');
   const [liveSymbols, setLiveSymbols] = useState(new Set());
+  const [dbTokens, setDbTokens] = useState([]);
 
-  // 🚀 Fetch & Subscribe to Active Streams in Supabase for Live Badges
+  // 🚀 1. Fetch & Subscribe to Global Tokens from Supabase across ALL Devices
   useEffect(() => {
     if (!supabase) return;
 
-    // 1. Initial check for all active stream symbols
+    const fetchGlobalTokens = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('tokens')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!error && data) {
+          const formatted = data.map(item => ({
+            id: item.id || item.mint_address,
+            name: item.name,
+            symbol: item.symbol,
+            description: item.description,
+            icon: item.icon || '🔥',
+            imagePreview: item.image_url,
+            mintAddress: item.mint_address,
+            creatorAddress: item.creator_address,
+            mcap: item.market_cap || '$10.0K',
+            price: '0.0001',
+            change: '+0.0%',
+            isGraduated: (item.progress || 0) >= 100,
+            progress: item.progress || 0,
+            links: item.links || {}
+          }));
+          setDbTokens(formatted);
+        }
+      } catch (err) {
+        console.error("Error fetching global tokens:", err);
+      }
+    };
+
+    fetchGlobalTokens();
+
+    // Realtime Listener: Instantly push newly created tokens from ANY device to screen
+    const globalTokenChannel = supabase
+      .channel('global_directory_tokens')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'tokens' },
+        (payload) => {
+          if (payload.new) {
+            const item = payload.new;
+            const formatted = {
+              id: item.id || item.mint_address,
+              name: item.name,
+              symbol: item.symbol,
+              description: item.description,
+              icon: item.icon || '🔥',
+              imagePreview: item.image_url,
+              mintAddress: item.mint_address,
+              creatorAddress: item.creator_address,
+              mcap: item.market_cap || '$10.0K',
+              price: '0.0001',
+              change: '+0.0%',
+              isGraduated: (item.progress || 0) >= 100,
+              progress: item.progress || 0,
+              links: item.links || {}
+            };
+
+            setDbTokens(prev => {
+              if (prev.some(t => t.mintAddress === formatted.mintAddress)) return prev;
+              return [formatted, ...prev];
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(globalTokenChannel);
+    };
+  }, []);
+
+  // 🚀 2. Fetch & Subscribe to Active Streams in Supabase for Live Badges
+  useEffect(() => {
+    if (!supabase) return;
+
     const fetchActiveStreams = async () => {
       const { data, error } = await supabase
         .from('active_streams')
@@ -34,14 +111,15 @@ export default function Home({
 
     fetchActiveStreams();
 
-    // 2. Realtime listener for new streams
     const channel = supabase
       .channel('home_live_badges')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'active_streams' },
+        { event: '*', schema: 'public', table: 'active_streams' },
         (payload) => {
-          if (payload.new && payload.new.token_symbol) {
+          if (payload.eventType === 'DELETE') {
+            fetchActiveStreams();
+          } else if (payload.new && payload.new.token_symbol) {
             setLiveSymbols(prev => new Set([...prev, payload.new.token_symbol]));
           }
         }
@@ -53,9 +131,21 @@ export default function Home({
     };
   }, []);
 
-  const enrichedTokens = tokens.map(t => {
+  // 🚀 3. Deduplicate and Merge Supabase Global Tokens + Props Tokens
+  const combinedTokens = [...dbTokens];
+  tokens.forEach(pt => {
+    const exists = combinedTokens.some(
+      dt => (dt.mintAddress && pt.mintAddress && dt.mintAddress === pt.mintAddress) ||
+            (dt.symbol === pt.symbol && dt.name === pt.name)
+    );
+    if (!exists) {
+      combinedTokens.push(pt);
+    }
+  });
+
+  const enrichedTokens = combinedTokens.map(t => {
     const trend = t.trend || Array.from({length: 12}, () => Math.random() * 100);
-    const mcapValue = parseFloat((t.mcap || t.marketCap || '$1M').replace(/[^0-9.]/g, ''));
+    const mcapValue = parseFloat((t.mcap || t.marketCap || '$10K').replace(/[^0-9.]/g, ''));
     const isPositive = (t.change || '').includes('+') || parseFloat(t.change || 0) >= 0;
     const isLive = liveSymbols.has(t.symbol);
     return { ...t, trend, mcapValue, isPositive, isLive };
@@ -112,7 +202,7 @@ export default function Home({
       <header className="flex-none z-50 bg-[#0A0A0B]/95 backdrop-blur-xl pt-4 pb-3 px-4 border-b border-white/[0.04]">
         <div className="flex items-center justify-between mb-4">
           
-          {/* 🚀 LEFT SIDE: PROFILE AVATAR + DIRECTORY TITLE */}
+          {/* LEFT SIDE: PROFILE AVATAR + DIRECTORY TITLE */}
           <div className="flex items-center gap-3">
             <div 
               onClick={() => { if (onOpenAccountDrawer) onOpenAccountDrawer(); }} 
@@ -134,7 +224,7 @@ export default function Home({
             </div>
           </div>
           
-          {/* 🚀 RIGHT SIDE: EARN BUTTON + NOTIFICATIONS */}
+          {/* RIGHT SIDE: EARN BUTTON + NOTIFICATIONS */}
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setActivePage && setActivePage('earn')}
@@ -203,7 +293,7 @@ export default function Home({
 
                 <div className="flex flex-col min-w-0">
                   <h2 className="text-2xl sm:text-3xl font-black text-white truncate">{spotlightToken.name}</h2>
-                  <span className="text-sm font-mono font-bold text-zinc-400 mt-1">{spotlightToken.symbol}</span>
+                  <span className="text-sm font-mono font-bold text-zinc-400 mt-1">${spotlightToken.symbol}</span>
                 </div>
               </div>
 
@@ -214,7 +304,7 @@ export default function Home({
                   </span>
                   <span className="text-[11px] text-zinc-500 font-bold uppercase tracking-widest mt-1">MCap: {spotlightToken.mcap || spotlightToken.marketCap}</span>
                 </div>
-                <button className="px-6 py-2.5 bg-white hover:bg-zinc-200 text-black text-[11px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 shadow-md">
+                <button className="px-6 py-2.5 bg-white hover:bg-zinc-200 text-black text-[11px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 shadow-md cursor-pointer">
                   Trade
                 </button>
               </div>
