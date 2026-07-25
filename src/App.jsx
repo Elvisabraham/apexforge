@@ -482,7 +482,6 @@ function AppContent() {
 
       {/* --- FLOATING TV STREAM WIDGET --- */}
       <ActiveTvStream 
-  streamUrl={activeStreamUrl} 
   currentTokenSymbol={
     (typeof selectedToken !== 'undefined' && selectedToken?.symbol) || 
     (typeof activeToken !== 'undefined' && activeToken?.symbol) || 
