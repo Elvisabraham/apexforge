@@ -1,10 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createChart, CandlestickSeries, AreaSeries } from 'lightweight-charts';
-import { useWallet } from '@solana/wallet-adapter-react'; 
+import { useWallet } from '@solana/wallet-adapter-react';
 import ActiveTvStream from './ActiveTvStream';
 
+// 🚀 HELPER: Format address or generate default username (Put this here!)
+const formatCreator = (val, email) => {
+  if (email) return `@${email.split('@')[0]}`;
+  if (!val) return 'ApexDeployer_0x1';
+  if (val.length > 20) {
+    return `${val.slice(0, 4)}...${val.slice(-4)}`;
+  }
+  return val;
+};
+
 export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
-  // 🚀 ADD THESE 2 LINES HERE:
   const { publicKey } = useWallet();
   const connectedAddress = publicKey ? publicKey.toBase58() : null;
 
