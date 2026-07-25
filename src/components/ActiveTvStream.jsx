@@ -20,17 +20,18 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
     !creatorAddress || 
     (connectedAddress && connectedAddress.toLowerCase() === creatorAddress.toLowerCase());
 
-  // Realtime Supabase Listener
+  // Realtime Supabase Listener (STRICTLY FILTERED PER TOKEN)
   useEffect(() => {
     if (!currentTokenSymbol) return;
 
     const fetchActiveStream = async () => {
       if (supabase) {
         try {
+          // 🚀 1. Exact match query instead of wildcard % search
           const { data, error } = await supabase
             .from('active_streams')
             .select('stream_url, token_symbol')
-            .ilike('token_symbol', `%${currentTokenSymbol}%`)
+            .ilike('token_symbol', currentTokenSymbol)
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
@@ -53,13 +54,24 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
       try {
         channel = supabase
           .channel(`token_stream_${currentTokenSymbol}`)
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'active_streams' }, (payload) => {
-            if (payload.eventType === 'DELETE') {
-              setStreamData({ url: null, symbol: null, closedLocally: false });
-            } else if (payload.new && payload.new.stream_url) {
-              setStreamData({ url: payload.new.stream_url, symbol: payload.new.token_symbol, closedLocally: false });
+          .on(
+            'postgres_changes', 
+            { 
+              event: '*', 
+              schema: 'public', 
+              table: 'active_streams'
+            }, 
+            (payload) => {
+              if (payload.eventType === 'DELETE') {
+                setStreamData({ url: null, symbol: null, closedLocally: false });
+              } else if (payload.new && payload.new.stream_url) {
+                // 🚀 2. Strict check: ONLY update state if the stream belongs to THIS exact token symbol!
+                if (payload.new.token_symbol?.toLowerCase() === currentTokenSymbol.toLowerCase()) {
+                  setStreamData({ url: payload.new.stream_url, symbol: payload.new.token_symbol, closedLocally: false });
+                }
+              }
             }
-          })
+          )
           .subscribe();
       } catch (err) {
         console.log("Realtime subscription error");
