@@ -7,12 +7,20 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
   const [streamData, setStreamData] = useState({ url: propStreamUrl, symbol: currentTokenSymbol });
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const dragStart = useRef({ x: 0, y: 0 });
+  
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const positionRef = useRef({ x: 0, y: 0 });
 
   const connectedAddress = publicKey ? publicKey.toBase58() : null;
   const isCreator = !creatorAddress || (connectedAddress && connectedAddress.toLowerCase() === creatorAddress.toLowerCase());
 
-  // 🚀 Keep stream state strictly synced with current token page
+  // Keep positionRef in sync
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
+
+  // Sync stream data with Supabase
   useEffect(() => {
     const fetchActiveStream = async () => {
       if (supabase) {
@@ -67,26 +75,46 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
     };
   }, [currentTokenSymbol, propStreamUrl]);
 
-  // 🚀 FIXED DRAG HANDLERS (Touch & Mouse)
-  const handleStartDrag = (clientX, clientY, target) => {
-    if (target.tagName === 'BUTTON' || target.closest('button')) return;
-    setIsDragging(true);
-    dragStart.current = {
-      x: clientX - position.x,
-      y: clientY - position.y
+  // 🚀 GLOBAL DRAG LISTENERS (Window Scope - Never drops input)
+  useEffect(() => {
+    const handlePointerMove = (e) => {
+      if (!isDraggingRef.current) return;
+      
+      const newX = e.clientX - dragStartRef.current.x;
+      const newY = e.clientY - dragStartRef.current.y;
+      
+      setPosition({ x: newX, y: newY });
     };
-  };
 
-  const handleMoveDrag = (clientX, clientY) => {
-    if (!isDragging) return;
-    setPosition({
-      x: clientX - dragStart.current.x,
-      y: clientY - dragStart.current.y
-    });
-  };
+    const handlePointerUp = () => {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        setIsDragging(false);
+      }
+    };
 
-  const handleEndDrag = () => {
-    setIsDragging(false);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+    };
+  }, []);
+
+  const handlePointerDown = (e) => {
+    // Prevent drag when tapping buttons
+    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+
+    isDraggingRef.current = true;
+    setIsDragging(true);
+
+    dragStartRef.current = {
+      x: e.clientX - positionRef.current.x,
+      y: e.clientY - positionRef.current.y
+    };
   };
 
   const handleCloseLocal = (e) => {
@@ -113,17 +141,14 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
     if (closeStream) closeStream();
   };
 
-  // 🚀 STRICT TOKEN-HOME-ONLY SCOPE GUARD:
+  // 🚀 SCOPE GUARD: Hide if no stream or if user is NOT strictly in the token home
   if (!streamData.url) return null;
 
-  // Normalize page name check (only allow token home views like 'trade', 'token', 'tokenhome')
   const validTokenPages = ['trade', 'token', 'tokenhome', 'token_home'];
   const isTokenHome = activePage && validTokenPages.includes(activePage.toLowerCase());
 
-  // Hide completely if NOT strictly inside the token home view
   if (!isTokenHome) return null;
 
-  // Flexible Symbol Match Check
   const isSymbolMatching = 
     !currentTokenSymbol || 
     !streamData.symbol || 
@@ -133,7 +158,7 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
 
   if (!isSymbolMatching) return null;
 
-  // If minimized locally on token page, show restore pill
+  // Show restore button when closed locally
   if (streamData.closedLocally) {
     return (
       <button
@@ -152,16 +177,13 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
         transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
         touchAction: 'none'
       }}
-      onMouseDown={(e) => handleStartDrag(e.clientX, e.clientY, e.target)}
-      onMouseMove={(e) => handleMoveDrag(e.clientX, e.clientY)}
-      onMouseUp={handleEndDrag}
-      onTouchStart={(e) => handleStartDrag(e.touches[0].clientX, e.touches[0].clientY, e.target)}
-      onTouchMove={(e) => handleMoveDrag(e.touches[0].clientX, e.touches[0].clientY)}
-      onTouchEnd={handleEndDrag}
-      className="fixed bottom-20 right-4 z-[999] w-80 sm:w-96 bg-[#0c0c0e] border border-rose-500/30 rounded-2xl shadow-[0_0_50px_rgba(225,29,72,0.3)] overflow-hidden select-none cursor-grab active:cursor-grabbing animate-slideUpNative"
+      className="fixed bottom-20 right-4 z-[999] w-80 sm:w-96 bg-[#0c0c0e] border border-rose-500/30 rounded-2xl shadow-[0_0_50px_rgba(225,29,72,0.3)] overflow-hidden select-none animate-slideUpNative"
     >
       {/* Header Bar - Drag Handle */}
-      <div className="flex justify-between items-center px-4 py-2.5 bg-[#121217] border-b border-white/10">
+      <div 
+        onPointerDown={handlePointerDown}
+        className="flex justify-between items-center px-4 py-2.5 bg-[#121217] border-b border-white/10 cursor-grab active:cursor-grabbing"
+      >
         <div className="flex items-center gap-2 pointer-events-none">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -191,11 +213,11 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
         </div>
       </div>
 
-      {/* Video Container - Pointer Events Completely Disabled While Dragging */}
+      {/* Video Container - Pointer events disabled during drag so iframe never blocks pointer movement */}
       <div className={`relative pt-[56.25%] w-full bg-black ${isDragging ? 'pointer-events-none' : 'pointer-events-auto'}`}>
         <iframe
           src={streamData.url}
-          className="absolute top-0 left-0 w-full h-full border-0 pointer-events-auto"
+          className="absolute top-0 left-0 w-full h-full border-0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           title="Creator Live Stream"
