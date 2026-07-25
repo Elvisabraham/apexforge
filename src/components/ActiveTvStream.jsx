@@ -6,7 +6,6 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
   const { publicKey } = useWallet();
   const [streamData, setStreamData] = useState({ url: propStreamUrl, symbol: currentTokenSymbol, closedLocally: false });
   
-  // 🚀 Direct coordinate state for 100% reliable positioning
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const isDragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -14,7 +13,7 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
   const connectedAddress = publicKey ? publicKey.toBase58() : null;
   const isCreator = !creatorAddress || (connectedAddress && connectedAddress.toLowerCase() === creatorAddress.toLowerCase());
 
-  // Fetch active stream & handle Supabase Realtime
+  // Supabase Realtime Stream Listener
   useEffect(() => {
     const fetchActiveStream = async () => {
       if (supabase) {
@@ -69,7 +68,7 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
     };
   }, [currentTokenSymbol, propStreamUrl]);
 
-  // 🚀 DRAG HANDLERS (Works seamlessly on Touch Screens & Desktop Mice)
+  // DRAG HANDLERS
   const onStart = (clientX, clientY, e) => {
     if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
     isDragging.current = true;
@@ -115,26 +114,31 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
     if (closeStream) closeStream();
   };
 
-  // 🚀 SCOPE GUARDS
+  // 🚀 STRICT ALLOW-LIST GUARD:
   if (!streamData.url) return null;
 
-  // Hide on main tabs (Directory, Earn, Profile, Wallet, Ranks)
-  const mainTabs = ['directory', 'home', 'earn', 'profile', 'ranks', 'wallet'];
-  if (activePage && mainTabs.includes(activePage.toLowerCase())) return null;
+  // ONLY show on trade/token/tokenHome pages. Hide everywhere else!
+  const allowedTokenPages = ['trade', 'token', 'tokenhome', 'token_home'];
+  const currentPage = (activePage || '').toLowerCase();
+  
+  // If activePage is set and NOT in the allowed list, hide it immediately
+  if (currentPage && !allowedTokenPages.includes(currentPage)) {
+    return null;
+  }
 
-  // Flexible symbol check
+  // Symbol Check
   if (currentTokenSymbol && streamData.symbol) {
     const current = currentTokenSymbol.toUpperCase();
     const stream = streamData.symbol.toUpperCase();
     if (!current.includes(stream) && !stream.includes(current)) return null;
   }
 
-  // Restore Pill if minimized locally
+  // Restore Button if minimized locally
   if (streamData.closedLocally) {
     return (
       <button
         onClick={handleReOpenLocal}
-        className="fixed bottom-24 right-4 z-[9999] bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] uppercase tracking-wider px-3.5 py-2.5 rounded-full shadow-[0_0_25px_rgba(225,29,72,0.6)] flex items-center gap-2 animate-bounce border border-white/20 cursor-pointer"
+        className="fixed bottom-24 right-4 z-[99999] bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] uppercase tracking-wider px-3.5 py-2.5 rounded-full shadow-[0_0_25px_rgba(225,29,72,0.6)] flex items-center gap-2 animate-bounce border border-white/20 cursor-pointer pointer-events-auto"
       >
         <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
         <span>🔴 Restore Live View</span>
@@ -148,7 +152,7 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
         transform: `translate(${pos.x}px, ${pos.y}px)`,
         touchAction: 'none'
       }}
-      className="fixed bottom-20 right-4 z-[9999] w-80 sm:w-96 bg-[#0c0c0e] border border-rose-500/30 rounded-2xl shadow-[0_0_50px_rgba(225,29,72,0.3)] overflow-hidden select-none animate-slideUpNative"
+      className="fixed bottom-20 right-4 z-[99999] w-80 sm:w-96 bg-[#0c0c0e] border border-rose-500/30 rounded-2xl shadow-[0_0_50px_rgba(225,29,72,0.3)] overflow-hidden select-none animate-slideUpNative pointer-events-auto"
     >
       {/* DRAGGABLE HEADER BAR */}
       <div 
@@ -158,19 +162,19 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
         onTouchStart={(e) => onStart(e.touches[0].clientX, e.touches[0].clientY, e)}
         onTouchMove={(e) => onMove(e.touches[0].clientX, e.touches[0].clientY)}
         onTouchEnd={onEnd}
-        className="flex justify-between items-center px-4 py-3 bg-[#121217] border-b border-white/10 cursor-grab active:cursor-grabbing select-none"
+        className="flex justify-between items-center px-4 py-3 bg-[#121217] border-b border-white/10 cursor-grab active:cursor-grabbing select-none pointer-events-auto"
       >
         <div className="flex items-center gap-2 pointer-events-none">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
           </span>
-          <span className="text-[10px] font-black text-rose-400 uppercase tracking-wider pointer-events-none">
+          <span className="text-[10px] font-black text-rose-400 uppercase tracking-wider">
             ${streamData.symbol || 'CREATOR'} LIVE
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pointer-events-auto">
           {isCreator && (
             <button 
               onClick={handleEndBroadcastGlobal}
@@ -189,11 +193,11 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
         </div>
       </div>
 
-      {/* VIDEO CONTAINER */}
-      <div className="relative pt-[56.25%] w-full bg-black">
+      {/* VIDEO FRAME */}
+      <div className="relative pt-[56.25%] w-full bg-black pointer-events-auto">
         <iframe
           src={streamData.url}
-          className="absolute top-0 left-0 w-full h-full border-0"
+          className="absolute top-0 left-0 w-full h-full border-0 pointer-events-auto"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           title="Creator Live Stream"
