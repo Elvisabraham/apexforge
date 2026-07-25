@@ -15,29 +15,28 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
 
   // 🚀 Keep stream state strictly synced with current token page
   useEffect(() => {
-    if (!currentTokenSymbol) {
-      setStreamData({ url: null, symbol: null });
-      return;
-    }
-
     const fetchActiveStream = async () => {
-      if (supabase && currentTokenSymbol) {
+      if (supabase) {
         try {
-          const { data, error } = await supabase
+          let query = supabase
             .from('active_streams')
             .select('stream_url, token_symbol')
-            .eq('token_symbol', currentTokenSymbol)
             .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+            .limit(1);
+
+          if (currentTokenSymbol) {
+            query = query.ilike('token_symbol', `%${currentTokenSymbol}%`);
+          }
+
+          const { data, error } = await query.maybeSingle();
 
           if (!error && data && data.stream_url) {
             setStreamData({ url: data.stream_url, symbol: data.token_symbol });
-          } else {
+          } else if (!propStreamUrl) {
             setStreamData({ url: null, symbol: null });
           }
         } catch (err) {
-          setStreamData({ url: null, symbol: null });
+          if (!propStreamUrl) setStreamData({ url: null, symbol: null });
         }
       }
     };
@@ -48,15 +47,11 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
     if (supabase) {
       try {
         channel = supabase
-          .channel(`stream_room_${currentTokenSymbol}`)
+          .channel('global_active_streams_listener')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'active_streams' }, (payload) => {
             if (payload.eventType === 'DELETE') {
-              // Clear only if deleted stream matches current token
-              if (!payload.old?.token_symbol || payload.old.token_symbol === currentTokenSymbol) {
-                setStreamData({ url: null, symbol: null });
-              }
-            } else if (payload.new && payload.new.token_symbol === currentTokenSymbol) {
-              // 🚀 STRICT MATCH: Only show if payload symbol matches current token page EXACTLY
+              setStreamData({ url: null, symbol: null });
+            } else if (payload.new && payload.new.stream_url) {
               setStreamData({ url: payload.new.stream_url, symbol: payload.new.token_symbol });
             }
           })
@@ -71,11 +66,10 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
         supabase.removeChannel(channel);
       }
     };
-  }, [currentTokenSymbol]);
+  }, [currentTokenSymbol, propStreamUrl]);
 
   // 🚀 FIXED DRAG LOGIC (Works smoothly on Touch & Mouse)
   const handlePointerDown = (e) => {
-    // Ignore button clicks
     if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
     
     isDragging.current = true;
@@ -127,15 +121,22 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
     if (closeStream) closeStream();
   };
 
-  // 🚀 STRICT PAGE & TOKEN SCOPE GUARDS:
+  // 🚀 FLEXIBLE PAGE & TOKEN SCOPE GUARDS:
   // 1. Must have active stream URL
   if (!streamData.url) return null;
 
   // 2. Hide if user is NOT inside a active token/trading view
   if (activePage && activePage !== 'trade' && activePage !== 'token') return null;
 
-  // 3. Hide if the stream symbol doesn't match the current token symbol
-  if (!currentTokenSymbol || streamData.symbol !== currentTokenSymbol) return null;
+  // 3. Flexible Symbol Matching (Case-Insensitive & Partial Match)
+  const isSymbolMatching = 
+    !currentTokenSymbol || 
+    !streamData.symbol || 
+    streamData.symbol.toUpperCase() === currentTokenSymbol.toUpperCase() ||
+    currentTokenSymbol.toUpperCase().includes(streamData.symbol.toUpperCase()) ||
+    streamData.symbol.toUpperCase().includes(currentTokenSymbol.toUpperCase());
+
+  if (!isSymbolMatching) return null;
 
   return (
     <div 
