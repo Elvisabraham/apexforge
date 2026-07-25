@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { supabase } from './supabaseClient';
 
-export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenSymbol, closeStream }) {
+export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenSymbol, creatorAddress, closeStream }) {
+  const { publicKey } = useWallet();
   const [streamUrl, setStreamUrl] = useState(propStreamUrl);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const isDragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
+
+  const connectedAddress = publicKey ? publicKey.toBase58() : null;
+  const isCreator = !creatorAddress || (connectedAddress && connectedAddress.toLowerCase() === creatorAddress.toLowerCase());
 
   // Sync internal state with prop
   useEffect(() => {
@@ -46,11 +51,12 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
         channel = supabase
           .channel('public:active_streams')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'active_streams' }, (payload) => {
-            const newStream = payload.new;
-            if (newStream && newStream.stream_url) {
-              // Filter by current token symbol if provided
-              if (!currentTokenSymbol || newStream.token_symbol === currentTokenSymbol) {
-                setStreamUrl(newStream.stream_url);
+            if (payload.eventType === 'DELETE') {
+              // Stream ended by creator -> clear player globally
+              setStreamUrl(null);
+            } else if (payload.new && payload.new.stream_url) {
+              if (!currentTokenSymbol || payload.new.token_symbol === currentTokenSymbol) {
+                setStreamUrl(payload.new.stream_url);
               }
             }
           })
@@ -69,7 +75,6 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
 
   // --- Drag Logic (Touch & Mouse) ---
   const handlePointerDown = (e) => {
-    // Don't trigger drag when clicking close button
     if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
     
     isDragging.current = true;
@@ -91,9 +96,33 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
     isDragging.current = false;
   };
 
-  // Close Button Handler
-  const handleClose = (e) => {
+  // Close Local Window (Trader view)
+  const handleCloseLocal = (e) => {
     e.stopPropagation();
+    setStreamUrl(null);
+    if (closeStream) closeStream();
+  };
+
+  // End Broadcast Globally (Creator only)
+  const handleEndBroadcastGlobal = async (e) => {
+    e.stopPropagation();
+
+    if (supabase) {
+      try {
+        let deleteQuery = supabase.from('active_streams').delete();
+        
+        if (currentTokenSymbol) {
+          deleteQuery = deleteQuery.eq('token_symbol', currentTokenSymbol);
+        } else {
+          deleteQuery = deleteQuery.neq('id', 0); // Clear active stream
+        }
+
+        await deleteQuery;
+      } catch (err) {
+        console.error("Error ending broadcast:", err);
+      }
+    }
+
     setStreamUrl(null);
     if (closeStream) closeStream();
   };
@@ -121,12 +150,27 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
           </span>
           <span className="text-[10px] font-black text-rose-400 uppercase tracking-wider">Creator Live</span>
         </div>
-        <button 
-          onClick={handleClose}
-          className="text-zinc-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors z-50 cursor-pointer"
-        >
-          ✕
-        </button>
+
+        <div className="flex items-center gap-2">
+          {/* Creator End Stream Button */}
+          {isCreator && (
+            <button 
+              onClick={handleEndBroadcastGlobal}
+              className="bg-rose-600 hover:bg-rose-700 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg transition-colors shadow-sm"
+              title="End stream globally for all traders"
+            >
+              End Broadcast
+            </button>
+          )}
+
+          {/* Regular Close Button (minimizes/closes local view) */}
+          <button 
+            onClick={handleCloseLocal}
+            className="text-zinc-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       {/* Video Container */}
