@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import MediaUploader from './MediaUploader'; 
+import { supabase } from './supabaseClient'; // 🚀 Supabase client import
 
 export default function Launch({ onForgeSuccess }) {
   const { connected, publicKey } = useWallet();
@@ -40,6 +41,8 @@ export default function Launch({ onForgeSuccess }) {
     { text: "> confirming block finality...", duration: 1000 }
   ];
 
+  const connectedAddress = publicKey ? publicKey.toBase58() : '47ZT1q3mR...';
+
   useEffect(() => {
     if (isDeploying && deploymentStep < deploymentStages.length) {
       const timer = setTimeout(() => {
@@ -47,35 +50,60 @@ export default function Launch({ onForgeSuccess }) {
       }, deploymentStages[deploymentStep].duration);
       return () => clearTimeout(timer);
     } else if (isDeploying && deploymentStep === deploymentStages.length) {
-      setTimeout(() => {
+      setTimeout(async () => {
         setDeploySuccess(true);
         const finalAddress = generateMockAddress();
         
         setDeployedHistory(prev => [...prev, tokenName.toLowerCase()]);
         
+        const newToken = {
+          id: Date.now().toString(),
+          name: tokenName,
+          symbol: tokenSymbol.toUpperCase(),
+          description: description, 
+          links: {                 
+            twitter: twitter,
+            telegram: telegram,
+            website: website
+          },
+          mintAddress: finalAddress,
+          creatorAddress: connectedAddress,
+          imagePreview: thumbnailUrl || imagePreview, 
+          videoUrl: mediaType === 'video' ? 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-code-31910-large.mp4' : null, 
+          mediaType: mediaType, 
+          icon: '🔥', 
+          mcap: '$10.0K', 
+          price: '0.0001',
+          change: '+0.0%',
+          initialSnipe: parseFloat(initialBuy || '0'),
+          isGraduated: false, 
+          progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
+        };
+
+        // 🚀 SAVE TO SUPABASE TO BROADCAST GLOBALLY TO ALL DEVICES
+        if (supabase) {
+          try {
+            await supabase.from('tokens').insert([
+              {
+                name: newToken.name,
+                symbol: newToken.symbol,
+                description: newToken.description,
+                icon: newToken.icon,
+                image_url: newToken.imagePreview,
+                mint_address: newToken.mintAddress,
+                creator_address: newToken.creatorAddress,
+                market_cap: newToken.mcap,
+                progress: newToken.progress,
+                links: newToken.links,
+                created_at: new Date().toISOString()
+              }
+            ]);
+          } catch (err) {
+            console.error("Error saving token to global database:", err);
+          }
+        }
+
         if (onForgeSuccess) {
-          const newToken = {
-            id: Date.now().toString(),
-            name: tokenName,
-            symbol: tokenSymbol,
-            description: description, 
-            links: {                 
-              twitter: twitter,
-              telegram: telegram,
-              website: website
-            },
-            mintAddress: finalAddress,
-            imagePreview: thumbnailUrl || imagePreview, 
-            videoUrl: mediaType === 'video' ? 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-code-31910-large.mp4' : null, 
-            mediaType: mediaType, 
-            icon: '🔥', 
-            mcap: '$10.0K', 
-            price: '0.0001',
-            change: '+0.0%',
-            initialSnipe: parseFloat(initialBuy || '0'),
-            isGraduated: false, 
-            progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
-          };
           onForgeSuccess(newToken);
         }
 
@@ -317,7 +345,7 @@ export default function Launch({ onForgeSuccess }) {
         </div>
       </div>
 
-      {/* --- 🚀 FIXED: PINNED BOTTOM ACTION BAR AT bottom-[90px] TO CLEAR GLOBAL NAV --- */}
+      {/* --- PINNED BOTTOM ACTION BAR --- */}
       {!isDeploying && (
         <div className="absolute bottom-[90px] md:bottom-0 left-0 right-0 z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.9)]">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
@@ -341,7 +369,7 @@ export default function Launch({ onForgeSuccess }) {
         </div>
       )}
 
-      {/* --- 🚀 FIXED: LIVE SUPPORT CHAT WIDGET AT bottom-[170px] TO CLEAR THE ACTION BAR --- */}
+      {/* --- LIVE SUPPORT CHAT WIDGET --- */}
       {!isDeploying && (
         <div 
           onClick={() => alert("Connecting to live Forge Support Agent...")}
