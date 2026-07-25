@@ -151,22 +151,44 @@ export default function Home({
     return { ...t, trend, mcapValue, isPositive, isLive };
   });
 
-  const displayedTokens = enrichedTokens.filter(t => {
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return t.name.toLowerCase().includes(query) || 
-             t.symbol.toLowerCase().includes(query) || 
-             (t.mintAddress && t.mintAddress.toLowerCase().includes(query));
-    }
-    if (activeTab === 'EXPLORE') return true;
-    if (activeTab === 'GRADUATED') return t.isGraduated === true || t.progress >= 100;
-    if (activeTab === 'TRENDING') return !t.isGraduated && t.progress >= 5;
-    
-    // 🚀 NEW TAB FIX: Shows all non-graduated tokens!
-    if (activeTab === 'NEW') return !t.isGraduated; 
-    
-    return true; 
-  });
+  const displayedTokens = enrichedTokens
+    // 1. Filter by Search & Tab Logic
+    .filter(t => {
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        return t.name.toLowerCase().includes(query) || 
+               t.symbol.toLowerCase().includes(query) || 
+               (t.mintAddress && t.mintAddress.toLowerCase().includes(query));
+      }
+
+      const isGrad = t.isGraduated === true || t.progress >= 100;
+
+      if (activeTab === 'EXPLORE') return true;
+      if (activeTab === 'GRADUATED') return isGrad;
+      if (activeTab === 'TRENDING') return !isGrad && t.progress >= 5;
+      if (activeTab === 'NEW') return !isGrad;
+
+      return true; 
+    })
+    // 2. Sort Dynamically Based on Active Tab
+    .sort((a, b) => {
+      if (activeTab === 'NEW') {
+        // Sort strictly by newest creation timestamp
+        return new Date(b.created_at || b.id || 0) - new Date(a.created_at || a.id || 0);
+      }
+      
+      if (activeTab === 'TRENDING') {
+        // Sort by Volume or highest curve progress first
+        return (b.volume24h || b.progress) - (a.volume24h || a.progress);
+      }
+
+      if (activeTab === 'GRADUATED' || activeTab === 'EXPLORE') {
+        // Sort by Market Cap highest to lowest
+        return b.mcapValue - a.mcapValue;
+      }
+
+      return 0;
+    });
 
   const spotlightToken = [...enrichedTokens].sort((a, b) => b.mcapValue - a.mcapValue)[0];
 
