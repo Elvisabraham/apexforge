@@ -2,42 +2,40 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { supabase } from './supabaseClient';
 
-export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, closeStream }) {
+export default function ActiveTvStream({ currentTokenSymbol, activePage, creatorAddress, closeStream }) {
   const { publicKey } = useWallet();
-  const [streamData, setStreamData] = useState({ url: null, symbol: currentTokenSymbol, closedLocally: false });
-  
+  const [streamData, setStreamData] = useState({ url: null, symbol: null, closedLocally: false });
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   
   const dragStart = useRef({ x: 0, y: 0 });
-  const handleRef = useRef(null);
-
   const connectedAddress = publicKey ? publicKey.toBase58() : null;
   const isCreator = !creatorAddress || (connectedAddress && connectedAddress.toLowerCase() === creatorAddress.toLowerCase());
 
-  // Supabase Realtime Stream Listener
+  // 🚀 Fetch Active Stream Globally from Supabase
   useEffect(() => {
-    if (!currentTokenSymbol) return;
-
     const fetchActiveStream = async () => {
-      if (supabase) {
-        try {
-          const { data, error } = await supabase
-            .from('active_streams')
-            .select('stream_url, token_symbol')
-            .ilike('token_symbol', `%${currentTokenSymbol}%`)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+      if (!supabase) return;
+      try {
+        let query = supabase
+          .from('active_streams')
+          .select('stream_url, token_symbol')
+          .order('created_at', { ascending: false })
+          .limit(1);
 
-          if (!error && data && data.stream_url) {
-            setStreamData({ url: data.stream_url, symbol: data.token_symbol, closedLocally: false });
-          } else {
-            setStreamData({ url: null, symbol: null, closedLocally: false });
-          }
-        } catch (err) {
+        if (currentTokenSymbol) {
+          query = query.ilike('token_symbol', `%${currentTokenSymbol}%`);
+        }
+
+        const { data, error } = await query.maybeSingle();
+
+        if (!error && data && data.stream_url) {
+          setStreamData(prev => ({ ...prev, url: data.stream_url, symbol: data.token_symbol }));
+        } else {
           setStreamData({ url: null, symbol: null, closedLocally: false });
         }
+      } catch (err) {
+        setStreamData({ url: null, symbol: null, closedLocally: false });
       }
     };
 
@@ -47,7 +45,7 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
     if (supabase) {
       try {
         channel = supabase
-          .channel(`token_stream_${currentTokenSymbol}`)
+          .channel('global_active_streams_listener')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'active_streams' }, (payload) => {
             if (payload.eventType === 'DELETE') {
               setStreamData({ url: null, symbol: null, closedLocally: false });
@@ -57,7 +55,7 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
           })
           .subscribe();
       } catch (err) {
-        console.log("Realtime error");
+        console.log("Realtime subscription error");
       }
     }
 
@@ -68,7 +66,7 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
     };
   }, [currentTokenSymbol]);
 
-  // 🚀 FIXED DRAG SYSTEM USING NATIVE POINTER CAPTURE
+  // 🚀 DRAG HANDLERS WITH POINTER CAPTURE
   const handlePointerDown = (e) => {
     if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
 
@@ -78,7 +76,6 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
       y: e.clientY - pos.y
     };
 
-    // Lock touch/mouse focus strictly to the header handle
     if (e.target.setPointerCapture) {
       e.target.setPointerCapture(e.pointerId);
     }
@@ -98,9 +95,7 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
       if (e.target.releasePointerCapture) {
         try {
           e.target.releasePointerCapture(e.pointerId);
-        } catch (err) {
-          // Pointer release safety
-        }
+        } catch (err) {}
       }
     }
   };
@@ -129,9 +124,24 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
     if (closeStream) closeStream();
   };
 
+  // 1. Hide if no active stream in Supabase
   if (!streamData.url) return null;
 
-  // Restore Button if minimized
+  // 2. Hide on main tabs (Directory/Home, Earn, Profile, Wallet, Ranks)
+  const mainTabs = ['directory', 'home', 'explore', 'earn', 'profile', 'ranks', 'wallet'];
+  const currentPage = (activePage || '').toLowerCase();
+  if (currentPage && mainTabs.includes(currentPage)) {
+    return null;
+  }
+
+  // 3. Match symbol if currentTokenSymbol is passed
+  if (currentTokenSymbol && streamData.symbol) {
+    const current = currentTokenSymbol.toUpperCase();
+    const stream = streamData.symbol.toUpperCase();
+    if (!current.includes(stream) && !stream.includes(current)) return null;
+  }
+
+  // Restore Button if minimized locally
   if (streamData.closedLocally) {
     return (
       <button
@@ -146,7 +156,7 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
 
   return (
     <>
-      {/* Invisible Screen Shield: Prevents iframe or chart elements from hijacking drag events */}
+      {/* Invisible Screen Shield during active drag */}
       {isDragging && (
         <div className="fixed inset-0 z-[999998] cursor-grabbing select-none bg-transparent touch-none" />
       )}
@@ -160,7 +170,6 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
       >
         {/* DRAGGABLE HEADER BAR */}
         <div 
-          ref={handleRef}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -173,7 +182,7 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
             </span>
             <span className="text-[10px] font-black text-rose-400 uppercase tracking-wider">
-              ${streamData.symbol} LIVE
+              ${streamData.symbol || 'CREATOR'} LIVE
             </span>
           </div>
 
