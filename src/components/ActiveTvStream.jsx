@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { supabase } from './supabaseClient';
 
@@ -7,7 +8,6 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
   const [streamData, setStreamData] = useState({ url: null, symbol: currentTokenSymbol, closedLocally: false });
   const [isDragging, setIsDragging] = useState(false);
 
-  // Direct DOM Refs for high-performance direct transform
   const modalRef = useRef(null);
   const isDraggingRef = useRef(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
@@ -69,7 +69,7 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
     };
   }, [currentTokenSymbol]);
 
-  // 🚀 DIRECT HARDWARE DOM DRAG ENGINE (Native Touch & Mouse)
+  // Touch & Mouse Drag Handlers
   const handleTouchStart = (e) => {
     if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
     const touch = e.touches[0];
@@ -101,7 +101,6 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
     setIsDragging(false);
   };
 
-  // Mouse handlers for desktop browser fallback
   const handleMouseDown = (e) => {
     if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
     isDraggingRef.current = true;
@@ -157,33 +156,34 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
   if (!streamData.url) return null;
 
   if (streamData.closedLocally) {
-    return (
+    return ReactDOM.createPortal(
       <button
         onClick={handleReOpenLocal}
         className="fixed bottom-24 right-4 z-[999999] bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] uppercase tracking-wider px-3.5 py-2.5 rounded-full shadow-[0_0_25px_rgba(225,29,72,0.6)] flex items-center gap-2 animate-bounce border border-white/20 cursor-pointer pointer-events-auto"
       >
         <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
         <span>🔴 Restore Live View</span>
-      </button>
+      </button>,
+      document.body
     );
   }
 
-  return (
+  return ReactDOM.createPortal(
     <>
-      {/* Invisible Screen Overlay when actively dragging */}
+      {/* Invisible Screen Overlay when dragging */}
       {isDragging && (
         <div 
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          className="fixed inset-0 z-[999998] bg-transparent cursor-grabbing select-none touch-none" 
+          className="fixed inset-0 z-[9999998] bg-transparent cursor-grabbing select-none touch-none" 
         />
       )}
 
       <div 
         ref={modalRef}
-        className="fixed bottom-20 right-4 z-[999999] w-80 sm:w-96 bg-[#0c0c0e] border border-rose-500/30 rounded-2xl shadow-[0_0_50px_rgba(225,29,72,0.3)] overflow-hidden select-none animate-slideUpNative pointer-events-auto touch-none"
+        className="fixed bottom-20 right-4 z-[9999999] w-80 sm:w-96 bg-[#0c0c0e] border border-rose-500/30 rounded-2xl shadow-[0_0_50px_rgba(225,29,72,0.3)] overflow-hidden select-none animate-slideUpNative pointer-events-auto touch-none"
       >
         {/* DRAGGABLE HEADER BAR */}
         <div 
@@ -235,6 +235,7 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
           ></iframe>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
