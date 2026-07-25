@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createChart, CandlestickSeries, AreaSeries } from 'lightweight-charts';
-import { useWallet } from '@solana/wallet-adapter-react'; // 👈 Added
+import { useWallet } from '@solana/wallet-adapter-react'; 
 import ActiveTvStream from './ActiveTvStream';
 
 export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
+  // 🚀 ADD THESE 2 LINES HERE:
+  const { publicKey } = useWallet();
+  const connectedAddress = publicKey ? publicKey.toBase58() : null;
+
   const chartContainerRef = useRef(null);
   const [chartTimeframe, setChartTimeframe] = useState('1d');
   const [chartType, setChartType] = useState('area'); 
