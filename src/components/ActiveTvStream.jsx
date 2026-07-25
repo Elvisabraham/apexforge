@@ -14,7 +14,11 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
   const posRef = useRef({ x: 0, y: 0 });
 
   const connectedAddress = publicKey ? publicKey.toBase58() : null;
-  const isCreator = !creatorAddress || (connectedAddress && connectedAddress.toLowerCase() === creatorAddress.toLowerCase());
+  
+  // 🚀 Flexible & Normalized Creator Permission Check
+  const isCreator = 
+    !creatorAddress || 
+    (connectedAddress && connectedAddress.toLowerCase() === creatorAddress.toLowerCase());
 
   // Realtime Supabase Listener
   useEffect(() => {
