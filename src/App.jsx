@@ -483,9 +483,13 @@ function AppContent() {
       {/* --- FLOATING TV STREAM WIDGET --- */}
       <ActiveTvStream 
   streamUrl={activeStreamUrl} 
-  currentTokenSymbol={selectedToken?.symbol || activeToken?.symbol} 
+  currentTokenSymbol={
+    (typeof selectedToken !== 'undefined' && selectedToken?.symbol) || 
+    (typeof activeToken !== 'undefined' && activeToken?.symbol) || 
+    (typeof currentToken !== 'undefined' && currentToken?.symbol) || 
+    null
+  } 
   activePage={activePage}
-  creatorAddress={selectedToken?.creatorAddress || selectedToken?.creator || selectedToken?.deployer}
   closeStream={stopStream} 
 />
 
