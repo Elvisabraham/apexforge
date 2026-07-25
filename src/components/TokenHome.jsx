@@ -87,7 +87,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const initialMcap = parseFloat((token?.mcap || token?.marketCap || '$10.0K').toString().replace(/[^0-9.]/g, '')) || 10;
   const isActuallyGraduated = token?.isGraduated === true || rawProgress >= 100 || initialMcap >= 69;
 
-  // Get raw address/name for permissions check
+  // Raw creator address/ID used strictly for permissions check
   const rawCreator = token?.creatorAddress || token?.creator || token?.deployer || connectedAddress || '47ZT1q3mR...';
 
   const displayToken = {
@@ -100,9 +100,9 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     description: token?.description || `A community-driven asset deployed fairly on the Apex Forge platform. Smart contract initialized.`,
     links: { twitter: token?.links?.twitter || '', telegram: token?.links?.telegram || '', website: token?.links?.website || '' },
     
-    // 🚀 Store raw address for internal logic, and formatted version for UI
+    // 🚀 Store raw address for stream checks, formatted username for the UI
     rawCreatorAddress: rawCreator,
-    creator: formatCreator(rawCreator),
+    creator: formatCreator(rawCreator, token?.creatorEmail),
     
     holders: '1,204',
     supply: '1.0B',
