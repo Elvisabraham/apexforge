@@ -6,6 +6,7 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
   const { publicKey } = useWallet();
   const [streamData, setStreamData] = useState({ url: propStreamUrl, symbol: currentTokenSymbol });
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDraggingState, setIsDraggingState] = useState(false);
   const isDragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const containerRef = useRef(null);
@@ -68,11 +69,12 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
     };
   }, [currentTokenSymbol, propStreamUrl]);
 
-  // 🚀 FIXED DRAG LOGIC (Works smoothly on Touch & Mouse)
+  // 🚀 SMOOTH DRAG LOGIC (Disables Iframe Events During Drag)
   const handlePointerDown = (e) => {
     if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
     
     isDragging.current = true;
+    setIsDraggingState(true);
     dragStart.current = {
       x: e.clientX - position.x,
       y: e.clientY - position.y
@@ -93,6 +95,7 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
 
   const handlePointerUp = (e) => {
     isDragging.current = false;
+    setIsDraggingState(false);
     if (containerRef.current && e.pointerId) {
       try {
         containerRef.current.releasePointerCapture(e.pointerId);
@@ -104,8 +107,13 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
 
   const handleCloseLocal = (e) => {
     e.stopPropagation();
-    setStreamData({ url: null, symbol: null });
+    setStreamData(prev => ({ ...prev, closedLocally: true }));
     if (closeStream) closeStream();
+  };
+
+  const handleReOpenLocal = (e) => {
+    e.stopPropagation();
+    setStreamData(prev => ({ ...prev, closedLocally: false }));
   };
 
   const handleEndBroadcastGlobal = async (e) => {
@@ -117,19 +125,16 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
         console.error("Error ending broadcast:", err);
       }
     }
-    setStreamData({ url: null, symbol: null });
+    setStreamData({ url: null, symbol: null, closedLocally: false });
     if (closeStream) closeStream();
   };
 
-  // 🚀 FLEXIBLE PAGE & TOKEN SCOPE GUARDS:
-  // 1. Must have active stream URL
+  // 🚀 GUARDS:
   if (!streamData.url) return null;
 
-  // 2. Hide ONLY if user explicitly navigates to non-token global sections
   const isGlobalTab = ['earn', 'profile', 'ranks', 'wallet', 'home', 'directory'].includes(activePage?.toLowerCase());
   if (isGlobalTab) return null;
 
-  // 3. Flexible Symbol Matching (Case-Insensitive & Partial Match)
   const isSymbolMatching = 
     !currentTokenSymbol || 
     !streamData.symbol || 
@@ -138,6 +143,19 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
     streamData.symbol.toUpperCase().includes(currentTokenSymbol.toUpperCase());
 
   if (!isSymbolMatching) return null;
+
+  // 🚀 IF CLOSED LOCALLY: Show floating button so creator/trader can bring player back anytime
+  if (streamData.closedLocally) {
+    return (
+      <button
+        onClick={handleReOpenLocal}
+        className="fixed bottom-24 right-4 z-[999] bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] uppercase tracking-wider px-3.5 py-2.5 rounded-full shadow-[0_0_25px_rgba(225,29,72,0.6)] flex items-center gap-2 animate-bounce border border-white/20 cursor-pointer"
+      >
+        <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
+        <span>🔴 Restore Live View</span>
+      </button>
+    );
+  }
 
   return (
     <div 
@@ -176,17 +194,18 @@ export default function ActiveTvStream({ streamUrl: propStreamUrl, currentTokenS
           <button 
             onClick={handleCloseLocal}
             className="text-zinc-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+            title="Minimize Stream View"
           >
             ✕
           </button>
         </div>
       </div>
 
-      {/* Video Frame */}
-      <div className="relative pt-[56.25%] w-full bg-black pointer-events-auto">
+      {/* Video Frame - Pointer Events Disabled During Dragging */}
+      <div className={`relative pt-[56.25%] w-full bg-black ${isDraggingState ? 'pointer-events-none' : 'pointer-events-auto'}`}>
         <iframe
           src={streamData.url}
-          className="absolute top-0 left-0 w-full h-full border-0 pointer-events-auto"
+          className="absolute top-0 left-0 w-full h-full border-0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           title="Creator Live Stream"
