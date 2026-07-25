@@ -5,7 +5,7 @@ import { supabase } from './supabaseClient';
 
 export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, closeStream }) {
   const { publicKey } = useWallet();
-  const [streamData, setStreamData] = useState({ url: null, symbol: currentTokenSymbol, closedLocally: false });
+  const [streamData, setStreamData] = useState({ url: null, symbol: currentTokenSymbol });
   const [isDragging, setIsDragging] = useState(false);
 
   const modalRef = useRef(null);
@@ -14,7 +14,11 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
   const currentPosRef = useRef({ x: 0, y: 0 });
 
   const connectedAddress = publicKey ? publicKey.toBase58() : null;
-  const isCreator = !creatorAddress || (connectedAddress && connectedAddress.toLowerCase() === creatorAddress.toLowerCase());
+  
+  // 🚀 Flexible Creator Check: Case-insensitive match or fallback if creator address is missing
+  const isCreator = 
+    !creatorAddress || 
+    (connectedAddress && connectedAddress.toLowerCase() === creatorAddress.toLowerCase());
 
   // Realtime Supabase Listener
   useEffect(() => {
@@ -32,12 +36,12 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
             .maybeSingle();
 
           if (!error && data && data.stream_url) {
-            setStreamData({ url: data.stream_url, symbol: data.token_symbol, closedLocally: false });
+            setStreamData({ url: data.stream_url, symbol: data.token_symbol });
           } else {
-            setStreamData({ url: null, symbol: null, closedLocally: false });
+            setStreamData({ url: null, symbol: null });
           }
         } catch (err) {
-          setStreamData({ url: null, symbol: null, closedLocally: false });
+          setStreamData({ url: null, symbol: null });
         }
       }
     };
@@ -51,9 +55,9 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
           .channel(`token_stream_${currentTokenSymbol}`)
           .on('postgres_changes', { event: '*', schema: 'public', table: 'active_streams' }, (payload) => {
             if (payload.eventType === 'DELETE') {
-              setStreamData({ url: null, symbol: null, closedLocally: false });
+              setStreamData({ url: null, symbol: null });
             } else if (payload.new && payload.new.stream_url) {
-              setStreamData({ url: payload.new.stream_url, symbol: payload.new.token_symbol, closedLocally: false });
+              setStreamData({ url: payload.new.stream_url, symbol: payload.new.token_symbol });
             }
           })
           .subscribe();
@@ -69,7 +73,7 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
     };
   }, [currentTokenSymbol]);
 
-  // Touch & Mouse Drag Handlers
+  // 🚀 DIRECT DOM DRAG HANDLERS (Native Touch & Mouse)
   const handleTouchStart = (e) => {
     if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
     const touch = e.touches[0];
@@ -131,13 +135,8 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
 
   const handleCloseLocal = (e) => {
     e.stopPropagation();
-    setStreamData(prev => ({ ...prev, closedLocally: true }));
+    setStreamData({ url: null, symbol: null });
     if (closeStream) closeStream();
-  };
-
-  const handleReOpenLocal = (e) => {
-    e.stopPropagation();
-    setStreamData(prev => ({ ...prev, closedLocally: false }));
   };
 
   const handleEndBroadcastGlobal = async (e) => {
@@ -149,28 +148,15 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
         console.error("Error ending broadcast:", err);
       }
     }
-    setStreamData({ url: null, symbol: null, closedLocally: false });
+    setStreamData({ url: null, symbol: null });
     if (closeStream) closeStream();
   };
 
   if (!streamData.url) return null;
 
-  if (streamData.closedLocally) {
-    return ReactDOM.createPortal(
-      <button
-        onClick={handleReOpenLocal}
-        className="fixed bottom-24 right-4 z-[999999] bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] uppercase tracking-wider px-3.5 py-2.5 rounded-full shadow-[0_0_25px_rgba(225,29,72,0.6)] flex items-center gap-2 animate-bounce border border-white/20 cursor-pointer pointer-events-auto"
-      >
-        <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
-        <span>🔴 Restore Live View</span>
-      </button>,
-      document.body
-    );
-  }
-
   return ReactDOM.createPortal(
     <>
-      {/* Invisible Screen Overlay when dragging */}
+      {/* Invisible Touch Shield during Drag */}
       {isDragging && (
         <div 
           onTouchMove={handleTouchMove}
@@ -217,7 +203,7 @@ export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, clo
             <button 
               onClick={handleCloseLocal}
               className="text-zinc-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-              title="Minimize Stream"
+              title="Close Stream"
             >
               ✕
             </button>
