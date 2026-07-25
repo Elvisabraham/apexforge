@@ -2,40 +2,42 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { supabase } from './supabaseClient';
 
-export default function ActiveTvStream({ currentTokenSymbol, activePage, creatorAddress, closeStream }) {
+export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, closeStream }) {
   const { publicKey } = useWallet();
-  const [streamData, setStreamData] = useState({ url: null, symbol: null, closedLocally: false });
+  const [streamData, setStreamData] = useState({ url: null, symbol: currentTokenSymbol, closedLocally: false });
+  
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   
-  const dragStart = useRef({ x: 0, y: 0 });
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+
   const connectedAddress = publicKey ? publicKey.toBase58() : null;
   const isCreator = !creatorAddress || (connectedAddress && connectedAddress.toLowerCase() === creatorAddress.toLowerCase());
 
-  // 🚀 Fetch Active Stream Globally from Supabase
+  // Realtime Supabase Listener
   useEffect(() => {
+    if (!currentTokenSymbol) return;
+
     const fetchActiveStream = async () => {
-      if (!supabase) return;
-      try {
-        let query = supabase
-          .from('active_streams')
-          .select('stream_url, token_symbol')
-          .order('created_at', { ascending: false })
-          .limit(1);
+      if (supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('active_streams')
+            .select('stream_url, token_symbol')
+            .ilike('token_symbol', `%${currentTokenSymbol}%`)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-        if (currentTokenSymbol) {
-          query = query.ilike('token_symbol', `%${currentTokenSymbol}%`);
-        }
-
-        const { data, error } = await query.maybeSingle();
-
-        if (!error && data && data.stream_url) {
-          setStreamData(prev => ({ ...prev, url: data.stream_url, symbol: data.token_symbol }));
-        } else {
+          if (!error && data && data.stream_url) {
+            setStreamData({ url: data.stream_url, symbol: data.token_symbol, closedLocally: false });
+          } else {
+            setStreamData({ url: null, symbol: null, closedLocally: false });
+          }
+        } catch (err) {
           setStreamData({ url: null, symbol: null, closedLocally: false });
         }
-      } catch (err) {
-        setStreamData({ url: null, symbol: null, closedLocally: false });
       }
     };
 
@@ -45,7 +47,7 @@ export default function ActiveTvStream({ currentTokenSymbol, activePage, creator
     if (supabase) {
       try {
         channel = supabase
-          .channel('global_active_streams_listener')
+          .channel(`token_stream_${currentTokenSymbol}`)
           .on('postgres_changes', { event: '*', schema: 'public', table: 'active_streams' }, (payload) => {
             if (payload.eventType === 'DELETE') {
               setStreamData({ url: null, symbol: null, closedLocally: false });
@@ -66,38 +68,28 @@ export default function ActiveTvStream({ currentTokenSymbol, activePage, creator
     };
   }, [currentTokenSymbol]);
 
-  // 🚀 DRAG HANDLERS WITH POINTER CAPTURE
-  const handlePointerDown = (e) => {
-    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-
+  // 🚀 TOUCH & MOUSE DRAG ENGINE
+  const startDrag = (clientX, clientY, target) => {
+    if (target.tagName === 'BUTTON' || target.closest('button')) return;
+    isDraggingRef.current = true;
     setIsDragging(true);
-    dragStart.current = {
-      x: e.clientX - pos.x,
-      y: e.clientY - pos.y
+    dragStartRef.current = {
+      x: clientX - pos.x,
+      y: clientY - pos.y
     };
-
-    if (e.target.setPointerCapture) {
-      e.target.setPointerCapture(e.pointerId);
-    }
   };
 
-  const handlePointerMove = (e) => {
-    if (!isDragging) return;
+  const moveDrag = (clientX, clientY) => {
+    if (!isDraggingRef.current) return;
     setPos({
-      x: e.clientX - dragStart.current.x,
-      y: e.clientY - dragStart.current.y
+      x: clientX - dragStartRef.current.x,
+      y: clientY - dragStartRef.current.y
     });
   };
 
-  const handlePointerUp = (e) => {
-    if (isDragging) {
-      setIsDragging(false);
-      if (e.target.releasePointerCapture) {
-        try {
-          e.target.releasePointerCapture(e.pointerId);
-        } catch (err) {}
-      }
-    }
+  const endDrag = () => {
+    isDraggingRef.current = false;
+    setIsDragging(false);
   };
 
   const handleCloseLocal = (e) => {
@@ -124,24 +116,9 @@ export default function ActiveTvStream({ currentTokenSymbol, activePage, creator
     if (closeStream) closeStream();
   };
 
-  // 1. Hide if no active stream in Supabase
   if (!streamData.url) return null;
 
-  // 2. Hide on main tabs (Directory/Home, Earn, Profile, Wallet, Ranks)
-  const mainTabs = ['directory', 'home', 'explore', 'earn', 'profile', 'ranks', 'wallet'];
-  const currentPage = (activePage || '').toLowerCase();
-  if (currentPage && mainTabs.includes(currentPage)) {
-    return null;
-  }
-
-  // 3. Match symbol if currentTokenSymbol is passed
-  if (currentTokenSymbol && streamData.symbol) {
-    const current = currentTokenSymbol.toUpperCase();
-    const stream = streamData.symbol.toUpperCase();
-    if (!current.includes(stream) && !stream.includes(current)) return null;
-  }
-
-  // Restore Button if minimized locally
+  // Restore Pill when closed locally
   if (streamData.closedLocally) {
     return (
       <button
@@ -156,9 +133,15 @@ export default function ActiveTvStream({ currentTokenSymbol, activePage, creator
 
   return (
     <>
-      {/* Invisible Screen Shield during active drag */}
+      {/* 🚀 INVISIBLE DRAG SHIELD: Blocks YouTube/Chart from stealing finger input during drag */}
       {isDragging && (
-        <div className="fixed inset-0 z-[999998] cursor-grabbing select-none bg-transparent touch-none" />
+        <div 
+          onMouseMove={(e) => moveDrag(e.clientX, e.clientY)}
+          onMouseUp={endDrag}
+          onTouchMove={(e) => moveDrag(e.touches[0].clientX, e.touches[0].clientY)}
+          onTouchEnd={endDrag}
+          className="fixed inset-0 z-[999998] bg-transparent cursor-grabbing select-none touch-none" 
+        />
       )}
 
       <div 
@@ -170,10 +153,12 @@ export default function ActiveTvStream({ currentTokenSymbol, activePage, creator
       >
         {/* DRAGGABLE HEADER BAR */}
         <div 
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
+          onMouseDown={(e) => startDrag(e.clientX, e.clientY, e.target)}
+          onMouseMove={(e) => moveDrag(e.clientX, e.clientY)}
+          onMouseUp={endDrag}
+          onTouchStart={(e) => startDrag(e.touches[0].clientX, e.touches[0].clientY, e.target)}
+          onTouchMove={(e) => moveDrag(e.touches[0].clientX, e.touches[0].clientY)}
+          onTouchEnd={endDrag}
           className="flex justify-between items-center px-4 py-3 bg-[#121217] border-b border-white/10 cursor-grab active:cursor-grabbing select-none pointer-events-auto touch-none"
         >
           <div className="flex items-center gap-2 pointer-events-none">
@@ -182,7 +167,7 @@ export default function ActiveTvStream({ currentTokenSymbol, activePage, creator
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
             </span>
             <span className="text-[10px] font-black text-rose-400 uppercase tracking-wider">
-              ${streamData.symbol || 'CREATOR'} LIVE
+              ${streamData.symbol} LIVE
             </span>
           </div>
 
@@ -209,7 +194,7 @@ export default function ActiveTvStream({ currentTokenSymbol, activePage, creator
         <div className={`relative pt-[56.25%] w-full bg-black ${isDragging ? 'pointer-events-none' : 'pointer-events-auto'}`}>
           <iframe
             src={streamData.url}
-            className="absolute top-0 left-0 w-full h-full border-0"
+            className="absolute top-0 left-0 w-full h-full border-0 pointer-events-auto"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             title="Creator Live Stream"
