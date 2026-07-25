@@ -78,6 +78,9 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const initialMcap = parseFloat((token?.mcap || token?.marketCap || '$10.0K').toString().replace(/[^0-9.]/g, '')) || 10;
   const isActuallyGraduated = token?.isGraduated === true || rawProgress >= 100 || initialMcap >= 69;
 
+  // Get raw address/name for permissions check
+  const rawCreator = token?.creatorAddress || token?.creator || token?.deployer || connectedAddress || '47ZT1q3mR...';
+
   const displayToken = {
     name: token?.name || token?.token || 'Token',
     symbol: token?.symbol || 'TKN',
@@ -88,8 +91,9 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     description: token?.description || `A community-driven asset deployed fairly on the Apex Forge platform. Smart contract initialized.`,
     links: { twitter: token?.links?.twitter || '', telegram: token?.links?.telegram || '', website: token?.links?.website || '' },
     
-    // 🚀 UPDATED LINE BELOW: Allows your connected wallet to match creator permissions!
-    creator: token?.creatorAddress || token?.creator || token?.deployer || connectedAddress || '47ZT1q3mR...',
+    // 🚀 Store raw address for internal logic, and formatted version for UI
+    rawCreatorAddress: rawCreator,
+    creator: formatCreator(rawCreator),
     
     holders: '1,204',
     supply: '1.0B',
