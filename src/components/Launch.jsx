@@ -83,7 +83,7 @@ export default function Launch({ onForgeSuccess }) {
         // 🚀 SAVE TO SUPABASE TO BROADCAST GLOBALLY TO ALL DEVICES
         if (supabase) {
           try {
-            await supabase.from('tokens').insert([
+            const { data, error } = await supabase.from('tokens').insert([
               {
                 name: newToken.name,
                 symbol: newToken.symbol,
@@ -98,11 +98,17 @@ export default function Launch({ onForgeSuccess }) {
                 created_at: new Date().toISOString()
               }
             ]);
+
+            if (error) {
+              console.error("Supabase Insert Error:", error);
+              alert(`⚠️ Global Sync Alert: ${error.message}`);
+            } else {
+              console.log("Token saved globally to Supabase!");
+            }
           } catch (err) {
             console.error("Error saving token to global database:", err);
           }
         }
-
         if (onForgeSuccess) {
           onForgeSuccess(newToken);
         }
