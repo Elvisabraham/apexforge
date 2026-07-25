@@ -16,9 +16,13 @@ import '@solana/wallet-adapter-react-ui/styles.css';
 export default function SolanaProvider({ children }) {
   const network = WalletAdapterNetwork.Mainnet;
 
-  // Uses a free RPC endpoint to prevent 403 Forbidden errors
+  // 🚀 Replaced rate-limited Ankr endpoint to fix 403 Forbidden errors
   const endpoint = useMemo(() => {
-    return 'https://rpc.ankr.com/solana';
+    // Official public fallback:
+    return 'https://api.mainnet-beta.solana.com';
+
+    // 💡 Tip: For high-traffic production, replace with a free key from Helius/QuickNode:
+    // return 'https://mainnet.helius-rpc.com/?api-key=YOUR_HELIUS_KEY';
   }, []);
 
   // Your expanded wallet list
