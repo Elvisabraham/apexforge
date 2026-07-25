@@ -486,8 +486,7 @@ function AppContent() {
   currentTokenSymbol={
     (typeof selectedToken !== 'undefined' && selectedToken?.symbol) || 
     (typeof activeToken !== 'undefined' && activeToken?.symbol) || 
-    (typeof currentToken !== 'undefined' && currentToken?.symbol) || 
-    null
+    ""
   } 
   activePage={activePage}
   closeStream={stopStream} 
