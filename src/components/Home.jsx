@@ -160,8 +160,11 @@ export default function Home({
     }
     if (activeTab === 'EXPLORE') return true;
     if (activeTab === 'GRADUATED') return t.isGraduated === true || t.progress >= 100;
-    if (activeTab === 'TRENDING') return !t.isGraduated && t.progress >= 5 && t.progress < 100;
-    if (activeTab === 'NEW') return !t.isGraduated && (!t.progress || t.progress < 5);
+    if (activeTab === 'TRENDING') return !t.isGraduated && t.progress >= 5;
+    
+    // 🚀 NEW TAB FIX: Shows all non-graduated tokens!
+    if (activeTab === 'NEW') return !t.isGraduated; 
+    
     return true; 
   });
 
