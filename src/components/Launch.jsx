@@ -33,123 +33,114 @@ export default function Launch({ onForgeSuccess }) {
 
   const connectedAddress = publicKey ? publicKey.toBase58() : '';
 
-  // 🚀 REAL ON-CHAIN DEPLOYMENT HANDLER
-  const handleRealDeployment = async () => {
-    if (!tokenName || !tokenSymbol) {
-      alert("⚠️ Token Name and Symbol are required to forge an asset.");
-      return;
-    }
-    if (!imagePreview) {
-      alert("⚠️ Please upload an asset logo or video to proceed.");
-      return;
-    }
-    if (!acceptedDisclaimer) {
-      alert("⚠️ You must acknowledge the disclaimer before launching an asset.");
-      return;
-    }
-    if (!connected || !publicKey) {
-      alert("⚠️ Wallet not connected! Please connect Phantom first.");
-      return;
-    }
-    if (!program) {
-      alert("⚠️ Anchor Program initialized failed. Check your VITE_PROGRAM_ID or connection.");
-      return;
-    }
-    
-    if (deployedHistory.includes(tokenName.toLowerCase())) {
-      alert(`⚠️ You have already deployed an asset named "${tokenName}". Please choose a unique name.`);
-      return;
-    }
+  // 🚀 REAL ON-CHAIN DEPLOYMENT HANDLER (STRICT GUARD)
+const handleRealDeployment = async () => {
+  // 1. HARD STOP: Check form inputs first
+  if (!tokenName || !tokenSymbol) {
+    alert("⚠️ Token Name and Symbol are required to forge an asset.");
+    return;
+  }
+  if (!imagePreview) {
+    alert("⚠️ Please upload an asset logo or video to proceed.");
+    return;
+  }
+  if (!acceptedDisclaimer) {
+    alert("⚠️ You must acknowledge the disclaimer before launching an asset.");
+    return;
+  }
 
-    try {
-      setIsDeploying(true);
-      setDeploySuccess(false);
-      setStatusMessage("> Awaiting Phantom signature for contract creation...");
+  // 2. HARD STOP: Check wallet connection strictly
+  if (!connected || !publicKey) {
+    alert("🔒 Wallet Not Connected! Please connect Phantom to deploy an on-chain contract.");
+    return; // <-- Halts execution completely
+  }
 
-      // ------------------------------------------------------------------
-      // 🚀 ON-CHAIN Smart Contract Execution (Triggers Phantom Popup)
-      // Note: Update '.createToken(...)' & '.accounts({...})' to match 
-      // your exact Anchor program instruction names if different.
-      // ------------------------------------------------------------------
-      const metadataUrl = thumbnailUrl || imagePreview;
+  // 3. HARD STOP: Verify Anchor program initialization
+  if (!program) {
+    alert("⚠️ Anchor Program is not ready. Please refresh or reconnect your Phantom wallet.");
+    return; // <-- Halts execution completely
+  }
 
-      const txSignature = await program.methods
-        .createToken(tokenName, tokenSymbol.toUpperCase(), metadataUrl)
-        .accounts({
-          // Add specific accounts required by your Anchor instruction context
-        })
-        .rpc(); // <-- THIS `.rpc()` call triggers the Phantom popup!
+  if (deployedHistory.includes(tokenName.toLowerCase())) {
+    alert(`⚠️ You have already deployed an asset named "${tokenName}". Choose a unique name.`);
+    return;
+  }
 
-      setStatusMessage("> Transaction confirmed on-chain! Syncing database...");
-      console.log("On-Chain Mint Signature:", txSignature);
+  // ONLY show the deployment terminal after ALL guards pass!
+  setIsDeploying(true);
+  setDeploySuccess(false);
+  setStatusMessage("> Awaiting Phantom signature for contract creation...");
 
-      setDeployedTokenAddress(txSignature);
-      setDeployedHistory(prev => [...prev, tokenName.toLowerCase()]);
+  try {
+    const metadataUrl = thumbnailUrl || imagePreview;
 
-      const newToken = {
-        id: Date.now().toString(),
-        name: tokenName,
-        symbol: tokenSymbol.toUpperCase(),
-        description: description, 
-        links: {                
-          twitter: twitter,
-          telegram: telegram,
-          website: website
-        },
-        mintAddress: txSignature,
-        creatorAddress: connectedAddress,
-        imagePreview: metadataUrl, 
-        videoUrl: mediaType === 'video' ? 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-code-31910-large.mp4' : null, 
-        mediaType: mediaType, 
-        icon: '🔥', 
-        mcap: '$10.0K', 
-        price: '0.0001',
-        change: '+0.0%',
-        initialSnipe: parseFloat(initialBuy || '0'),
-        isGraduated: false, 
-        progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
-      };
+    // ------------------------------------------------------------------
+    // 🚀 EXECUTE ANCHOR RPC (Triggers Phantom Signature Modal)
+    // ------------------------------------------------------------------
+    const txSignature = await program.methods
+      .createToken(tokenName, tokenSymbol.toUpperCase(), metadataUrl)
+      .accounts({
+        // Fill in your Anchor account context addresses here
+      })
+      .rpc();
 
-      // 🚀 SAVE TO SUPABASE AFTER REAL ON-CHAIN CONFIRMATION
-      if (supabase) {
-        try {
-          const { error } = await supabase.from('tokens').insert([
-            {
-              name: newToken.name,
-              symbol: newToken.symbol,
-              description: newToken.description,
-              icon: newToken.icon,
-              image_url: newToken.imagePreview,
-              mint_address: newToken.mintAddress,
-              creator_address: newToken.creatorAddress,
-              market_cap: newToken.mcap,
-              progress: newToken.progress,
-              links: newToken.links,
-              created_at: new Date().toISOString()
-            }
-          ]);
+    console.log("On-Chain Mint Signature:", txSignature);
+    setStatusMessage("> Transaction confirmed on-chain! Syncing database...");
 
-          if (error) {
-            console.error("Supabase Insert Error:", error);
-          } else {
-            console.log("Token synced to Supabase database!");
-          }
-        } catch (err) {
-          console.error("Database save failed:", err);
+    setDeployedTokenAddress(txSignature);
+    setDeployedHistory(prev => [...prev, tokenName.toLowerCase()]);
+
+    const newToken = {
+      id: Date.now().toString(),
+      name: tokenName,
+      symbol: tokenSymbol.toUpperCase(),
+      description: description,
+      links: { twitter, telegram, website },
+      mintAddress: txSignature,
+      creatorAddress: publicKey.toBase58(),
+      imagePreview: metadataUrl,
+      mediaType: mediaType,
+      icon: '🔥',
+      mcap: '$10.0K',
+      price: '0.0001',
+      change: '+0.0%',
+      initialSnipe: parseFloat(initialBuy || '0'),
+      isGraduated: false,
+      progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
+    };
+
+    // 🚀 SAVE TO SUPABASE ONLY IF ON-CHAIN TX SUCCEEDED
+    if (supabase) {
+      await supabase.from('tokens').insert([
+        {
+          name: newToken.name,
+          symbol: newToken.symbol,
+          description: newToken.description,
+          icon: newToken.icon,
+          image_url: newToken.imagePreview,
+          mint_address: newToken.mintAddress,
+          creator_address: newToken.creatorAddress,
+          market_cap: newToken.mcap,
+          progress: newToken.progress,
+          links: newToken.links,
+          created_at: new Date().toISOString()
         }
-      }
-
-      setDeploySuccess(true);
-      if (onForgeSuccess) {
-        onForgeSuccess(newToken);
-      }
-
-    } catch (err) {
-      console.error("Deployment failed or cancelled by user:", err);
-      alert(`⚠️ Transaction Cancelled or Failed: ${err.message || err}`);
-      setIsDeploying(false);
+      ]);
     }
-  };
+
+    setDeploySuccess(true);
+    if (onForgeSuccess) {
+      onForgeSuccess(newToken);
+    }
+
+  } catch (err) {
+    console.error("On-chain transaction failed or cancelled:", err);
+    alert(`❌ Transaction Cancelled: ${err.message || "Phantom signature rejected."}`);
+    
+    // CLOSE TERMINAL BACK TO FORM IF FAILED/CANCELLED
+    setIsDeploying(false);
+  }
+};
 
   const handleMediaSelected = (mediaData) => {
     setImagePreview(mediaData.previewUrl);
