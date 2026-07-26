@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
-import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
+import { ConnectionProvider, WalletProvider, useAnchorWallet } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { Program, AnchorProvider } from '@coral-xyz/anchor';
 
-// Bringing in the heavy hitters
 import { 
   PhantomWalletAdapter, 
   SolflareWalletAdapter,
@@ -11,21 +12,20 @@ import {
   TrustWalletAdapter
 } from '@solana/wallet-adapter-wallets';
 
+import idl from '../idl/idl.json';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
+// Program ID from your build
+const PROGRAM_ID = new PublicKey(import.meta.env.VITE_PROGRAM_ID || '4vLUMypMsazY7Xsm56Q1h5wbkT1EBFuvevtmE77SYbfJ');
+
 export default function SolanaProvider({ children }) {
-  const network = WalletAdapterNetwork.Mainnet;
+  // ⚙️ Switched to Devnet for contract testing
+  const network = WalletAdapterNetwork.Devnet;
 
-  // 🚀 Replaced rate-limited Ankr endpoint to fix 403 Forbidden errors
   const endpoint = useMemo(() => {
-    // Official public fallback:
-    return 'https://api.mainnet-beta.solana.com';
-
-    // 💡 Tip: For high-traffic production, replace with a free key from Helius/QuickNode:
-    // return 'https://mainnet.helius-rpc.com/?api-key=YOUR_HELIUS_KEY';
+    return 'https://api.devnet.solana.com';
   }, []);
 
-  // Your expanded wallet list
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
@@ -46,3 +46,19 @@ export default function SolanaProvider({ children }) {
     </ConnectionProvider>
   );
 }
+
+// 🚀 Hook to interact directly with your Apex Forge Anchor contract in UI components
+export const useApexForgeProgram = () => {
+  const wallet = useAnchorWallet();
+
+  return useMemo(() => {
+    if (!wallet) return null;
+
+    const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+    const provider = new AnchorProvider(connection, wallet, {
+      preflightCommitment: 'confirmed',
+    });
+
+    return new Program(idl, PROGRAM_ID, provider);
+  }, [wallet]);
+};
