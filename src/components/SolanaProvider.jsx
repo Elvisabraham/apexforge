@@ -8,7 +8,6 @@ import { Program, AnchorProvider } from '@coral-xyz/anchor';
 import idl from '../idl/idl.json';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
-// Fallback constant string
 const FALLBACK_PROGRAM_ID = '4vLUMypMsazY7Xsm56Q1h5wbkT1EBFuvevtmE77SYbfJ';
 
 export default function SolanaProvider({ children }) {
@@ -31,7 +30,7 @@ export default function SolanaProvider({ children }) {
   );
 }
 
-// 🚀 CRASH-PROOF ANCHOR PROGRAM HOOK
+// 🚀 CRASH-PROOF ANCHOR HOOK
 export const useApexForgeProgram = () => {
   const wallet = useAnchorWallet();
 
@@ -44,18 +43,17 @@ export const useApexForgeProgram = () => {
         preflightCommitment: 'confirmed',
       });
 
-      // 1. SAFELY RESOLVE PROGRAM ID INSIDE HOOK
       const rawProgramId = import.meta.env.VITE_PROGRAM_ID || idl?.address || FALLBACK_PROGRAM_ID;
       const programId = new PublicKey(rawProgramId.trim());
 
-      console.log("Initializing Anchor Program with ID:", programId.toBase58());
+      const formattedIdl = {
+        ...idl,
+        address: programId.toBase58()
+      };
 
-      // 2. CONSTRUCT PROGRAM
-      try {
-        return new Program(idl, provider);
-      } catch (v30Err) {
-        return new Program(idl, programId, provider);
-      }
+      console.log("Anchor Initialized Successfully for Program:", programId.toBase58());
+      
+      return new Program(formattedIdl, programId, provider);
 
     } catch (err) {
       console.error("🔴 CRITICAL: Failed to construct Anchor Program instance:", err);
