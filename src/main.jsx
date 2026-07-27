@@ -1,4 +1,4 @@
-import { Buffer } from '@solana/web3.js';
+import { Buffer } from 'buffer';
 if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
