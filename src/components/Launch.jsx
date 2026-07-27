@@ -93,7 +93,7 @@ export default function Launch({ onForgeSuccess }) {
 //   PROGRAM_ID
 // );
 
-// 🚀 NEW (Native Browser Compatible - No Buffer needed!)
+// 🚀 Native browser seed encoding (works 100% without Node's Buffer)
 const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
   [new TextEncoder().encode("bonding-curve"), mintPublicKey.toBuffer()],
   PROGRAM_ID
