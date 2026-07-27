@@ -90,11 +90,10 @@ export default function Launch({ onForgeSuccess }) {
         safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
       }
 
-      // 4. Calculate Anchor Discriminator for "create_token"
-      // global:create_token discriminator bytes
-      const discriminator = Buffer.from([142, 182, 172, 102, 107, 235, 137, 246]);
+      // 4. Correct SHA-256 Discriminator for "global:create_token"
+      const discriminator = Buffer.from([84, 52, 222, 172, 116, 206, 137, 238]);
 
-      // 5. Borsh encode instruction data: [discriminator, name, symbol, uri]
+      // 5. Borsh encode instruction arguments: [discriminator, name, symbol, uri]
       const encodeString = (str) => {
         const buf = Buffer.from(str, 'utf8');
         const lenBuf = Buffer.alloc(4);
@@ -109,9 +108,7 @@ export default function Launch({ onForgeSuccess }) {
         encodeString(safeUri)
       ]);
 
-      // 6. Construct Standard Web3 Transaction Instruction
-      const { Transaction, TransactionInstruction } = await import('@solana/web3.js');
-
+      // 6. Build Standard Web3 Transaction Instruction
       const createTokenIx = new TransactionInstruction({
         programId: PROGRAM_ID,
         keys: [
