@@ -78,51 +78,29 @@ export default function Launch({ onForgeSuccess }) {
       setDeploySuccess(false);
       setStatusMessage("> Initializing Anchor Provider & Connection...");
 
-      // 3. Single, Clean Connection & Provider Setup
+     // 3. Connection & Provider Setup
       const connection = new Connection("https://api.devnet.solana.com", "confirmed");
       const provider = new AnchorProvider(connection, wallet, {
         preflightCommitment: "confirmed",
       });
 
-      // 4. Clean IDL Definition
+      // 4. Load Actual Project IDL
       const cleanIdl = {
+        ...idl,
         address: PROGRAM_ID.toBase58(),
-        metadata: { name: "apex_forge", version: "0.1.0" },
-        instructions: [
-          {
-            name: "createToken",
-            discriminator: [0, 1, 2, 3, 4, 5, 6, 7],
-            accounts: [
-              { name: "bondingCurve", writable: true, signer: false },
-              { name: "mint", writable: true, signer: true },
-              { name: "creator", writable: true, signer: true },
-              { name: "systemProgram", writable: false, signer: false },
-              { name: "tokenProgram", writable: false, signer: false },
-              { name: "rent", writable: false, signer: false }
-            ],
-            args: [
-              { name: "name", type: "string" },
-              { name: "symbol", type: "string" },
-              { name: "uri", type: "string" }
-            ]
-          }
-        ],
-        accounts: [],
-        types: [],
-        errors: []
       };
 
-      // 5. Construct Anchor Program
+      // 5. Construct Anchor Program Instance
       const program = new Program(cleanIdl, provider);
 
-      setStatusMessage("> Generating token mint & deriving accounts...");
+      setStatusMessage("> Deriving on-chain accounts & keys...");
 
-      // 6. Key Generation & PDA Derivation
+      // 6. Account Generation & PDA Derivation
       const mintKeypair = Keypair.generate();
       const mintPublicKey = mintKeypair.publicKey;
 
       const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
-        [new TextEncoder().encode("bonding-curve"), mintPublicKey.toBuffer()],
+        [new TextEncoder().encode("bonding_curve"), mintPublicKey.toBuffer()],
         PROGRAM_ID
       );
 
