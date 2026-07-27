@@ -4,7 +4,7 @@
   "name": "apex_forge",
   "instructions": [
     {
-      "name": "createToken",
+      "name": "create_token",
       "accounts": [
         { "name": "bondingCurve", "isMut": true, "isSigner": false },
         { "name": "mint", "isMut": true, "isSigner": true },
@@ -20,7 +20,7 @@
       ]
     },
     {
-      "name": "buyTokens",
+      "name": "buy_tokens",
       "accounts": [
         { "name": "bondingCurve", "isMut": true, "isSigner": false },
         { "name": "buyer", "isMut": true, "isSigner": true },
