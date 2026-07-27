@@ -99,32 +99,42 @@ const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
   PROGRAM_ID
 );
 
-      const cleanIdl = {
-        address: PROGRAM_ID.toBase58(),
-        metadata: { name: "apex_forge", version: "0.1.0" },
-        instructions: [
-          {
-            name: "createToken",
-            discriminator: [0, 1, 2, 3, 4, 5, 6, 7],
-            accounts: [
-              { name: "bondingCurve", writable: true, signer: false },
-              { name: "mint", writable: true, signer: true },
-              { name: "creator", writable: true, signer: true },
-              { name: "systemProgram", writable: false, signer: false },
-              { name: "tokenProgram", writable: false, signer: false },
-              { name: "rent", writable: false, signer: false }
-            ],
-            args: [
-              { name: "name", type: "string" },
-              { name: "symbol", type: "string" },
-              { name: "uri", type: "string" }
-            ]
-          }
-        ],
-        accounts: [],
-        types: [],
-        errors: []
-      };
+     // 1. Create Connection & Provider
+const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+const provider = new AnchorProvider(connection, wallet, {
+  preflightCommitment: 'confirmed',
+});
+
+// 2. Define Clean IDL
+const cleanIdl = {
+  address: PROGRAM_ID.toBase58(),
+  metadata: { name: "apex_forge", version: "0.1.0" },
+  instructions: [
+    {
+      name: "createToken",
+      discriminator: [0, 1, 2, 3, 4, 5, 6, 7],
+      accounts: [
+        { name: "bondingCurve", writable: true, signer: false },
+        { name: "mint", writable: true, signer: true },
+        { name: "creator", writable: true, signer: true },
+        { name: "systemProgram", writable: false, signer: false },
+        { name: "tokenProgram", writable: false, signer: false },
+        { name: "rent", writable: false, signer: false }
+      ],
+      args: [
+        { name: "name", type: "string" },
+        { name: "symbol", type: "string" },
+        { name: "uri", type: "string" }
+      ]
+    }
+  ],
+  accounts: [],
+  types: [],
+  errors: []
+};
+
+// 🚀 3. ADD THIS LINE TO DEFINE PROGRAM:
+const program = new Program(cleanIdl, provider);
 
       // 🚀 SANITIZE INPUTS TO PREVENT BORSH OVERFLOW
 const safeName = tokenName.slice(0, 32);      // Anchor Max String limit for Name
