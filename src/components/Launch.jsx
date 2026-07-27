@@ -1,449 +1,436 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import MediaUploader from './MediaUploader'; 
-import { supabase } from './supabaseClient'; // 🚀 Supabase client import
+import { supabase } from './supabaseClient';
+import { useApexForgeProgram } from './SolanaProvider'; // 🚀 Anchor Program Context
 
 export default function Launch({ onForgeSuccess }) {
-  const { connected, publicKey } = useWallet();
+  const { connected, publicKey } = useWallet();
+  const program = useApexForgeProgram(); // 🚀 Active Anchor Instance
 
-  const [tokenName, setTokenName] = useState('');
-  const [tokenSymbol, setTokenSymbol] = useState('');
-  const [description, setDescription] = useState('');
-  
-  const [imagePreview, setImagePreview] = useState(null);
-  const [thumbnailUrl, setThumbnailUrl] = useState(null);
-  const [mediaType, setMediaType] = useState('image'); 
-  const [uploaderKey, setUploaderKey] = useState(0); 
-  
-  const [showSocials, setShowSocials] = useState(false);
-  const [twitter, setTwitter] = useState('');
-  const [telegram, setTelegram] = useState('');
-  const [website, setWebsite] = useState('');
-  const [initialBuy, setInitialBuy] = useState('');
-  
-  const [acceptedDisclaimer, setAcceptedDisclaimer] = useState(false);
-  const [deployedHistory, setDeployedHistory] = useState([]); 
+  const [tokenName, setTokenName] = useState('');
+  const [tokenSymbol, setTokenSymbol] = useState('');
+  const [description, setDescription] = useState('');
+  
+  const [imagePreview, setImagePreview] = useState(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState(null);
+  const [mediaType, setMediaType] = useState('image'); 
+  const [uploaderKey, setUploaderKey] = useState(0); 
+  
+  const [showSocials, setShowSocials] = useState(false);
+  const [twitter, setTwitter] = useState('');
+  const [telegram, setTelegram] = useState('');
+  const [website, setWebsite] = useState('');
+  const [initialBuy, setInitialBuy] = useState('');
+  
+  const [acceptedDisclaimer, setAcceptedDisclaimer] = useState(false);
+  const [deployedHistory, setDeployedHistory] = useState([]); 
 
-  const [isDeploying, setIsDeploying] = useState(false);
-  const [deploymentStep, setDeploymentStep] = useState(0);
-  const [deploySuccess, setDeploySuccess] = useState(false);
-  const [mockTokenAddress, setMockTokenAddress] = useState('');
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [deploySuccess, setDeploySuccess] = useState(false);
+  const [deployedTokenAddress, setDeployedTokenAddress] = useState('');
+  const [statusMessage, setStatusMessage] = useState('Initializing wallet & contract...');
 
-  const deploymentStages = [
-    { text: "> initializing anchor workspace...", duration: 800 },
-    { text: "> verifying unique asset hash...", duration: 1000 },
-    { text: "> compiling smart contract...", duration: 1200 },
-    { text: "> uploading metadata to IPFS...", duration: 1500 },
-    { text: "> generating mint authority...", duration: 1000 },
-    { text: "> establishing bonding curve...", duration: 1200 },
-    { text: "> awaiting wallet signature...", duration: 2000 }, 
-    { text: "> broadcasting transaction...", duration: 800 },
-    { text: "> confirming block finality...", duration: 1000 }
-  ];
+  const connectedAddress = publicKey ? publicKey.toBase58() : '';
 
-  const connectedAddress = publicKey ? publicKey.toBase58() : '47ZT1q3mR...';
+  // 🚀 REAL ON-CHAIN DEPLOYMENT HANDLER (HARD-GUARDED FOR PHANTOM)
+  const handleRealDeployment = async () => {
+    // 1. HARD STOP: Check form inputs
+    if (!tokenName || !tokenSymbol) {
+      alert("⚠️ Token Name and Symbol are required to forge an asset.");
+      return;
+    }
+    if (!imagePreview) {
+      alert("⚠️ Please upload an asset logo or video to proceed.");
+      return;
+    }
+    if (!acceptedDisclaimer) {
+      alert("⚠️ You must acknowledge the disclaimer before launching an asset.");
+      return;
+    }
 
-  useEffect(() => {
-    if (isDeploying && deploymentStep < deploymentStages.length) {
-      const timer = setTimeout(() => {
-        setDeploymentStep(prev => prev + 1);
-      }, deploymentStages[deploymentStep].duration);
-      return () => clearTimeout(timer);
-    } else if (isDeploying && deploymentStep === deploymentStages.length) {
-      setTimeout(async () => {
-        setDeploySuccess(true);
-        const finalAddress = generateMockAddress();
-        
-        setDeployedHistory(prev => [...prev, tokenName.toLowerCase()]);
-        
-        const newToken = {
-          id: Date.now().toString(),
-          name: tokenName,
-          symbol: tokenSymbol.toUpperCase(),
-          description: description, 
-          links: {                 
-            twitter: twitter,
-            telegram: telegram,
-            website: website
-          },
-          mintAddress: finalAddress,
-          creatorAddress: connectedAddress,
-          imagePreview: thumbnailUrl || imagePreview, 
-          videoUrl: mediaType === 'video' ? 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-code-31910-large.mp4' : null, 
-          mediaType: mediaType, 
-          icon: '🔥', 
-          mcap: '$10.0K', 
-          price: '0.0001',
-          change: '+0.0%',
-          initialSnipe: parseFloat(initialBuy || '0'),
-          isGraduated: false, 
-          progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
-        };
+    // 2. HARD STOP: Wallet Connection Check
+    if (!connected || !publicKey) {
+      alert("🔒 Wallet Not Connected! Please connect Phantom to deploy an on-chain contract.");
+      return;
+    }
 
-        // 🚀 SAVE TO SUPABASE TO BROADCAST GLOBALLY TO ALL DEVICES
-        if (supabase) {
-          try {
-            const { data, error } = await supabase.from('tokens').insert([
-              {
-                name: newToken.name,
-                symbol: newToken.symbol,
-                description: newToken.description,
-                icon: newToken.icon,
-                image_url: newToken.imagePreview,
-                mint_address: newToken.mintAddress,
-                creator_address: newToken.creatorAddress,
-                market_cap: newToken.mcap,
-                progress: newToken.progress,
-                links: newToken.links,
-                created_at: new Date().toISOString()
-              }
-            ]);
+    // 3. HARD STOP: Anchor Program Guard
+    if (!program) {
+      alert("⚠️ Anchor Program initialized failed. Check your VITE_PROGRAM_ID or reconnect Phantom.");
+      return;
+    }
+    
+    if (deployedHistory.includes(tokenName.toLowerCase())) {
+      alert(`⚠️ You have already deployed an asset named "${tokenName}". Please choose a unique name.`);
+      return;
+    }
 
-            if (error) {
-              console.error("Supabase Insert Error:", error);
-              alert(`⚠️ Global Sync Alert: ${error.message}`);
-            } else {
-              console.log("Token saved globally to Supabase!");
-            }
-          } catch (err) {
-            console.error("Error saving token to global database:", err);
-          }
-        }
-        if (onForgeSuccess) {
-          onForgeSuccess(newToken);
-        }
+    try {
+      setIsDeploying(true);
+      setDeploySuccess(false);
+      setStatusMessage("> Awaiting Phantom signature for contract creation...");
 
-      }, 600);
-    }
-  }, [isDeploying, deploymentStep]);
+      const metadataUrl = thumbnailUrl || imagePreview;
 
-  const handleMediaSelected = (mediaData) => {
-    setImagePreview(mediaData.previewUrl);
-    setThumbnailUrl(mediaData.thumbnailUrl);
-    setMediaType(mediaData.type);
-  };
+      // ------------------------------------------------------------------
+      // 🚀 ON-CHAIN Smart Contract Execution (Triggers Phantom Signature Modal)
+      // Note: Adjust `.createToken(...)` & `.accounts({...})` to match 
+      // your Rust program's exact Anchor instructions.
+      // ------------------------------------------------------------------
+      const txSignature = await program.methods
+        .createToken(tokenName, tokenSymbol.toUpperCase(), metadataUrl)
+        .accounts({
+          // Add required account addresses from your Rust Anchor contract
+        })
+        .rpc(); // <-- THIS `.rpc()` call triggers the Phantom popup!
 
-  const handleDescriptionChange = (e) => {
-    let val = e.target.value;
-    
-    const bannedWords = [/100x/gi, /guaranteed profit/gi, /rug pull/gi, /moon safe/gi, /financial advice/gi, /risk free/gi];
-    let isFlagged = false;
+      setStatusMessage("> Transaction confirmed on-chain! Syncing database...");
+      console.log("On-Chain Mint Signature:", txSignature);
 
-    bannedWords.forEach(regex => {
-      if (regex.test(val)) {
-        val = val.replace(regex, "***");
-        isFlagged = true;
-      }
-    });
+      setDeployedTokenAddress(txSignature);
+      setDeployedHistory(prev => [...prev, tokenName.toLowerCase()]);
 
-    setDescription(val);
+      const newToken = {
+        id: Date.now().toString(),
+        name: tokenName,
+        symbol: tokenSymbol.toUpperCase(),
+        description: description, 
+        links: {                
+          twitter: twitter,
+          telegram: telegram,
+          website: website
+        },
+        mintAddress: txSignature,
+        creatorAddress: connectedAddress,
+        imagePreview: metadataUrl, 
+        videoUrl: mediaType === 'video' ? 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-code-31910-large.mp4' : null, 
+        mediaType: mediaType, 
+        icon: '🔥', 
+        mcap: '$10.0K', 
+        price: '0.0001',
+        change: '+0.0%',
+        initialSnipe: parseFloat(initialBuy || '0'),
+        isGraduated: false, 
+        progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
+      };
 
-    if (isFlagged) {
-      alert("⚠️ App Store Safety Protocol: Certain financial hype words have been sanitized to protect the Apex Forge ecosystem and maintain platform compliance.");
-    }
-  };
+      // 🚀 SAVE TO SUPABASE ONLY AFTER ON-CHAIN TRANSACTION SUCCEEDS
+      if (supabase) {
+        try {
+          const { error } = await supabase.from('tokens').insert([
+            {
+              name: newToken.name,
+              symbol: newToken.symbol,
+              description: newToken.description,
+              icon: newToken.icon,
+              image_url: newToken.imagePreview,
+              mint_address: newToken.mintAddress,
+              creator_address: newToken.creatorAddress,
+              market_cap: newToken.mcap,
+              progress: newToken.progress,
+              links: newToken.links,
+              created_at: new Date().toISOString()
+            }
+          ]);
 
-  const handleInitialBuyChange = (e) => {
-    let val = e.target.value.replace(/[^0-9.]/g, '');
-    if ((val.match(/\./g) || []).length > 1) val = val.substring(0, val.lastIndexOf('.'));
-    const parts = val.split('.');
-    if (parts[0]) parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    setInitialBuy(parts.join('.'));
-  };
+          if (error) {
+            console.error("Supabase Insert Error:", error);
+          } else {
+            console.log("Token synced globally to Supabase!");
+          }
+        } catch (err) {
+          console.error("Database save failed:", err);
+        }
+      }
 
-  const generateMockAddress = () => {
-    const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-    let addr = '';
-    for (let i = 0; i < 44; i++) {
-      addr += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setMockTokenAddress(addr);
-    return addr;
-  };
+      setDeploySuccess(true);
+      if (onForgeSuccess) {
+        onForgeSuccess(newToken);
+      }
 
-  const startMockDeployment = () => {
-    if (!tokenName || !tokenSymbol) {
-      alert("⚠️ Token Name and Symbol are required to forge an asset.");
-      return;
-    }
-    if (!imagePreview) {
-      alert("⚠️ Please upload an asset logo or video to proceed.");
-      return;
-    }
-    if (!acceptedDisclaimer) {
-      alert("⚠️ You must acknowledge the entertainment and risk disclaimer before launching an asset.");
-      return;
-    }
-    
-    if (deployedHistory.includes(tokenName.toLowerCase())) {
-      alert(`⚠️ Rug Blocker Active: You have already deployed an asset named "${tokenName}". Please choose a unique name to prevent community confusion.`);
-      return;
-    }
-    
-    setIsDeploying(true);
-    setDeploymentStep(0);
-    setDeploySuccess(false);
-  };
+    } catch (err) {
+      console.error("Deployment failed or cancelled by user:", err);
+      alert(`⚠️ Transaction Cancelled or Failed: ${err.message || err}`);
+      setIsDeploying(false);
+    }
+  };
 
-  const resetForge = () => {
-    setTokenName('');
-    setTokenSymbol('');
-    setDescription('');
-    setImagePreview(null);
-    setThumbnailUrl(null);
-    setTwitter('');
-    setTelegram('');
-    setWebsite('');
-    setInitialBuy('');
-    setShowSocials(false);
-    setAcceptedDisclaimer(false);
-    
-    setIsDeploying(false);
-    setDeploySuccess(false);
-    setDeploymentStep(0);
-    
-    setUploaderKey(prev => prev + 1); 
-  };
+  const handleMediaSelected = (mediaData) => {
+    setImagePreview(mediaData.previewUrl);
+    setThumbnailUrl(mediaData.thumbnailUrl);
+    setMediaType(mediaData.type);
+  };
 
-  return (
-    <div className="flex flex-col w-full h-full bg-[#050505] text-white font-sans overflow-hidden relative select-none">
-      
-      <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
+  const handleDescriptionChange = (e) => {
+    let val = e.target.value;
+    const bannedWords = [/100x/gi, /guaranteed profit/gi, /rug pull/gi, /moon safe/gi, /financial advice/gi, /risk free/gi];
+    let isFlagged = false;
 
-      {/* --- PINNED HEADER --- */}
-      <header className="flex-none z-40 bg-[#050505]/95 backdrop-blur-md px-4 py-4 border-b border-white/[0.04] flex items-center justify-center shadow-md">
-        <h1 className="text-xl font-black tracking-wide text-white uppercase flex items-center gap-2">
-          <svg viewBox="0 0 100 100" className="w-5 h-5 text-[#089981]" fill="currentColor">
-            <path d="M 50 10 L 10 90 L 30 90 L 50 45 L 70 90 L 90 90 Z" fill="#FFFFFF" />
-            <path d="M 50 45 C 35 70, 35 85, 50 85 C 65 85, 65 70, 50 45 Z" fill="#089981" />
-          </svg>
-          The Forge
-        </h1>
-      </header>
+    bannedWords.forEach(regex => {
+      if (regex.test(val)) {
+        val = val.replace(regex, "***");
+        isFlagged = true;
+      }
+    });
 
-      {/* --- SCROLLABLE MIDDLE CONTAINER WITH MASSIVE PADDING --- */}
-      <div className={`flex-1 overflow-y-auto no-scrollbar px-4 pt-6 pb-72 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
-        <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
-          
-          <div className="flex flex-col gap-1">
-            <h2 className="text-3xl font-black text-white tracking-tight">Deploy Asset</h2>
-            <p className="text-[13px] text-zinc-400 font-medium leading-relaxed">Create and launch a fair-launch token instantly. Liquidity is securely locked.</p>
-          </div>
+    setDescription(val);
+    if (isFlagged) {
+      alert("⚠️ App Store Safety Protocol: Certain financial hype words have been sanitized to maintain platform compliance.");
+    }
+  };
 
-          <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Asset Media (Video/GIF/Image) <span className="text-rose-500">*</span></label>
-            <MediaUploader key={uploaderKey} onMediaSelected={handleMediaSelected} />
-          </div>
+  const handleInitialBuyChange = (e) => {
+    let val = e.target.value.replace(/[^0-9.]/g, '');
+    if ((val.match(/\./g) || []).length > 1) val = val.substring(0, val.lastIndexOf('.'));
+    const parts = val.split('.');
+    if (parts[0]) parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    setInitialBuy(parts.join('.'));
+  };
 
-          {/* TOKEN DETAILS */}
-          <div className="flex flex-col gap-5">
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Token Name <span className="text-rose-500">*</span></label>
-              <input type="text" placeholder="e.g. Apex Forge" value={tokenName} onChange={(e) => setTokenName(e.target.value)} className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981]/50 transition-all font-black text-lg shadow-inner"/>
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Ticker Symbol <span className="text-rose-500">*</span></label>
-              <div className="relative flex flex-col gap-2">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 font-black text-lg">$</span>
-                <input type="text" placeholder="APEX" value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())} className="w-full bg-[#121212] border border-white/5 rounded-xl pl-9 pr-4 py-3.5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981]/50 transition-all font-black text-lg uppercase shadow-inner" />
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-end">
-                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Description</label>
-              </div>
-              <textarea 
-                placeholder="Describe your project's utility and vision... (Note: Excessive financial hype will be sanitized)" 
-                value={description} 
-                onChange={handleDescriptionChange} 
-                rows={4} 
-                className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981]/50 transition-all font-medium text-sm resize-none shadow-inner" 
-              />
-            </div>
-          </div>
+  const resetForge = () => {
+    setTokenName('');
+    setTokenSymbol('');
+    setDescription('');
+    setImagePreview(null);
+    setThumbnailUrl(null);
+    setTwitter('');
+    setTelegram('');
+    setWebsite('');
+    setInitialBuy('');
+    setShowSocials(false);
+    setAcceptedDisclaimer(false);
+    
+    setIsDeploying(false);
+    setDeploySuccess(false);
+    
+    setUploaderKey(prev => prev + 1); 
+  };
 
-          {/* SOCIALS WITH REAL TELEGRAM LOGO */}
-          <div className="flex flex-col bg-[#121212] border border-white/5 rounded-xl overflow-hidden shadow-inner">
-            <button onClick={() => setShowSocials(!showSocials)} className="w-full px-4 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors cursor-pointer">
-              <span className="text-sm font-bold text-zinc-300 flex items-center gap-2">
-                <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                Add Social Links (Optional)
-              </span>
-              <svg className={`w-4 h-4 text-zinc-500 transition-transform duration-300 ${showSocials ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-            </button>
-            {showSocials && (
-              <div className="p-4 pt-0 flex flex-col gap-3 border-t border-white/5 animate-fadeIn">
-                <div className="flex items-center bg-[#050505] border border-white/5 rounded-lg overflow-hidden focus-within:border-[#089981]/50 transition-colors shadow-inner">
-                  <span className="pl-3 pr-2 text-zinc-500 font-black">𝕏</span>
-                  <input type="text" placeholder="(Optional) Twitter Link" value={twitter} onChange={(e) => setTwitter(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
-                </div>
-                
-                {/* Real Telegram SVG Logo */}
-                <div className="flex items-center bg-[#050505] border border-white/5 rounded-lg overflow-hidden focus-within:border-[#089981]/50 transition-colors shadow-inner">
-                  <span className="pl-3 pr-2 text-zinc-400 flex items-center justify-center">
-                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.481-.428-.009-1.252-.242-1.865-.442-752-.245-1.349-.375-1.297-.789.027-.216.324-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.14.12.098.153.228.166.32.011.082.025.269.011.415z"/>
-                    </svg>
-                  </span>
-                  <input type="text" placeholder="(Optional) Telegram Link" value={telegram} onChange={(e) => setTelegram(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
-                </div>
+  return (
+    <div className="flex flex-col w-full h-full bg-[#050505] text-white font-sans overflow-hidden relative select-none">
+      
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
 
-                <div className="flex items-center bg-[#050505] border border-white/5 rounded-lg overflow-hidden focus-within:border-[#089981]/50 transition-colors shadow-inner">
-                  <span className="pl-3 pr-2 text-zinc-500 font-black">🌐</span>
-                  <input type="text" placeholder="(Optional) Website URL" value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
-                </div>
-              </div>
-            )}
-          </div>
+      {/* --- PINNED HEADER --- */}
+      <header className="flex-none z-40 bg-[#050505]/95 backdrop-blur-md px-4 py-4 border-b border-white/[0.04] flex items-center justify-center shadow-md">
+        <h1 className="text-xl font-black tracking-wide text-white uppercase flex items-center gap-2">
+          <svg viewBox="0 0 100 100" className="w-5 h-5 text-[#089981]" fill="currentColor">
+            <path d="M 50 10 L 10 90 L 30 90 L 50 45 L 70 90 L 90 90 Z" fill="#FFFFFF" />
+            <path d="M 50 45 C 35 70, 35 85, 50 85 C 65 85, 65 70, 50 45 Z" fill="#089981" />
+          </svg>
+          The Forge
+        </h1>
+      </header>
 
-          {/* ANTI-BOT PROTECTION CARD */}
-          <div className="bg-gradient-to-br from-[#121212] to-[#0A0A0A] border border-[#089981]/30 rounded-3xl p-6 shadow-[0_0_30px_rgba(8,153,129,0.05)] relative overflow-hidden group">
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#089981]/10 rounded-full blur-3xl group-hover:bg-[#089981]/20 transition-colors"></div>
-            
-            <div className="flex justify-between items-center border-b border-white/5 pb-3 mb-5 relative z-10">
-              <h3 className="text-[11px] font-black text-[#089981] uppercase tracking-widest flex items-center gap-2">⚡ Initial Snipe</h3>
-              <span className="text-[9px] font-mono text-zinc-500 bg-black/50 px-2 py-1 rounded">ANTI-BOT PROTECTION</span>
-            </div>
-            
-            <p className="text-xs text-zinc-400 font-medium mb-5 leading-relaxed relative z-10">
-              Secure the lowest entry price at block 0. Choose how much SOL to inject instantly upon contract deployment to prevent sniper bots from front-running you.
-            </p>
-            
-            <div className="flex items-center bg-[#050505] border border-white/10 rounded-2xl px-5 py-2 focus-within:border-[#089981]/80 transition-colors shadow-inner relative z-10">
-               <input type="text" inputMode="decimal" placeholder="0.00" value={initialBuy} onChange={handleInitialBuyChange} className="w-full bg-transparent text-4xl font-black text-white outline-none py-3 placeholder-zinc-700 font-mono" />
-               <div className="flex flex-col items-end shrink-0">
-                 <span className="text-lg font-black text-[#089981]">SOL</span>
-               </div>
-            </div>
-            
-            <div className="flex gap-2 mt-4 w-full relative z-10">
-               {['0.5', '1.0', '2.5', '5.0'].map(amt => (
-                 <button key={amt} onClick={() => setInitialBuy(amt)} className="flex-1 py-3 bg-white/5 hover:bg-[#089981]/20 rounded-xl text-xs font-black text-zinc-300 hover:text-[#089981] transition-colors border border-white/5 active:scale-95 shadow-sm cursor-pointer">{amt}</button>
-               ))}
-            </div>
+      {/* --- SCROLLABLE MIDDLE CONTAINER --- */}
+      <div className={`flex-1 overflow-y-auto no-scrollbar px-4 pt-6 pb-72 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
+        <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
+          
+          <div className="flex flex-col gap-1">
+            <h2 className="text-3xl font-black text-white tracking-tight">Deploy Asset</h2>
+            <p className="text-[13px] text-zinc-400 font-medium leading-relaxed">Create and launch a fair-launch token on Solana Devnet. Liquidity is securely locked.</p>
+          </div>
 
-            <div className="mt-6 pt-5 border-t border-white/5 relative z-10">
-              <div className="flex justify-between text-[9px] font-black uppercase text-zinc-600 mb-2">
-                <span>Curve Progress</span>
-                <span>{initialBuy ? ((parseFloat(initialBuy)/85)*100).toFixed(1) : '0.0'}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-[#050505] rounded-full overflow-hidden">
-                <div className="h-full bg-[#089981] transition-all duration-300" style={{width: `${initialBuy ? ((parseFloat(initialBuy)/85)*100) : 0}%`}}></div>
-              </div>
-            </div>
-          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Asset Media (Video/GIF/Image) <span className="text-rose-500">*</span></label>
+            <MediaUploader key={uploaderKey} onMediaSelected={handleMediaSelected} />
+          </div>
 
-          <div className="flex items-start gap-3 bg-[#121212] border border-white/10 p-4 rounded-xl mt-2 mb-2">
-            <input 
-              type="checkbox" 
-              checked={acceptedDisclaimer} 
-              onChange={(e) => setAcceptedDisclaimer(e.target.checked)} 
-              className="mt-1 min-w-[20px] min-h-[20px] accent-[#089981] cursor-pointer"
-            />
-            <p className="text-[10px] text-zinc-400 font-medium leading-relaxed">
-              <strong className="text-white">Mandatory Disclosure:</strong> I acknowledge that assets deployed on Apex Forge are community digital art concepts intended strictly for entertainment and social engagement. They hold no intrinsic financial value and do not constitute investment products.
-            </p>
-          </div>
+          {/* TOKEN DETAILS */}
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Token Name <span className="text-rose-500">*</span></label>
+              <input type="text" placeholder="e.g. Apex Forge" value={tokenName} onChange={(e) => setTokenName(e.target.value)} className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981]/50 transition-all font-black text-lg shadow-inner"/>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Ticker Symbol <span className="text-rose-500">*</span></label>
+              <div className="relative flex flex-col gap-2">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 font-black text-lg">$</span>
+                <input type="text" placeholder="APEX" value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())} className="w-full bg-[#121212] border border-white/5 rounded-xl pl-9 pr-4 py-3.5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981]/50 transition-all font-black text-lg uppercase shadow-inner" />
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-end">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Description</label>
+              </div>
+              <textarea 
+                placeholder="Describe your project's utility and vision... (Note: Excessive financial hype will be sanitized)" 
+                value={description} 
+                onChange={handleDescriptionChange} 
+                rows={4} 
+                className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981]/50 transition-all font-medium text-sm resize-none shadow-inner" 
+              />
+            </div>
+          </div>
 
-        </div>
-      </div>
+          {/* SOCIALS WITH REAL TELEGRAM LOGO */}
+          <div className="flex flex-col bg-[#121212] border border-white/5 rounded-xl overflow-hidden shadow-inner">
+            <button onClick={() => setShowSocials(!showSocials)} className="w-full px-4 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors cursor-pointer">
+              <span className="text-sm font-bold text-zinc-300 flex items-center gap-2">
+                <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                Add Social Links (Optional)
+              </span>
+              <svg className={`w-4 h-4 text-zinc-500 transition-transform duration-300 ${showSocials ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            {showSocials && (
+              <div className="p-4 pt-0 flex flex-col gap-3 border-t border-white/5 animate-fadeIn">
+                <div className="flex items-center bg-[#050505] border border-white/5 rounded-lg overflow-hidden focus-within:border-[#089981]/50 transition-colors shadow-inner">
+                  <span className="pl-3 pr-2 text-zinc-500 font-black">𝕏</span>
+                  <input type="text" placeholder="(Optional) Twitter Link" value={twitter} onChange={(e) => setTwitter(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
+                </div>
+                
+                <div className="flex items-center bg-[#050505] border border-white/5 rounded-lg overflow-hidden focus-within:border-[#089981]/50 transition-colors shadow-inner">
+                  <span className="pl-3 pr-2 text-zinc-400 flex items-center justify-center">
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.481-.428-.009-1.252-.242-1.865-.442-752-.245-1.349-.375-1.297-.789.027-.216.324-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.14.12.098.153.228.166.32.011.082.025.269.011.415z"/>
+                    </svg>
+                  </span>
+                  <input type="text" placeholder="(Optional) Telegram Link" value={telegram} onChange={(e) => setTelegram(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
+                </div>
 
-      {/* --- PINNED BOTTOM ACTION BAR --- */}
-      {!isDeploying && (
-        <div className="absolute bottom-[90px] md:bottom-0 left-0 right-0 z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.9)]">
-          <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
-            
-            <div className="flex flex-col shrink-0">
-              <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Network Cost</span>
-              <span className="text-sm font-black text-white font-mono">0.05 SOL</span>
-            </div>
+                <div className="flex items-center bg-[#050505] border border-white/5 rounded-lg overflow-hidden focus-within:border-[#089981]/50 transition-colors shadow-inner">
+                  <span className="pl-3 pr-2 text-zinc-500 font-black">🌐</span>
+                  <input type="text" placeholder="(Optional) Website URL" value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
+                </div>
+              </div>
+            )}
+          </div>
 
-            <button 
-              onClick={startMockDeployment} 
-              className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(8,153,129,0.3)] ${
-                acceptedDisclaimer 
-                  ? 'bg-[#089981] hover:bg-[#06806b] text-white active:scale-95 cursor-pointer' 
-                  : 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50'
-              }`}
-            >
-              Initialize Contract 🚀
-            </button>
-          </div>
-        </div>
-      )}
+          {/* ANTI-BOT PROTECTION CARD */}
+          <div className="bg-gradient-to-br from-[#121212] to-[#0A0A0A] border border-[#089981]/30 rounded-3xl p-6 shadow-[0_0_30px_rgba(8,153,129,0.05)] relative overflow-hidden group">
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#089981]/10 rounded-full blur-3xl group-hover:bg-[#089981]/20 transition-colors"></div>
+            
+            <div className="flex justify-between items-center border-b border-white/5 pb-3 mb-5 relative z-10">
+              <h3 className="text-[11px] font-black text-[#089981] uppercase tracking-widest flex items-center gap-2">⚡ Initial Snipe</h3>
+              <span className="text-[9px] font-mono text-zinc-500 bg-black/50 px-2 py-1 rounded">ANTI-BOT PROTECTION</span>
+            </div>
+            
+            <p className="text-xs text-zinc-400 font-medium mb-5 leading-relaxed relative z-10">
+              Secure the lowest entry price at block 0. Choose how much SOL to inject instantly upon contract deployment to prevent sniper bots from front-running you.
+            </p>
+            
+            <div className="flex items-center bg-[#050505] border border-white/10 rounded-2xl px-5 py-2 focus-within:border-[#089981]/80 transition-colors shadow-inner relative z-10">
+               <input type="text" inputMode="decimal" placeholder="0.00" value={initialBuy} onChange={handleInitialBuyChange} className="w-full bg-transparent text-4xl font-black text-white outline-none py-3 placeholder-zinc-700 font-mono" />
+               <div className="flex flex-col items-end shrink-0">
+                 <span className="text-lg font-black text-[#089981]">SOL</span>
+               </div>
+            </div>
+            
+            <div className="flex gap-2 mt-4 w-full relative z-10">
+               {['0.5', '1.0', '2.5', '5.0'].map(amt => (
+                 <button key={amt} onClick={() => setInitialBuy(amt)} className="flex-1 py-3 bg-white/5 hover:bg-[#089981]/20 rounded-xl text-xs font-black text-zinc-300 hover:text-[#089981] transition-colors border border-white/5 active:scale-95 shadow-sm cursor-pointer">{amt}</button>
+               ))}
+            </div>
 
-      {/* --- LIVE SUPPORT CHAT WIDGET --- */}
-      {!isDeploying && (
-        <div 
-          onClick={() => alert("Connecting to live Forge Support Agent...")}
-          className="absolute right-4 bottom-[170px] md:bottom-24 z-50 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
-        >
-          <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-        </div>
-      )}
+            <div className="mt-6 pt-5 border-t border-white/5 relative z-10">
+              <div className="flex justify-between text-[9px] font-black uppercase text-zinc-600 mb-2">
+                <span>Curve Progress</span>
+                <span>{initialBuy ? ((parseFloat(initialBuy)/85)*100).toFixed(1) : '0.0'}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-[#050505] rounded-full overflow-hidden">
+                <div className="h-full bg-[#089981] transition-all duration-300" style={{width: `${initialBuy ? ((parseFloat(initialBuy)/85)*100) : 0}%`}}></div>
+              </div>
+            </div>
+          </div>
 
-      {/* --- COMPILATION TERMINAL --- */}
-      {isDeploying && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-lg bg-[#0A0A0A] border border-[#089981]/40 rounded-xl overflow-hidden shadow-[0_0_80px_rgba(8,153,129,0.15)] flex flex-col relative">
-            
-            {!deploySuccess && (
-              <button onClick={resetForge} className="absolute top-3 right-4 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-400 transition-colors z-20 cursor-pointer">
-                Abort
-              </button>
-            )}
+          <div className="flex items-start gap-3 bg-[#121212] border border-white/10 p-4 rounded-xl mt-2 mb-2">
+            <input 
+              type="checkbox" 
+              checked={acceptedDisclaimer} 
+              onChange={(e) => setAcceptedDisclaimer(e.target.checked)} 
+              className="mt-1 min-w-[20px] min-h-[20px] accent-[#089981] cursor-pointer"
+            />
+            <p className="text-[10px] text-zinc-400 font-medium leading-relaxed">
+              <strong className="text-white">Mandatory Disclosure:</strong> I acknowledge that assets deployed on Apex Forge are community digital art concepts intended strictly for entertainment and social engagement. They hold no intrinsic financial value and do not constitute investment products.
+            </p>
+          </div>
 
-            <div className="bg-[#121212] px-4 py-3 border-b border-white/5 flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-rose-500/80"></div>
-              <div className="w-3 h-3 rounded-full bg-amber-500/80"></div>
-              <div className="w-3 h-3 rounded-full bg-[#089981]/80"></div>
-              <span className="ml-2 text-[10px] font-mono font-bold text-zinc-500">root@apex-forge: ~/deploy/${tokenSymbol || 'unknown'}</span>
-            </div>
+        </div>
+      </div>
 
-            <div className="p-6 font-mono text-xs sm:text-sm h-64 overflow-y-auto flex flex-col gap-2 relative">
-              {!deploySuccess ? (
-                <>
-                  {deploymentStages.slice(0, deploymentStep).map((stage, idx) => (
-                    <div key={idx} className="text-zinc-500 flex items-center gap-2 animate-fadeIn">
-                      <span className="text-[#089981]">✓</span> {stage.text.replace('> ', '')}
-                    </div>
-                  ))}
-                  
-                  {deploymentStep < deploymentStages.length && (
-                    <div className="text-[#089981] flex items-center gap-2">
-                      <span className="animate-spin text-white">⟳</span> {deploymentStages[deploymentStep].text.replace('> ', '')}
-                      <span className="animate-pulse block w-2 h-4 bg-[#089981] ml-1"></span>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center animate-fadeIn gap-4">
-                  <div className="w-16 h-16 bg-[#089981]/20 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(8,153,129,0.5)]">
-                    <svg className="w-8 h-8 text-[#089981]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </div>
-                  <h3 className="text-xl font-black uppercase text-white tracking-widest">Contract Live</h3>
-                  <div className="bg-black border border-white/10 px-4 py-2 rounded-lg">
-                    <span className="text-[#089981] font-bold select-all">{mockTokenAddress}</span>
-                  </div>
-                  <button onClick={resetForge} className="mt-4 px-6 py-3 bg-[#089981] text-black font-black uppercase tracking-widest text-xs rounded-lg hover:bg-[#06806b] transition-colors cursor-pointer">
-                    Deploy Another
-                  </button>
-                </div>
-              )}
-            </div>
+      {/* --- PINNED BOTTOM ACTION BAR --- */}
+      {!isDeploying && (
+        <div className="absolute bottom-[90px] md:bottom-0 left-0 right-0 z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.9)]">
+          <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+            
+            <div className="flex flex-col shrink-0">
+              <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Network Cost</span>
+              <span className="text-sm font-black text-white font-mono">~0.002 SOL</span>
+            </div>
 
-            {!deploySuccess && (
-              <div className="h-1 w-full bg-[#121212]">
-                <div className="h-full bg-[#089981] transition-all duration-300" style={{ width: `${(deploymentStep / deploymentStages.length) * 100}%` }}></div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+            <button 
+              onClick={handleRealDeployment} 
+              className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(8,153,129,0.3)] ${
+                acceptedDisclaimer 
+                  ? 'bg-[#089981] hover:bg-[#06806b] text-white active:scale-95 cursor-pointer' 
+                  : 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50'
+              }`}
+            >
+              Initialize Contract 🚀
+            </button>
+          </div>
+        </div>
+      )}
 
-    </div>
-  );
+      {/* --- LIVE SUPPORT CHAT WIDGET --- */}
+      {!isDeploying && (
+        <div 
+          onClick={() => alert("Connecting to live Forge Support Agent...")}
+          className="absolute right-4 bottom-[170px] md:bottom-24 z-50 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
+        >
+          <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+        </div>
+      )}
+
+      {/* --- REAL DEPLOYMENT TERMINAL --- */}
+      {isDeploying && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-lg bg-[#0A0A0A] border border-[#089981]/40 rounded-xl overflow-hidden shadow-[0_0_80px_rgba(8,153,129,0.15)] flex flex-col relative">
+            
+            {!deploySuccess && (
+              <button onClick={resetForge} className="absolute top-3 right-4 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-400 transition-colors z-20 cursor-pointer">
+                Cancel
+              </button>
+            )}
+
+            <div className="bg-[#121212] px-4 py-3 border-b border-white/5 flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-rose-500/80"></div>
+              <div className="w-3 h-3 rounded-full bg-amber-500/80"></div>
+              <div className="w-3 h-3 rounded-full bg-[#089981]/80"></div>
+              <span className="ml-2 text-[10px] font-mono font-bold text-zinc-500">root@apex-forge: ~/deploy/${tokenSymbol || 'unknown'}</span>
+            </div>
+
+            <div className="p-6 font-mono text-xs sm:text-sm h-64 flex flex-col items-center justify-center gap-4 text-center">
+              {!deploySuccess ? (
+                <>
+                  <div className="w-12 h-12 border-4 border-[#089981]/20 border-t-[#089981] rounded-full animate-spin"></div>
+                  <p className="text-[#089981] font-bold text-sm animate-pulse">{statusMessage}</p>
+                  <p className="text-[10px] text-zinc-500">Please review and confirm the signature popup in Phantom.</p>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center animate-fadeIn gap-4">
+                  <div className="w-16 h-16 bg-[#089981]/20 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(8,153,129,0.5)]">
+                    <svg className="w-8 h-8 text-[#089981]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <h3 className="text-xl font-black uppercase text-white tracking-widest">Contract Live On-Chain</h3>
+                  <div className="bg-black border border-white/10 px-4 py-2 rounded-lg max-w-xs overflow-hidden">
+                    <span className="text-[#089981] font-bold text-xs select-all break-all">{deployedTokenAddress}</span>
+                  </div>
+                  <button onClick={resetForge} className="mt-4 px-6 py-3 bg-[#089981] text-black font-black uppercase tracking-widest text-xs rounded-lg hover:bg-[#06806b] transition-colors cursor-pointer">
+                    Deploy Another
+                  </button>
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
 }
