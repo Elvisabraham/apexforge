@@ -48,7 +48,7 @@ export default function Launch({ onForgeSuccess }) {
 
   // 🚀 REAL ON-CHAIN DEPLOYMENT HANDLER
   const handleRealDeployment = async () => {
-    // 1. Check form inputs
+    // 1. Input Guardrails
     if (!tokenName || !tokenSymbol) {
       alert("⚠️ Token Name and Symbol are required to forge an asset.");
       return;
@@ -62,7 +62,7 @@ export default function Launch({ onForgeSuccess }) {
       return;
     }
 
-    // 2. Check Wallet Connection
+    // 2. Wallet Connection Guardrail
     if (!connected || !publicKey || !wallet) {
       alert("🔒 Wallet Not Connected! Please connect Phantom to deploy an on-chain contract.");
       return;
@@ -76,91 +76,81 @@ export default function Launch({ onForgeSuccess }) {
     try {
       setIsDeploying(true);
       setDeploySuccess(false);
-      setStatusMessage("> Generating token mint & deriving accounts...");
+      setStatusMessage("> Initializing Anchor Provider & Connection...");
 
-      const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+      // 3. Single, Clean Connection & Provider Setup
+      const connection = new Connection("https://api.devnet.solana.com", "confirmed");
       const provider = new AnchorProvider(connection, wallet, {
-        preflightCommitment: 'confirmed',
+        preflightCommitment: "confirmed",
       });
 
-      // 3. GENERATE FRESH MINT & BONDING CURVE ACCOUNTS
+      // 4. Clean IDL Definition
+      const cleanIdl = {
+        address: PROGRAM_ID.toBase58(),
+        metadata: { name: "apex_forge", version: "0.1.0" },
+        instructions: [
+          {
+            name: "createToken",
+            discriminator: [0, 1, 2, 3, 4, 5, 6, 7],
+            accounts: [
+              { name: "bondingCurve", writable: true, signer: false },
+              { name: "mint", writable: true, signer: true },
+              { name: "creator", writable: true, signer: true },
+              { name: "systemProgram", writable: false, signer: false },
+              { name: "tokenProgram", writable: false, signer: false },
+              { name: "rent", writable: false, signer: false }
+            ],
+            args: [
+              { name: "name", type: "string" },
+              { name: "symbol", type: "string" },
+              { name: "uri", type: "string" }
+            ]
+          }
+        ],
+        accounts: [],
+        types: [],
+        errors: []
+      };
+
+      // 5. Construct Anchor Program
+      const program = new Program(cleanIdl, provider);
+
+      setStatusMessage("> Generating token mint & deriving accounts...");
+
+      // 6. Key Generation & PDA Derivation
       const mintKeypair = Keypair.generate();
       const mintPublicKey = mintKeypair.publicKey;
 
-      // ❌ OLD (Fails in Vite browser build without polyfill)
-// const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
-//   [Buffer.from("bonding-curve"), mintPublicKey.toBuffer()],
-//   PROGRAM_ID
-// );
+      const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
+        [new TextEncoder().encode("bonding-curve"), mintPublicKey.toBuffer()],
+        PROGRAM_ID
+      );
 
-// 🚀 Native browser seed encoding (works 100% without Node's Buffer)
-const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
-  [new TextEncoder().encode("bonding-curve"), mintPublicKey.toBuffer()],
-  PROGRAM_ID
-);
+      // 7. Sanitize Strings (Prevents Borsh Buffer Overrun)
+      const safeName = tokenName.trim().slice(0, 32);
+      const safeSymbol = tokenSymbol.trim().toUpperCase().slice(0, 10);
+      let safeUri = thumbnailUrl || imagePreview || "https://apexforge.app/metadata.json";
 
-     // 1. Create Connection & Provider
-const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
-const provider = new AnchorProvider(connection, wallet, {
-  preflightCommitment: 'confirmed',
-});
+      if (safeUri.startsWith("data:") || safeUri.length > 128) {
+        safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
+      }
 
-// 2. Define Clean IDL
-const cleanIdl = {
-  address: PROGRAM_ID.toBase58(),
-  metadata: { name: "apex_forge", version: "0.1.0" },
-  instructions: [
-    {
-      name: "createToken",
-      discriminator: [0, 1, 2, 3, 4, 5, 6, 7],
-      accounts: [
-        { name: "bondingCurve", writable: true, signer: false },
-        { name: "mint", writable: true, signer: true },
-        { name: "creator", writable: true, signer: true },
-        { name: "systemProgram", writable: false, signer: false },
-        { name: "tokenProgram", writable: false, signer: false },
-        { name: "rent", writable: false, signer: false }
-      ],
-      args: [
-        { name: "name", type: "string" },
-        { name: "symbol", type: "string" },
-        { name: "uri", type: "string" }
-      ]
-    }
-  ],
-  accounts: [],
-  types: [],
-  errors: []
-};
+      setStatusMessage("> Awaiting Phantom signature for contract creation...");
 
-// 🚀 3. ADD THIS LINE TO DEFINE PROGRAM:
-const program = new Program(cleanIdl, provider);
+      // 8. Execute On-Chain Instruction
+      const txSignature = await program.methods
+        .createToken(safeName, safeSymbol, safeUri)
+        .accounts({
+          bondingCurve: bondingCurvePDA,
+          mint: mintPublicKey,
+          creator: publicKey,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          rent: SYSVAR_RENT_PUBKEY,
+        })
+        .signers([mintKeypair])
+        .rpc();
 
-      // 🚀 SANITIZE INPUTS TO PREVENT BORSH OVERFLOW
-const safeName = tokenName.slice(0, 32);      // Anchor Max String limit for Name
-const safeSymbol = tokenSymbol.slice(0, 10);  // Anchor Max String limit for Symbol
-
-let safeUri = thumbnailUrl || imagePreview || "https://apexforge.app/metadata.json";
-if (safeUri.startsWith("data:") || safeUri.length > 128) {
-  // Pass a safe length URL on-chain
-  safeUri = `https://apexforge.app/metadata/${tokenSymbol.toLowerCase()}.json`;
-}
-
-setStatusMessage("> Awaiting Phantom signature for contract creation...");
-
-// 🚀 EXECUTE INSTRUCTION WITH SANITIZED ARGS
-const txSignature = await program.methods
-  .createToken(safeName, safeSymbol.toUpperCase(), safeUri)
-  .accounts({
-    bondingCurve: bondingCurvePDA,
-    mint: mintPublicKey,
-    creator: publicKey,
-    systemProgram: SystemProgram.programId,
-    tokenProgram: TOKEN_PROGRAM_ID,
-    rent: SYSVAR_RENT_PUBKEY,
-  })
-  .signers([mintKeypair])
-  .rpc();
       setStatusMessage("> Transaction confirmed on-chain! Syncing database...");
       console.log("On-Chain Mint Signature:", txSignature);
 
@@ -169,14 +159,14 @@ const txSignature = await program.methods
 
       const newToken = {
         id: Date.now().toString(),
-        name: tokenName,
-        symbol: tokenSymbol.toUpperCase(),
+        name: safeName,
+        symbol: safeSymbol,
         description: description, 
         links: { twitter, telegram, website },
         mintAddress: mintPublicKey.toBase58(),
         txHash: txSignature,
         creatorAddress: connectedAddress,
-        imagePreview: metadataUrl, 
+        imagePreview: safeUri, 
         videoUrl: mediaType === 'video' ? 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-code-31910-large.mp4' : null, 
         mediaType: mediaType, 
         icon: '🔥', 
@@ -188,7 +178,7 @@ const txSignature = await program.methods
         progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
       };
 
-      // 5. SYNC TO SUPABASE
+      // 9. Sync to Supabase
       if (supabase) {
         try {
           await supabase.from('tokens').insert([
