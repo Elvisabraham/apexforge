@@ -30,7 +30,7 @@ export default function SolanaProvider({ children }) {
   );
 }
 
-// 🚀 CRASH-PROOF ANCHOR HOOK
+// 🚀 ANCHOR PROGRAM HOOK (COMPATIBLE WITH SOLANA PLAYGROUND IDLs)
 export const useApexForgeProgram = () => {
   const wallet = useAnchorWallet();
 
@@ -43,20 +43,30 @@ export const useApexForgeProgram = () => {
         preflightCommitment: 'confirmed',
       });
 
-      const rawProgramId = import.meta.env.VITE_PROGRAM_ID || idl?.address || FALLBACK_PROGRAM_ID;
+      const rawProgramId = import.meta.env.VITE_PROGRAM_ID || FALLBACK_PROGRAM_ID;
       const programId = new PublicKey(rawProgramId.trim());
 
-      const formattedIdl = {
+      // Format IDL to ensure program ID and accounts map cleanly
+      const normalizedIdl = {
         ...idl,
-        address: programId.toBase58()
+        address: programId.toBase58(),
+        metadata: {
+          address: programId.toBase58(),
+          ...(idl.metadata || {})
+        }
       };
 
-      console.log("Anchor Initialized Successfully for Program:", programId.toBase58());
-      
-      return new Program(formattedIdl, programId, provider);
+      console.log("⚡ Anchor Program Context Initialized:", programId.toBase58());
+
+      // Fallback constructor strategy to bridge version mismatches
+      try {
+        return new Program(normalizedIdl, provider);
+      } catch (e1) {
+        return new Program(normalizedIdl, programId, provider);
+      }
 
     } catch (err) {
-      console.error("🔴 CRITICAL: Failed to construct Anchor Program instance:", err);
+      console.error("🔴 Anchor Provider Error:", err);
       return null;
     }
   }, [wallet]);
