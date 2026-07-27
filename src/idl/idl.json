@@ -38,8 +38,8 @@
       "type": {
         "kind": "struct",
         "fields": [
-          { "name": "creator", "type": "publicKey" },
-          { "name": "mint", "type": "publicKey" },
+          { "name": "creator", "type": "pubkey" },
+          { "name": "mint", "type": "pubkey" },
           { "name": "virtualSolReserves", "type": "u64" },
           { "name": "virtualTokenReserves", "type": "u64" },
           { "name": "realSolReserves", "type": "u64" },
@@ -55,8 +55,8 @@
       "type": {
         "kind": "struct",
         "fields": [
-          { "name": "creator", "type": "publicKey" },
-          { "name": "mint", "type": "publicKey" },
+          { "name": "creator", "type": "pubkey" },
+          { "name": "mint", "type": "pubkey" },
           { "name": "virtualSolReserves", "type": "u64" },
           { "name": "virtualTokenReserves", "type": "u64" },
           { "name": "realSolReserves", "type": "u64" },
