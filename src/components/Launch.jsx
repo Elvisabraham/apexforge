@@ -93,24 +93,27 @@ export default function Launch({ onForgeSuccess }) {
       }
 
       // 4. SHA-256 Discriminator for "global:create_token"
-      const discriminator = Buffer.from([84, 52, 222, 172, 116, 206, 137, 238]);
+const discriminator = Buffer.from([84, 52, 222, 172, 116, 206, 137, 238]);
 
-      // 5. Borsh encode string helper
-      const encodeString = (str) => {
-        const buf = Buffer.from(str, 'utf8');
-        const lenBuf = Buffer.alloc(4);
-        lenBuf.writeUInt32LE(buf.length, 0);
-        return Buffer.concat([lenBuf, buf]);
-      };
+// Encode arguments (string length prefix + string bytes)
+const encodeString = (str) => {
+  const buf = Buffer.from(str, 'utf-8');
+  const len = Buffer.alloc(4);
+  len.writeUInt32LE(buf.length, 0);
+  return Buffer.concat([len, buf]);
+};
 
-      const data = Buffer.concat([
-        discriminator,
-        encodeString(safeName),
-        encodeString(safeSymbol),
-        encodeString(safeUri)
-      ]);
+const nameBuf = encodeString(tokenName);
+const symbolBuf = encodeString(tokenSymbol);
+const uriBuf = encodeString(tokenUri || "https://example.com/meta.json");
 
-      // 6. Build Standard Web3 Transaction Instruction
+const instructionData = Buffer.concat([
+  discriminator,
+  nameBuf,
+  symbolBuf,
+  uriBuf
+]);
+
 const createTokenIx = new TransactionInstruction({
   programId: PROGRAM_ID,
   keys: [
@@ -121,7 +124,7 @@ const createTokenIx = new TransactionInstruction({
     { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
     { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
   ],
-  data: data,
+  data: instructionData,
 });
 
       setStatusMessage("> Awaiting Phantom signature...");
