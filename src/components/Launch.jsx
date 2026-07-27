@@ -96,7 +96,6 @@ if (safeUri.startsWith("data:") || safeUri.length > 128) {
 // 4. SHA-256 Discriminator for "global:create_token"
 const discriminator = Buffer.from([84, 52, 222, 172, 116, 206, 137, 238]);
 
-// String Buffer Encoder Helper
 const encodeString = (str) => {
   const buf = Buffer.from(str, 'utf-8');
   const len = Buffer.alloc(4);
@@ -104,18 +103,21 @@ const encodeString = (str) => {
   return Buffer.concat([len, buf]);
 };
 
-// Encode parameters using safeUri (NOT tokenUri)
 const nameBuf = encodeString(safeName);
 const symbolBuf = encodeString(safeSymbol);
 const uriBuf = encodeString(safeUri);
 
-const data = Buffer.concat([
+// Define instructionData here
+const instructionData = Buffer.concat([
   discriminator,
   nameBuf,
   symbolBuf,
   uriBuf
 ]);
 
+// ... steps 5 PDA derivations ...
+
+// 6. Build Standard Web3 Transaction Instruction
 const createTokenIx = new TransactionInstruction({
   programId: PROGRAM_ID,
   keys: [
@@ -126,7 +128,7 @@ const createTokenIx = new TransactionInstruction({
     { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
     { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
   ],
-  data: instructionData,
+  data: instructionData, // <--- Now perfectly matched!
 });
 
       setStatusMessage("> Awaiting Phantom signature...");
