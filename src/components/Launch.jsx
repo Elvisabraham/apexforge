@@ -84,17 +84,8 @@ export default function Launch({ onForgeSuccess }) {
         preflightCommitment: "confirmed",
       });
 
-      // 4. Sanitize IDL for Anchor v0.30+ Compatibility
-      // Convert legacy string types like "publicKey" -> "pubkey" to prevent fieldLayout error
-      const rawIdlString = JSON.stringify(idl)
-        .replace(/"type"\s*:\s*"publicKey"/g, '"type": "pubkey"')
-        .replace(/"type"\s*:\s*"publicKey"/g, '"type": "pubkey"');
-      
-      const customIdl = JSON.parse(rawIdlString);
-      customIdl.address = PROGRAM_ID.toBase58();
-
-      // 5. Instantiate Anchor Program
-      const program = new Program(customIdl, provider);
+      // 4. Instantiate Anchor Program directly using imported IDL
+      const program = new Program(idl, provider);
 
       setStatusMessage("> Deriving on-chain accounts & keys...");
 

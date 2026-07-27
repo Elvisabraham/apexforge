@@ -6,8 +6,8 @@
     {
       "name": "createToken",
       "accounts": [
-        { "name": "bondingCurve", "isMut": true, "isSigner": true },
-        { "name": "mint", "isMut": true, "isSigner": false },
+        { "name": "bondingCurve", "isMut": true, "isSigner": false },
+        { "name": "mint", "isMut": true, "isSigner": true },
         { "name": "creator", "isMut": true, "isSigner": true },
         { "name": "systemProgram", "isMut": false, "isSigner": false },
         { "name": "tokenProgram", "isMut": false, "isSigner": false },
