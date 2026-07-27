@@ -5,6 +5,14 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { Program, AnchorProvider } from '@coral-xyz/anchor';
 
+// 🚀 IMPORTS FOR MOBILE AND DESKTOP WALLET ADAPTERS
+import {
+  PhantomWalletAdapter,
+  SolflareWalletAdapter,
+  CoinbaseWalletAdapter,
+  TrustWalletAdapter,
+} from '@solana/wallet-adapter-wallets';
+
 import idl from '../idl/idl.json';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
@@ -17,7 +25,16 @@ export default function SolanaProvider({ children }) {
     return 'https://api.devnet.solana.com';
   }, []);
 
-  const wallets = useMemo(() => [], [network]);
+  // 🚀 REGISTER WALLET ADAPTERS FOR MOBILE BROWSERS & EXTENSIONS
+  const wallets = useMemo(
+    () => [
+      new PhantomWalletAdapter(),
+      new SolflareWalletAdapter({ network }),
+      new CoinbaseWalletAdapter(),
+      new TrustWalletAdapter(),
+    ],
+    [network]
+  );
 
   return (
     <ConnectionProvider endpoint={endpoint}>
@@ -30,7 +47,7 @@ export default function SolanaProvider({ children }) {
   );
 }
 
-// 🚀 ANCHOR PROGRAM HOOK (COMPATIBLE WITH SOLANA PLAYGROUND IDLs)
+// 🚀 CRASH-PROOF ANCHOR HOOK
 export const useApexForgeProgram = () => {
   const wallet = useAnchorWallet();
 
@@ -43,27 +60,15 @@ export const useApexForgeProgram = () => {
         preflightCommitment: 'confirmed',
       });
 
-      const rawProgramId = import.meta.env.VITE_PROGRAM_ID || FALLBACK_PROGRAM_ID;
+      const rawProgramId = import.meta.env.VITE_PROGRAM_ID || idl?.address || FALLBACK_PROGRAM_ID;
       const programId = new PublicKey(rawProgramId.trim());
 
-      // Format IDL to ensure program ID and accounts map cleanly
-      const normalizedIdl = {
+      const formattedIdl = {
         ...idl,
         address: programId.toBase58(),
-        metadata: {
-          address: programId.toBase58(),
-          ...(idl.metadata || {})
-        }
       };
 
-      console.log("⚡ Anchor Program Context Initialized:", programId.toBase58());
-
-      // Fallback constructor strategy to bridge version mismatches
-      try {
-        return new Program(normalizedIdl, provider);
-      } catch (e1) {
-        return new Program(normalizedIdl, programId, provider);
-      }
+      return new Program(formattedIdl, programId, provider);
 
     } catch (err) {
       console.error("🔴 Anchor Provider Error:", err);
