@@ -359,7 +359,7 @@ export default function Launch({ onForgeSuccess }) {
             
             <div className="flex flex-col shrink-0">
               <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Network Cost</span>
-              <span className="text-sm font-black text-white font-mono">~0.002 SOL</span>
+              <span className="text-sm font-black text-white font-mono">~0.05 SOL</span>
             </div>
 
             <button 
