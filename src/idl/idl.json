@@ -34,7 +34,7 @@
   ],
   "accounts": [
     {
-      "name": "BondingCurve",
+      "name": "bondingCurve",
       "type": {
         "kind": "struct",
         "fields": [
@@ -51,7 +51,7 @@
   ],
   "types": [
     {
-      "name": "BondingCurve",
+      "name": "bondingCurve",
       "type": {
         "kind": "struct",
         "fields": [
@@ -67,10 +67,6 @@
     }
   ],
   "errors": [
-    {
-      "code": 6000,
-      "name": "CurveComplete",
-      "msg": "Bonding curve is already complete and graduated."
-    }
+    { "code": 6000, "name": "CurveComplete", "msg": "Bonding curve is already complete and graduated." }
   ]
 }
