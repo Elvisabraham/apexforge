@@ -1,17 +1,22 @@
 {
   "address": "4vLUMypMsazY7Xsm56Q1h5wbkT1EBFuvevtmE77SYbfJ",
-  "version": "0.1.0",
-  "name": "apex_forge",
+  "metadata": {
+    "name": "apex_forge",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Apex Forge Smart Contract"
+  },
   "instructions": [
     {
       "name": "createToken",
+      "discriminator": [0, 1, 2, 3, 4, 5, 6, 7],
       "accounts": [
-        { "name": "bondingCurve", "isMut": true, "isSigner": true },
-        { "name": "mint", "isMut": true, "isSigner": false },
-        { "name": "creator", "isMut": true, "isSigner": true },
-        { "name": "systemProgram", "isMut": false, "isSigner": false },
-        { "name": "tokenProgram", "isMut": false, "isSigner": false },
-        { "name": "rent", "isMut": false, "isSigner": false }
+        { "name": "bondingCurve", "writable": true, "signer": true },
+        { "name": "mint", "writable": true, "signer": false },
+        { "name": "creator", "writable": true, "signer": true },
+        { "name": "systemProgram", "writable": false, "signer": false },
+        { "name": "tokenProgram", "writable": false, "signer": false },
+        { "name": "rent", "writable": false, "signer": false }
       ],
       "args": [
         { "name": "name", "type": "string" },
@@ -21,11 +26,12 @@
     },
     {
       "name": "buyTokens",
+      "discriminator": [8, 9, 10, 11, 12, 13, 14, 15],
       "accounts": [
-        { "name": "bondingCurve", "isMut": true, "isSigner": false },
-        { "name": "buyer", "isMut": true, "isSigner": true },
-        { "name": "systemProgram", "isMut": false, "isSigner": false },
-        { "name": "tokenProgram", "isMut": false, "isSigner": false }
+        { "name": "bondingCurve", "writable": true, "signer": false },
+        { "name": "buyer", "writable": true, "signer": true },
+        { "name": "systemProgram", "writable": false, "signer": false },
+        { "name": "tokenProgram", "writable": false, "signer": false }
       ],
       "args": [
         { "name": "solAmount", "type": "u64" }
@@ -35,11 +41,17 @@
   "accounts": [
     {
       "name": "BondingCurve",
+      "discriminator": [16, 17, 18, 19, 20, 21, 22, 23]
+    }
+  ],
+  "types": [
+    {
+      "name": "BondingCurve",
       "type": {
         "kind": "struct",
         "fields": [
-          { "name": "creator", "type": "publicKey" },
-          { "name": "mint", "type": "publicKey" },
+          { "name": "creator", "type": "pubkey" },
+          { "name": "mint", "type": "pubkey" },
           { "name": "virtualSolReserves", "type": "u64" },
           { "name": "virtualTokenReserves", "type": "u64" },
           { "name": "realSolReserves", "type": "u64" },
