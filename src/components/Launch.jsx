@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
 import { useWallet, useAnchorWallet } from '@solana/wallet-adapter-react';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { 
+  Connection, 
+  PublicKey, 
+  Keypair, 
+  SystemProgram, 
+  SYSVAR_RENT_PUBKEY 
+} from '@solana/web3.js';
 import { Program, AnchorProvider } from '@coral-xyz/anchor';
+
 import MediaUploader from './MediaUploader'; 
 import { supabase } from './supabaseClient';
 import idl from '../idl/idl.json';
 
+// 🚀 Standard SPL Token Program ID (No npm install required!)
+const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const PROGRAM_ID = new PublicKey('4vLUMypMsazY7Xsm56Q1h5wbkT1EBFuvevtmE77SYbfJ');
 
 export default function Launch({ onForgeSuccess }) {
@@ -118,17 +127,17 @@ export default function Launch({ onForgeSuccess }) {
 
       // 4. EXECUTE INSTRUCTION WITH REQUIRED ACCOUNTS & SIGNERS
       const txSignature = await program.methods
-        .createToken(tokenName, tokenSymbol.toUpperCase(), metadataUrl)
-        .accounts({
-          bondingCurve: bondingCurvePDA,
-          mint: mintPublicKey,
-          creator: publicKey,
-          systemProgram: SystemProgram.programId,
-          tokenProgram: TOKEN_PROGRAM_ID || new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
-          rent: SYSVAR_RENT_PUBKEY,
-        })
-        .signers([mintKeypair]) // Mint must sign as it's a new account
-        .rpc();
+  .createToken(tokenName, tokenSymbol.toUpperCase(), metadataUrl)
+  .accounts({
+    bondingCurve: bondingCurvePDA,
+    mint: mintPublicKey,
+    creator: publicKey,
+    systemProgram: SystemProgram.programId,
+    tokenProgram: TOKEN_PROGRAM_ID, // 👈 Uses the PublicKey constant above
+    rent: SYSVAR_RENT_PUBKEY,
+  })
+  .signers([mintKeypair])
+  .rpc();
 
       setStatusMessage("> Transaction confirmed on-chain! Syncing database...");
       console.log("On-Chain Mint Signature:", txSignature);
