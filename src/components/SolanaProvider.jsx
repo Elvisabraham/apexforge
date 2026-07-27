@@ -44,13 +44,15 @@ export default function SolanaProvider({ children }) {
   );
 }
 
-// 🚀 CRASH-PROOF ANCHOR PROGRAM HOOK (SUPPORTING ANCHOR v0.30+ & LEGACY CONSTRUCTORS)
+// 🚀 DEBUG-READY ANCHOR PROGRAM HOOK
 export const useApexForgeProgram = () => {
   const wallet = useAnchorWallet();
 
   return useMemo(() => {
-    // 1. HARD GUARD: Do not build program if wallet or public key isn't fully connected
-    if (!wallet || !wallet.publicKey) return null;
+    if (!wallet || !wallet.publicKey) {
+      console.log("Anchor Hook: Wallet not connected yet.");
+      return null;
+    }
 
     try {
       const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
@@ -58,15 +60,18 @@ export const useApexForgeProgram = () => {
         preflightCommitment: 'confirmed',
       });
 
-      // 🚀 TRY ANCHOR v0.30+ SYNTAX FIRST, THEN FALL BACK TO CLASSIC SYNTAX
+      console.log("Initializing Program with IDL:", idl?.name || "IDL loaded", "and PROGRAM_ID:", PROGRAM_ID.toBase58());
+
+      // Attempt instantiation
       try {
         return new Program(idl, provider);
       } catch (v30Err) {
+        console.warn("v0.30 syntax failed, trying legacy constructor syntax...", v30Err);
         return new Program(idl, PROGRAM_ID, provider);
       }
 
     } catch (err) {
-      console.error("Failed to construct Anchor Program instance:", err);
+      console.error("🔴 CRITICAL: Failed to construct Anchor Program instance:", err);
       return null;
     }
   }, [wallet]);
