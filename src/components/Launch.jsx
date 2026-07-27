@@ -46,9 +46,8 @@ export default function Launch({ onForgeSuccess }) {
 
   const connectedAddress = publicKey ? publicKey.toBase58() : '';
 
-  // 🚀 REAL ON-CHAIN DEPLOYMENT HANDLER
+  // 🚀 DIRECT ON-CHAIN DEPLOYMENT HANDLER (No Anchor IDL Parsing Bugs)
   const handleRealDeployment = async () => {
-    // 1. Input Guardrails
     if (!tokenName || !tokenSymbol) {
       alert("⚠️ Token Name and Symbol are required to forge an asset.");
       return;
@@ -61,70 +60,90 @@ export default function Launch({ onForgeSuccess }) {
       alert("⚠️ You must acknowledge the disclaimer before launching an asset.");
       return;
     }
-
-    // 2. Wallet Connection Guardrail
     if (!connected || !publicKey || !wallet) {
-      alert("🔒 Wallet Not Connected! Please connect Phantom to deploy an on-chain contract.");
-      return;
-    }
-
-    if (deployedHistory.includes(tokenName.toLowerCase())) {
-      alert(`⚠️ You have already deployed an asset named "${tokenName}". Please choose a unique name.`);
+      alert("🔒 Wallet Not Connected! Please connect Phantom.");
       return;
     }
 
     try {
       setIsDeploying(true);
       setDeploySuccess(false);
-      setStatusMessage("> Initializing Anchor Provider & Connection...");
+      setStatusMessage("> Generating token keys & computing PDA...");
 
-      // 3. Connection & Provider Setup
       const connection = new Connection("https://api.devnet.solana.com", "confirmed");
-      const provider = new AnchorProvider(connection, wallet, {
-        preflightCommitment: "confirmed",
-      });
 
-      // 4. Instantiate Anchor Program directly using imported IDL
-      const program = new Program(idl, provider);
-
-      setStatusMessage("> Deriving on-chain accounts & keys...");
-
-      // 6. Account Generation & PDA Derivation
+      // 1. Generate Fresh Mint Keypair
       const mintKeypair = Keypair.generate();
       const mintPublicKey = mintKeypair.publicKey;
 
+      // 2. Derive Bonding Curve PDA
       const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
         [new TextEncoder().encode("bonding_curve"), mintPublicKey.toBuffer()],
         PROGRAM_ID
       );
 
-      // 7. Sanitize Strings (Prevents Borsh Buffer Overrun)
+      // 3. Prepare Arguments
       const safeName = tokenName.trim().slice(0, 32);
       const safeSymbol = tokenSymbol.trim().toUpperCase().slice(0, 10);
       let safeUri = thumbnailUrl || imagePreview || "https://apexforge.app/metadata.json";
-
       if (safeUri.startsWith("data:") || safeUri.length > 128) {
         safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
       }
 
-      setStatusMessage("> Awaiting Phantom signature for contract creation...");
+      // 4. Calculate Anchor Discriminator for "create_token"
+      // global:create_token discriminator bytes
+      const discriminator = Buffer.from([142, 182, 172, 102, 107, 235, 137, 246]);
 
-      // 8. Execute On-Chain Instruction
-      const txSignature = await program.methods
-        .createToken(safeName, safeSymbol, safeUri)
-        .accounts({
-          bondingCurve: bondingCurvePDA,
-          mint: mintPublicKey,
-          creator: publicKey,
-          systemProgram: SystemProgram.programId,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          rent: SYSVAR_RENT_PUBKEY,
-        })
-        .signers([mintKeypair])
-        .rpc();
+      // 5. Borsh encode instruction data: [discriminator, name, symbol, uri]
+      const encodeString = (str) => {
+        const buf = Buffer.from(str, 'utf8');
+        const lenBuf = Buffer.alloc(4);
+        lenBuf.writeUInt32LE(buf.length, 0);
+        return Buffer.concat([lenBuf, buf]);
+      };
 
-      setStatusMessage("> Transaction confirmed on-chain! Syncing database...");
-      console.log("On-Chain Mint Signature:", txSignature);
+      const data = Buffer.concat([
+        discriminator,
+        encodeString(safeName),
+        encodeString(safeSymbol),
+        encodeString(safeUri)
+      ]);
+
+      // 6. Construct Standard Web3 Transaction Instruction
+      const { Transaction, TransactionInstruction } = await import('@solana/web3.js');
+
+      const createTokenIx = new TransactionInstruction({
+        programId: PROGRAM_ID,
+        keys: [
+          { pubkey: bondingCurvePDA, isSigner: false, isWritable: true },
+          { pubkey: mintPublicKey, isSigner: true, isWritable: true },
+          { pubkey: publicKey, isSigner: true, isWritable: true },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        ],
+        data: data,
+      });
+
+      setStatusMessage("> Awaiting Phantom signature...");
+
+      // 7. Assemble & Send Transaction
+      const tx = new Transaction().add(createTokenIx);
+      tx.feePayer = publicKey;
+      const { blockhash } = await connection.getLatestBlockhash('confirmed');
+      tx.recentBlockhash = blockhash;
+
+      // Partial sign with Mint Keypair
+      tx.partialSign(mintKeypair);
+
+      // Request Phantom signature and broadcast
+      const signedTx = await wallet.signTransaction(tx);
+      const txSignature = await connection.sendRawTransaction(signedTx.serialize());
+
+      setStatusMessage("> Transaction broadcasted! Confirming on-chain...");
+      await connection.confirmTransaction(txSignature, 'confirmed');
+
+      console.log("Success! Tx Signature:", txSignature);
 
       setDeployedTokenAddress(txSignature);
       setDeployedHistory(prev => [...prev, tokenName.toLowerCase()]);
@@ -150,7 +169,6 @@ export default function Launch({ onForgeSuccess }) {
         progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
       };
 
-      // 9. Sync to Supabase
       if (supabase) {
         try {
           await supabase.from('tokens').insert([
