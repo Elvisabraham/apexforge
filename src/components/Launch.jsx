@@ -79,17 +79,19 @@ export default function Launch({ onForgeSuccess }) {
       setStatusMessage("> Initializing Anchor Provider & Connection...");
 
       // 3. Connection & Provider Setup
-const connection = new Connection("https://api.devnet.solana.com", "confirmed");
-const provider = new AnchorProvider(connection, wallet, {
-  preflightCommitment: "confirmed",
-});
+      const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+      const provider = new AnchorProvider(connection, wallet, {
+        preflightCommitment: "confirmed",
+      });
 
-// 4. Construct Anchor Program
-const customIdl = { ...idl, address: PROGRAM_ID.toBase58() };
-const program = new Program(customIdl, provider);
+      // 4. Load Project IDL with Program Address Attached
+      const customIdl = {
+        ...idl,
+        address: PROGRAM_ID.toBase58(),
+      };
 
-      // 5. Construct Anchor Program Instance
-      const program = new Program(cleanIdl, provider);
+      // 5. Instantiate Program ONCE
+      const program = new Program(customIdl, provider);
 
       setStatusMessage("> Deriving on-chain accounts & keys...");
 
