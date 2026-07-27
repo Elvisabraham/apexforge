@@ -110,19 +110,19 @@ export default function Launch({ onForgeSuccess }) {
         encodeString(safeUri)
       ]);
 
-      // 6. Build Web3 Instruction directly using imported TransactionInstruction
-      const createTokenIx = new TransactionInstruction({
-        programId: PROGRAM_ID,
-        keys: [
-          { pubkey: bondingCurvePDA, isSigner: false, isWritable: true },
-          { pubkey: mintPublicKey, isSigner: true, isWritable: true },
-          { pubkey: publicKey, isSigner: true, isWritable: true },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        ],
-        data: data,
-      });
+      // 6. Build Standard Web3 Transaction Instruction
+const createTokenIx = new TransactionInstruction({
+  programId: PROGRAM_ID,
+  keys: [
+    { pubkey: bondingCurvePDA, isSigner: false, isWritable: true },
+    { pubkey: mintPublicKey, isSigner: true, isWritable: true },
+    { pubkey: publicKey, isSigner: true, isWritable: true },
+    { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+  ],
+  data: data,
+});
 
       setStatusMessage("> Awaiting Phantom signature...");
 
