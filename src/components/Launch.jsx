@@ -87,11 +87,17 @@ export default function Launch({ onForgeSuccess }) {
       const mintKeypair = Keypair.generate();
       const mintPublicKey = mintKeypair.publicKey;
 
-      // Derive PDA for bonding curve if your Rust program uses seeds: [b"bonding-curve", mint.key()]
-      const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
-        [Buffer.from("bonding-curve"), mintPublicKey.toBuffer()],
-        PROGRAM_ID
-      );
+      // ❌ OLD (Fails in Vite browser build without polyfill)
+// const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
+//   [Buffer.from("bonding-curve"), mintPublicKey.toBuffer()],
+//   PROGRAM_ID
+// );
+
+// 🚀 NEW (Native Browser Compatible - No Buffer needed!)
+const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
+  [new TextEncoder().encode("bonding-curve"), mintPublicKey.toBuffer()],
+  PROGRAM_ID
+);
 
       const cleanIdl = {
         address: PROGRAM_ID.toBase58(),
