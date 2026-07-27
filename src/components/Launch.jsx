@@ -126,25 +126,31 @@ const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
         errors: []
       };
 
-      const program = new Program(cleanIdl, provider);
+      // 🚀 SANITIZE INPUTS TO PREVENT BORSH OVERFLOW
+const safeName = tokenName.slice(0, 32);      // Anchor Max String limit for Name
+const safeSymbol = tokenSymbol.slice(0, 10);  // Anchor Max String limit for Symbol
 
-      setStatusMessage("> Awaiting Phantom signature for contract creation...");
-      const metadataUrl = thumbnailUrl || imagePreview;
+let safeUri = thumbnailUrl || imagePreview || "https://apexforge.app/metadata.json";
+if (safeUri.startsWith("data:") || safeUri.length > 128) {
+  // Pass a safe length URL on-chain
+  safeUri = `https://apexforge.app/metadata/${tokenSymbol.toLowerCase()}.json`;
+}
 
-      // 4. EXECUTE INSTRUCTION WITH REQUIRED ACCOUNTS & SIGNERS
-      const txSignature = await program.methods
-  .createToken(tokenName, tokenSymbol.toUpperCase(), metadataUrl)
+setStatusMessage("> Awaiting Phantom signature for contract creation...");
+
+// 🚀 EXECUTE INSTRUCTION WITH SANITIZED ARGS
+const txSignature = await program.methods
+  .createToken(safeName, safeSymbol.toUpperCase(), safeUri)
   .accounts({
     bondingCurve: bondingCurvePDA,
     mint: mintPublicKey,
     creator: publicKey,
     systemProgram: SystemProgram.programId,
-    tokenProgram: TOKEN_PROGRAM_ID, // 👈 Uses the PublicKey constant above
+    tokenProgram: TOKEN_PROGRAM_ID,
     rent: SYSVAR_RENT_PUBKEY,
   })
   .signers([mintKeypair])
   .rpc();
-
       setStatusMessage("> Transaction confirmed on-chain! Syncing database...");
       console.log("On-Chain Mint Signature:", txSignature);
 
