@@ -5,7 +5,9 @@ import {
   PublicKey, 
   Keypair, 
   SystemProgram, 
-  SYSVAR_RENT_PUBKEY 
+  SYSVAR_RENT_PUBKEY,
+  Transaction,
+  TransactionInstruction
 } from '@solana/web3.js';
 import { Program, AnchorProvider } from '@coral-xyz/anchor';
 
@@ -90,10 +92,10 @@ export default function Launch({ onForgeSuccess }) {
         safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
       }
 
-      // 4. Correct SHA-256 Discriminator for "global:create_token"
+      // 4. SHA-256 Discriminator for "global:create_token"
       const discriminator = Buffer.from([84, 52, 222, 172, 116, 206, 137, 238]);
 
-      // 5. Borsh encode instruction arguments: [discriminator, name, symbol, uri]
+      // 5. Borsh encode string helper
       const encodeString = (str) => {
         const buf = Buffer.from(str, 'utf8');
         const lenBuf = Buffer.alloc(4);
@@ -108,7 +110,7 @@ export default function Launch({ onForgeSuccess }) {
         encodeString(safeUri)
       ]);
 
-      // 6. Build Standard Web3 Transaction Instruction
+      // 6. Build Web3 Instruction directly using imported TransactionInstruction
       const createTokenIx = new TransactionInstruction({
         programId: PROGRAM_ID,
         keys: [
