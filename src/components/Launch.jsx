@@ -53,7 +53,7 @@ export default function Launch({ onForgeSuccess }) {
       return;
     }
 
-    // 2. Check Wallet
+    // 2. Check Wallet Connection
     if (!connected || !publicKey || !wallet) {
       alert("🔒 Wallet Not Connected! Please connect Phantom to deploy an on-chain contract.");
       return;
@@ -67,14 +67,23 @@ export default function Launch({ onForgeSuccess }) {
     try {
       setIsDeploying(true);
       setDeploySuccess(false);
-      setStatusMessage("> Constructing Anchor Provider & Connection...");
+      setStatusMessage("> Generating token mint & deriving accounts...");
 
       const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
       const provider = new AnchorProvider(connection, wallet, {
         preflightCommitment: 'confirmed',
       });
 
-      // 🚀 SANITIZED IDL THAT AVOIDS THE CODER 'SIZE' PARSER CRASH
+      // 3. GENERATE FRESH MINT & BONDING CURVE ACCOUNTS
+      const mintKeypair = Keypair.generate();
+      const mintPublicKey = mintKeypair.publicKey;
+
+      // Derive PDA for bonding curve if your Rust program uses seeds: [b"bonding-curve", mint.key()]
+      const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("bonding-curve"), mintPublicKey.toBuffer()],
+        PROGRAM_ID
+      );
+
       const cleanIdl = {
         address: PROGRAM_ID.toBase58(),
         metadata: { name: "apex_forge", version: "0.1.0" },
@@ -83,8 +92,8 @@ export default function Launch({ onForgeSuccess }) {
             name: "createToken",
             discriminator: [0, 1, 2, 3, 4, 5, 6, 7],
             accounts: [
-              { name: "bondingCurve", writable: true, signer: true },
-              { name: "mint", writable: true, signer: false },
+              { name: "bondingCurve", writable: true, signer: false },
+              { name: "mint", writable: true, signer: true },
               { name: "creator", writable: true, signer: true },
               { name: "systemProgram", writable: false, signer: false },
               { name: "tokenProgram", writable: false, signer: false },
@@ -107,9 +116,18 @@ export default function Launch({ onForgeSuccess }) {
       setStatusMessage("> Awaiting Phantom signature for contract creation...");
       const metadataUrl = thumbnailUrl || imagePreview;
 
-      // 🚀 EXECUTE INSTRUCTION
+      // 4. EXECUTE INSTRUCTION WITH REQUIRED ACCOUNTS & SIGNERS
       const txSignature = await program.methods
         .createToken(tokenName, tokenSymbol.toUpperCase(), metadataUrl)
+        .accounts({
+          bondingCurve: bondingCurvePDA,
+          mint: mintPublicKey,
+          creator: publicKey,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID || new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
+          rent: SYSVAR_RENT_PUBKEY,
+        })
+        .signers([mintKeypair]) // Mint must sign as it's a new account
         .rpc();
 
       setStatusMessage("> Transaction confirmed on-chain! Syncing database...");
@@ -123,12 +141,9 @@ export default function Launch({ onForgeSuccess }) {
         name: tokenName,
         symbol: tokenSymbol.toUpperCase(),
         description: description, 
-        links: {                
-          twitter: twitter,
-          telegram: telegram,
-          website: website
-        },
-        mintAddress: txSignature,
+        links: { twitter, telegram, website },
+        mintAddress: mintPublicKey.toBase58(),
+        txHash: txSignature,
         creatorAddress: connectedAddress,
         imagePreview: metadataUrl, 
         videoUrl: mediaType === 'video' ? 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-code-31910-large.mp4' : null, 
@@ -142,7 +157,7 @@ export default function Launch({ onForgeSuccess }) {
         progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
       };
 
-      // 3. SYNC TO SUPABASE
+      // 5. SYNC TO SUPABASE
       if (supabase) {
         try {
           await supabase.from('tokens').insert([
