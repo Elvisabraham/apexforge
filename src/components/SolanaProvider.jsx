@@ -44,7 +44,7 @@ export default function SolanaProvider({ children }) {
   );
 }
 
-// 🚀 CRASH-PROOF ANCHOR PROGRAM HOOK
+// 🚀 CRASH-PROOF ANCHOR PROGRAM HOOK (SUPPORTING ANCHOR v0.30+ & LEGACY CONSTRUCTORS)
 export const useApexForgeProgram = () => {
   const wallet = useAnchorWallet();
 
@@ -58,7 +58,13 @@ export const useApexForgeProgram = () => {
         preflightCommitment: 'confirmed',
       });
 
-      return new Program(idl, PROGRAM_ID, provider);
+      // 🚀 TRY ANCHOR v0.30+ SYNTAX FIRST, THEN FALL BACK TO CLASSIC SYNTAX
+      try {
+        return new Program(idl, provider);
+      } catch (v30Err) {
+        return new Program(idl, PROGRAM_ID, provider);
+      }
+
     } catch (err) {
       console.error("Failed to construct Anchor Program instance:", err);
       return null;
