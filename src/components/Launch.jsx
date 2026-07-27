@@ -84,18 +84,19 @@ export default function Launch({ onForgeSuccess }) {
         PROGRAM_ID
       );
 
-      // 3. Prepare Arguments
-      const safeName = tokenName.trim().slice(0, 32);
-      const safeSymbol = tokenSymbol.trim().toUpperCase().slice(0, 10);
-      let safeUri = thumbnailUrl || imagePreview || "https://apexforge.app/metadata.json";
-      if (safeUri.startsWith("data:") || safeUri.length > 128) {
-        safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
-      }
+      // 3. Prepare Arguments Safely
+const safeName = (tokenName || "").trim().slice(0, 32) || "Apex Token";
+const safeSymbol = (tokenSymbol || "").trim().toUpperCase().slice(0, 10) || "APEX";
 
-      // 4. SHA-256 Discriminator for "global:create_token"
+let safeUri = thumbnailUrl || imagePreview || "https://apexforge.app/metadata.json";
+if (safeUri.startsWith("data:") || safeUri.length > 128) {
+  safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
+}
+
+// 4. SHA-256 Discriminator for "global:create_token"
 const discriminator = Buffer.from([84, 52, 222, 172, 116, 206, 137, 238]);
 
-// Encode arguments (string length prefix + string bytes)
+// String Buffer Encoder Helper
 const encodeString = (str) => {
   const buf = Buffer.from(str, 'utf-8');
   const len = Buffer.alloc(4);
@@ -103,11 +104,12 @@ const encodeString = (str) => {
   return Buffer.concat([len, buf]);
 };
 
-const nameBuf = encodeString(tokenName);
-const symbolBuf = encodeString(tokenSymbol);
-const uriBuf = encodeString(tokenUri || "https://example.com/meta.json");
+// Encode parameters using safeUri (NOT tokenUri)
+const nameBuf = encodeString(safeName);
+const symbolBuf = encodeString(safeSymbol);
+const uriBuf = encodeString(safeUri);
 
-const instructionData = Buffer.concat([
+const data = Buffer.concat([
   discriminator,
   nameBuf,
   symbolBuf,
