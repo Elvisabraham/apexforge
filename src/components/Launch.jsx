@@ -17,7 +17,7 @@ import idl from '../idl/idl.json';
 
 // 🚀 Standard SPL Token Program ID (No npm install required!)
 const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-const PROGRAM_ID = new PublicKey('4vLUMypMsazY7Xsm56Q1h5wbkT1EBFuvevtmE77SYbfJ');
+const PROGRAM_ID = new PublicKey("zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc");
 
 export default function Launch({ onForgeSuccess }) {
   const { connected, publicKey } = useWallet();

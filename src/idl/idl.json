@@ -1,5 +1,5 @@
 {
-  "address": "4vLUMypMsazY7Xsm56Q1h5wbkT1EBFuvevtmE77SYbfJ",
+  "address": "zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc",
   "version": "0.1.0",
   "name": "apex_forge",
   "instructions": [
@@ -34,7 +34,7 @@
   ],
   "accounts": [
     {
-      "name": "bondingCurve",
+      "name": "BondingCurve",
       "type": {
         "kind": "struct",
         "fields": [
@@ -51,7 +51,7 @@
   ],
   "types": [
     {
-      "name": "bondingCurve",
+      "name": "BondingCurve",
       "type": {
         "kind": "struct",
         "fields": [
