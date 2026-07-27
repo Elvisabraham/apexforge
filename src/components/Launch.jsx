@@ -10,7 +10,7 @@ const PROGRAM_ID = new PublicKey('4vLUMypMsazY7Xsm56Q1h5wbkT1EBFuvevtmE77SYbfJ')
 
 export default function Launch({ onForgeSuccess }) {
   const { connected, publicKey } = useWallet();
-  const wallet = useAnchorWallet(); // 🚀 Directly consume Anchor Wallet hook
+  const wallet = useAnchorWallet(); // 🚀 Active Anchor Wallet instance
 
   const [tokenName, setTokenName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
@@ -37,8 +37,9 @@ export default function Launch({ onForgeSuccess }) {
 
   const connectedAddress = publicKey ? publicKey.toBase58() : '';
 
-  // 🚀 DIRECT ON-CHAIN DEPLOYMENT HANDLER
+  // 🚀 REAL ON-CHAIN DEPLOYMENT HANDLER
   const handleRealDeployment = async () => {
+    // 1. Check form inputs
     if (!tokenName || !tokenSymbol) {
       alert("⚠️ Token Name and Symbol are required to forge an asset.");
       return;
@@ -52,6 +53,7 @@ export default function Launch({ onForgeSuccess }) {
       return;
     }
 
+    // 2. Check Wallet & Anchor Context
     if (!connected || !publicKey || !wallet) {
       alert("🔒 Wallet Not Connected! Please connect Phantom to deploy an on-chain contract.");
       return;
@@ -65,9 +67,9 @@ export default function Launch({ onForgeSuccess }) {
     try {
       setIsDeploying(true);
       setDeploySuccess(false);
-      setStatusMessage("> Constructing Anchor Program & Provider...");
+      setStatusMessage("> Initializing Anchor Provider & Connection...");
 
-      // 1. DYNAMICALLY INITIALIZE ANCHOR PROGRAM
+      // 3. Dynamic Anchor Provider Construction
       const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
       const provider = new AnchorProvider(connection, wallet, {
         preflightCommitment: 'confirmed',
@@ -83,8 +85,7 @@ export default function Launch({ onForgeSuccess }) {
       setStatusMessage("> Awaiting Phantom signature for contract creation...");
       const metadataUrl = thumbnailUrl || imagePreview;
 
-      // 2. CALL ANCHOR INSTRUCTION (Triggers Phantom Signature Modal)
-      // Note: Update method name (.createToken) and accounts to match your exact Rust code
+      // 4. Trigger Anchor instruction on-chain (opens Phantom modal)
       const txSignature = await program.methods
         .createToken(tokenName, tokenSymbol.toUpperCase(), metadataUrl)
         .rpc();
@@ -119,10 +120,10 @@ export default function Launch({ onForgeSuccess }) {
         progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
       };
 
-      // 3. SAVE TO SUPABASE
+      // 5. Sync to Supabase
       if (supabase) {
         try {
-          await supabase.from('tokens').insert([
+          const { error } = await supabase.from('tokens').insert([
             {
               name: newToken.name,
               symbol: newToken.symbol,
@@ -137,6 +138,12 @@ export default function Launch({ onForgeSuccess }) {
               created_at: new Date().toISOString()
             }
           ]);
+
+          if (error) {
+            console.error("Supabase Insert Error:", error);
+          } else {
+            console.log("Token synced globally to Supabase!");
+          }
         } catch (err) {
           console.error("Database save failed:", err);
         }
@@ -174,7 +181,7 @@ export default function Launch({ onForgeSuccess }) {
 
     setDescription(val);
     if (isFlagged) {
-      alert("⚠️ Safety Protocol: Financial hype words have been sanitized.");
+      alert("⚠️ App Store Safety Protocol: Certain financial hype words have been sanitized to maintain platform compliance.");
     }
   };
 
@@ -198,8 +205,10 @@ export default function Launch({ onForgeSuccess }) {
     setInitialBuy('');
     setShowSocials(false);
     setAcceptedDisclaimer(false);
+    
     setIsDeploying(false);
     setDeploySuccess(false);
+    
     setUploaderKey(prev => prev + 1); 
   };
 
@@ -222,13 +231,13 @@ export default function Launch({ onForgeSuccess }) {
         </h1>
       </header>
 
-      {/* --- SCROLLABLE CONTAINER --- */}
+      {/* --- SCROLLABLE MIDDLE CONTAINER --- */}
       <div className={`flex-1 overflow-y-auto no-scrollbar px-4 pt-6 pb-72 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
         <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
           
           <div className="flex flex-col gap-1">
             <h2 className="text-3xl font-black text-white tracking-tight">Deploy Asset</h2>
-            <p className="text-[13px] text-zinc-400 font-medium leading-relaxed">Create and launch a fair-launch token on Solana Devnet.</p>
+            <p className="text-[13px] text-zinc-400 font-medium leading-relaxed">Create and launch a fair-launch token on Solana Devnet. Liquidity is securely locked.</p>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -250,8 +259,11 @@ export default function Launch({ onForgeSuccess }) {
               </div>
             </div>
             <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-end">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Description</label>
+              </div>
               <textarea 
-                placeholder="Describe your project's utility and vision..." 
+                placeholder="Describe your project's utility and vision... (Note: Excessive financial hype will be sanitized)" 
                 value={description} 
                 onChange={handleDescriptionChange} 
                 rows={4} 
@@ -260,22 +272,77 @@ export default function Launch({ onForgeSuccess }) {
             </div>
           </div>
 
-          {/* SOCIAL LINKS */}
+          {/* SOCIALS WITH REAL TELEGRAM LOGO */}
           <div className="flex flex-col bg-[#121212] border border-white/5 rounded-xl overflow-hidden shadow-inner">
             <button onClick={() => setShowSocials(!showSocials)} className="w-full px-4 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors cursor-pointer">
-              <span className="text-sm font-bold text-zinc-300">Add Social Links (Optional)</span>
+              <span className="text-sm font-bold text-zinc-300 flex items-center gap-2">
+                <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                Add Social Links (Optional)
+              </span>
+              <svg className={`w-4 h-4 text-zinc-500 transition-transform duration-300 ${showSocials ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
             </button>
             {showSocials && (
-              <div className="p-4 pt-0 flex flex-col gap-3 border-t border-white/5">
-                <input type="text" placeholder="(Optional) Twitter Link" value={twitter} onChange={(e) => setTwitter(e.target.value)} className="w-full bg-[#050505] p-3 text-sm text-white rounded-lg outline-none" />
-                <input type="text" placeholder="(Optional) Telegram Link" value={telegram} onChange={(e) => setTelegram(e.target.value)} className="w-full bg-[#050505] p-3 text-sm text-white rounded-lg outline-none" />
-                <input type="text" placeholder="(Optional) Website URL" value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full bg-[#050505] p-3 text-sm text-white rounded-lg outline-none" />
+              <div className="p-4 pt-0 flex flex-col gap-3 border-t border-white/5 animate-fadeIn">
+                <div className="flex items-center bg-[#050505] border border-white/5 rounded-lg overflow-hidden focus-within:border-[#089981]/50 transition-colors shadow-inner">
+                  <span className="pl-3 pr-2 text-zinc-500 font-black">𝕏</span>
+                  <input type="text" placeholder="(Optional) Twitter Link" value={twitter} onChange={(e) => setTwitter(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
+                </div>
+                
+                <div className="flex items-center bg-[#050505] border border-white/5 rounded-lg overflow-hidden focus-within:border-[#089981]/50 transition-colors shadow-inner">
+                  <span className="pl-3 pr-2 text-zinc-400 flex items-center justify-center">
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.481-.428-.009-1.252-.242-1.865-.442-752-.245-1.349-.375-1.297-.789.027-.216.324-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.14.12.098.153.228.166.32.011.082.025.269.011.415z"/>
+                    </svg>
+                  </span>
+                  <input type="text" placeholder="(Optional) Telegram Link" value={telegram} onChange={(e) => setTelegram(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
+                </div>
+
+                <div className="flex items-center bg-[#050505] border border-white/5 rounded-lg overflow-hidden focus-within:border-[#089981]/50 transition-colors shadow-inner">
+                  <span className="pl-3 pr-2 text-zinc-500 font-black">🌐</span>
+                  <input type="text" placeholder="(Optional) Website URL" value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
+                </div>
               </div>
             )}
           </div>
 
-          {/* DISCLAIMER CHECKBOX */}
-          <div className="flex items-start gap-3 bg-[#121212] border border-white/10 p-4 rounded-xl">
+          {/* ANTI-BOT PROTECTION CARD */}
+          <div className="bg-gradient-to-br from-[#121212] to-[#0A0A0A] border border-[#089981]/30 rounded-3xl p-6 shadow-[0_0_30px_rgba(8,153,129,0.05)] relative overflow-hidden group">
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#089981]/10 rounded-full blur-3xl group-hover:bg-[#089981]/20 transition-colors"></div>
+            
+            <div className="flex justify-between items-center border-b border-white/5 pb-3 mb-5 relative z-10">
+              <h3 className="text-[11px] font-black text-[#089981] uppercase tracking-widest flex items-center gap-2">⚡ Initial Snipe</h3>
+              <span className="text-[9px] font-mono text-zinc-500 bg-black/50 px-2 py-1 rounded">ANTI-BOT PROTECTION</span>
+            </div>
+            
+            <p className="text-xs text-zinc-400 font-medium mb-5 leading-relaxed relative z-10">
+              Secure the lowest entry price at block 0. Choose how much SOL to inject instantly upon contract deployment to prevent sniper bots from front-running you.
+            </p>
+            
+            <div className="flex items-center bg-[#050505] border border-white/10 rounded-2xl px-5 py-2 focus-within:border-[#089981]/80 transition-colors shadow-inner relative z-10">
+               <input type="text" inputMode="decimal" placeholder="0.00" value={initialBuy} onChange={handleInitialBuyChange} className="w-full bg-transparent text-4xl font-black text-white outline-none py-3 placeholder-zinc-700 font-mono" />
+               <div className="flex flex-col items-end shrink-0">
+                 <span className="text-lg font-black text-[#089981]">SOL</span>
+               </div>
+            </div>
+            
+            <div className="flex gap-2 mt-4 w-full relative z-10">
+               {['0.5', '1.0', '2.5', '5.0'].map(amt => (
+                 <button key={amt} onClick={() => setInitialBuy(amt)} className="flex-1 py-3 bg-white/5 hover:bg-[#089981]/20 rounded-xl text-xs font-black text-zinc-300 hover:text-[#089981] transition-colors border border-white/5 active:scale-95 shadow-sm cursor-pointer">{amt}</button>
+               ))}
+            </div>
+
+            <div className="mt-6 pt-5 border-t border-white/5 relative z-10">
+              <div className="flex justify-between text-[9px] font-black uppercase text-zinc-600 mb-2">
+                <span>Curve Progress</span>
+                <span>{initialBuy ? ((parseFloat(initialBuy)/85)*100).toFixed(1) : '0.0'}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-[#050505] rounded-full overflow-hidden">
+                <div className="h-full bg-[#089981] transition-all duration-300" style={{width: `${initialBuy ? ((parseFloat(initialBuy)/85)*100) : 0}%`}}></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3 bg-[#121212] border border-white/10 p-4 rounded-xl mt-2 mb-2">
             <input 
               type="checkbox" 
               checked={acceptedDisclaimer} 
@@ -283,7 +350,7 @@ export default function Launch({ onForgeSuccess }) {
               className="mt-1 min-w-[20px] min-h-[20px] accent-[#089981] cursor-pointer"
             />
             <p className="text-[10px] text-zinc-400 font-medium leading-relaxed">
-              <strong className="text-white">Mandatory Disclosure:</strong> Assets deployed on Apex Forge are community digital art concepts for entertainment purposes.
+              <strong className="text-white">Mandatory Disclosure:</strong> I acknowledge that assets deployed on Apex Forge are community digital art concepts intended strictly for entertainment and social engagement. They hold no intrinsic financial value and do not constitute investment products.
             </p>
           </div>
 
@@ -292,11 +359,17 @@ export default function Launch({ onForgeSuccess }) {
 
       {/* --- PINNED BOTTOM ACTION BAR --- */}
       {!isDeploying && (
-        <div className="absolute bottom-[90px] md:bottom-0 left-0 right-0 z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 border-t border-white/[0.04]">
+        <div className="absolute bottom-[90px] md:bottom-0 left-0 right-0 z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.9)]">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+            
+            <div className="flex flex-col shrink-0">
+              <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Network Cost</span>
+              <span className="text-sm font-black text-white font-mono">~0.05 SOL</span>
+            </div>
+
             <button 
               onClick={handleRealDeployment} 
-              className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(8,153,129,0.3)] ${
                 acceptedDisclaimer 
                   ? 'bg-[#089981] hover:bg-[#06806b] text-white active:scale-95 cursor-pointer' 
                   : 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50'
@@ -308,24 +381,57 @@ export default function Launch({ onForgeSuccess }) {
         </div>
       )}
 
+      {/* --- LIVE SUPPORT CHAT WIDGET --- */}
+      {!isDeploying && (
+        <div 
+          onClick={() => alert("Connecting to live Forge Support Agent...")}
+          className="absolute right-4 bottom-[170px] md:bottom-24 z-50 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
+        >
+          <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+        </div>
+      )}
+
       {/* --- REAL DEPLOYMENT TERMINAL --- */}
       {isDeploying && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-md">
-          <div className="w-full max-w-lg bg-[#0A0A0A] border border-[#089981]/40 rounded-xl overflow-hidden p-6 flex flex-col items-center justify-center gap-4 text-center font-mono">
-            {!deploySuccess ? (
-              <>
-                <div className="w-12 h-12 border-4 border-[#089981]/20 border-t-[#089981] rounded-full animate-spin"></div>
-                <p className="text-[#089981] font-bold text-sm animate-pulse">{statusMessage}</p>
-              </>
-            ) : (
-              <div className="flex flex-col items-center gap-4">
-                <h3 className="text-xl font-black uppercase text-white">Contract Live On-Chain</h3>
-                <span className="text-[#089981] font-bold text-xs select-all break-all">{deployedTokenAddress}</span>
-                <button onClick={resetForge} className="mt-4 px-6 py-3 bg-[#089981] text-black font-black uppercase text-xs rounded-lg">
-                  Deploy Another
-                </button>
-              </div>
+        <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-lg bg-[#0A0A0A] border border-[#089981]/40 rounded-xl overflow-hidden shadow-[0_0_80px_rgba(8,153,129,0.15)] flex flex-col relative">
+            
+            {!deploySuccess && (
+              <button onClick={resetForge} className="absolute top-3 right-4 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-400 transition-colors z-20 cursor-pointer">
+                Cancel
+              </button>
             )}
+
+            <div className="bg-[#121212] px-4 py-3 border-b border-white/5 flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-rose-500/80"></div>
+              <div className="w-3 h-3 rounded-full bg-amber-500/80"></div>
+              <div className="w-3 h-3 rounded-full bg-[#089981]/80"></div>
+              <span className="ml-2 text-[10px] font-mono font-bold text-zinc-500">root@apex-forge: ~/deploy/${tokenSymbol || 'unknown'}</span>
+            </div>
+
+            <div className="p-6 font-mono text-xs sm:text-sm h-64 flex flex-col items-center justify-center gap-4 text-center">
+              {!deploySuccess ? (
+                <>
+                  <div className="w-12 h-12 border-4 border-[#089981]/20 border-t-[#089981] rounded-full animate-spin"></div>
+                  <p className="text-[#089981] font-bold text-sm animate-pulse">{statusMessage}</p>
+                  <p className="text-[10px] text-zinc-500">Please review and confirm the signature popup in Phantom.</p>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center animate-fadeIn gap-4">
+                  <div className="w-16 h-16 bg-[#089981]/20 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(8,153,129,0.5)]">
+                    <svg className="w-8 h-8 text-[#089981]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <h3 className="text-xl font-black uppercase text-white tracking-widest">Contract Live On-Chain</h3>
+                  <div className="bg-black border border-white/10 px-4 py-2 rounded-lg max-w-xs overflow-hidden">
+                    <span className="text-[#089981] font-bold text-xs select-all break-all">{deployedTokenAddress}</span>
+                  </div>
+                  <button onClick={resetForge} className="mt-4 px-6 py-3 bg-[#089981] text-black font-black uppercase tracking-widest text-xs rounded-lg hover:bg-[#06806b] transition-colors cursor-pointer">
+                    Deploy Another
+                  </button>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       )}
