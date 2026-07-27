@@ -16,7 +16,7 @@ import {
 import idl from '../idl/idl.json';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
-const FALLBACK_PROGRAM_ID = '4vLUMypMsazY7Xsm56Q1h5wbkT1EBFuvevtmE77SYbfJ';
+const FALLBACK_PROGRAM_ID = 'zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc';
 
 export default function SolanaProvider({ children }) {
   const network = WalletAdapterNetwork.Devnet;
@@ -47,7 +47,7 @@ export default function SolanaProvider({ children }) {
   );
 }
 
-// 🚀 CRASH-PROOF ANCHOR HOOK
+// 🚀 CRASH-PROOF ANCHOR HOOK (Anchor v0.30+ Compatible)
 export const useApexForgeProgram = () => {
   const wallet = useAnchorWallet();
 
@@ -68,7 +68,8 @@ export const useApexForgeProgram = () => {
         address: programId.toBase58(),
       };
 
-      return new Program(formattedIdl, programId, provider);
+      // Anchor v0.30+ Signature: new Program(idl, provider)
+      return new Program(formattedIdl, provider);
 
     } catch (err) {
       console.error("🔴 Anchor Provider Error:", err);
