@@ -15,12 +15,13 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
   const { setVisible } = useWalletModal();
 
   const [isMuted, setIsMuted] = useState(false);
-  const [activeModal, setActiveModal] = useState(null); 
+  const [activeModal, setActiveModal] = useState(null);
   const [copied, setCopied] = useState(false);
   const [settingsView, setSettingsView] = useState(null);
-  
+
   const [isScrolled, setIsScrolled] = useState(false);
-  const [activeTab, setActiveTab] = useState('assets'); 
+  const [activeTab, setActiveTab] = useState('assets');
+  const [selectedNetwork, setSelectedNetwork] = useState('devnet');
   
   const [showFullHistory, setShowFullHistory] = useState(false);
   const [viewAll, setViewAll] = useState({ assets: false, created: false });
@@ -848,17 +849,35 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
             <div className="flex flex-col flex-1 overflow-y-auto p-4 gap-2">
               
               <div className="mb-4">
-                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 px-3">Network</span>
-                <div className="mt-2 flex flex-col gap-1">
-                  <button className="flex items-center justify-between w-full p-3 rounded-xl hover:bg-white/5 transition-colors text-left group">
-                    <span className="text-sm font-bold text-zinc-300 group-hover:text-white">Mainnet Beta</span>
-                    <span className="w-2 h-2 rounded-full bg-[#089981] shadow-[0_0_5px_#089981] shrink-0"></span>
-                  </button>
-                  <button className="flex items-center justify-between w-full p-3 rounded-xl hover:bg-white/5 transition-colors text-left group">
-                    <span className="text-sm font-bold text-zinc-500 group-hover:text-white">Devnet</span>
-                  </button>
-                </div>
-              </div>
+  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 px-3">Network</span>
+  <div className="mt-2 flex flex-col gap-1">
+    {/* Mainnet Beta Button */}
+    <button 
+      onClick={() => setSelectedNetwork('mainnet')}
+      className="flex items-center justify-between w-full p-3 rounded-xl hover:bg-white/5 transition-colors text-left group"
+    >
+      <span className={`text-sm font-bold ${selectedNetwork === 'mainnet' ? 'text-white' : 'text-zinc-500'} group-hover:text-white`}>
+        Mainnet Beta
+      </span>
+      {selectedNetwork === 'mainnet' && (
+        <span className="w-2 h-2 rounded-full bg-[#089981] shadow-[0_0_5px_#089981] shrink-0"></span>
+      )}
+    </button>
+
+    {/* Devnet Button */}
+    <button 
+      onClick={() => setSelectedNetwork('devnet')}
+      className="flex items-center justify-between w-full p-3 rounded-xl hover:bg-white/5 transition-colors text-left group"
+    >
+      <span className={`text-sm font-bold ${selectedNetwork === 'devnet' ? 'text-white' : 'text-zinc-500'} group-hover:text-white`}>
+        Devnet
+      </span>
+      {selectedNetwork === 'devnet' && (
+        <span className="w-2 h-2 rounded-full bg-[#089981] shadow-[0_0_5px_#089981] shrink-0"></span>
+      )}
+    </button>
+  </div>
+</div>
 
               <div className="mb-4">
                 <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 px-3">Security</span>
