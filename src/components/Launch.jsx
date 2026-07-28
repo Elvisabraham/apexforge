@@ -15,13 +15,13 @@ import MediaUploader from './MediaUploader';
 import { supabase } from './supabaseClient';
 import idl from '../idl/idl.json';
 
-// 🚀 Standard SPL Token Program ID (No npm install required!)
+// 🚀 Standard SPL Token Program ID
 const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const PROGRAM_ID = new PublicKey("zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc");
 
 export default function Launch({ onForgeSuccess }) {
   const { connected, publicKey } = useWallet();
-  const wallet = useAnchorWallet(); // 🚀 Active Anchor Wallet instance
+  const wallet = useAnchorWallet();
 
   const [tokenName, setTokenName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
@@ -48,7 +48,7 @@ export default function Launch({ onForgeSuccess }) {
 
   const connectedAddress = publicKey ? publicKey.toBase58() : '';
 
-  // 🚀 DIRECT ON-CHAIN DEPLOYMENT HANDLER (No Anchor IDL Parsing Bugs)
+  // 🚀 DIRECT ON-CHAIN DEPLOYMENT HANDLER
   const handleRealDeployment = async () => {
     if (!tokenName || !tokenSymbol) {
       alert("⚠️ Token Name and Symbol are required to forge an asset.");
@@ -85,61 +85,59 @@ export default function Launch({ onForgeSuccess }) {
       );
 
       // 3. Prepare Arguments Safely
-const safeName = (tokenName || "").trim().slice(0, 32) || "Apex Token";
-const safeSymbol = (tokenSymbol || "").trim().toUpperCase().slice(0, 10) || "APEX";
+      const safeName = (tokenName || "").trim().slice(0, 32) || "Apex Token";
+      const safeSymbol = (tokenSymbol || "").trim().toUpperCase().slice(0, 10) || "APEX";
 
-let safeUri = thumbnailUrl || imagePreview || "https://apexforge.app/metadata.json";
-if (safeUri.startsWith("data:") || safeUri.length > 128) {
-  safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
-}
+      let safeUri = thumbnailUrl || imagePreview || "https://apexforge.app/metadata.json";
+      if (safeUri.startsWith("data:") || safeUri.length > 128) {
+        safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
+      }
 
-// 4. SHA-256 Discriminator for "global:create_token"
-const discriminator = Buffer.from([84, 52, 222, 172, 116, 206, 137, 238]);
+      // 4. SHA-256 Discriminator for "global:create_token"
+      const discriminator = Buffer.from([84, 52, 222, 172, 116, 206, 137, 238]);
 
-const encodeString = (str) => {
-  const buf = Buffer.from(str, 'utf-8');
-  const len = Buffer.alloc(4);
-  len.writeUInt32LE(buf.length, 0);
-  return Buffer.concat([len, buf]);
-};
+      // Borsh String Serialization: [4 bytes LE length] + [utf-8 string bytes]
+      const encodeString = (str) => {
+        const strBuf = Buffer.from(str, 'utf-8');
+        const lenBuf = Buffer.alloc(4);
+        lenBuf.writeUInt32LE(strBuf.length, 0);
+        return Buffer.concat([lenBuf, strBuf]);
+      };
 
-const nameBuf = encodeString(safeName);
-const symbolBuf = encodeString(safeSymbol);
-const uriBuf = encodeString(safeUri);
+      const nameBuf = encodeString(safeName);
+      const symbolBuf = encodeString(safeSymbol);
+      const uriBuf = encodeString(safeUri);
 
-// Define instructionData here
-const instructionData = Buffer.concat([
-  discriminator,
-  nameBuf,
-  symbolBuf,
-  uriBuf
-]);
+      const instructionData = Buffer.concat([
+        discriminator,
+        nameBuf,
+        symbolBuf,
+        uriBuf
+      ]);
 
-// ... steps 5 PDA derivations ...
-
-// 6. Build Standard Web3 Transaction Instruction
-const createTokenIx = new TransactionInstruction({
-  programId: PROGRAM_ID,
-  keys: [
-    { pubkey: bondingCurvePDA, isSigner: false, isWritable: true },
-    { pubkey: mintPublicKey, isSigner: true, isWritable: true },
-    { pubkey: publicKey, isSigner: true, isWritable: true },
-    { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-    { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-  ],
-  data: instructionData, // <--- Now perfectly matched!
-});
+      // 5. Build Standard Web3 Transaction Instruction
+      const createTokenIx = new TransactionInstruction({
+        programId: PROGRAM_ID,
+        keys: [
+          { pubkey: bondingCurvePDA, isSigner: false, isWritable: true },
+          { pubkey: mintPublicKey, isSigner: true, isWritable: true },
+          { pubkey: publicKey, isSigner: true, isWritable: true },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        ],
+        data: instructionData,
+      });
 
       setStatusMessage("> Awaiting Phantom signature...");
 
-      // 7. Assemble & Send Transaction
+      // 6. Assemble & Send Transaction
       const tx = new Transaction().add(createTokenIx);
       tx.feePayer = publicKey;
       const { blockhash } = await connection.getLatestBlockhash('confirmed');
       tx.recentBlockhash = blockhash;
 
-      // Partial sign with Mint Keypair
+      // Partial sign with Mint Keypair FIRST
       tx.partialSign(mintKeypair);
 
       // Request Phantom signature and broadcast
