@@ -97,13 +97,16 @@ export default function Launch({ onForgeSuccess }) {
 
       setStatusMessage("> Awaiting Phantom signature...");
 
-      // 4. Send Transaction via Anchor (Handles discriminator + serializations automatically)
+      // 4. Send Transaction via Anchor
       const txSignature = await program.methods
         .createToken(safeName, safeSymbol, safeUri)
         .accounts({
           bondingCurve: bondingCurvePDA,
           mint: mintPublicKey,
           creator: publicKey,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          rent: SYSVAR_RENT_PUBKEY,
         })
         .signers([mintKeypair])
         .rpc();
