@@ -92,8 +92,8 @@ export default function Launch({ onForgeSuccess }) {
       }
 
       // 3. Construct Anchor Borsh Data Buffer Manually
-      // 8-byte discriminator for "global:initialize"
-      const discriminator = Buffer.from([175, 175, 109, 31, 13, 152, 155, 237]);
+      // 8-byte SHA-256 Discriminator for "global:create_bonding_curve"
+const discriminator = Buffer.from([160, 201, 104, 196, 100, 156, 178, 227]);
 
       const encodeString = (str) => {
         const strBuf = Buffer.from(str, 'utf-8');
