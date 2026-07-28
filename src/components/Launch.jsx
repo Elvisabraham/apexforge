@@ -15,10 +15,9 @@ import MediaUploader from './MediaUploader';
 import { supabase } from './supabaseClient';
 import idl from '../idl/idl.json';
 
-// 🚀 Standard SPL Token Program ID
+// 🚀 Program IDs
 const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const PROGRAM_ID = new PublicKey("zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc");
-
 export default function Launch({ onForgeSuccess }) {
   const { connected, publicKey } = useWallet();
   const wallet = useAnchorWallet();
@@ -48,7 +47,7 @@ export default function Launch({ onForgeSuccess }) {
 
   const connectedAddress = publicKey ? publicKey.toBase58() : '';
 
-  // 🚀 DIRECT ON-CHAIN DEPLOYMENT HANDLER
+ // 🚀 DIRECT ON-CHAIN DEPLOYMENT HANDLER (Using Anchor Program Methods)
   const handleRealDeployment = async () => {
     if (!tokenName || !tokenSymbol) {
       alert("⚠️ Token Name and Symbol are required to forge an asset.");
@@ -70,21 +69,24 @@ export default function Launch({ onForgeSuccess }) {
     try {
       setIsDeploying(true);
       setDeploySuccess(false);
-      setStatusMessage("> Generating token keys & computing PDA...");
+      setStatusMessage("> Initializing Anchor Provider & PDA...");
 
       const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 
-      // 1. Generate Fresh Mint Keypair
+      // 1. Setup Anchor Provider & Program Instance
+      const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' });
+      const program = new Program(idl, PROGRAM_ID, provider);
+
+      // 2. Generate Fresh Mint Keypair & Derive Bonding Curve PDA
       const mintKeypair = Keypair.generate();
       const mintPublicKey = mintKeypair.publicKey;
 
-      // 2. Derive Bonding Curve PDA
       const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
-        [new TextEncoder().encode("bonding_curve"), mintPublicKey.toBuffer()],
+        [Buffer.from("bonding_curve"), mintPublicKey.toBuffer()],
         PROGRAM_ID
       );
 
-      // 3. Prepare Arguments Safely
+      // 3. Prepare Arguments
       const safeName = (tokenName || "").trim().slice(0, 32) || "Apex Token";
       const safeSymbol = (tokenSymbol || "").trim().toUpperCase().slice(0, 10) || "APEX";
 
@@ -93,59 +95,20 @@ export default function Launch({ onForgeSuccess }) {
         safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
       }
 
-      // 4. SHA-256 Discriminator for "global:create_token"
-      const discriminator = Buffer.from([84, 52, 222, 172, 116, 206, 137, 238]);
-
-      // Borsh String Serialization: [4 bytes LE length] + [utf-8 string bytes]
-      const encodeString = (str) => {
-        const strBuf = Buffer.from(str, 'utf-8');
-        const lenBuf = Buffer.alloc(4);
-        lenBuf.writeUInt32LE(strBuf.length, 0);
-        return Buffer.concat([lenBuf, strBuf]);
-      };
-
-      const nameBuf = encodeString(safeName);
-      const symbolBuf = encodeString(safeSymbol);
-      const uriBuf = encodeString(safeUri);
-
-      const instructionData = Buffer.concat([
-        discriminator,
-        nameBuf,
-        symbolBuf,
-        uriBuf
-      ]);
-
-      // 5. Build Standard Web3 Transaction Instruction
-      const createTokenIx = new TransactionInstruction({
-        programId: PROGRAM_ID,
-        keys: [
-          { pubkey: bondingCurvePDA, isSigner: false, isWritable: true },
-          { pubkey: mintPublicKey, isSigner: true, isWritable: true },
-          { pubkey: publicKey, isSigner: true, isWritable: true },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        ],
-        data: instructionData,
-      });
-
       setStatusMessage("> Awaiting Phantom signature...");
 
-      // 6. Assemble & Send Transaction
-      const tx = new Transaction().add(createTokenIx);
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash('confirmed');
-      tx.recentBlockhash = blockhash;
-
-      // Partial sign with Mint Keypair FIRST
-      tx.partialSign(mintKeypair);
-
-      // Request Phantom signature and broadcast
-      const signedTx = await wallet.signTransaction(tx);
-      const txSignature = await connection.sendRawTransaction(signedTx.serialize());
+      // 4. Send Transaction via Anchor (Handles discriminator + serializations automatically)
+      const txSignature = await program.methods
+        .createToken(safeName, safeSymbol, safeUri)
+        .accounts({
+          bondingCurve: bondingCurvePDA,
+          mint: mintPublicKey,
+          creator: publicKey,
+        })
+        .signers([mintKeypair])
+        .rpc();
 
       setStatusMessage("> Transaction broadcasted! Confirming on-chain...");
-      await connection.confirmTransaction(txSignature, 'confirmed');
 
       console.log("Success! Tx Signature:", txSignature);
 
