@@ -125,25 +125,38 @@ export default function Launch({ onForgeSuccess }) {
 
       setStatusMessage("> Awaiting Phantom signature...");
 
-      // 5. Build Transaction & Add Blockhash
+     setStatusMessage("> Awaiting Phantom signature...");
+
+      // 1. Build transaction without blockhash first
       const tx = new Transaction().add(createTokenIx);
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash('confirmed');
+
+      // Fetch fresh blockhash immediately before signing
+      const { blockhash } = await connection.getLatestBlockhash('finalized');
       tx.recentBlockhash = blockhash;
 
-      // 6. Partial Sign with Mint Keypair
+      // 2. Partial Sign with Mint Keypair
       tx.partialSign(mintKeypair);
 
-      // 7. Request Phantom Signature & Broadcast Raw Transaction
+      // 3. Request Phantom Signature
       const signedTx = await wallet.signTransaction(tx);
-      const txSignature = await connection.sendRawTransaction(signedTx.serialize());
+
+      setStatusMessage("> Broadcasting transaction to Devnet...");
+
+      // 4. Send Raw Transaction with skipPreflight: true
+      const rawTx = signedTx.serialize();
+      const txSignature = await connection.sendRawTransaction(rawTx, {
+        skipPreflight: true, // Prevents Phantom simulation timeout crashes
+        maxRetries: 5,
+      });
 
       setStatusMessage("> Transaction broadcasted! Confirming on-chain...");
-      await connection.confirmTransaction(txSignature, 'confirmed');
+      await connection.confirmTransaction(txSignature, 'finalized');
 
       console.log("Success! Tx Signature:", txSignature);
+      alert(`🚀 Token Successfully Forged! Tx: ${txSignature}`);
 
-      setDeployedTokenAddress(txSignature);
+      setDeployedTokenAddress(txSignature);;
       setDeployedHistory(prev => [...prev, tokenName.toLowerCase()]);
 
       const newToken = {
