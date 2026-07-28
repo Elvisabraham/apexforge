@@ -208,10 +208,11 @@ export default function Launch({ onForgeSuccess }) {
       }
 
     } catch (err) {
-      console.error("Deployment failed:", err);
-      alert(`⚠️ Transaction Failed: ${err.message || err}`);
-      setIsDeploying(false);
-    }
+  console.error("Deployment failed details:", err);
+  const errMsg = err?.message || JSON.stringify(err);
+  alert(`⚠️ Transaction Failed: ${errMsg}`);
+  setIsDeploying(false);
+}
   };
 
   const handleMediaSelected = (mediaData) => {
