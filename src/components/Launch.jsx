@@ -95,10 +95,10 @@ export default function Launch({ onForgeSuccess }) {
         safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
       }
 
-      setStatusMessage("> Awaiting Phantom signature...");
+      setStatusMessage("> Constructing transaction instruction...");
 
-      // 4. Send Transaction via Anchor
-      const txSignature = await program.methods
+      // 1. Get raw instruction from Anchor method
+      const ix = await program.methods
         .createToken(safeName, safeSymbol, safeUri)
         .accounts({
           bondingCurve: bondingCurvePDA,
@@ -108,16 +108,31 @@ export default function Launch({ onForgeSuccess }) {
           tokenProgram: TOKEN_PROGRAM_ID,
           rent: SYSVAR_RENT_PUBKEY,
         })
-        .signers([mintKeypair])
-        .rpc();
+        .instruction();
+
+      // 2. Assemble Web3 Transaction
+      const tx = new Transaction().add(ix);
+      tx.feePayer = publicKey;
+
+      const { blockhash } = await connection.getLatestBlockhash('confirmed');
+      tx.recentBlockhash = blockhash;
+
+      // 3. Partial sign with Mint Keypair FIRST
+      tx.partialSign(mintKeypair);
+
+      setStatusMessage("> Awaiting Phantom signature...");
+
+      // 4. Request Wallet signature and broadcast
+      const signedTx = await wallet.signTransaction(tx);
+      const txSignature = await connection.sendRawTransaction(signedTx.serialize());
 
       setStatusMessage("> Transaction broadcasted! Confirming on-chain...");
+      await connection.confirmTransaction(txSignature, 'confirmed');
 
       console.log("Success! Tx Signature:", txSignature);
 
       setDeployedTokenAddress(txSignature);
       setDeployedHistory(prev => [...prev, tokenName.toLowerCase()]);
-
       const newToken = {
         id: Date.now().toString(),
         name: safeName,
