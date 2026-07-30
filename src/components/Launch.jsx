@@ -93,7 +93,7 @@ export default function Launch({ onForgeSuccess }) {
 
       // 3. Construct Anchor Borsh Data Buffer Manually
       // 8-byte discriminator for "global:create_token"
-      const discriminator = Buffer.from([84, 52, 222, 172, 116, 206, 137, 238]);
+const discriminator = Buffer.from([84, 52, 222, 172, 116, 206, 137, 238]);
       const encodeString = (str) => {
         const strBuf = Buffer.from(str, 'utf-8');
         const lenBuf = Buffer.alloc(4);
