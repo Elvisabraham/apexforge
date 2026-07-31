@@ -75,7 +75,8 @@ export default function Launch({ onForgeSuccess }) {
       
       // 1. Setup Anchor Provider & Program using your fresh IDL
       const provider = new AnchorProvider(connection, wallet, { preflightCommitment: 'confirmed' });
-      const program = new Program(idl, PROGRAM_ID, provider);
+      // Wrap the idl in JSON.parse/stringify to strip any Vite formatting
+const program = new Program(JSON.parse(JSON.stringify(idl)), PROGRAM_ID, provider);
 
       setStatusMessage("> Generating keys & deriving bonding curve PDA...");
 
