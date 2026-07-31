@@ -47,7 +47,7 @@ export default function Launch({ onForgeSuccess }) {
 
   const connectedAddress = publicKey ? publicKey.toBase58() : '';
 
-// 🚀 ANCHOR DEPLOYMENT HANDLER (With Fresh IDL)
+ // 🚀 DIRECT ON-CHAIN DEPLOYMENT HANDLER (Pure Web3.js - No Anchor IDL Crashes)
   const handleRealDeployment = async () => {
     if (!tokenName || !tokenSymbol) {
       alert("⚠️ Token Name and Symbol are required to forge an asset.");
@@ -69,18 +69,11 @@ export default function Launch({ onForgeSuccess }) {
     try {
       setIsDeploying(true);
       setDeploySuccess(false);
-      setStatusMessage("> Initializing Anchor Provider...");
-
-      const connection = new Connection("https://api.devnet.solana.com", "confirmed");
-      
-      // 1. Setup Anchor Provider & Program using your fresh IDL
-      const provider = new AnchorProvider(connection, wallet, { preflightCommitment: 'confirmed' });
-      // Wrap the idl in JSON.parse/stringify to strip any Vite formatting
-const program = new Program(JSON.parse(JSON.stringify(idl)), PROGRAM_ID, provider);
-
       setStatusMessage("> Generating keys & deriving bonding curve PDA...");
 
-      // 2. Generate Keys & PDA
+      const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+
+      // 1. Generate Fresh Mint Keypair & Derive Bonding Curve PDA
       const mintKeypair = Keypair.generate();
       const mintPublicKey = mintKeypair.publicKey;
 
@@ -89,92 +82,120 @@ const program = new Program(JSON.parse(JSON.stringify(idl)), PROGRAM_ID, provide
         PROGRAM_ID
       );
 
-      // 3. Prepare Safe Arguments
+      // 2. Prepare Safe Arguments
       const safeName = (tokenName || "").trim().slice(0, 32) || "Apex Token";
       const safeSymbol = (tokenSymbol || "").trim().toUpperCase().slice(0, 10) || "APEX";
+
       let safeUri = thumbnailUrl || imagePreview || "https://apexforge.app/metadata.json";
       if (safeUri.startsWith("data:") || safeUri.length > 128) {
         safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
       }
 
-      setStatusMessage("> Building transaction via Anchor...");
+      // 3. Construct Anchor Borsh Data Buffer Manually
+      // 8-byte discriminator for "global:create_token"
+const discriminator = Buffer.from([84, 52, 222, 172, 116, 206, 137, 238]);
+      const encodeString = (str) => {
+        const strBuf = Buffer.from(str, 'utf-8');
+        const lenBuf = Buffer.alloc(4);
+        lenBuf.writeUInt32LE(strBuf.length, 0);
+        return Buffer.concat([lenBuf, strBuf]);
+      };
 
-      // 4. Let Anchor Build the Transaction automatically!
-      const tx = await program.methods
-        .createToken(safeName, safeSymbol, safeUri)
-        .accounts({
-          bondingCurve: bondingCurvePDA,
-          mint: mintPublicKey,
-          creator: publicKey,
-          systemProgram: SystemProgram.programId,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          rent: SYSVAR_RENT_PUBKEY,
-        })
-        .transaction();
+      const instructionData = Buffer.concat([
+        discriminator,
+        encodeString(safeName),
+        encodeString(safeSymbol),
+        encodeString(safeUri)
+      ]);
+
+      // 4. Construct Direct Web3 TransactionInstruction
+      const createTokenIx = new TransactionInstruction({
+        programId: PROGRAM_ID,
+        keys: [
+          { pubkey: bondingCurvePDA, isSigner: false, isWritable: true },
+          { pubkey: mintPublicKey, isSigner: true, isWritable: true },
+          { pubkey: publicKey, isSigner: true, isWritable: true },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        ],
+        data: instructionData,
+      });
 
       setStatusMessage("> Awaiting Phantom signature...");
 
-      // 5. Fetch fresh blockhash right before signing so it doesn't expire
+     setStatusMessage("> Awaiting Phantom signature...");
+
+      // 1. Build transaction without blockhash first
+      const tx = new Transaction().add(createTokenIx);
       tx.feePayer = publicKey;
+
+      // Fetch fresh blockhash immediately before signing
       const { blockhash } = await connection.getLatestBlockhash('finalized');
       tx.recentBlockhash = blockhash;
 
-      // 6. Sign and Send
+      // 2. Partial Sign with Mint Keypair
       tx.partialSign(mintKeypair);
+
+      // 3. Request Phantom Signature
       const signedTx = await wallet.signTransaction(tx);
-      
-      setStatusMessage("> Broadcasting to Devnet...");
-      const txSignature = await connection.sendRawTransaction(signedTx.serialize(), {
-        skipPreflight: true,
+
+      setStatusMessage("> Broadcasting transaction to Devnet...");
+
+      // 4. Send Raw Transaction with skipPreflight: true
+      const rawTx = signedTx.serialize();
+      const txSignature = await connection.sendRawTransaction(rawTx, {
+        skipPreflight: true, // Prevents Phantom simulation timeout crashes
         maxRetries: 5,
       });
 
-      setStatusMessage("> Confirming on-chain...");
+      setStatusMessage("> Transaction broadcasted! Confirming on-chain...");
       await connection.confirmTransaction(txSignature, 'finalized');
 
       console.log("Success! Tx Signature:", txSignature);
       alert(`🚀 Token Successfully Forged! Tx: ${txSignature}`);
-      
-      // Setup UI & Database Data
-      setDeployedTokenAddress(txSignature);
+
+      setDeployedTokenAddress(txSignature);;
       setDeployedHistory(prev => [...prev, tokenName.toLowerCase()]);
 
       const newToken = {
         id: Date.now().toString(),
         name: safeName,
         symbol: safeSymbol,
-        description: description,
+        description: description, 
         links: { twitter, telegram, website },
         mintAddress: mintPublicKey.toBase58(),
         txHash: txSignature,
-        creatorAddress: publicKey.toBase58(),
-        imagePreview: safeUri,
+        creatorAddress: connectedAddress,
+        imagePreview: safeUri, 
         videoUrl: mediaType === 'video' ? 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-code-31910-large.mp4' : null, 
-        mediaType: mediaType,
-        icon: '🔥',
-        mcap: '$10.0K',
+        mediaType: mediaType, 
+        icon: '🔥', 
+        mcap: '$10.0K', 
         price: '0.0001',
         change: '+0.0%',
         initialSnipe: parseFloat(initialBuy || '0'),
-        isGraduated: false,
+        isGraduated: false, 
         progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
       };
 
       if (supabase) {
         try {
-          await supabase.from('tokens').insert([{
-            name: newToken.name,
-            symbol: newToken.symbol,
-            description: newToken.description,
-            icon: newToken.icon,
-            image_url: newToken.imagePreview,
-            mint_address: newToken.mintAddress,
-            creator_address: newToken.creatorAddress,
-            market_cap: newToken.mcap,
-            progress: newToken.progress,
-            links: newToken.links,
-            created_at: new Date().toISOString()
-          }]);
+          await supabase.from('tokens').insert([
+            {
+              name: newToken.name,
+              symbol: newToken.symbol,
+              description: newToken.description,
+              icon: newToken.icon,
+              image_url: newToken.imagePreview,
+              mint_address: newToken.mintAddress,
+              creator_address: newToken.creatorAddress,
+              market_cap: newToken.mcap,
+              progress: newToken.progress,
+              links: newToken.links,
+              created_at: new Date().toISOString()
+            }
+          ]);
         } catch (err) {
           console.error("Database save failed:", err);
         }
@@ -186,11 +207,11 @@ const program = new Program(JSON.parse(JSON.stringify(idl)), PROGRAM_ID, provide
       }
 
     } catch (err) {
-      console.error("Deployment failed details:", err);
-      const errMsg = err?.message || JSON.stringify(err);
-      alert(`⚠️ Transaction Failed: ${errMsg}`);
-      setIsDeploying(false);
-    }
+  console.error("Deployment failed details:", err);
+  const errMsg = err?.message || JSON.stringify(err);
+  alert(`⚠️ Transaction Failed: ${errMsg}`);
+  setIsDeploying(false);
+}
   };
 
   const handleMediaSelected = (mediaData) => {
