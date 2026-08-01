@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Buffer } from 'buffer';
 import { useWallet, useAnchorWallet } from '@solana/wallet-adapter-react';
 import { 
   Connection, 
