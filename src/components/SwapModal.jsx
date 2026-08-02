@@ -25,6 +25,13 @@ export default function SwapModal({
   const activePayAsset = portfolio.find(a => a.symbol === swapPayAsset) || portfolio[0];
 const activeReceiveAsset = portfolio.find(a => a.symbol === swapReceiveAsset) || portfolio[1] || { symbol: 'APEX', balance: 0 };
 
+// NEW: If pay and receive assets are the same (e.g. SOL to SOL), force receive to APEX
+  useEffect(() => {
+    if (isOpen && swapPayAsset === swapReceiveAsset) {
+      setSwapReceiveAsset('APEX');
+    }
+  }, [isOpen, swapPayAsset, swapReceiveAsset, setSwapReceiveAsset]);
+
   // 🚀 AMM BONDING CURVE MATH (k = x * y)
   const calculateExpectedOutput = (inputAmount, isBuying) => {
     if (!inputAmount || isNaN(inputAmount)) return '0';
