@@ -22,8 +22,8 @@ export default function SwapModal({
 }) {
   if (!isOpen) return null;
 
-  const activePayAsset = portfolio.find(a => a.symbol === swapPayAsset) || portfolio[0];
-const activeReceiveAsset = portfolio.find(a => a.symbol === swapReceiveAsset) || portfolio[1] || { symbol: 'APEX', balance: 0 };
+ const activePayAsset = portfolio.find(a => a.symbol === swapPayAsset) || { symbol: swapPayAsset || 'SOL', balance: 0 };
+const activeReceiveAsset = portfolio.find(a => a.symbol === swapReceiveAsset) || { symbol: swapReceiveAsset || 'APEX', balance: 0 }; 
 
 // NEW: If pay and receive assets are the same (e.g. SOL to SOL), force receive to APEX
   useEffect(() => {
