@@ -192,6 +192,28 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     if (str.startsWith('$')) return <><span className="font-bold mr-[2px]">$</span>{str.slice(1)}</>;
     return str;
   };
+// 🚀 AMM CONSTANT PRODUCT MATH (k = x * y)
+  const calculateExpectedOutput = (inputAmount, isBuying) => {
+    if (!inputAmount || isNaN(inputAmount)) return '0.00';
+    const input = parseFloat(inputAmount);
+
+    const VIRTUAL_SOL = 30 + curveState.solInCurve; 
+    const k = 30 * 1000000000;
+    const currentTokens = k / VIRTUAL_SOL;
+
+    if (isBuying) {
+      const newSol = VIRTUAL_SOL + input;
+      const newTokens = k / newSol;
+      const tokensReceived = currentTokens - newTokens;
+      return (tokensReceived / 1000000).toFixed(2); // In Millions (M)
+    } else {
+      const realTokenInput = input * 1000000;
+      const newTokens = currentTokens + realTokenInput;
+      const newSol = k / newTokens;
+      const solReceived = VIRTUAL_SOL - newSol;
+      return solReceived.toFixed(4); // In SOL
+    }
+  };
 
   const handleExecuteTrade = () => {
     const amount = parseFloat(tradeAmount.toString().replace(/,/g, ''));
@@ -967,11 +989,14 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                <div className="flex justify-between items-center">
                  <span className="text-[10px] font-bold text-zinc-500 uppercase">You Receive (Est.)</span>
                  <span className={`text-sm font-black ${displayToken.isGraduated ? 'text-amber-500' : (tradeMode === 'buy' ? 'text-[#089981]' : 'text-[#00FF66]')}`}>
+                   
+                   {/* 🚀 DYNAMIC INJECTED MATH */}
                    {cleanNumericAmount > 0 ? (
                      tradeMode === 'buy' 
-                       ? `${(((cleanNumericAmount * (displayToken.isGraduated ? 0.995 : 1)) / curveState.price) / 1000000).toFixed(2)}M ${displayToken.symbol}`
-                       : `${((cleanNumericAmount * 1000000 * curveState.price) * (displayToken.isGraduated ? 0.995 : 1)).toFixed(4)} SOL`
+                       ? `${calculateExpectedOutput(cleanNumericAmount, true)}M ${displayToken.symbol}`
+                       : `${calculateExpectedOutput(cleanNumericAmount, false)} SOL`
                    ) : '0.00'}
+
                  </span>
                </div>
                
