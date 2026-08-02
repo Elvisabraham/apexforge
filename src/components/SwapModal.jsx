@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function SwapModal({
   isOpen,
@@ -25,13 +25,50 @@ export default function SwapModal({
   const activePayAsset = portfolio.find(a => a.symbol === swapPayAsset) || portfolio[0];
   const activeReceiveAsset = portfolio.find(a => a.symbol === swapReceiveAsset) || portfolio[1] || portfolio[0];
 
+  // 🚀 AMM BONDING CURVE MATH (k = x * y)
+  const calculateExpectedOutput = (inputAmount, isBuying) => {
+    if (!inputAmount || isNaN(inputAmount)) return '0';
+    const input = parseFloat(inputAmount);
+
+    // NOTE: These are your contract's starting virtual reserves. 
+    // In the next step, we will pass these in as props directly from the live blockchain data!
+    const VIRTUAL_SOL = 30; 
+    const VIRTUAL_TOKENS = 1000000000; 
+    const k = VIRTUAL_SOL * VIRTUAL_TOKENS;
+
+    if (isBuying) {
+      // User pays SOL, receives Tokens
+      const newSol = VIRTUAL_SOL + input;
+      const newTokens = k / newSol;
+      const tokensReceived = VIRTUAL_TOKENS - newTokens;
+      return tokensReceived.toFixed(2);
+    } else {
+      // User pays Tokens, receives SOL
+      const newTokens = VIRTUAL_TOKENS + input;
+      const newSol = k / newTokens;
+      const solReceived = VIRTUAL_SOL - newSol;
+      return solReceived.toFixed(4);
+    }
+  };
+
+  // Determine if we are buying (paying SOL) or selling (paying Tokens)
+  const isBuying = activePayAsset?.symbol === 'SOL';
+  
+  // Calculate the live expected output based on user input
+  const expectedOutput = swapAmount && swapAmount !== '0' 
+    ? calculateExpectedOutput(swapAmount.replace(/,/g, ''), isBuying) 
+    : '';
+
+  // Calculate the live conversion rate for the UI
+  const currentRate = isBuying 
+    ? calculateExpectedOutput('1', true) 
+    : calculateExpectedOutput('1', false);
+
   return (
-    // 🚀 FIXED: Upgraded to a tap-to-close backdrop that anchors to the bottom on mobile
     <div 
       className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md animate-fadeIn"
       onClick={onClose}
     >
-      {/* 🚀 FIXED: Bottom-sheet slide-up design for mobile, floating card for desktop */}
       <div 
         className="w-full max-w-[420px] bg-[#050505] border-t sm:border border-white/10 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 relative shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col h-auto max-h-[90vh] overflow-y-auto scrollbar-hide animate-slideUpNative"
         onClick={(e) => e.stopPropagation()}
@@ -103,7 +140,13 @@ export default function SwapModal({
           <div className="bg-[#121212] border border-white/5 shadow-lg rounded-3xl p-5 flex flex-col relative z-10">
             <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">You Receive</span>
             <div className="flex justify-between items-center">
-              <input type="text" value={swapAmount ? formatNumber((parseFloat(swapAmount.replace(/,/g, '')) * 1.5).toFixed(2)) : ''} placeholder="0" readOnly className="bg-transparent text-4xl font-sans font-black text-white outline-none w-1/2 placeholder:text-zinc-800" />
+              <input 
+                type="text" 
+                value={expectedOutput ? formatNumber(expectedOutput) : ''} 
+                placeholder="0" 
+                readOnly 
+                className="bg-transparent text-4xl font-sans font-black text-white outline-none w-1/2 placeholder:text-zinc-800" 
+              />
               <div className="relative">
                 <button onClick={() => { setShowReceiveDropdown(!showReceiveDropdown); setShowPayDropdown(false); }} className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-3 py-2 rounded-2xl transition-colors border border-white/5">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] bg-gradient-to-br ${getAssetColor(activeReceiveAsset?.symbol)} border border-current shrink-0`}>
@@ -128,7 +171,7 @@ export default function SwapModal({
 
           <div className="flex justify-between items-center mt-6 mb-8 px-2">
             <span className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Rate</span>
-            <span className="text-xs font-bold text-white">1 {activePayAsset?.symbol} = 1.50 {activeReceiveAsset?.symbol}</span>
+            <span className="text-xs font-bold text-white">1 {activePayAsset?.symbol} ≈ {formatNumber(currentRate)} {activeReceiveAsset?.symbol}</span>
           </div>
 
           <button 
