@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Buffer } from 'buffer';
+import { createInitializeMint2Instruction, MINT_SIZE } from '@solana/spl-token';
 import { useWallet, useAnchorWallet } from '@solana/wallet-adapter-react';
 import { 
   Connection, 
@@ -48,7 +49,7 @@ export default function Launch({ onForgeSuccess }) {
 
   const connectedAddress = publicKey ? publicKey.toBase58() : '';
 
- // 🚀 DIRECT ON-CHAIN DEPLOYMENT HANDLER (Pure Web3.js - No Anchor IDL Crashes)
+// 🚀 DIRECT ON-CHAIN DEPLOYMENT HANDLER (Pure Web3.js)
   const handleRealDeployment = async () => {
     if (!tokenName || !tokenSymbol) {
       alert("⚠️ Token Name and Symbol are required to forge an asset.");
@@ -86,16 +87,41 @@ export default function Launch({ onForgeSuccess }) {
       // 2. Prepare Safe Arguments
       const safeName = (tokenName || "").trim().slice(0, 32) || "Apex Token";
       const safeSymbol = (tokenSymbol || "").trim().toUpperCase().slice(0, 10) || "APEX";
-
       let safeUri = thumbnailUrl || imagePreview || "https://apexforge.app/metadata.json";
       if (safeUri.startsWith("data:") || safeUri.length > 128) {
         safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
       }
 
-      // 3. Construct Anchor Borsh Data Buffer Manually (Bypasses IDL .size error!)
-      // 8-byte discriminator for "global:create_token"
-      const discriminator = Buffer.from([84, 52, 222, 172, 116, 206, 137, 238]);
+      setStatusMessage("> Preparing Mint Account Initialization...");
+
+      // 3. 🚀 PREPARE THE MINT ACCOUNT (Fixes the uninitialized mint trap!)
+      const mintRent = await connection.getMinimumBalanceForRentExemption(MINT_SIZE);
+      const createMintAccountIx = SystemProgram.createAccount({
+        fromPubkey: publicKey,
+        newAccountPubkey: mintPublicKey,
+        space: MINT_SIZE,
+        lamports: mintRent,
+        programId: TOKEN_PROGRAM_ID,
+      });
+
+      const initializeMintIx = createInitializeMint2Instruction(
+        mintPublicKey,
+        6, // Decimals
+        publicKey, // Mint Authority
+        null, // Freeze Authority
+        TOKEN_PROGRAM_ID
+      );
+
+      // 4. 🚀 DYNAMIC DISCRIMINATOR (Fixes Error 101 permanently!)
+      const getDiscriminator = async (name) => {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(`global:${name}`);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        return Buffer.from(hashBuffer).slice(0, 8);
+      };
       
+      const discriminator = await getDiscriminator("create_token");
+
       const encodeString = (str) => {
         const strBuf = Buffer.from(str, 'utf-8');
         const lenBuf = Buffer.alloc(4);
@@ -110,12 +136,12 @@ export default function Launch({ onForgeSuccess }) {
         encodeString(safeUri)
       ]);
 
-      // 4. Construct Direct Web3 TransactionInstruction
+      // 5. Construct Anchor Instruction perfectly mapped to your Rust struct
       const createTokenIx = new TransactionInstruction({
         programId: PROGRAM_ID,
         keys: [
           { pubkey: bondingCurvePDA, isSigner: false, isWritable: true },
-          { pubkey: mintPublicKey, isSigner: true, isWritable: true },
+          { pubkey: mintPublicKey, isSigner: false, isWritable: true }, // Not a signer here, just passing the initialized account!
           { pubkey: publicKey, isSigner: true, isWritable: true },
           { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
           { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
@@ -124,24 +150,29 @@ export default function Launch({ onForgeSuccess }) {
         data: instructionData,
       });
 
-      setStatusMessage("> Awaiting Phantom signature...");
+      setStatusMessage("> Awaiting wallet signature...");
 
-      // 5. Build transaction with fresh blockhash
-      const tx = new Transaction().add(createTokenIx);
+      // 6. Build transaction adding ALL instructions in order
+      const tx = new Transaction().add(
+        createMintAccountIx,
+        initializeMintIx,
+        createTokenIx
+      );
+      
       tx.feePayer = publicKey;
       const { blockhash } = await connection.getLatestBlockhash('finalized');
       tx.recentBlockhash = blockhash;
 
-      // 6. Partial Sign & Request Phantom Signature
-      tx.partialSign(mintKeypair);
+      // 7. Partial Sign & Request Wallet Signature
+      tx.partialSign(mintKeypair); // Mint keypair must sign to create the account
       const signedTx = await wallet.signTransaction(tx);
 
       setStatusMessage("> Broadcasting transaction to Devnet...");
 
-      // 7. Send Raw Transaction
+      // 8. Send Raw Transaction
       const rawTx = signedTx.serialize();
       const txSignature = await connection.sendRawTransaction(rawTx, {
-        skipPreflight: true, // Prevents simulation timeouts
+        skipPreflight: true,
         maxRetries: 5,
       });
 
@@ -151,7 +182,7 @@ export default function Launch({ onForgeSuccess }) {
       console.log("Success! Tx Signature:", txSignature);
       alert(`🚀 Token Successfully Forged! Tx: ${txSignature}`);
 
-      // 8. Setup UI & Database
+      // 9. Setup UI & Database
       setDeployedTokenAddress(txSignature);
       setDeployedHistory(prev => [...prev, tokenName.toLowerCase()]);
 
