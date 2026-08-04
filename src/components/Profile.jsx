@@ -259,7 +259,7 @@ export default function Profile({
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar relative">
+      <div className="flex-1 overflow-y-auto scrollbar-hide relative">
         <div className="w-full h-32 bg-gradient-to-r from-[#121212] via-[#1A1A24] to-[#0A0A0A] relative border-b border-white/[0.05]">
           <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
         </div>
@@ -586,7 +586,7 @@ export default function Profile({
                   <h3 className="text-sm font-black text-white uppercase tracking-widest">{activeModal === 'followers' ? 'Followers' : 'Following'}</h3>
                   <button onClick={() => setActiveModal(null)} className="p-1 text-zinc-400 hover:text-white">✕</button>
                 </div>
-                <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto no-scrollbar">
+                <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto scrollbar-hide">
                   {mockUsersList.map(u => (
                     <div key={u.id} className="flex items-center justify-between p-3 bg-black/40 border border-white/5 rounded-xl">
                       <div className="flex items-center gap-3">
