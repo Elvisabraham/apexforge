@@ -277,8 +277,8 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
       
       <style>{`
         * { -webkit-tap-highlight-color: transparent !important; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* 🚀 HIDE DESKTOP BROWSER SPINNER ARROWS */
         input[type=number]::-webkit-inner-spin-button, 

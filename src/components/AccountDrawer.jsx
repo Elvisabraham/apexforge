@@ -21,7 +21,7 @@ export default function AccountDrawer({
         className="w-[300px] sm:w-[320px] h-full bg-[#0A0A0A] border-r border-white/10 shadow-[20px_0_50px_rgba(0,0,0,0.8)] relative z-10 animate-slideRight flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-5 flex flex-col flex-1 overflow-y-auto no-scrollbar">
+        <div className="p-5 flex flex-col flex-1 overflow-y-auto scrollbar-hide">
           
           <div className="flex justify-between items-center mb-6 shrink-0">
             <h3 className="text-xs font-black uppercase tracking-wider text-zinc-500">Your Account</h3>

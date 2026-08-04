@@ -408,8 +408,8 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
         * { -webkit-tap-highlight-color: transparent !important; }
         @keyframes slideUpNative { 0% { transform: translateY(100%); } 100% { transform: translateY(0); } }
         .animate-slideUpNative { animation: slideUpNative 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* 🚀 HIDE DESKTOP BROWSER SPINNER ARROWS */
         input[type=number]::-webkit-inner-spin-button, 
@@ -490,7 +490,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       </header>
 
       {/* --- SCROLLABLE CONTENT --- */}
-      <div className="flex-1 overflow-y-auto no-scrollbar relative">
+      <div className="flex-1 overflow-y-auto scrollbar-hide relative">
         <div className="flex flex-col w-full pb-8">
           
           <div className="flex flex-col px-4 pt-4 pb-2">
@@ -506,7 +506,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
              <div ref={chartContainerRef} className="w-full h-full" />
           </div>
 
-          <div className="flex items-center px-4 py-3 border-b border-white/[0.05] bg-[#0A0A0B] overflow-x-auto no-scrollbar">
+          <div className="flex items-center px-4 py-3 border-b border-white/[0.05] bg-[#0A0A0B] overflow-x-auto scrollbar-hide">
              <div className="flex items-center gap-1.5">
                {['15m', '1h', '4h', '1d', 'MAX'].map(tf => (
                  <button key={tf} onClick={() => setChartTimeframe(tf)} className={`text-[12px] font-bold uppercase px-3 py-1.5 rounded-lg transition-colors shrink-0 ${chartTimeframe === tf ? `bg-[#2B2B43] text-white shadow-sm` : 'text-zinc-500 hover:text-white bg-transparent'}`}>{tf}</button>
@@ -701,7 +701,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
               <button onClick={() => setShowAllTrades(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg></button>
             </div>
 
-            <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-1">
+            <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
               {[
                 { id: 'all', label: 'All Trades' },
                 { id: 'buys', label: '🟢 Buys Only' },
@@ -718,7 +718,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
               ))}
             </div>
 
-            <div className="flex-1 overflow-y-auto no-scrollbar pb-6 space-y-2">
+            <div className="flex-1 overflow-y-auto scrollbar-hide pb-6 space-y-2">
               {getFilteredTrades().length === 0 ? (
                 <div className="text-center py-12 text-zinc-600 text-xs font-bold uppercase tracking-widest">No matching transactions found</div>
               ) : (

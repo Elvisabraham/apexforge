@@ -295,8 +295,8 @@ export default function Launch({ onForgeSuccess }) {
     <div className="flex flex-col w-full h-full bg-[#050505] text-white font-sans overflow-hidden relative select-none">
       
       <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
       {/* --- PINNED HEADER --- */}
@@ -311,7 +311,7 @@ export default function Launch({ onForgeSuccess }) {
       </header>
 
       {/* --- SCROLLABLE MIDDLE CONTAINER --- */}
-      <div className={`flex-1 overflow-y-auto no-scrollbar px-4 pt-6 pb-72 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`flex-1 overflow-y-auto scrollbar-hide px-4 pt-6 pb-72 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
         <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
           
           <div className="flex flex-col gap-1">

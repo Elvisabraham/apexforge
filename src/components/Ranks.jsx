@@ -68,8 +68,8 @@ export default function Ranks({ onOpenProfile }) {
     <div className="flex flex-col w-full h-screen bg-[#0A0A0B] text-white font-sans overflow-hidden select-none">
       
       <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes slideDown { 0% { opacity: 0; transform: translateY(-10px); } 100% { opacity: 1; transform: translateY(0); } }
         .animate-slideDown { animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
       `}</style>
@@ -85,7 +85,7 @@ export default function Ranks({ onOpenProfile }) {
       </header>
 
       {/* --- SCROLLABLE CONTENT --- */}
-      <div className="flex-1 overflow-y-auto no-scrollbar relative pb-32">
+      <div className="flex-1 overflow-y-auto scrollbar-hide relative pb-32">
         
         {/* 🚀 UPGRADED HERO CARD */}
         <div className="p-4">

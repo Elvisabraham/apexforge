@@ -180,8 +180,8 @@ export default function Watch({ onTokenClick, userProfile }) {
       <style>{`
         .snap-container { scroll-snap-type: y mandatory; overflow-y: scroll; height: 100vh; }
         .snap-item { scroll-snap-align: start; height: 100vh; position: relative; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
       {/* --- DESKTOP FLOATING HEADER (Tabs + Search Icon) --- */}
@@ -271,7 +271,7 @@ export default function Watch({ onTokenClick, userProfile }) {
       <div 
         ref={containerRef} 
         onScroll={handleScroll} 
-        className={`snap-container no-scrollbar w-full relative pb-40 ${isCommentDrawerOpen || isSearchOpen ? 'overflow-hidden touch-none' : ''}`}
+        className={`snap-container scrollbar-hide w-full relative pb-40 ${isCommentDrawerOpen || isSearchOpen ? 'overflow-hidden touch-none' : ''}`}
       >
         {filteredFeed.length === 0 ? (
           <div className="w-full h-full flex flex-col items-center justify-center text-center p-6 gap-3">
@@ -435,7 +435,7 @@ export default function Watch({ onTokenClick, userProfile }) {
           </div>
 
           {/* Search Results List */}
-          <div className="flex-1 overflow-y-auto max-w-2xl mx-auto w-full flex flex-col gap-3 no-scrollbar pb-10">
+          <div className="flex-1 overflow-y-auto max-w-2xl mx-auto w-full flex flex-col gap-3 scrollbar-hide pb-10">
             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 px-1 mt-2">Matching Watch Tickers</span>
             
             {feedData.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.symbol.toLowerCase().includes(searchQuery.toLowerCase()) || t.hypeText.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
@@ -501,7 +501,7 @@ export default function Watch({ onTokenClick, userProfile }) {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 no-scrollbar bg-[#0E0E10]">
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 scrollbar-hide bg-[#0E0E10]">
               {activeToken.comments.map((comment) => (
                 <div key={comment.id} className="flex flex-col bg-white/[0.02] border border-white/[0.04] p-3 rounded-xl">
                   <span 

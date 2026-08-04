@@ -15,8 +15,8 @@ export default function Refer({ onBack }) {
     <div className="flex flex-col w-full h-screen bg-[#050505] text-white font-sans overflow-hidden select-none animate-fadeIn">
       
       <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
       {/* --- HEADER --- */}
@@ -45,7 +45,7 @@ export default function Refer({ onBack }) {
       </header>
 
       {/* --- SCROLLABLE CONTENT --- */}
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-32 px-4 pt-6">
+      <div className="flex-1 overflow-y-auto scrollbar-hide pb-32 px-4 pt-6">
         
         {/* HERO INTRO */}
         <div className="mb-6">

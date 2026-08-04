@@ -410,7 +410,7 @@ export default function Wallet({ setActivePage, onOpenProfile, onOpenSettings, o
         <div 
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto no-scrollbar pb-32"
+          className="flex-1 overflow-y-auto scrollbar-hide pb-32"
         >
           <div className="flex flex-col w-full max-w-4xl mx-auto">
             

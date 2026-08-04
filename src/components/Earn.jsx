@@ -44,8 +44,8 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
     <div className="flex flex-col w-full h-screen bg-[#050505] text-white font-sans animate-fadeIn overflow-hidden relative select-none">
       
       <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes slideUpNative { 0% { transform: translateY(100%); } 100% { transform: translateY(0); } }
         .animate-slideUpNative { animation: slideUpNative 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
       `}</style>
@@ -73,7 +73,7 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
       </header>
 
       {/* --- SCROLLABLE CONTENT --- */}
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
+      <div className="flex-1 overflow-y-auto scrollbar-hide pb-32">
         
         {/* HERO PORTFOLIO CARD */}
         <div className="p-4">
@@ -196,7 +196,7 @@ export default function Earn({ setActivePage, userPortfolio, onBack }) {
         <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="absolute inset-0 z-0" onClick={() => setActiveVault(null)}></div>
           
-          <div className="bg-[#121212] border-t border-[#089981]/30 rounded-t-3xl w-full max-w-lg p-6 pb-24 mb-16 relative z-10 shadow-[0_-20px_50px_rgba(8,153,129,0.15)] animate-slideUpNative flex flex-col max-h-[80vh] overflow-y-auto no-scrollbar">
+          <div className="bg-[#121212] border-t border-[#089981]/30 rounded-t-3xl w-full max-w-lg p-6 pb-24 mb-16 relative z-10 shadow-[0_-20px_50px_rgba(8,153,129,0.15)] animate-slideUpNative flex flex-col max-h-[80vh] overflow-y-auto scrollbar-hide">
             
             {/* Grab Bar */}
             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-5 shrink-0"></div>

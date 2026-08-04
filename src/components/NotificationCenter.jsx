@@ -175,7 +175,7 @@ export default function NotificationCenter({ isOpen, onClose, notifications = []
           <>
             {/* CATEGORY FILTER PILLS */}
             <div className="px-4 py-3 border-b border-white/5 bg-[#121212]/50">
-              <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+              <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
                 {[
                   { id: 'ALL', label: 'All' },
                   { id: 'ALERTS', label: 'Alerts' },

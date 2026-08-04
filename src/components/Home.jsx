@@ -219,8 +219,8 @@ export default function Home({
     <div className="flex flex-col w-full h-full bg-[#0A0A0B] text-white font-sans overflow-hidden select-none relative">
       
       <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
       {/* --- UNMOVABLE HEADER --- */}
@@ -282,7 +282,7 @@ export default function Home({
       </header>
 
       {/* --- SCROLLABLE FEED --- */}
-      <div className="flex-1 overflow-y-auto no-scrollbar relative pb-20">
+      <div className="flex-1 overflow-y-auto scrollbar-hide relative pb-20">
         
         {spotlightToken && !searchQuery && (activeTab === 'TRENDING' || activeTab === 'EXPLORE') && (
           <div className="px-4 pt-4 pb-2">
@@ -338,7 +338,7 @@ export default function Home({
         )}
 
         <div className="sticky top-0 z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04]">
-          <div className="flex gap-2 w-full overflow-x-auto no-scrollbar bg-[#131722] p-1.5 rounded-xl border border-white/5">
+          <div className="flex gap-2 w-full overflow-x-auto scrollbar-hide bg-[#131722] p-1.5 rounded-xl border border-white/5">
             {['EXPLORE', 'TRENDING', 'NEW', 'GRADUATED'].map(tab => (
               <button 
                 key={tab}
