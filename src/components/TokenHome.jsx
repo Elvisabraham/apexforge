@@ -213,98 +213,18 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     }
   };
 
-  const handleExecuteTrade = () => {
+  const handleExecuteTrade = async () => {
     const amount = parseFloat(tradeAmount.toString().replace(/,/g, ''));
     if (!amount || amount <= 0) return;
+
+    // 🚀 Send the transaction to the blockchain using your central hook!
+    const success = await executeTradeOnChain(tradeMode, amount, displayToken.mintAddress);
     
-    const randomTxHash = `${Math.random().toString(36).substring(2, 6)}...${Math.random().toString(36).substring(2, 6)}`;
-
-    if (tradeMode === 'buy') {
-      if (amount > userBalanceSol) return;
-
-      const platformFeePercent = displayToken.isGraduated ? 0.005 : 0; 
-      const feeAmount = amount * platformFeePercent;
-      const netSolAmount = amount - feeAmount;
-
-      const currentPrice = curveState.price;
-      const tokensReceived = (netSolAmount / currentPrice) / 1000000; 
-
-      let newProgress = curveState.progress;
-      let newSolInCurve = curveState.solInCurve;
-      
-      if (!displayToken.isGraduated) {
-        newSolInCurve = curveState.solInCurve + netSolAmount;
-        newProgress = Math.min(100, (newSolInCurve / 85) * 100); 
-      }
-
-      const pricePumpFactor = 1 + (netSolAmount * 0.05); 
-      const newPrice = currentPrice * pricePumpFactor;
-      const newMcap = curveState.mcap * pricePumpFactor;
-
-      setUserBalanceSol(prev => prev - amount);
-      setUserTokenBalance(prev => prev + (tokensReceived * 1000000));
-      setCurveState({ price: newPrice, mcap: newMcap, progress: newProgress.toFixed(1), solInCurve: newSolInCurve });
-
-      setRecentTrades(prev => [{
-        id: Date.now(), 
-        type: 'buy', 
-        amountToken: `${tokensReceived.toFixed(1)}M`, 
-        amountSol: netSolAmount.toFixed(2), 
-        price: `$${newPrice.toFixed(7)}`, 
-        time: 'Just now', 
-        user: 'You',
-        txHash: randomTxHash
-      }, ...prev].slice(0, 50));
-
-      if (displayToken.isGraduated) {
-          alert(`Jupiter API BUY Executed on Raydium! \n\nFee collected for Treasury: ${feeAmount.toFixed(4)} SOL (0.5%)`);
-      }
-
-    } else if (tradeMode === 'sell') {
-      const tokenQuantity = amount * 1000000;
-      if (tokenQuantity > userTokenBalance) return;
-
-      const currentPrice = curveState.price;
-      const grossSolReceived = (tokenQuantity * currentPrice);
-      
-      const platformFeePercent = displayToken.isGraduated ? 0.005 : 0; 
-      const feeAmount = grossSolReceived * platformFeePercent;
-      const netSolReceived = grossSolReceived - feeAmount;
-
-      let newProgress = curveState.progress;
-      let newSolInCurve = curveState.solInCurve;
-
-      if (!displayToken.isGraduated) {
-        newSolInCurve = Math.max(0, curveState.solInCurve - grossSolReceived);
-        newProgress = Math.max(0, (newSolInCurve / 85) * 100); 
-      }
-
-      const priceDumpFactor = 1 - (grossSolReceived * 0.05); 
-      const newPrice = Math.max(0.0000001, currentPrice * priceDumpFactor);
-      const newMcap = Math.max(1, curveState.mcap * priceDumpFactor);
-
-      setUserTokenBalance(prev => prev - tokenQuantity);
-      setUserBalanceSol(prev => prev + netSolReceived);
-      setCurveState({ price: newPrice, mcap: newMcap, progress: newProgress.toFixed(1), solInCurve: newSolInCurve });
-
-      setRecentTrades(prev => [{
-        id: Date.now(), 
-        type: 'sell', 
-        amountToken: `${amount.toFixed(1)}M`, 
-        amountSol: netSolReceived.toFixed(2), 
-        price: `$${newPrice.toFixed(7)}`, 
-        time: 'Just now', 
-        user: 'You',
-        txHash: randomTxHash
-      }, ...prev].slice(0, 50));
-
-      if (displayToken.isGraduated) {
-          alert(`Jupiter API SELL Executed on Raydium! \n\nFee collected for Treasury: ${feeAmount.toFixed(4)} SOL (0.5%)`);
-      }
+    if (success) {
+      // If the Phantom wallet transaction succeeds, close the modal
+      setIsBuyModalOpen(false);
+      setTradeAmount('');
     }
-
-    setIsBuyModalOpen(false);
-    setTradeAmount('');
   };
 
   const handleCopyCA = (source) => {
@@ -1012,12 +932,12 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
              </div>
 
              <button 
-                onClick={handleExecuteTrade}
-                disabled={!cleanNumericAmount || cleanNumericAmount <= 0}
-                className={`w-full ${displayToken.isGraduated ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-[0_4px_12px_rgba(245,158,11,0.15)]' : (tradeMode === 'buy' ? 'bg-[#089981] hover:bg-[#06806b] shadow-[0_4px_12px_rgba(8,153,129,0.15)]' : 'bg-[#F23645] hover:bg-rose-600 shadow-[0_4px_12px_rgba(242,54,69,0.15)]')} disabled:opacity-50 text-white font-black text-sm py-4 rounded-2xl tracking-[0.2em] uppercase transition-all active:scale-95 flex items-center justify-center gap-2`}
-             >
-                Confirm {tradeMode} ⚡
-             </button>
+    onClick={handleExecuteTrade}
+    disabled={!cleanNumericAmount || cleanNumericAmount <= 0 || isProcessing}
+    className={`w-full ${displayToken.isGraduated ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-[0_0_20px_rgba(245,158,11,0.3)]' : (tradeMode === 'buy' ? 'bg-[#089981] hover:bg-[#06806b] shadow-[0_0_20px_rgba(8,153,129,0.3)]' : 'bg-[#F23645] hover:bg-rose-600 shadow-[0_0_20px_rgba(242,54,69,0.3)]')} disabled:opacity-50 text-white font-black text-sm py-4 rounded-2xl tracking-[0.2em] uppercase transition-all active:scale-95 flex items-center justify-center gap-2`}
+  >
+    {isProcessing ? 'Confirming in Wallet... ⏳' : `Confirm ${tradeMode} ⚡`}
+  </button>
           </div>
         </div>
       )}
