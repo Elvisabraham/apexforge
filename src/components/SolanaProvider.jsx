@@ -47,7 +47,7 @@ export default function SolanaProvider({ children }) {
   );
 }
 
-// 🚀 CRASH-PROOF ANCHOR HOOK (Restored for Anchor v0.29)
+// 🚀 CRASH-PROOF ANCHOR HOOK (Strictly for Anchor v0.30+)
 export const useApexForgeProgram = () => {
   const wallet = useAnchorWallet();
 
@@ -70,14 +70,11 @@ export const useApexForgeProgram = () => {
         return null;
       }
 
-      const rawProgramId = import.meta.env.VITE_PROGRAM_ID || idl?.metadata?.address || idl?.address || 'zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc';
-      const programId = new PublicKey(rawProgramId.trim());
-      
-      console.log("🟢 Initializing Smart Contract with Program ID:", programId.toBase58());
+      console.log("🟢 Initializing Smart Contract (Anchor v0.30 Mode)...");
 
-      // 🚀 THE FINAL FIX: We restored the standard 3-argument constructor!
-      // Since the "pubkey" typo in the IDL is fixed, this will now work perfectly.
-      return new Program(idl, programId, provider);
+      // 🚀 THE FIX: Anchor v0.30+ ONLY takes 2 arguments!
+      // It will automatically read the Program ID from your 52-line IDL file.
+      return new Program(idl, provider);
 
     } catch (err) {
       console.error("🔴 Anchor Provider Crashed. Reason:", err.message);
