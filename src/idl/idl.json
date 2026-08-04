@@ -1,5 +1,11 @@
 {
   "address": "zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc",
+  "metadata": {
+    "name": "apex_forge",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
   "version": "0.1.0",
   "name": "apex_forge",
   "instructions": [
@@ -38,8 +44,8 @@
       "type": {
         "kind": "struct",
         "fields": [
-          { "name": "creator", "type": "pubkey" },
-          { "name": "mint", "type": "pubkey" },
+          { "name": "creator", "type": "publicKey" },
+          { "name": "mint", "type": "publicKey" },
           { "name": "virtualSolReserves", "type": "u64" },
           { "name": "virtualTokenReserves", "type": "u64" },
           { "name": "realSolReserves", "type": "u64" },
@@ -55,8 +61,8 @@
       "type": {
         "kind": "struct",
         "fields": [
-          { "name": "creator", "type": "pubkey" },
-          { "name": "mint", "type": "pubkey" },
+          { "name": "creator", "type": "publicKey" },
+          { "name": "mint", "type": "publicKey" },
           { "name": "virtualSolReserves", "type": "u64" },
           { "name": "virtualTokenReserves", "type": "u64" },
           { "name": "realSolReserves", "type": "u64" },
