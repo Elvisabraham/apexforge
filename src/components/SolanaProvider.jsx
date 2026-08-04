@@ -47,7 +47,7 @@ export default function SolanaProvider({ children }) {
   );
 }
 
-// 🚀 CRASH-PROOF ANCHOR HOOK (Handles ALL Anchor versions)
+// 🚀 CRASH-PROOF ANCHOR HOOK (Restored for Anchor v0.29)
 export const useApexForgeProgram = () => {
   const wallet = useAnchorWallet();
 
@@ -65,29 +65,19 @@ export const useApexForgeProgram = () => {
         preflightCommitment: 'confirmed',
       });
 
-      // 🛑 EMERGENCY CHECK: Is the IDL actually there?
-      if (!idl || Object.keys(idl).length === 0 || (!idl.instructions && !idl.methods)) {
-        console.error("🔴 CRITICAL: IDL is empty or invalid! Please paste your compiled Anchor contract into src/idl/idl.json");
+      if (!idl || Object.keys(idl).length === 0) {
+        console.error("🔴 CRITICAL: IDL is empty!");
         return null;
       }
 
-      const rawProgramId = import.meta.env.VITE_PROGRAM_ID || idl?.metadata?.address || idl?.address || FALLBACK_PROGRAM_ID;
+      const rawProgramId = import.meta.env.VITE_PROGRAM_ID || idl?.metadata?.address || idl?.address || 'zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc';
       const programId = new PublicKey(rawProgramId.trim());
       
       console.log("🟢 Initializing Smart Contract with Program ID:", programId.toBase58());
 
-      // 🚀 THE FIX: Inject the address into BOTH places Anchor looks for it
-      const formattedIdl = { 
-        ...idl, 
-        address: programId.toBase58(),
-        metadata: {
-          ...(idl?.metadata || {}),
-          address: programId.toBase58()
-        }
-      };
-
-      // Correct Anchor Signature: Program(idl, provider)
-      return new Program(formattedIdl, provider);
+      // 🚀 THE FINAL FIX: We restored the standard 3-argument constructor!
+      // Since the "pubkey" typo in the IDL is fixed, this will now work perfectly.
+      return new Program(idl, programId, provider);
 
     } catch (err) {
       console.error("🔴 Anchor Provider Crashed. Reason:", err.message);
