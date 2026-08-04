@@ -48,5 +48,22 @@
         ]
       }
     }
+  ],
+  "types": [
+    {
+      "name": "BondingCurve",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "creator", "type": "publicKey" },
+          { "name": "mint", "type": "publicKey" },
+          { "name": "virtualSolReserves", "type": "u64" },
+          { "name": "virtualTokenReserves", "type": "u64" },
+          { "name": "realSolReserves", "type": "u64" },
+          { "name": "realTokenReserves", "type": "u64" },
+          { "name": "complete", "type": "bool" }
+        ]
+      }
+    }
   ]
 }
