@@ -76,14 +76,18 @@ export const useApexForgeProgram = () => {
       
       console.log("🟢 Initializing Smart Contract with Program ID:", programId.toBase58());
 
-      try {
-        // Try Standard Anchor v0.29 (Most Common)
-        return new Program(idl, programId, provider);
-      } catch (innerErr) {
-        // Fallback for Anchor v0.30+
-        const formattedIdl = { ...idl, address: programId.toBase58() };
-        return new Program(formattedIdl, provider);
-      }
+      // 🚀 THE FIX: Inject the address into BOTH places Anchor looks for it
+      const formattedIdl = { 
+        ...idl, 
+        address: programId.toBase58(),
+        metadata: {
+          ...(idl?.metadata || {}),
+          address: programId.toBase58()
+        }
+      };
+
+      // Correct Anchor Signature: Program(idl, provider)
+      return new Program(formattedIdl, provider);
 
     } catch (err) {
       console.error("🔴 Anchor Provider Crashed. Reason:", err.message);
