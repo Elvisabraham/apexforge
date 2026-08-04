@@ -2,18 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createChart, CandlestickSeries, AreaSeries } from 'lightweight-charts';
 import { useWallet } from '@solana/wallet-adapter-react';
 import ActiveTvStream from './ActiveTvStream';
+import { useTrade } from '../hooks/useTrade';
 
-// 🚀 HELPER: Format address or generate default username (Put this here!)
+// 🚀 HELPER: Format address... (Leave this here)
 const formatCreator = (val, email) => {
-  if (email) return `@${email.split('@')[0]}`;
-  if (!val) return 'ApexDeployer_0x1';
-  if (val.length > 20) {
-    return `${val.slice(0, 4)}...${val.slice(-4)}`;
-  }
-  return val;
+  // ...
 };
 
 export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
+  const { executeTradeOnChain, isProcessing } = useTrade();
+
   const { publicKey } = useWallet();
   const connectedAddress = publicKey ? publicKey.toBase58() : null;
 
