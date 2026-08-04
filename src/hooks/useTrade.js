@@ -9,8 +9,15 @@ export const useTrade = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const executeTradeOnChain = async (mode, amount, tokenMint) => {
-    if (!program || !publicKey) {
-      alert("Please connect your wallet first!");
+    // 1. Check if wallet is missing
+    if (!publicKey) {
+      alert("❌ Wallet not connected! Please connect Phantom.");
+      return false;
+    }
+
+    // 2. Check if Smart Contract is missing
+    if (!program) {
+      alert("⚠️ Wallet IS connected, but the Smart Contract failed to load! We need to wire the IDL.");
       return false;
     }
 
@@ -44,12 +51,12 @@ export const useTrade = () => {
       }
 
       setIsProcessing(false);
-      return true; // Returns true if trade succeeds
+      return true; 
 
     } catch (err) {
       console.error("Trade Failed:", err);
       setIsProcessing(false);
-      return false; // Returns false if user rejects or trade fails
+      return false; 
     }
   };
 
