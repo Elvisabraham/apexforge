@@ -47,32 +47,46 @@ export default function SolanaProvider({ children }) {
   );
 }
 
-// 🚀 CRASH-PROOF ANCHOR HOOK (Anchor v0.30+ Compatible)
+// 🚀 CRASH-PROOF ANCHOR HOOK (Handles ALL Anchor versions)
 export const useApexForgeProgram = () => {
   const wallet = useAnchorWallet();
 
   return useMemo(() => {
-    if (!wallet || !wallet.publicKey) return null;
+    if (!wallet) {
+      console.log("🟡 Waiting for Anchor Wallet to connect...");
+      return null;
+    }
 
     try {
+      console.log("🟢 Anchor Wallet Connected:", wallet.publicKey.toBase58());
+      
       const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
       const provider = new AnchorProvider(connection, wallet, {
         preflightCommitment: 'confirmed',
       });
 
-      const rawProgramId = import.meta.env.VITE_PROGRAM_ID || idl?.address || FALLBACK_PROGRAM_ID;
+      // 🛑 EMERGENCY CHECK: Is the IDL actually there?
+      if (!idl || Object.keys(idl).length === 0 || (!idl.instructions && !idl.methods)) {
+        console.error("🔴 CRITICAL: IDL is empty or invalid! Please paste your compiled Anchor contract into src/idl/idl.json");
+        return null;
+      }
+
+      const rawProgramId = import.meta.env.VITE_PROGRAM_ID || idl?.metadata?.address || idl?.address || FALLBACK_PROGRAM_ID;
       const programId = new PublicKey(rawProgramId.trim());
+      
+      console.log("🟢 Initializing Smart Contract with Program ID:", programId.toBase58());
 
-      const formattedIdl = {
-        ...idl,
-        address: programId.toBase58(),
-      };
-
-      // Anchor v0.30+ Signature: new Program(idl, provider)
-      return new Program(formattedIdl, provider);
+      try {
+        // Try Standard Anchor v0.29 (Most Common)
+        return new Program(idl, programId, provider);
+      } catch (innerErr) {
+        // Fallback for Anchor v0.30+
+        const formattedIdl = { ...idl, address: programId.toBase58() };
+        return new Program(formattedIdl, provider);
+      }
 
     } catch (err) {
-      console.error("🔴 Anchor Provider Error:", err);
+      console.error("🔴 Anchor Provider Crashed. Reason:", err.message);
       return null;
     }
   }, [wallet]);
