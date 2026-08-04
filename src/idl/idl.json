@@ -1,11 +1,5 @@
 {
   "address": "zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc",
-  "metadata": {
-    "name": "apex_forge",
-    "version": "0.1.0",
-    "spec": "0.1.0",
-    "description": "Created with Anchor"
-  },
   "version": "0.1.0",
   "name": "apex_forge",
   "instructions": [
@@ -54,25 +48,5 @@
         ]
       }
     }
-  ],
-  "types": [
-    {
-      "name": "BondingCurve",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          { "name": "creator", "type": "publicKey" },
-          { "name": "mint", "type": "publicKey" },
-          { "name": "virtualSolReserves", "type": "u64" },
-          { "name": "virtualTokenReserves", "type": "u64" },
-          { "name": "realSolReserves", "type": "u64" },
-          { "name": "realTokenReserves", "type": "u64" },
-          { "name": "complete", "type": "bool" }
-        ]
-      }
-    }
-  ],
-  "errors": [
-    { "code": 6000, "name": "CurveComplete", "msg": "Bonding curve is already complete and graduated." }
   ]
 }
