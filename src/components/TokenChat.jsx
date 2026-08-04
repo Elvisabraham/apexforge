@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTrade } from '../hooks/useTrade';
 
 export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile }) {
+  const { executeTradeOnChain, isProcessing } = useTrade();
+
   const messagesEndRef = useRef(null);
   const [inputText, setInputText] = useState('');
   const [activeReactionId, setActiveReactionId] = useState(null);
