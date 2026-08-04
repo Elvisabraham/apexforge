@@ -20,9 +20,9 @@ export const useTrade = () => {
     try {
       const provider = new AnchorProvider(connection, wallet, { preflightCommitment: 'confirmed' });
       
-      // 🚀 THE FIX: Explicitly define the Program ID and pass all THREE arguments!
-      const programId = new PublicKey(idl.address || "zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc");
-      const program = new Program(idl, programId, provider);
+      // 🚀 THE FINAL FIX: Anchor 0.30+ constructor only needs 2 arguments!
+      // It automatically reads the Program ID right out of your clean IDL.
+      const program = new Program(idl, provider);
 
       const amountInLamports = new BN(parseFloat(amount) * 1e9);
       
