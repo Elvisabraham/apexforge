@@ -200,98 +200,20 @@ function AppContent() {
     setActivePage(page);
   };
 
-  const handleExecuteTrade = () => {
+  const handleExecuteTrade = async () => {
     const amount = parseFloat(tradeAmount);
     if (isNaN(amount) || amount <= 0) {
       alert("⚠️ Please enter a valid amount to trade.");
       return;
     }
 
-    const exchangeRate = 1850420; 
-    const currentSolPriceUSD = 145;
-
-    if (tradeMode === 'buy') {
-      const tokensToReceive = amount * exchangeRate;
-      const usdValueSpent = amount * currentSolPriceUSD;
-
-      setUserPortfolio(prev => {
-        let updated = [...prev];
-        const tokenIndex = updated.findIndex(t => t.symbol === selectedTokenData.symbol);
-        
-        if (tokenIndex !== -1) {
-          updated[tokenIndex] = {
-            ...updated[tokenIndex],
-            balance: updated[tokenIndex].balance + tokensToReceive,
-            valueUSD: updated[tokenIndex].valueUSD + usdValueSpent
-          };
-        } else {
-          updated.push({
-            symbol: selectedTokenData.symbol,
-            name: selectedTokenData.name || selectedTokenData.tokenName || 'Unknown Token',
-            balance: tokensToReceive,
-            valueUSD: usdValueSpent,
-            icon: selectedTokenData.icon || '🪙',
-            imagePreview: selectedTokenData.imagePreview
-          });
-        }
-        return updated;
-      });
-      
-      setGlobalTransactions(prev => [{
-        id: Date.now().toString(),
-        type: 'Swap',
-        details: `Swapped SOL for ${selectedTokenData.symbol}`,
-        time: 'Just now',
-        amount: `+ ${formatWithCommas(tokensToReceive.toFixed(0))}${selectedTokenData.symbol}`,
-        color: 'text-[#00FF66] drop-shadow-[0_0_8px_rgba(0,255,102,0.3)]',
-        hash: Math.random().toString(36).substring(2, 10)
-      }, ...prev]);
-
-      alert(`✅ Trade Executed! You successfully bought ${formatWithCommas(tokensToReceive.toFixed(0))}${selectedTokenData.symbol}.`);
-
-    } else {
-      const tokenInWallet = userPortfolio.find(t => t.symbol === selectedTokenData.symbol);
-      if (!tokenInWallet || amount > tokenInWallet.balance) {
-        alert(`⚠️ Insufficient ${selectedTokenData.symbol} balance to execute sell.`);
-        return;
-      }
-      
-      const usdValueReceived = (amount / exchangeRate) * currentSolPriceUSD;
-
-      setUserPortfolio(prev => {
-        let updated = [...prev];
-        const tokenIndex = updated.findIndex(t => t.symbol === selectedTokenData.symbol);
-        
-        if (tokenIndex !== -1) {
-          const newBalance = updated[tokenIndex].balance - amount;
-          if (newBalance <= 0) {
-              updated.splice(tokenIndex, 1); 
-          } else {
-             updated[tokenIndex] = {
-               ...updated[tokenIndex],
-               balance: newBalance,
-               valueUSD: updated[tokenIndex].valueUSD - usdValueReceived
-             };
-          }
-        }
-        return updated;
-      });
-
-      setGlobalTransactions(prev => [{
-        id: Date.now().toString(),
-        type: 'Swap',
-        details: `Swapped ${selectedTokenData.symbol} for SOL`,
-        time: 'Just now',
-        amount: `+ $${usdValueReceived.toFixed(2)}`,
-        color: 'text-[#00FF66] drop-shadow-[0_0_8px_rgba(0,255,102,0.3)]',
-        hash: Math.random().toString(36).substring(2, 10)
-      }, ...prev]);
-
-      alert(`✅ Trade Executed! You sold ${formatWithCommas(amount)}${selectedTokenData.symbol}.`);
+    // 🚀 Send the transaction straight to your deployed Solana hook and Phantom wallet!
+    const success = await executeTradeOnChain(tradeMode, amount, selectedTokenData?.mintAddress);
+    
+    if (success) {
+      setIsTradePortalOpen(false);
+      setTradeAmount('');
     }
-
-    setIsTradePortalOpen(false);
-    setTradeAmount('');
   };
 
   const handleForgeSuccess = (newToken) => {
