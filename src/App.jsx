@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import '@solana/wallet-adapter-react-ui/styles.css';
 
 // --- SOLANA PROVIDER INTEGRATION ---
 import SolanaProvider from './components/SolanaProvider'; // 🚀 Added Solana Web3 Context Wrapper
@@ -461,9 +463,14 @@ function AppContent() {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#050505] text-white flex flex-col overflow-hidden select-none">
-      
-      <style>{`
+<div className="fixed inset-0 bg-[#050505] text-white flex flex-col overflow-hidden select-none">
+  
+  {/* 🚀 OFFICIAL WEB3 WALLET CONNECT BUTTON */}
+  <div className="absolute top-4 right-4 z-[999]">
+    <WalletMultiButton style={{ backgroundColor: '#089981', borderRadius: '12px' }} />
+  </div>
+
+  <style>{`
         * {
           -webkit-touch-callout: none;
           -webkit-user-select: none;
