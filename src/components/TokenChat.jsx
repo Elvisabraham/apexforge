@@ -332,7 +332,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
           <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Top Room Holders</span>
           <span onClick={() => setIsHoldersModalOpen(true)} className="text-[10px] font-bold text-[#089981] cursor-pointer hover:text-white transition-colors">View All</span>
         </div>
-        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-1">
+       <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1">
           {topHolders.map((whale, idx) => (
             <div key={whale.id} onClick={() => onOpenProfile ? onOpenProfile(whale.name) : setIsHoldersModalOpen(true)} className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group">
               <div className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-transform group-hover:scale-105 ${idx === 0 ? 'border-amber-400' : 'border-white/10'}`}>
@@ -354,7 +354,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
       </div>
 
       {/* --- CHAT FEED --- */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar bg-[#050505]" onClick={() => setActiveReactionId(null)}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide bg-[#050505]" onClick={() => setActiveReactionId(null)}>
         {messages.map((msg) => {
           if (msg.isSystem) {
             return (
@@ -469,7 +469,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
               <button onClick={() => setIsHoldersModalOpen(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg></button>
             </div>
 
-            <div className="flex-1 overflow-y-auto no-scrollbar pb-6 space-y-2">
+            <div className="flex-1 overflow-y-auto scrollbar-hide pb-6 space-y-2">
               {topHolders.map((holder, index) => (
                 <div key={holder.id} onClick={() => { setIsHoldersModalOpen(false); if(onOpenProfile) onOpenProfile(holder.name); }} className="bg-[#121212] border border-white/5 p-4 rounded-xl flex justify-between items-center cursor-pointer hover:border-[#089981]/50 transition-colors">
                   <div className="flex items-center gap-3">
