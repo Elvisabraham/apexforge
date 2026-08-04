@@ -20,18 +20,16 @@ export const useTrade = () => {
     try {
       const provider = new AnchorProvider(connection, wallet, { preflightCommitment: 'confirmed' });
       
-      // 🚀 THE FINAL FIX: Anchor 0.30+ constructor only needs 2 arguments!
-      // It automatically reads the Program ID right out of your clean IDL.
-      const program = new Program(idl, provider);
+      // 🚀 RESTORED: We are enforcing 3 arguments so Anchor doesn't get confused.
+      const programId = new PublicKey(idl.address || "zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc");
+      const program = new Program(idl, programId, provider);
 
       const amountInLamports = new BN(parseFloat(amount) * 1e9);
       
-      // Fallback placeholder just in case tokenMint isn't passed in properly yet
       const mintPubkey = new PublicKey(tokenMint || "11111111111111111111111111111111");
       const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 
       if (mode === 'buy') {
-        // 🚀 SMART CONTRACT BUY LOGIC
         const tx = await program.methods
           .buyTokens(amountInLamports)
           .accounts({
@@ -45,7 +43,7 @@ export const useTrade = () => {
         console.log("✅ Buy Successful! Signature:", tx);
         alert("Transaction Sent! Check console for signature.");
       } else {
-        alert("⚠️ Sell logic coming soon! Smart contract currently only supports Buy.");
+        alert("⚠️ Sell logic coming soon!");
       }
 
       setIsProcessing(false);
