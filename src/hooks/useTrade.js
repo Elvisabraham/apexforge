@@ -77,7 +77,7 @@ console.log("🔍 ATTEMPTING TO TRADE EXACT ADDRESS:", tokenMint);
             systemProgram: SystemProgram.programId,
             tokenProgram: TOKEN_PROGRAM_ID,
           })
-          .rpc();
+          .rpc({ skipPreflight: true });
 
         console.log("✅ Buy Successful! Signature:", tx);
         alert(`🚀 Trade Successful! Tx: ${tx}`);
