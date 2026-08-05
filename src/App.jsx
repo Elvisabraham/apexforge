@@ -387,10 +387,6 @@ function AppContent() {
   return (
 <div className="fixed inset-0 bg-[#050505] text-white flex flex-col overflow-hidden select-none">
   
-  {/* 🚀 OFFICIAL WEB3 WALLET CONNECT BUTTON - DELETE THIS */}
-  <div className="absolute top-4 right-4 z-[999]">
-    <WalletMultiButton style={{ backgroundColor: '#089981', borderRadius: '12px' }} />
-  </div>
   <style>{`
         * {
           -webkit-touch-callout: none;
