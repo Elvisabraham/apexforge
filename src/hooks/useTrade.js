@@ -21,12 +21,12 @@ export const useTrade = () => {
       const provider = new AnchorProvider(connection, wallet, { preflightCommitment: 'confirmed' });
       setProvider(provider); 
       
-      // 🚀 THE FIX: 3-ARGUMENT SETUP FOR ANCHOR v0.29.0
       const programId = new PublicKey(idl.address || "zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc");
       const program = new Program(idl, programId, provider);
 
       const amountInLamports = new BN(Math.floor(parseFloat(amount) * 1e9));
       
+      // Parse Mint Address
       let mintPubkey;
       try {
         const safeMintString = (tokenMint && typeof tokenMint === 'string' && tokenMint.length > 30) 
@@ -35,10 +35,16 @@ export const useTrade = () => {
         mintPubkey = new PublicKey(safeMintString);
       } catch (keyError) {
         console.error("🔴 INVALID TOKEN ADDRESS:", tokenMint);
-        alert("Trade Failed: The UI passed an invalid token address string.");
+        alert("Trade Failed: Invalid token mint address.");
         setIsProcessing(false);
         return false;
       }
+
+      // 🚀 DERIVE THE BONDING CURVE PDA FROM THE SEEDS
+      const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("bonding_curve"), mintPubkey.toBuffer()],
+        programId
+      );
 
       const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 
@@ -46,7 +52,7 @@ export const useTrade = () => {
         const tx = await program.methods
           .buyTokens(amountInLamports)
           .accounts({
-            bondingCurve: mintPubkey, 
+            bondingCurve: bondingCurvePDA, // 🟢 Passed correct PDA
             buyer: wallet.publicKey,
             systemProgram: SystemProgram.programId,
             tokenProgram: TOKEN_PROGRAM_ID,
@@ -54,7 +60,7 @@ export const useTrade = () => {
           .rpc();
         
         console.log("✅ Buy Successful! Signature:", tx);
-        alert("Transaction Sent! Check console for signature.");
+        alert("Transaction Successful!");
       } else {
         alert("⚠️ Sell logic coming soon!");
       }
