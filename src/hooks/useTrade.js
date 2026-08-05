@@ -19,12 +19,11 @@ export const useTrade = () => {
     
     try {
       const provider = new AnchorProvider(connection, wallet, { preflightCommitment: 'confirmed' });
-      setProvider(provider); // 🚀 Forces Anchor to globally register your wallet
+      setProvider(provider); 
       
-      // 🚀 THE WINNING COMBO: 2 Arguments paired with the Full IDL
+      // 🚀 STRICT 2-ARGUMENT SETUP
       const program = new Program(idl, provider);
 
-      // Math.floor prevents JS decimal bugs from crashing the BN constructor
       const amountInLamports = new BN(Math.floor(parseFloat(amount) * 1e9));
       
       let mintPubkey;
