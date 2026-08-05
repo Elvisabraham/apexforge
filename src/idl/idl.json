@@ -31,5 +31,39 @@
         { "name": "solAmount", "type": "u64" }
       ]
     }
+  ],
+  "accounts": [
+    {
+      "name": "BondingCurve",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "creator", "type": "pubkey" },
+          { "name": "mint", "type": "pubkey" },
+          { "name": "virtualSolReserves", "type": "u64" },
+          { "name": "virtualTokenReserves", "type": "u64" },
+          { "name": "realSolReserves", "type": "u64" },
+          { "name": "realTokenReserves", "type": "u64" },
+          { "name": "complete", "type": "bool" }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "BondingCurve",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "creator", "type": "pubkey" },
+          { "name": "mint", "type": "pubkey" },
+          { "name": "virtualSolReserves", "type": "u64" },
+          { "name": "virtualTokenReserves", "type": "u64" },
+          { "name": "realSolReserves", "type": "u64" },
+          { "name": "realTokenReserves", "type": "u64" },
+          { "name": "complete", "type": "bool" }
+        ]
+      }
+    }
   ]
 }
