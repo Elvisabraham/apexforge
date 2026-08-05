@@ -25,13 +25,21 @@ export const useTrade = () => {
       const program = new Program(idl, programId, provider);
 
       // 1. Verify the Mint Address was passed from the UI
-      if (!tokenMint || typeof tokenMint !== 'string' || tokenMint.length < 30) {
-        alert("⚠️ Trade Failed: Invalid or missing token mint address.");
-        setIsProcessing(false);
-        return false;
-      }
+if (!tokenMint || typeof tokenMint !== 'string' || tokenMint.length < 30) {
+  alert("⚠️ Trade Failed: Invalid or missing token mint address.");
+  setIsProcessing(false);
+  return false;
+}
 
-      const mintPubkey = new PublicKey(tokenMint.trim());
+// 🚀 THE SAFETY TRIPWIRE
+if (tokenMint.includes('8AVmX9aQwZoonSolanaNet11oHEZforge')) {
+  alert("⚠️ UI Error: The app is still trying to trade the fake placeholder address! Let the database sync.");
+  setIsProcessing(false);
+  return false;
+}
+
+console.log("🔍 ATTEMPTING TO TRADE EXACT ADDRESS:", tokenMint);
+const mintPubkey = new PublicKey(tokenMint.trim());
 
       // 2. Derive the unique Bonding Curve PDA
       const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
