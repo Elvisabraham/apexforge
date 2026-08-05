@@ -78,12 +78,27 @@ export const useLaunchToken = () => {
       transaction.recentBlockhash = latestBlockhash.blockhash;
       transaction.feePayer = wallet.publicKey;
 
-      // 5. FIRE OFF TO PHANTOM
+      // 5. FIRE OFF TO PHANTOM & AWAIT BLOCKCHAIN VERDICT
       const txSignature = await wallet.sendTransaction(transaction, connection, {
-        signers: [mintKeypair] // 🚀 Ensure the new mint signs its own birth!
+        signers: [mintKeypair] 
       });
 
-      console.log("✅ Token Launched! Signature:", txSignature);
+      console.log("⏳ Waiting for Solana to confirm transaction...");
+      
+      const confirmation = await connection.confirmTransaction({
+        signature: txSignature,
+        blockhash: latestBlockhash.blockhash,
+        lastValidBlockHeight: latestBlockhash.lastValidBlockHeight
+      }, 'confirmed');
+
+      if (confirmation.value.err) {
+        console.error("🔴 ON-CHAIN ERROR:", confirmation.value.err);
+        alert("Launch Failed on the blockchain! Check your console for details.");
+        setIsLaunching(false);
+        return null; // Stops the dead token from saving to your database!
+      }
+
+      console.log("✅ Token Officially Live on Solana! Signature:", txSignature);
       setIsLaunching(false);
       return mintKeypair.publicKey.toString();
 
