@@ -24,32 +24,31 @@ export const useTrade = () => {
       const programId = new PublicKey(idl.address || "zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc");
       const program = new Program(idl, programId, provider);
 
-      const amountInLamports = new BN(Math.floor(parseFloat(amount) * 1e9));
-
-      // 1. Verify Mint Address passed from UI
+      // 1. Verify the Mint Address was passed from the UI
       if (!tokenMint || typeof tokenMint !== 'string' || tokenMint.length < 30) {
         alert("⚠️ Trade Failed: Invalid or missing token mint address.");
         setIsProcessing(false);
         return false;
       }
 
-      const mintPubkey = new PublicKey(tokenMint);
+      const mintPubkey = new PublicKey(tokenMint.trim());
 
-      // 2. Derive Bonding Curve PDA
+      // 2. Derive the unique Bonding Curve PDA
       const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
         [Buffer.from("bonding_curve"), mintPubkey.toBuffer()],
         programId
       );
 
+      const amountInLamports = new BN(Math.floor(parseFloat(amount) * 1e9));
       const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 
       if (mode === 'buy') {
-        // 3. Execute buyTokens passing all required accounts
+        // 3. Execute the transaction passing ALL required accounts
         const tx = await program.methods
           .buyTokens(amountInLamports)
           .accounts({
             bondingCurve: bondingCurvePDA,
-            mint: mintPubkey, // 🟢 CRITICAL FIX: Pass the real token mint address!
+            mint: mintPubkey, // 🟢 CRITICAL FIX: The contract now receives the token address!
             buyer: wallet.publicKey,
             systemProgram: SystemProgram.programId,
             tokenProgram: TOKEN_PROGRAM_ID,
@@ -57,7 +56,7 @@ export const useTrade = () => {
           .rpc();
 
         console.log("✅ Buy Successful! Signature:", tx);
-        alert(`🚀 Buy Successful! Tx: ${tx}`);
+        alert(`🚀 Trade Successful! Tx: ${tx}`);
       } else {
         alert("⚠️ Sell logic coming soon!");
       }
