@@ -48,7 +48,7 @@ export const useTrade = () => {
           .buyTokens(amountInLamports)
           .accounts({
             bondingCurve: bondingCurvePDA,
-            mint: mintPubkey, // 🟢 CRITICAL FIX: The contract now receives the token address!
+            mint: mintPubkey, // 🟢 CRITICAL FIX: The contract now receives the real token address!
             buyer: wallet.publicKey,
             systemProgram: SystemProgram.programId,
             tokenProgram: TOKEN_PROGRAM_ID,
