@@ -69,12 +69,19 @@ export const useTrade = () => {
       return true; 
 
     } catch (err) {
-      console.error("🔴 Trade Failed:", err);
-      alert("Trade Failed: Check the console for details!");
-      setIsProcessing(false);
-      return false; 
-    }
-  };
+  console.error("🔴 Trade Failed:", err);
+  
+  // Look for the specific AccountNotInitialized error
+  if (err.message && err.message.includes("AccountNotInitialized")) {
+    alert("⚠️ Trade Failed: This token's bonding curve has not been launched on the blockchain yet!");
+  } else {
+    alert("Trade Failed: Check the console for details!");
+  }
+  
+  setIsProcessing(false);
+  return false; 
+}
+ };
 
   return { executeTradeOnChain, isProcessing };
 };
