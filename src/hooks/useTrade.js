@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { BN, Program, AnchorProvider, setProvider } from '@coral-xyz/anchor';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
-import idl from '../idl/idl.json'; 
+import idl from '../idl/idl.json';
 
 export const useTrade = () => {
   const wallet = useWallet();
-  const { connection } = useConnection(); 
+  const { connection } = useConnection();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const executeTradeOnChain = async (mode, amount, tokenMint) => {
@@ -16,31 +16,26 @@ export const useTrade = () => {
     }
 
     setIsProcessing(true);
-    
+
     try {
       const provider = new AnchorProvider(connection, wallet, { preflightCommitment: 'confirmed' });
-      setProvider(provider); 
-      
+      setProvider(provider);
+
       const programId = new PublicKey(idl.address || "zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc");
       const program = new Program(idl, programId, provider);
 
       const amountInLamports = new BN(Math.floor(parseFloat(amount) * 1e9));
-      
-      // Parse Mint Address
-      let mintPubkey;
-      try {
-        const safeMintString = (tokenMint && typeof tokenMint === 'string' && tokenMint.length > 30) 
-          ? tokenMint 
-          : "11111111111111111111111111111111"; 
-        mintPubkey = new PublicKey(safeMintString);
-      } catch (keyError) {
-        console.error("🔴 INVALID TOKEN ADDRESS:", tokenMint);
-        alert("Trade Failed: Invalid token mint address.");
+
+      // 1. Verify Mint Address passed from UI
+      if (!tokenMint || typeof tokenMint !== 'string' || tokenMint.length < 30) {
+        alert("⚠️ Trade Failed: Invalid or missing token mint address.");
         setIsProcessing(false);
         return false;
       }
 
-      // 🚀 DERIVE THE BONDING CURVE PDA FROM THE SEEDS
+      const mintPubkey = new PublicKey(tokenMint);
+
+      // 2. Derive Bonding Curve PDA
       const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
         [Buffer.from("bonding_curve"), mintPubkey.toBuffer()],
         programId
@@ -49,39 +44,40 @@ export const useTrade = () => {
       const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 
       if (mode === 'buy') {
+        // 3. Execute buyTokens passing all required accounts
         const tx = await program.methods
           .buyTokens(amountInLamports)
           .accounts({
-            bondingCurve: bondingCurvePDA, // 🟢 Passed correct PDA
+            bondingCurve: bondingCurvePDA,
+            mint: mintPubkey, // 🟢 CRITICAL FIX: Pass the real token mint address!
             buyer: wallet.publicKey,
             systemProgram: SystemProgram.programId,
             tokenProgram: TOKEN_PROGRAM_ID,
           })
           .rpc();
-        
+
         console.log("✅ Buy Successful! Signature:", tx);
-        alert("Transaction Successful!");
+        alert(`🚀 Buy Successful! Tx: ${tx}`);
       } else {
         alert("⚠️ Sell logic coming soon!");
       }
 
       setIsProcessing(false);
-      return true; 
+      return true;
 
     } catch (err) {
-  console.error("🔴 Trade Failed:", err);
-  
-  // Look for the specific AccountNotInitialized error
-  if (err.message && err.message.includes("AccountNotInitialized")) {
-    alert("⚠️ Trade Failed: This token's bonding curve has not been launched on the blockchain yet!");
-  } else {
-    alert("Trade Failed: Check the console for details!");
-  }
-  
-  setIsProcessing(false);
-  return false; 
-}
- };
+      console.error("🔴 Trade Failed:", err);
+
+      if (err.message && err.message.includes("AccountNotInitialized")) {
+        alert("⚠️ Trade Failed: This token's bonding curve has not been launched on the blockchain yet!");
+      } else {
+        alert(`Trade Failed: ${err?.message || "Check the console for details!"}`);
+      }
+
+      setIsProcessing(false);
+      return false;
+    }
+  };
 
   return { executeTradeOnChain, isProcessing };
 };
