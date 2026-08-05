@@ -39,7 +39,23 @@ if (tokenMint.includes('8AVmX9aQwZoonSolanaNet11oHEZforge')) {
 }
 
 console.log("🔍 ATTEMPTING TO TRADE EXACT ADDRESS:", tokenMint);
-const mintPubkey = new PublicKey(tokenMint.trim());
+      const mintPubkey = new PublicKey(tokenMint.trim());
+
+      // 🚀 DEVNET SYNC TRIPWIRE
+      console.log("🔍 Checking if Devnet has synced your new token...");
+      const accountCheck = await provider.connection.getAccountInfo(mintPubkey, 'confirmed');
+      
+      if (!accountCheck) {
+        alert("⚠️ Devnet Lag: The blockchain successfully created your token, but the network hasn't synced it yet! Please wait 15 seconds and try clicking Buy again.");
+        setIsProcessing(false);
+        return false;
+      }
+      
+      if (accountCheck.owner.toBase58() === '11111111111111111111111111111111') {
+        alert("⚠️ Launch Error: The token was saved to the database, but the blockchain rejected the mint. Please forge a new token.");
+        setIsProcessing(false);
+        return false;
+      }
 
       // 2. Derive the unique Bonding Curve PDA
       const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
