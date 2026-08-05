@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createChart, CandlestickSeries, AreaSeries } from 'lightweight-charts';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import ActiveTvStream from './ActiveTvStream';
 import { useTrade } from '../hooks/useTrade';
 
@@ -12,6 +13,7 @@ const formatCreator = (val, email) => {
 export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
   const { executeTradeOnChain, isProcessing } = useTrade();
 
+  const { connection } = useConnection();
   const { publicKey } = useWallet();
   const connectedAddress = publicKey ? publicKey.toBase58() : null;
 
@@ -121,13 +123,28 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     return { price: initialBasePrice, mcap: initialMcap, progress: displayToken.progress, solInCurve: (displayToken.progress / 100) * 85 };
   });
 
-  const [userBalanceSol, setUserBalanceSol] = useState(() => {
-    const cached = localStorage.getItem(localCacheKey);
-    if (cached) {
-      try { return JSON.parse(cached).userBalanceSol; } catch(e) {}
-    }
-    return 4.50; 
-  });
+  const [userBalanceSol, setUserBalanceSol] = useState(0);
+
+  // 🚀 FETCH REAL SOL BALANCE FROM PHANTOM
+  useEffect(() => {
+    let isMounted = true;
+    const fetchRealBalance = async () => {
+      if (publicKey && connection) {
+        try {
+          const balanceLamports = await connection.getBalance(publicKey, 'confirmed');
+          if (isMounted) {
+            setUserBalanceSol(balanceLamports / LAMPORTS_PER_SOL);
+          }
+        } catch (err) {
+          console.error("Failed to fetch live balance:", err);
+        }
+      }
+    };
+
+    fetchRealBalance();
+    const id = setInterval(fetchRealBalance, 10000); // Auto-refresh every 10s
+    return () => { isMounted = false; clearInterval(id); };
+  }, [publicKey, connection]);
 
   const [userTokenBalance, setUserTokenBalance] = useState(() => {
     const cached = localStorage.getItem(localCacheKey);
