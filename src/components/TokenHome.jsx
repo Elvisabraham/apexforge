@@ -94,7 +94,8 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     change: token?.change || '+0.0%',
     icon: token?.icon || '🪙',
     imagePreview: token?.imagePreview || token?.image || null, 
-    mintAddress: token?.mintAddress || '8AVmX9aQwZoonSolanaNet11oHEZforge',
+    // 🚀 THIS IS THE MAGIC FIX LINE RIGHT HERE:
+    mintAddress: token?.mintAddress || token?.mint_address || '8AVmX9aQwZoonSolanaNet11oHEZforge',
     description: token?.description || `A community-driven asset deployed fairly on the Apex Forge platform. Smart contract initialized.`,
     links: { twitter: token?.links?.twitter || '', telegram: token?.links?.telegram || '', website: token?.links?.website || '' },
     
