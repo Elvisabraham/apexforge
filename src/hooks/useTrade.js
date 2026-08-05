@@ -21,8 +21,9 @@ export const useTrade = () => {
       const provider = new AnchorProvider(connection, wallet, { preflightCommitment: 'confirmed' });
       setProvider(provider); 
       
-      // 🚀 STRICT 2-ARGUMENT SETUP
-      const program = new Program(idl, provider);
+      // 🚀 THE FIX: 3-ARGUMENT SETUP FOR ANCHOR v0.29.0
+      const programId = new PublicKey(idl.address || "zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc");
+      const program = new Program(idl, programId, provider);
 
       const amountInLamports = new BN(Math.floor(parseFloat(amount) * 1e9));
       
