@@ -20,13 +20,27 @@ export const useTrade = () => {
     try {
       const provider = new AnchorProvider(connection, wallet, { preflightCommitment: 'confirmed' });
       
-      // 🚀 RESTORED: We are enforcing 3 arguments so Anchor doesn't get confused.
       const programId = new PublicKey(idl.address || "zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc");
       const program = new Program(idl, programId, provider);
 
       const amountInLamports = new BN(parseFloat(amount) * 1e9);
       
-      const mintPubkey = new PublicKey(tokenMint || "11111111111111111111111111111111");
+      // 🚀 THE FIX: Safely parse the tokenMint and catch illegal frontend strings!
+      let mintPubkey;
+      try {
+        // If the token string from the UI is empty or too short, force a safe default
+        const safeMintString = (tokenMint && typeof tokenMint === 'string' && tokenMint.length > 30) 
+          ? tokenMint 
+          : "11111111111111111111111111111111"; 
+          
+        mintPubkey = new PublicKey(safeMintString);
+      } catch (keyError) {
+        console.error("🔴 INVALID TOKEN ADDRESS PASSED FROM UI:", tokenMint);
+        alert("Trade Failed: The UI passed an invalid token address string. Check console!");
+        setIsProcessing(false);
+        return false;
+      }
+
       const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 
       if (mode === 'buy') {
