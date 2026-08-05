@@ -1,28 +1,12 @@
 import React, { useState } from 'react';
-import { Buffer } from 'buffer';
-import { createInitializeMint2Instruction, MINT_SIZE } from '@solana/spl-token';
-import { useWallet, useAnchorWallet } from '@solana/wallet-adapter-react';
-import { 
-  Connection, 
-  PublicKey, 
-  Keypair, 
-  SystemProgram, 
-  SYSVAR_RENT_PUBKEY,
-  Transaction,
-  TransactionInstruction
-} from '@solana/web3.js';
-import { Program, AnchorProvider } from '@coral-xyz/anchor';
-
+import { useWallet } from '@solana/wallet-adapter-react';
 import MediaUploader from './MediaUploader'; 
 import { supabase } from './supabaseClient';
-import idl from '../idl/idl.json';
+import { useLaunchToken } from '../hooks/useLaunchToken'; // 🚀 IMPORTED YOUR NEW HOOK
 
-// 🚀 Program IDs
-const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-const PROGRAM_ID = new PublicKey("zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc");
 export default function Launch({ onForgeSuccess }) {
   const { connected, publicKey } = useWallet();
-  const wallet = useAnchorWallet();
+  const { executeLaunchOnChain, isLaunching } = useLaunchToken(); // 🚀 INITIALIZED THE HOOK
 
   const [tokenName, setTokenName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
@@ -47,9 +31,7 @@ export default function Launch({ onForgeSuccess }) {
   const [deployedTokenAddress, setDeployedTokenAddress] = useState('');
   const [statusMessage, setStatusMessage] = useState('Initializing wallet & contract...');
 
-  const connectedAddress = publicKey ? publicKey.toBase58() : '';
-
-// 🚀 DIRECT ON-CHAIN DEPLOYMENT HANDLER (Pure Web3.js)
+  // 🚀 DIRECT ON-CHAIN DEPLOYMENT USING YOUR HOOK
   const handleRealDeployment = async () => {
     if (!tokenName || !tokenSymbol) {
       alert("⚠️ Token Name and Symbol are required to forge an asset.");
@@ -63,7 +45,7 @@ export default function Launch({ onForgeSuccess }) {
       alert("⚠️ You must acknowledge the disclaimer before launching an asset.");
       return;
     }
-    if (!connected || !publicKey || !wallet) {
+    if (!connected || !publicKey) {
       alert("🔒 Wallet Not Connected! Please connect Phantom.");
       return;
     }
@@ -71,20 +53,9 @@ export default function Launch({ onForgeSuccess }) {
     try {
       setIsDeploying(true);
       setDeploySuccess(false);
-      setStatusMessage("> Generating keys & deriving bonding curve PDA...");
+      setStatusMessage("> Requesting wallet signature to deploy on Solana...");
 
-      const connection = new Connection("https://api.devnet.solana.com", "confirmed");
-
-      // 1. Generate Fresh Mint Keypair & Derive Bonding Curve PDA
-      const mintKeypair = Keypair.generate();
-      const mintPublicKey = mintKeypair.publicKey;
-
-      const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
-        [Buffer.from("bonding_curve"), mintPublicKey.toBuffer()],
-        PROGRAM_ID
-      );
-
-      // 2. Prepare Safe Arguments
+      // 1. Prepare Safe Arguments
       const safeName = (tokenName || "").trim().slice(0, 32) || "Apex Token";
       const safeSymbol = (tokenSymbol || "").trim().toUpperCase().slice(0, 10) || "APEX";
       let safeUri = thumbnailUrl || imagePreview || "https://apexforge.app/metadata.json";
@@ -92,150 +63,68 @@ export default function Launch({ onForgeSuccess }) {
         safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
       }
 
-      setStatusMessage("> Preparing Mint Account Initialization...");
+      // 2. 🚀 EXECUTE THE SMART CONTRACT HOOK
+      const mintAddress = await executeLaunchOnChain(safeName, safeSymbol, safeUri);
 
-      // 3. 🚀 PREPARE THE MINT ACCOUNT (Fixes the uninitialized mint trap!)
-      const mintRent = await connection.getMinimumBalanceForRentExemption(MINT_SIZE);
-      const createMintAccountIx = SystemProgram.createAccount({
-        fromPubkey: publicKey,
-        newAccountPubkey: mintPublicKey,
-        space: MINT_SIZE,
-        lamports: mintRent,
-        programId: TOKEN_PROGRAM_ID,
-      });
+      // 3. IF SUCCESSFUL, UPDATE UI AND DATABASE
+      if (mintAddress) {
+        setStatusMessage("> Transaction broadcasted! Saving to database...");
+        
+        setDeployedTokenAddress(mintAddress);
+        setDeployedHistory(prev => [...prev, tokenName.toLowerCase()]);
 
-      const initializeMintIx = createInitializeMint2Instruction(
-        mintPublicKey,
-        6, // Decimals
-        publicKey, // Mint Authority
-        null, // Freeze Authority
-        TOKEN_PROGRAM_ID
-      );
+        const newToken = {
+          id: Date.now().toString(),
+          name: safeName,
+          symbol: safeSymbol,
+          description: description, 
+          links: { twitter, telegram, website },
+          mintAddress: mintAddress,
+          creatorAddress: publicKey.toBase58(),
+          imagePreview: safeUri, 
+          videoUrl: mediaType === 'video' ? 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-code-31910-large.mp4' : null, 
+          mediaType: mediaType, 
+          icon: '🔥', 
+          mcap: '$10.0K', 
+          price: '0.0001',
+          change: '+0.0%',
+          initialSnipe: parseFloat(initialBuy || '0'),
+          isGraduated: false, 
+          progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
+        };
 
-      // 4. 🚀 DYNAMIC DISCRIMINATOR (Fixes Error 101 permanently!)
-      const getDiscriminator = async (name) => {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(`global:${name}`);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        return Buffer.from(hashBuffer).slice(0, 8);
-      };
-      
-      const discriminator = await getDiscriminator("create_token");
-
-      const encodeString = (str) => {
-        const strBuf = Buffer.from(str, 'utf-8');
-        const lenBuf = Buffer.alloc(4);
-        lenBuf.writeUInt32LE(strBuf.length, 0);
-        return Buffer.concat([lenBuf, strBuf]);
-      };
-
-      const instructionData = Buffer.concat([
-        discriminator,
-        encodeString(safeName),
-        encodeString(safeSymbol),
-        encodeString(safeUri)
-      ]);
-
-      // 5. Construct Anchor Instruction perfectly mapped to your Rust struct
-      const createTokenIx = new TransactionInstruction({
-        programId: PROGRAM_ID,
-        keys: [
-          { pubkey: bondingCurvePDA, isSigner: false, isWritable: true },
-          { pubkey: mintPublicKey, isSigner: false, isWritable: true }, // Not a signer here, just passing the initialized account!
-          { pubkey: publicKey, isSigner: true, isWritable: true },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        ],
-        data: instructionData,
-      });
-
-      setStatusMessage("> Awaiting wallet signature...");
-
-      // 6. Build transaction adding ALL instructions in order
-      const tx = new Transaction().add(
-        createMintAccountIx,
-        initializeMintIx,
-        createTokenIx
-      );
-      
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash('finalized');
-      tx.recentBlockhash = blockhash;
-
-      // 7. Partial Sign & Request Wallet Signature
-      tx.partialSign(mintKeypair); // Mint keypair must sign to create the account
-      const signedTx = await wallet.signTransaction(tx);
-
-      setStatusMessage("> Broadcasting transaction to Devnet...");
-
-      // 8. Send Raw Transaction
-      const rawTx = signedTx.serialize();
-      const txSignature = await connection.sendRawTransaction(rawTx, {
-        skipPreflight: true,
-        maxRetries: 5,
-      });
-
-      setStatusMessage("> Transaction broadcasted! Confirming on-chain...");
-      await connection.confirmTransaction(txSignature, 'finalized');
-
-      console.log("Success! Tx Signature:", txSignature);
-      alert(`🚀 Token Successfully Forged! Tx: ${txSignature}`);
-
-      // 9. Setup UI & Database
-      setDeployedTokenAddress(txSignature);
-      setDeployedHistory(prev => [...prev, tokenName.toLowerCase()]);
-
-      const newToken = {
-        id: Date.now().toString(),
-        name: safeName,
-        symbol: safeSymbol,
-        description: description, 
-        links: { twitter, telegram, website },
-        mintAddress: mintPublicKey.toBase58(),
-        txHash: txSignature,
-        creatorAddress: publicKey.toBase58(),
-        imagePreview: safeUri, 
-        videoUrl: mediaType === 'video' ? 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-code-31910-large.mp4' : null, 
-        mediaType: mediaType, 
-        icon: '🔥', 
-        mcap: '$10.0K', 
-        price: '0.0001',
-        change: '+0.0%',
-        initialSnipe: parseFloat(initialBuy || '0'),
-        isGraduated: false, 
-        progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
-      };
-
-      if (typeof supabase !== 'undefined' && supabase) {
-        try {
-          await supabase.from('tokens').insert([{
-            name: newToken.name,
-            symbol: newToken.symbol,
-            description: newToken.description,
-            icon: newToken.icon,
-            image_url: newToken.imagePreview,
-            mint_address: newToken.mintAddress,
-            creator_address: newToken.creatorAddress,
-            market_cap: newToken.mcap,
-            progress: newToken.progress,
-            links: newToken.links,
-            created_at: new Date().toISOString()
-          }]);
-        } catch (err) {
-          console.error("Database save failed:", err);
+        if (typeof supabase !== 'undefined' && supabase) {
+          try {
+            await supabase.from('tokens').insert([{
+              name: newToken.name,
+              symbol: newToken.symbol,
+              description: newToken.description,
+              icon: newToken.icon,
+              image_url: newToken.imagePreview,
+              mint_address: newToken.mintAddress,
+              creator_address: newToken.creatorAddress,
+              market_cap: newToken.mcap,
+              progress: newToken.progress,
+              links: newToken.links,
+              created_at: new Date().toISOString()
+            }]);
+          } catch (err) {
+            console.error("Database save failed:", err);
+          }
         }
-      }
 
-      setDeploySuccess(true);
-      if (onForgeSuccess) {
-        onForgeSuccess(newToken);
+        setDeploySuccess(true);
+        if (onForgeSuccess) {
+          onForgeSuccess(newToken);
+        }
+      } else {
+        // The hook handles the alert if it fails, just reset the UI state
+        setIsDeploying(false);
       }
 
     } catch (err) {
       console.error("Deployment failed details:", err);
-      const errMsg = err?.message || JSON.stringify(err);
-      alert(`⚠️ Transaction Failed: ${errMsg}`);
+      alert(`⚠️ Transaction Failed: ${err?.message || JSON.stringify(err)}`);
       setIsDeploying(false);
     }
   };
@@ -448,6 +337,7 @@ export default function Launch({ onForgeSuccess }) {
 
             <button 
               onClick={handleRealDeployment} 
+              disabled={isLaunching}
               className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(8,153,129,0.3)] ${
                 acceptedDisclaimer 
                   ? 'bg-[#089981] hover:bg-[#06806b] text-white active:scale-95 cursor-pointer' 
