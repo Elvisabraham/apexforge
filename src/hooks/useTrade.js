@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { BN, Program, AnchorProvider, setProvider } from '@coral-xyz/anchor';
-import { PublicKey, SystemProgram } from '@solana/web3.js';
+import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import idl from '../idl/idl.json';
 
 export const useTrade = () => {
@@ -66,9 +66,9 @@ console.log("🔍 ATTEMPTING TO TRADE EXACT ADDRESS:", tokenMint);
       const amountInLamports = new BN(Math.floor(parseFloat(amount) * 1e9));
       const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 
-      if (mode === 'buy') {
-        // 3. Execute the transaction passing ALL required accounts
-        const tx = await program.methods
+     if (mode === 'buy') {
+        // 3. GET THE RAW INSTRUCTION (Bypasses Anchor's .rpc wrapper)
+        const buyIx = await program.methods
           .buyTokens(amountInLamports)
           .accounts({
             bondingCurve: bondingCurvePDA,
@@ -77,16 +77,28 @@ console.log("🔍 ATTEMPTING TO TRADE EXACT ADDRESS:", tokenMint);
             systemProgram: SystemProgram.programId,
             tokenProgram: TOKEN_PROGRAM_ID,
           })
-          .rpc({ skipPreflight: true });
+          .instruction();
 
-        console.log("✅ Buy Successful! Signature:", tx);
-        alert(`🚀 Trade Successful! Tx: ${tx}`);
-      } else {
-        alert("⚠️ Sell logic coming soon!");
-      }
+        // 4. BUNDLE MANUALLY
+        const transaction = new Transaction().add(buyIx);
+        const latestBlockhash = await connection.getLatestBlockhash('confirmed');
+        transaction.recentBlockhash = latestBlockhash.blockhash;
+        transaction.feePayer = wallet.publicKey;
 
-      setIsProcessing(false);
-      return true;
+       // 5. SIGN AND SEND WITH RAW BYTES (Bypasses Phantom simulation lag)
+      const signedTx = await provider.wallet.signTransaction(transaction);
+      const tx = await connection.sendRawTransaction(signedTx.serialize(), {
+        skipPreflight: true
+      });
+
+      console.log("🚀 Buy Successful! Signature:", tx);
+      alert(`🚀 Trade Successful! Tx: ${tx}`);
+    } else {
+      alert("⚠️ Sell logic coming soon!");
+    }
+
+    setIsProcessing(false);
+    return true;
 
     } catch (err) {
       console.error("🔴 Trade Failed:", err);
