@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { BN, Program, AnchorProvider } from '@coral-xyz/anchor';
+import { BN, Program, AnchorProvider, setProvider } from '@coral-xyz/anchor';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import idl from '../idl/idl.json'; 
 
@@ -19,24 +19,23 @@ export const useTrade = () => {
     
     try {
       const provider = new AnchorProvider(connection, wallet, { preflightCommitment: 'confirmed' });
+      setProvider(provider); // 🚀 Forces Anchor to globally register your wallet
       
-      const programId = new PublicKey(idl.address || "zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc");
-      const program = new Program(idl, programId, provider);
+      // 🚀 THE WINNING COMBO: 2 Arguments paired with the Full IDL
+      const program = new Program(idl, provider);
 
-      const amountInLamports = new BN(parseFloat(amount) * 1e9);
+      // Math.floor prevents JS decimal bugs from crashing the BN constructor
+      const amountInLamports = new BN(Math.floor(parseFloat(amount) * 1e9));
       
-      // 🚀 THE FIX: Safely parse the tokenMint and catch illegal frontend strings!
       let mintPubkey;
       try {
-        // If the token string from the UI is empty or too short, force a safe default
         const safeMintString = (tokenMint && typeof tokenMint === 'string' && tokenMint.length > 30) 
           ? tokenMint 
           : "11111111111111111111111111111111"; 
-          
         mintPubkey = new PublicKey(safeMintString);
       } catch (keyError) {
-        console.error("🔴 INVALID TOKEN ADDRESS PASSED FROM UI:", tokenMint);
-        alert("Trade Failed: The UI passed an invalid token address string. Check console!");
+        console.error("🔴 INVALID TOKEN ADDRESS:", tokenMint);
+        alert("Trade Failed: The UI passed an invalid token address string.");
         setIsProcessing(false);
         return false;
       }
