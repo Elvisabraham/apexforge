@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { Program, AnchorProvider, setProvider } from '@coral-xyz/anchor';
-import { PublicKey, SystemProgram, Keypair, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
+import { PublicKey, SystemProgram, Keypair, SYSVAR_RENT_PUBKEY, Transaction } from '@solana/web3.js';
 import { createInitializeMint2Instruction, MINT_SIZE } from '@solana/spl-token';
 import idl from '../idl/idl.json';
 
@@ -53,8 +53,8 @@ export const useLaunchToken = () => {
         TOKEN_PROGRAM_ID
       );
 
-      // 3. Send the Transaction with Pre-Instructions
-      const tx = await program.methods
+      // 3. GET THE RAW INSTRUCTION (Instead of using Anchor's buggy .rpc)
+      const createTokenIx = await program.methods
         .createToken(name, symbol, uri)
         .accounts({
           bondingCurve: bondingCurvePDA,
@@ -64,11 +64,26 @@ export const useLaunchToken = () => {
           tokenProgram: TOKEN_PROGRAM_ID,
           rent: SYSVAR_RENT_PUBKEY,
         })
-        .preInstructions([createMintAccountIx, initializeMintIx]) // 🟢 Added missing initialization!
-        .signers([mintKeypair])
-        .rpc();
+        .instruction(); // 🚀 THIS IS THE KEY! We grab the instruction instead of firing it.
 
-      console.log("✅ Token Launched! Signature:", tx);
+      // 4. BUNDLE EVERYTHING MANUALLY (The Bulletproof Way)
+      const transaction = new Transaction().add(
+        createMintAccountIx,
+        initializeMintIx,
+        createTokenIx
+      );
+
+      // Get the latest blockhash to validate the transaction
+      const latestBlockhash = await connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = latestBlockhash.blockhash;
+      transaction.feePayer = wallet.publicKey;
+
+      // 5. FIRE OFF TO PHANTOM
+      const txSignature = await wallet.sendTransaction(transaction, connection, {
+        signers: [mintKeypair] // 🚀 Ensure the new mint signs its own birth!
+      });
+
+      console.log("✅ Token Launched! Signature:", txSignature);
       setIsLaunching(false);
       return mintKeypair.publicKey.toString();
 
