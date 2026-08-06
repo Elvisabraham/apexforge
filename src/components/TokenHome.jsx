@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createChart, CandlestickSeries, AreaSeries } from 'lightweight-charts';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import ActiveTvStream from './ActiveTvStream';
 import { useTrade } from '../hooks/useTrade';
 
@@ -125,26 +125,45 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
 
   const [userBalanceSol, setUserBalanceSol] = useState(0);
 
-  // 🚀 FETCH REAL SOL BALANCE FROM PHANTOM
+  // 🚀 FETCH REAL SOL & SPL TOKEN BALANCES
   useEffect(() => {
     let isMounted = true;
-    const fetchRealBalance = async () => {
+    const fetchLiveBalances = async () => {
       if (publicKey && connection) {
         try {
+          // 1. Fetch Native SOL Balance
           const balanceLamports = await connection.getBalance(publicKey, 'confirmed');
-          if (isMounted) {
-            setUserBalanceSol(balanceLamports / LAMPORTS_PER_SOL);
+          if (isMounted) setUserBalanceSol(balanceLamports / LAMPORTS_PER_SOL);
+
+          // 2. Fetch Custom Token Balance
+          if (displayToken.mintAddress && displayToken.mintAddress !== '8AVmX9aQwZoonSolanaNet11oHEZforge') {
+            const tokenAccounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
+              mint: new PublicKey(displayToken.mintAddress)
+            });
+
+            if (tokenAccounts.value.length > 0) {
+              // Get the actual human-readable token amount
+              const actualBalance = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
+              // Multiply by 1,000,000 to match your existing UI math scaling
+              if (isMounted) setUserTokenBalance(actualBalance * 1000000); 
+            } else {
+              if (isMounted) setUserTokenBalance(0);
+            }
           }
         } catch (err) {
-          console.error("Failed to fetch live balance:", err);
+          console.error("Failed to fetch live balances:", err);
         }
       }
     };
 
-    fetchRealBalance();
-    const id = setInterval(fetchRealBalance, 10000); // Auto-refresh every 10s
+    fetchLiveBalances();
+    const id = setInterval(fetchLiveBalances, 5000); // Auto-refresh every 5s for snappy trades
+    
+    // Attach to window so we can manually force a refresh after a trade
+    window.forceBalanceRefresh = fetchLiveBalances; 
+
     return () => { isMounted = false; clearInterval(id); };
-  }, [publicKey, connection]);
+  }, [publicKey, connection, displayToken.mintAddress]);
 
   const [userTokenBalance, setUserTokenBalance] = useState(() => {
     const cached = localStorage.getItem(localCacheKey);
@@ -235,11 +254,34 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     const amount = parseFloat(tradeAmount.toString().replace(/,/g, ''));
     if (!amount || amount <= 0) return;
 
-    // 🚀 Send the transaction to the blockchain using your central hook!
+    // 🚀 Send the transaction to the blockchain using your central hook
     const success = await executeTradeOnChain(tradeMode, amount, displayToken.mintAddress);
     
     if (success) {
-      // If the Phantom wallet transaction succeeds, close the modal
+      // 1. INSTANT UI UPDATE: Inject the trade into the ledger feed
+      const estimatedTokens = calculateExpectedOutput(amount, tradeMode === 'buy');
+      const newTrade = { 
+        id: Date.now(), 
+        type: tradeMode, 
+        amountToken: `${estimatedTokens}M`, 
+        amountSol: amount.toFixed(2), 
+        price: `$${curveState.price.toFixed(7)}`, 
+        time: 'Just now', 
+        user: 'You', 
+        txHash: 'Processing...' // We can grab the real Tx hash from the hook later!
+      };
+      
+      setRecentTrades(prev => [newTrade, ...prev]);
+
+      // 2. 🚀 SUPABASE SYNC READY: 
+      // (This is where you will drop your supabase.from('trades').insert() code later!)
+
+      // 3. FORCE BALANCE REFRESH: Tell the app to immediately fetch new balances
+      if (window.forceBalanceRefresh) {
+        setTimeout(() => window.forceBalanceRefresh(), 2000); // 2 second delay to let blockchain finalize
+      }
+
+      // 4. Close modal and reset
       setIsBuyModalOpen(false);
       setTradeAmount('');
     }
