@@ -119,15 +119,28 @@ export const useTrade = () => {
         transaction.add(sellIx);
       }
 
-      // 4. BUNDLE AND SEND
+      // 4. BUNDLE AND SEND (Wait for real confirmation!)
       const latestBlockhash = await connection.getLatestBlockhash('confirmed');
       transaction.recentBlockhash = latestBlockhash.blockhash;
       transaction.feePayer = wallet.publicKey;
 
       const signedTx = await provider.wallet.signTransaction(transaction);
-      const tx = await connection.sendRawTransaction(signedTx.serialize(), {
-        skipPreflight: true
-      });
+      
+      // We removed skipPreflight so Phantom catches errors early!
+      const tx = await connection.sendRawTransaction(signedTx.serialize()); 
+
+      console.log("⏳ Waiting for Solana to confirm trade...");
+      
+      // Force React to wait for the official blockchain receipt
+      const confirmation = await connection.confirmTransaction({
+        signature: tx,
+        blockhash: latestBlockhash.blockhash,
+        lastValidBlockHeight: latestBlockhash.lastValidBlockHeight
+      }, 'confirmed');
+
+      if (confirmation.value.err) {
+        throw new Error("Transaction rejected by the blockchain (Insufficient funds or liquidity).");
+      }
 
       console.log(`🚀 ${mode.toUpperCase()} Successful! Signature:`, tx);
       alert(`🚀 Trade Successful! Tx: ${tx}`);
