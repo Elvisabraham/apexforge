@@ -148,7 +148,7 @@ export const useTrade = () => {
       setIsProcessing(false);
       return true;
 
-    } catch (err) {
+   } catch (err) {
       console.error("🔴 Trade Failed:", err);
       const errMsg = err?.message || "";
 
