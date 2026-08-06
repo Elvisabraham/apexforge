@@ -16,7 +16,7 @@ import {
 import idl from '../idl/idl.json';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
-const FALLBACK_PROGRAM_ID = 'zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc';
+const FALLBACK_PROGRAM_ID = 'cbVU2Yavor2XCxK8bnXoLjd1Lw11JngQAnkKjTu9PL3';
 
 export default function SolanaProvider({ children }) {
   const network = WalletAdapterNetwork.Devnet;
