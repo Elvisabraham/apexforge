@@ -150,11 +150,21 @@ export const useTrade = () => {
 
     } catch (err) {
       console.error("🔴 Trade Failed:", err);
-      if (err.message && err.message.includes("AccountNotInitialized")) {
+      const errMsg = err?.message || "";
+
+      // 1. Check if the user is trying to sell without owning an account
+      if (errMsg.includes("seller_token_account") && errMsg.includes("AccountNotInitialized")) {
+        alert("⚠️ Trade Blocked: You cannot sell a token you don't own! (0 Balance)");
+      } 
+      // 2. Check if the curve itself is missing
+      else if (errMsg.includes("AccountNotInitialized")) {
         alert("⚠️ Trade Failed: This token's bonding curve has not been launched on the blockchain yet!");
-      } else {
-        alert(`Trade Failed: ${err?.message || "Check the console for details!"}`);
+      } 
+      // 3. Any other errors (like Insufficient Liquidity)
+      else {
+        alert(`Trade Failed: Check the console for details. (Error: ${errMsg})`);
       }
+
       setIsProcessing(false);
       return false;
     }
