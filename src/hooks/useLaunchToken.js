@@ -22,14 +22,15 @@ export const useLaunchToken = () => {
       const provider = new AnchorProvider(connection, wallet, { preflightCommitment: 'confirmed' });
       setProvider(provider);
 
-      const programId = new PublicKey(idl.address || "zVUrGLVA9VYEGAaBexZfaNCiB6zTVtn61kDRfcRwYsc");
-      const program = new Program(idl, programId, provider);
+      // 🟢 FIXED: Using the live Apex Forge V2 Program ID
+      const programID = new PublicKey("cbVU2Yavor2XCxK8bnXoLjd1Lw11JngQAnkKjTu9PL3");
+      const program = new Program(idl, programID, provider);
 
       // 1. Generate Keypair & Derive PDA
       const mintKeypair = Keypair.generate();
       const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
         [Buffer.from("bonding_curve"), mintKeypair.publicKey.toBuffer()],
-        programId
+        programID // 🟢 Updated to match the new variable name
       );
 
       const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
