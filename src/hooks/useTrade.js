@@ -93,8 +93,35 @@ console.log("🔍 ATTEMPTING TO TRADE EXACT ADDRESS:", tokenMint);
 
       console.log("🚀 Buy Successful! Signature:", tx);
       alert(`🚀 Trade Successful! Tx: ${tx}`);
-    } else {
-      alert("⚠️ Sell logic coming soon!");
+    } else if (mode === 'sell') {
+      console.log("🔴 INITIATING SELL TRANSACTION...");
+
+      // 1. GET THE RAW SELL INSTRUCTION
+      const sellIx = await program.methods
+        .sellTokens(amountInLamports) 
+        .accounts({
+          bondingCurve: bondingCurvePDA,
+          mint: mintPubkey,
+          seller: wallet.publicKey,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .instruction();
+
+      // 2. BUNDLE MANUALLY (Bulletproof method)
+      const transaction = new Transaction().add(sellIx);
+      const latestBlockhash = await connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = latestBlockhash.blockhash;
+      transaction.feePayer = wallet.publicKey;
+
+      // 3. SIGN AND SEND WITH RAW BYTES
+      const signedTx = await wallet.signTransaction(transaction);
+      const tx = await connection.sendRawTransaction(signedTx.serialize(), {
+        skipPreflight: true
+      });
+
+      console.log("💥 Sell Successful! Signature:", tx);
+      alert(`💥 Tokens Sold Successfully! Tx: ${tx}`);
     }
 
     setIsProcessing(false);
