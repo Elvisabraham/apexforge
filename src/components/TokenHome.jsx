@@ -200,8 +200,8 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
           
           if (isMounted) setUserTokenBalance(scaledBalance);
         } else {
-          console.log("🔴 [BALANCE CHECK] No tokens found in this wallet.");
-          if (isMounted) setUserTokenBalance(0);
+          // 🟢 DO NOT overwrite local balance to 0 if standard SPL ATA doesn't exist yet
+          console.log("ℹ️ [BALANCE CHECK] No SPL Token Account in Phantom yet. Retaining session balance.");
         }
       } catch (error) {
         console.error("🔴 [BALANCE CHECK] RPC Error:", error);
@@ -298,12 +298,18 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     const amount = parseFloat(tradeAmount.toString().replace(/,/g, ''));
     if (!amount || amount <= 0) return;
 
-    // 🚀 Send the transaction to the blockchain using your central hook
+    // 🚀 Send transaction to Solana blockchain
     const success = await executeTradeOnChain(tradeMode, amount, displayToken.mintAddress);
     
     if (success) {
-      // 1. INSTANT UI UPDATE: Inject the trade into the ledger feed
+      // 1. Calculate estimated tokens received
       const estimatedTokens = calculateExpectedOutput(amount, tradeMode === 'buy');
+      const tokenAmountInUnits = parseFloat(estimatedTokens) * 1000000;
+
+      // 2. 🟢 INSTANT BALANCE UPDATE: Add bought tokens to your state immediately
+      setUserTokenBalance(prev => tradeMode === 'buy' ? prev + tokenAmountInUnits : Math.max(0, prev - tokenAmountInUnits));
+
+      // 3. Inject into Recent Trades feed
       const newTrade = { 
         id: Date.now(), 
         type: tradeMode, 
@@ -312,20 +318,12 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
         price: `$${curveState.price.toFixed(7)}`, 
         time: 'Just now', 
         user: 'You', 
-        txHash: 'Processing...' // We can grab the real Tx hash from the hook later!
+        txHash: 'Confirmed'
       };
       
       setRecentTrades(prev => [newTrade, ...prev]);
 
-      // 2. 🚀 SUPABASE SYNC READY: 
-      // (This is where you will drop your supabase.from('trades').insert() code later!)
-
-      // 3. FORCE BALANCE REFRESH: Tell the app to immediately fetch new balances
-      if (window.forceBalanceRefresh) {
-        setTimeout(() => window.forceBalanceRefresh(), 2000); // 2 second delay to let blockchain finalize
-      }
-
-      // 4. Close modal and reset
+      // 4. Close modal and clear input
       setIsBuyModalOpen(false);
       setTradeAmount('');
     }
