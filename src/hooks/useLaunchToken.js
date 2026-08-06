@@ -46,14 +46,15 @@ export const useLaunchToken = () => {
         programId: TOKEN_PROGRAM_ID,
       });
 
+      // 🟢 CRITICAL FIX: Hand over Mint Authority to the Bonding Curve PDA
       const initializeMintIx = createInitializeMint2Instruction(
         mintKeypair.publicKey,
         6, // Decimals
-        wallet.publicKey, // Mint Authority
+        bondingCurvePDA, // 🚀 CHANGED: The Smart Contract now owns the mint!
         null, // Freeze Authority
         TOKEN_PROGRAM_ID
       );
-
+      
       // 3. GET THE RAW INSTRUCTION (Instead of using Anchor's buggy .rpc)
       const createTokenIx = await program.methods
         .createToken(name, symbol, uri)
