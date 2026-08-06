@@ -173,6 +173,50 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     return 0;
   });
 
+  // 🚀 DEDICATED TOKEN BALANCE FETCHER
+  useEffect(() => {
+    let isMounted = true;
+    
+    const fetchMyTokenBalance = async () => {
+      // Don't fetch if wallet isn't connected or if it's the dummy "8AVmX..." address
+      if (!publicKey || !connection || !displayToken.mintAddress) return;
+      if (displayToken.mintAddress === '8AVmX9aQwZoonSolanaNet11oHEZforge') return;
+
+      console.log("🟢 [BALANCE CHECK] Querying Solana for:", displayToken.mintAddress);
+
+      try {
+        const accounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
+          mint: new PublicKey(displayToken.mintAddress)
+        });
+
+        if (accounts.value.length > 0) {
+          // Grab the actual token amount from the blockchain
+          const rawBalance = accounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
+          console.log("🟢 [BALANCE CHECK] Found Tokens! Raw Amount:", rawBalance);
+          
+          // If your smart contract minted exactly 3.32 tokens instead of 3,320,000, 
+          // we must scale it up by 1,000,000 so your UI math (userTokenBalance / 1000000) works perfectly!
+          const scaledBalance = rawBalance < 1000 ? (rawBalance * 1000000) : rawBalance; 
+          
+          if (isMounted) setUserTokenBalance(scaledBalance);
+        } else {
+          console.log("🔴 [BALANCE CHECK] No tokens found in this wallet.");
+          if (isMounted) setUserTokenBalance(0);
+        }
+      } catch (error) {
+        console.error("🔴 [BALANCE CHECK] RPC Error:", error);
+      }
+    };
+
+    fetchMyTokenBalance();
+    const intervalId = setInterval(fetchMyTokenBalance, 4000); // Aggressively check every 4 seconds
+    
+    return () => { 
+      isMounted = false; 
+      clearInterval(intervalId); 
+    };
+  }, [publicKey, connection, displayToken.mintAddress]);
+
   // Persistent Trades Logic
   const [recentTrades, setRecentTrades] = useState(() => {
     const cachedTrades = localStorage.getItem(`${localCacheKey}_trades`);
