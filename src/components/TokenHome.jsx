@@ -29,7 +29,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
 
   const chartContainerRef = useRef(null);
   const [chartTimeframe, setChartTimeframe] = useState('1d');
-  const [chartType, setChartType] = useState('area'); 
+  const [chartType, setChartType] = useState('candle'); // 🚀 FIX: Defaults to candlestick!
   const [isFavorited, setIsFavorited] = useState(false);
   const [isReported, setIsReported] = useState(false);
   
@@ -195,6 +195,10 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const invariantK = (30 * 1e9) * (1_000_000_000 * 1e6);
   const currentVirtualTokens = invariantK / currentVirtualSol;
 
+  // 🚀 2.5 LIVE PRICE MATH
+  const liveSpotPriceSol = (currentVirtualSol / 1e9) / (currentVirtualTokens / 1e6);
+  const liveUsdPrice = liveSpotPriceSol * 72.57; // Converts SOL price to USD
+
   // 🚀 3. DYNAMIC MARKET CAP (Using $72.57 SOL price)
   const dynamicMarketCapString = calculateMarketCap(currentVirtualSol, currentVirtualTokens, 72.57);
 
@@ -349,17 +353,24 @@ const handleExecuteTrade = async () => {
     const generateChartData = () => {
       let data = [];
       let time = Math.floor(Date.now() / 1000) - 3600; 
-      let basePrice = curveState.price; 
+      let basePrice = initialBasePrice; 
+      
       for (let i = 0; i < 40; i++) {
-        let volatility = basePrice * 0.1;
-        let open = basePrice + (Math.random() - 0.4) * volatility;
-        let close = isPositive ? open + (Math.random() - 0.2) * volatility : open + (Math.random() - 0.8) * volatility; 
+        let volatility = basePrice * 0.08;
+        let open = basePrice + (Math.random() - 0.5) * volatility;
+        let close = isPositive ? open + (Math.random() - 0.4) * volatility : open + (Math.random() - 0.6) * volatility; 
         let high = Math.max(open, close) + Math.random() * (volatility * 0.2);
         let low = Math.min(open, close) - Math.random() * (volatility * 0.2);
+        
         chartType === 'candle' ? data.push({ time: time + (i * 90), open, high, low, close }) : data.push({ time: time + (i * 90), value: close });
         basePrice = close;
       }
-      const finalPoint = chartType === 'candle' ? { time: time + (40 * 90), open: basePrice, high: Math.max(basePrice, curveState.price), low: Math.min(basePrice, curveState.price), close: curveState.price } : { time: time + (40 * 90), value: curveState.price };
+      
+      // 🚀 THE LIVE CANDLE: Reacts instantly to liveUsdPrice
+      const finalPoint = chartType === 'candle' 
+        ? { time: time + (40 * 90), open: basePrice, high: Math.max(basePrice, liveUsdPrice), low: Math.min(basePrice, liveUsdPrice), close: liveUsdPrice } 
+        : { time: time + (40 * 90), value: liveUsdPrice };
+        
       data.push(finalPoint);
       return data;
     };
@@ -370,7 +381,7 @@ const handleExecuteTrade = async () => {
     const handleResize = () => chart.applyOptions({ width: chartContainerRef.current.clientWidth });
     window.addEventListener('resize', handleResize);
     return () => { window.removeEventListener('resize', handleResize); chart.remove(); };
-  }, [chartTimeframe, chartType, curveState.price, trendColorHex, isPositive]);
+  }, [chartTimeframe, chartType, liveUsdPrice, trendColorHex, isPositive]);
 
   const formatLink = (url) => url.startsWith('http') ? url : `https://${url}`;
 
@@ -452,8 +463,12 @@ const handleExecuteTrade = async () => {
         <div className="flex flex-col w-full pb-8">
           
           <div className="flex flex-col px-4 pt-4 pb-2">
-            <span className="text-[38px] sm:text-[44px] font-black tracking-tighter leading-none">{formatProPrice(`$${curveState.price.toFixed(7)}`)}</span>
-            <span className={`${trendTextColor} font-bold text-xs sm:text-sm mt-1.5 tracking-wide flex items-center gap-1`}>{isPositive ? '▲' : '▼'} {formatProPrice(displayToken.change)} <span className="text-[#787B86] font-medium ml-1">{timeframeLabels[chartTimeframe]}</span></span>
+            <span className="text-[38px] sm:text-[44px] font-black tracking-tighter leading-none">
+              {formatProPrice(`$${liveUsdPrice.toFixed(7)}`)}
+            </span>
+            <span className={`${trendTextColor} font-bold text-xs sm:text-sm mt-1.5 tracking-wide flex items-center gap-1`}>
+              {isPositive ? '▲' : '▼'} {formatProPrice(displayToken.change)} <span className="text-[#787B86] font-medium ml-1">{timeframeLabels[chartTimeframe]}</span>
+            </span>
           </div>
 
           <div className="w-full relative bg-[#0A0A0B] border-y border-white/[0.05]">
