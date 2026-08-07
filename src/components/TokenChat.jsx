@@ -510,8 +510,18 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
                   Balance: {tradeMode === 'buy' ? `${userBalanceSol.toFixed(2)} SOL` : `${(userTokenBalance / 1000000).toFixed(2)}M ${displayToken.symbol}`}
                 </span>
                 <div className="flex gap-2">
-                  <button onClick={() => setTradeAmount(tradeMode === 'buy' ? (userBalanceSol * 0.5).toFixed(2) : ((userTokenBalance * 0.5) / 1000000).toFixed(2))} className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors">Half</button>
-                  <button onClick={() => setTradeAmount(tradeMode === 'buy' ? userBalanceSol.toFixed(2) : (userTokenBalance / 1000000).toFixed(2))} className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors">Max</button>
+                  <button 
+                    onClick={() => setTradeAmount(tradeMode === 'buy' ? (userBalanceSol > 0.01 ? (userBalanceSol * 0.5).toFixed(4) : "0") : ((userTokenBalance * 0.5) / 1000000).toFixed(4))} 
+                    className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors"
+                  >
+                    Half
+                  </button>
+                  <button 
+                    onClick={() => setTradeAmount(tradeMode === 'buy' ? (userBalanceSol > 0.01 ? (userBalanceSol - 0.01).toFixed(4) : "0") : (Math.max(0, userTokenBalance - 1000) / 1000000).toFixed(6))} 
+                    className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors"
+                  >
+                    Max
+                  </button>
                 </div>
              </div>
 
