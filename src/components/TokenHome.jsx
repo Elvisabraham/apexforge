@@ -173,9 +173,9 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       try { return JSON.parse(cachedTrades); } catch(e) {}
     }
     return [
-      { id: 1, type: 'buy', amountToken: '25.0M', amountSol: '1.85', price: `$${initialBasePrice.toFixed(7)}`, time: '5m ago', user: 'Whale_0x', txHash: '5K2a...9x1Z' },
-      { id: 2, type: 'sell', amountToken: '12.4M', amountSol: '0.85', price: `$${initialBasePrice.toFixed(7)}`, time: '28m ago', user: 'sold', txHash: '3F1b...8y2Y' },
-    ];
+            { id: 1, type: 'buy', user: 'Whale_0x', amountToken: '25.0M', amountSol: '1.85', price: `$${initialBasePrice.toFixed(7)}`, timestamp: Date.now() - 600000 },
+            { id: 2, type: 'sell', user: 'sold', amountToken: '12.4M', amountSol: '0.85', price: `$${initialBasePrice.toFixed(7)}`, timestamp: Date.now() - 1500000 }
+          ];
   });
 
   useEffect(() => {
@@ -300,16 +300,17 @@ const handleExecuteTrade = async () => {
         progress: parseFloat(calculateCurveProgress(newSolInCurve * 1e9))
       }));
 
-      const newTrade = { 
-        id: Date.now(), 
-        type: tradeMode, 
-        amountToken: tradeTokenDisplay, 
-        amountSol: tradeSol, 
-        price: `$${curveState.price.toFixed(7)}`, 
-        time: 'Just now', 
-        user: 'You', 
-        txHash: 'Confirmed'
-      };
+      const newTrade = {
+            id: Date.now(),
+            type: tradeMode,
+            amountToken: tradeTokenDisplay,
+            amountSol: tradeSol,
+            price: `$${curveState.price.toFixed(7)}`,
+            timestamp: Date.now(), // 🚀 FIX: Real-time tracking added here
+            time: 'Just now',
+            user: 'You',
+            txHash: 'Confirmed'
+          };
       
       setRecentTrades(prev => [newTrade, ...prev]);
       setIsBuyModalOpen(false);
