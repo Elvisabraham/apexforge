@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTrade } from '../hooks/useTrade';
-import { calculateBuyEstimation, calculateSellEstimation } from '../mathService'; // 🚀 IMPORT MATH ENGINE
+import TradeWidget from './TradeWidget';
 
 export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile }) {
   const { executeTradeOnChain, isProcessing } = useTrade();
@@ -244,34 +244,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     }
   };
 
-// 🚀 EXACT TOKENHOME BONDING CURVE ENGINE
-  const currentVSol = 30 + (curveState.solInCurve || 0);
-  const currentVTokens = (30 * 1000000000) / currentVSol;
-
-  let estOutputText = '0.00';
-  let estPriceImpact = '0.00';
-
-  if (cleanNumericAmount > 0) {
-    if (tradeMode === 'buy') {
-      const netSol = cleanNumericAmount * 0.99;
-      const newVSol = currentVSol + netSol;
-      const newVTokens = (30 * 1000000000) / newVSol;
-      const tokensOut = currentVTokens - newVTokens;
-      
-      estOutputText = `${(tokensOut / 1000000).toFixed(2)}M ${displayToken.symbol}`;
-      estPriceImpact = ((netSol / currentVSol) * 100).toFixed(2);
-    } else {
-      // Handles both raw token count (32,998) or input in Millions (0.03M)
-      const tokensIn = cleanNumericAmount < 1000 ? cleanNumericAmount * 1000000 : cleanNumericAmount;
-      const newVTokens = currentVTokens + tokensIn;
-      const newVSol = (currentVSol * currentVTokens) / newVTokens;
-      const solOut = (currentVSol - newVSol) * 0.99;
-
-      estOutputText = `${solOut.toFixed(4)} SOL`;
-      estPriceImpact = ((tokensIn / currentVTokens) * 100).toFixed(2);
-    }
-  }
-
   return (
     <div className="flex flex-col w-full h-[100dvh] bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative z-50">
       
@@ -510,85 +482,19 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
                 <button onClick={() => setIsBuyModalOpen(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg></button>
              </div>
 
-             <div className="flex p-1 bg-black/40 rounded-xl mb-6 border border-white/5 shadow-inner">
-               <button onClick={() => { setTradeMode('buy'); setTradeAmount(''); }} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${tradeMode === 'buy' ? 'bg-[#089981] text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}>Buy</button>
-               <button onClick={() => { setTradeMode('sell'); setTradeAmount(''); }} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}>Sell</button>
-             </div>
-
-             <div className="bg-black/40 border border-white/5 focus-within:border-white/20 rounded-2xl p-4 flex items-center justify-between gap-4 transition-all mb-2">
-                <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg shrink-0">
-                  {tradeMode === 'buy' ? (
-                    <><img src="https://cryptologos.cc/logos/solana-sol-logo.png" className="w-4 h-4" alt="SOL"/><span className="text-xs font-black text-white">SOL</span></>
-                  ) : (
-                    <><div className="w-4 h-4 rounded-full bg-black overflow-hidden flex items-center justify-center text-[8px]">{displayToken.imagePreview ? <img src={displayToken.imagePreview} className="w-full h-full object-cover" alt="TKN"/> : displayToken.icon}</div><span className="text-xs font-black text-white">{displayToken.symbol}</span></>
-                  )}
-                </div>
-
-                {/* 🚀 FORMATTED INPUT: Shows live commas (e.g. 28,978) as user types */}
-                <input 
-                  type="text" 
-                  inputMode="decimal"
-                  value={tradeAmount ? formatInputWithCommas(tradeAmount) : ''} 
-                  onChange={(e) => {
-                    const rawVal = e.target.value.replace(/,/g, '');
-                    if (rawVal === '' || /^\d*\.?\d*$/.test(rawVal)) {
-                      setTradeAmount(rawVal);
-                    }
-                  }} 
-                  placeholder="0.00" 
-                  className="bg-transparent text-right text-3xl font-black text-white w-full focus:outline-none placeholder-zinc-700 font-mono" 
-                />
-             </div>
-
-             <div className="flex justify-between items-center px-1 mb-6">
-                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                  Balance: {tradeMode === 'buy' ? `${userBalanceSol.toFixed(2)} SOL` : `${(userTokenBalance / 1000000).toFixed(2)}M ${displayToken.symbol}`}
-                </span>
-                <div className="flex gap-2">
-                  <button 
-                    onClick={() => setTradeAmount(tradeMode === 'buy' ? (userBalanceSol > 0.01 ? (userBalanceSol * 0.5).toFixed(4) : "0") : ((userTokenBalance * 0.5) / 1000000).toFixed(4))} 
-                    className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors"
-                  >
-                    Half
-                  </button>
-                  <button 
-                    onClick={() => setTradeAmount(tradeMode === 'buy' ? (userBalanceSol > 0.01 ? (userBalanceSol - 0.01).toFixed(4) : "0") : (Math.max(0, userTokenBalance - 1000) / 1000000).toFixed(6))} 
-                    className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors"
-                  >
-                    Max
-                  </button>
-                </div>
-             </div>
-
-             <div className="flex flex-col gap-2 p-4 bg-[#0A0A0A] border border-white/5 rounded-xl mb-6 shadow-inner">
-               <div className="flex justify-between items-center">
-                 <span className="text-[10px] font-bold text-zinc-500 uppercase">You Receive (Est.)</span>
-                 <span className={`text-sm font-black ${displayToken.isGraduated ? 'text-amber-500' : (tradeMode === 'buy' ? 'text-[#089981]' : 'text-[#00FF66]')}`}>
-  {estOutputText}
-</span>
-               </div>
-               
-               {displayToken.isGraduated ? (
-                 <div className="flex justify-between items-center">
-                   <span className="text-[10px] font-bold text-zinc-500 uppercase">Routing & Fees</span>
-                   <span className="text-[10px] font-black text-zinc-300 flex items-center gap-1">Raydium LP <span className="text-zinc-600">|</span> 0.5%</span>
-                 </div>
-               ) : (
-                 <div className="flex justify-between items-center">
-                   <span className="text-[10px] font-black text-zinc-300">
-  ~{estPriceImpact}%
-</span>
-                 </div>
-               )}
-             </div>
-
-             <button 
-    onClick={handleExecuteTrade}
-    disabled={!cleanNumericAmount || cleanNumericAmount <= 0 || isProcessing}
-    className={`w-full ${displayToken.isGraduated ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-[0_0_20px_rgba(245,158,11,0.3)]' : (tradeMode === 'buy' ? 'bg-[#089981] hover:bg-[#06806b] shadow-[0_0_20px_rgba(8,153,129,0.3)]' : 'bg-[#F23645] hover:bg-rose-600 shadow-[0_0_20px_rgba(242,54,69,0.3)]')} disabled:opacity-50 text-white font-black text-sm py-4 rounded-2xl tracking-[0.2em] uppercase transition-all active:scale-95 flex items-center justify-center gap-2`}
-  >
-    {isProcessing ? 'Confirming in Wallet... ⏳' : `Confirm ${tradeMode} ⚡`}
-  </button>
+             {/* 🚀 INJECT THE MASTER COMPONENT HERE */}
+          <TradeWidget 
+            displayToken={displayToken}
+            tradeMode={tradeMode}
+            setTradeMode={setTradeMode}
+            tradeAmount={tradeAmount}
+            setTradeAmount={setTradeAmount}
+            userBalanceSol={userBalance} 
+            userTokenBalance={userProfile?.tokenBalance || 0} 
+            handleExecuteTrade={handleExecuteTrade}
+            isProcessing={isProcessing}
+            curveState={curveState}
+          />
           </div>
         </div>
       )}
