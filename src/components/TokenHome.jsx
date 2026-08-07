@@ -236,17 +236,22 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     return str;
   };
 
-  const handleExecuteTrade = async () => {
+const handleExecuteTrade = async () => {
     const amount = parseFloat(tradeAmount.toString().replace(/,/g, ''));
     if (!amount || amount <= 0) return;
 
     const success = await executeTradeOnChain(tradeMode, amount, displayToken.mintAddress);
     
     if (success) {
-      // 🚀 5. FIXING THE DATA SWAP BUG
       const tradeSol = tradeMode === 'buy' ? amount.toFixed(4) : estimatedOutput;
-      const tradeTokenDisplay = tradeMode === 'buy' ? `${estimatedOutput}M` : `${(amount >= 1000000 ? (amount/1000000).toFixed(2) + 'M' : amount.toLocaleString())}`;
-      const internalTokenUpdate = tradeMode === 'buy' ? parseFloat(estimatedOutput) * 1000000 : amount;
+      
+      // 🚀 FIX 1: Divide by 1,000,000 so 30,923,165 becomes "30.92M" in the Trade Feed
+      const tradeTokenDisplay = tradeMode === 'buy' 
+        ? `${(parseFloat(estimatedOutput) / 1000000).toFixed(2)}M` 
+        : `${(amount >= 1000000 ? (amount/1000000).toFixed(2) + 'M' : amount.toLocaleString())}`;
+      
+      // 🚀 FIX 2: Stop multiplying by 1,000,000, it is already the correct raw amount!
+      const internalTokenUpdate = tradeMode === 'buy' ? parseFloat(estimatedOutput) : amount;
 
       setUserTokenBalance(prev => tradeMode === 'buy' ? prev + internalTokenUpdate : Math.max(0, prev - internalTokenUpdate));
 
@@ -932,8 +937,8 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                   Balance: {tradeMode === 'buy' ? `${userBalanceSol.toFixed(2)} SOL` : `${(userTokenBalance / 1000000).toFixed(2)}M ${displayToken.symbol}`}
                 </span>
                 <div className="flex gap-2">
-                  <button onClick={() => setTradeAmount(tradeMode === 'buy' ? (userBalanceSol * 0.5).toFixed(2) : ((userTokenBalance * 0.5) / 1000000).toFixed(2))} className="text-[10px] font-black uppercase tracking-widest bg-[#121212] hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors">Half</button>
-                  <button onClick={() => setTradeAmount(tradeMode === 'buy' ? userBalanceSol.toFixed(2) : (userTokenBalance / 1000000).toFixed(2))} className="text-[10px] font-black uppercase tracking-widest bg-[#121212] hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors">Max</button>
+                  <button onClick={() => setTradeAmount(tradeMode === 'buy' ? (userBalanceSol * 0.5).toFixed(2) : Math.floor(userTokenBalance * 0.5).toString())} className="text-[10px] font-black uppercase tracking-widest bg-[#121212] hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors">Half</button>
+                  <button onClick={() => setTradeAmount(tradeMode === 'buy' ? userBalanceSol.toFixed(2) : Math.floor(userTokenBalance).toString())} className="text-[10px] font-black uppercase tracking-widest bg-[#121212] hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors">Max</button>
                 </div>
              </div>
 
@@ -945,7 +950,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                    {/* 🚀 DYNAMIC INJECTED MATH */}
                    {cleanNumericAmount > 0 ? (
                      tradeMode === 'buy' 
-                       ? `${estimatedOutput}M ${displayToken.symbol}`
+                       ? `${(parseFloat(estimatedOutput) / 1000000).toFixed(2)}M ${displayToken.symbol}`
                        : `${estimatedOutput} SOL`
                    ) : '0.00'}
 
