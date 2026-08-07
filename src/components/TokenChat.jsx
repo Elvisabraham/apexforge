@@ -564,12 +564,8 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
                <div className="flex justify-between items-center">
                  <span className="text-[10px] font-bold text-zinc-500 uppercase">You Receive (Est.)</span>
                  <span className={`text-sm font-black ${displayToken.isGraduated ? 'text-amber-500' : (tradeMode === 'buy' ? 'text-[#089981]' : 'text-[#00FF66]')}`}>
-                  {cleanNumericAmount > 0 ? (
-                    tradeMode === 'buy' 
-                      ? `${(cleanNumericAmount * 11.5).toFixed(2)}M ${displayToken.symbol}`
-                      : `${Math.max(0.0001, cleanNumericAmount * ((curveState.solInCurve || 0.1) / 1000)).toFixed(4)} SOL`
-                  ) : '0.00'}
-                </span>
+  {estOutputText}
+</span>
                </div>
                
                {displayToken.isGraduated ? (
@@ -579,8 +575,9 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
                  </div>
                ) : (
                  <div className="flex justify-between items-center">
-                   <span className="text-[10px] font-bold text-zinc-500 uppercase">Price Impact</span>
-                   <span className="text-[10px] font-black text-zinc-300">~{dynamicPriceImpact}%</span>
+                   <span className="text-[10px] font-black text-zinc-300">
+  ~{estPriceImpact}%
+</span>
                  </div>
                )}
              </div>
