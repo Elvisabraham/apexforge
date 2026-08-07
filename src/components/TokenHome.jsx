@@ -25,13 +25,21 @@ const formatCreator = (val, email) => {
   export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
   const { executeTradeOnChain, isProcessing } = useTrade();
 
-  // 🚀 PASTE HERE (Line 25): Flawless MAX calculation for both sides
+  // 🚀 FIX: Smart MAX calculation (Cap dust at half a cent ~$0.005 regardless of bag size)
   const handleMaxClick = () => {
     if (tradeMode === 'sell') {
-      // SELL SIDE: Pass raw token balance (leaves 0 dust)
-      setTradeAmount(userTokenBalance.toString());
+      // 1. Target leaving exactly $0.005 (half a cent) worth of tokens
+      const targetDustInUsd = 0.005; 
+      
+      // 2. Convert $0.005 into token count using the live USD price
+      const dustTokens = liveUsdPrice > 0 ? (targetDustInUsd / liveUsdPrice) : 1000;
+      
+      // 3. Subtract half a cent worth of tokens, sell the rest!
+      const sellAmount = Math.max(0, userTokenBalance - dustTokens);
+      
+      setTradeAmount(sellAmount.toFixed(6).toString());
     } else {
-      // BUY SIDE: Reserve 0.01 SOL for network gas fee
+      // BUY SIDE: Pass raw SOL balance MINUS a small buffer for network gas fees
       const maxSol = userBalanceSol > 0.01 ? (userBalanceSol - 0.01).toFixed(4) : "0";
       setTradeAmount(maxSol.toString());
     }
