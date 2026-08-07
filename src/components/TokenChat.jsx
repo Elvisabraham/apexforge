@@ -49,7 +49,12 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
   const [curveState, setCurveState] = useState(() => {
     const cached = localStorage.getItem(localCacheKey);
-    if (cached) return JSON.parse(cached).curveState;
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed.curveState && parsed.curveState.solInCurve !== undefined) {
+        return parsed.curveState;
+      }
+    }
     return { price: initialBasePrice, mcap: initialMcap, progress: displayToken.progress, solInCurve: (displayToken.progress / 100) * 85 };
   });
 
