@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createChart, CandlestickSeries, AreaSeries } from 'lightweight-charts';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey, SystemProgram } from '@solana/web3.js'; // 👈 Added SystemProgram
+import { BN } from '@coral-xyz/anchor'; // 👈 Added BN
+import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from '@solana/spl-token';
 import ActiveTvStream from './ActiveTvStream';
 import { useTrade } from '../hooks/useTrade';
 
@@ -20,8 +22,20 @@ const formatCreator = (val, email) => {
   return val || 'Anonymous';
 };
 
-export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
+  export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
   const { executeTradeOnChain, isProcessing } = useTrade();
+
+  // 🚀 PASTE HERE (Line 25): Flawless MAX calculation for both sides
+  const handleMaxClick = () => {
+    if (tradeMode === 'sell') {
+      // SELL SIDE: Pass raw token balance (leaves 0 dust)
+      setTradeAmount(userTokenBalance.toString());
+    } else {
+      // BUY SIDE: Reserve 0.01 SOL for network gas fee
+      const maxSol = userBalanceSol > 0.01 ? (userBalanceSol - 0.01).toFixed(4) : "0";
+      setTradeAmount(maxSol.toString());
+    }
+  };
 
   const { connection } = useConnection();
   const { publicKey } = useWallet();
@@ -271,6 +285,29 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     return str;
   };
 
+// 🚀 ON-CHAIN BALANCE REFRESHER
+  const fetchUserBalances = async () => {
+    if (!wallet.publicKey || !connection || !displayToken.mintAddress) return;
+
+    try {
+      // 1. Fetch live SOL balance
+      const solLamports = await connection.getBalance(wallet.publicKey);
+      setUserBalanceSol(solLamports / LAMPORTS_PER_SOL);
+
+      // 2. Fetch live Token balance from Associated Token Account
+      const mintPublicKey = new PublicKey(displayToken.mintAddress);
+      // NOTE: Ensure getAssociatedTokenAddressSync is imported from '@solana/spl-token' at the top of your file
+      const userTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, wallet.publicKey);
+      
+      const tokenAccountInfo = await connection.getTokenAccountBalance(userTokenAccount);
+      if (tokenAccountInfo?.value?.uiAmount !== undefined) {
+        setUserTokenBalance(tokenAccountInfo.value.uiAmount);
+      }
+    } catch (err) {
+      console.log("No token account found or error fetching balance:", err);
+    }
+  };
+
 const handleExecuteTrade = async () => {
     const amount = parseFloat(tradeAmount.toString().replace(/,/g, ''));
     if (!amount || amount <= 0) return;
@@ -315,9 +352,15 @@ const handleExecuteTrade = async () => {
       setRecentTrades(prev => [newTrade, ...prev]);
       setIsBuyModalOpen(false);
       setTradeAmount('');
+
+      // 🚀 PASTE THIS HERE: Re-sync actual on-chain wallet balance 1.5s after trade confirms
+      setTimeout(() => {
+        fetchUserBalances();
+      }, 1500);
+
     }
   };
-
+    
   const handleCopyCA = (source) => {
     navigator.clipboard.writeText(displayToken.mintAddress);
     if (source === 'header') {
