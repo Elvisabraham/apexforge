@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTrade } from '../hooks/useTrade';
+import { calculateBuyEstimation, calculateSellEstimation } from '../mathService'; // 🚀 IMPORT MATH ENGINE
 
 export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile }) {
   const { executeTradeOnChain, isProcessing } = useTrade();
@@ -133,7 +134,8 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
   const renderFormattedText = (text, isMe) => {
     if (!text) return '';
-    const parts = text.split(/(\$[A-Za-z0-9]+)/g);
+    // 🚀 FIX: Handles token symbols containing spaces or special characters
+    const parts = text.split(/(\$[A-Za-z0-9_\s]+)/g);
     return parts.map((part, i) => {
       if (part.startsWith('$')) {
         return (
@@ -529,12 +531,12 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
                <div className="flex justify-between items-center">
                  <span className="text-[10px] font-bold text-zinc-500 uppercase">You Receive (Est.)</span>
                  <span className={`text-sm font-black ${displayToken.isGraduated ? 'text-amber-500' : (tradeMode === 'buy' ? 'text-[#089981]' : 'text-[#00FF66]')}`}>
-                   {cleanNumericAmount > 0 ? (
-                     tradeMode === 'buy' 
-                       ? `${(((cleanNumericAmount * (displayToken.isGraduated ? 0.995 : 1)) / curveState.price) / 1000000).toFixed(2)}M ${displayToken.symbol}`
-                       : `${((cleanNumericAmount * 1000000 * curveState.price) * (displayToken.isGraduated ? 0.995 : 1)).toFixed(4)} SOL`
-                   ) : '0.00'}
-                 </span>
+                  {cleanNumericAmount > 0 ? (
+                    tradeMode === 'buy' 
+                      ? `${(parseFloat(calculateBuyEstimation(cleanNumericAmount, curveState.solInCurve || 0)) / 1000000).toFixed(2)}M ${displayToken.symbol}`
+                      : `${parseFloat(calculateSellEstimation(cleanNumericAmount * 1000000, curveState.solInCurve || 0)).toFixed(4)} SOL`
+                  ) : '0.00'}
+                </span>
                </div>
                
                {displayToken.isGraduated ? (
