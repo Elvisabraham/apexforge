@@ -6,12 +6,12 @@ import ActiveTvStream from './ActiveTvStream';
 import { useTrade } from '../hooks/useTrade';
 
 // 🚀 1. IMPORT THE NEW MATH ENGINE
-import { 
-  calculateBuyEstimation, 
-  calculateSellEstimation, 
-  calculateCurveProgress, 
-  calculateMarketCap 
-} from '../services/mathService';
+import {
+  calculateBuyEstimation,
+  calculateSellEstimation,
+  calculateCurveProgress,
+  calculateMarketCap
+} from '../mathService';
 
 // HELPER: Format address...
 const formatCreator = (val, email) => {
