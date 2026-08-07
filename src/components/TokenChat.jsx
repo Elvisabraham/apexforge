@@ -538,8 +538,8 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
                  <span className={`text-sm font-black ${displayToken.isGraduated ? 'text-amber-500' : (tradeMode === 'buy' ? 'text-[#089981]' : 'text-[#00FF66]')}`}>
                   {cleanNumericAmount > 0 ? (
                     tradeMode === 'buy' 
-                      ? `${(parseFloat(calculateBuyEstimation(cleanNumericAmount, curveState.solInCurve || 0)) / 1000000).toFixed(2)}M ${displayToken.symbol}`
-                      : `${parseFloat(calculateSellEstimation(cleanNumericAmount * 1000000, curveState.solInCurve || 0)).toFixed(4)} SOL`
+                      ? `${((cleanNumericAmount / (curveState.price || 0.00001)) / 1000000).toFixed(2)}M ${displayToken.symbol}`
+                      : `${(cleanNumericAmount * (curveState.price || 0.00001) * 1000000).toFixed(4)} SOL`
                   ) : '0.00'}
                 </span>
                </div>
