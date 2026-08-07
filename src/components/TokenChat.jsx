@@ -244,6 +244,34 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     }
   };
 
+// 🚀 EXACT TOKENHOME BONDING CURVE ENGINE
+  const currentVSol = 30 + (curveState.solInCurve || 0);
+  const currentVTokens = (30 * 1000000000) / currentVSol;
+
+  let estOutputText = '0.00';
+  let estPriceImpact = '0.00';
+
+  if (cleanNumericAmount > 0) {
+    if (tradeMode === 'buy') {
+      const netSol = cleanNumericAmount * 0.99;
+      const newVSol = currentVSol + netSol;
+      const newVTokens = (30 * 1000000000) / newVSol;
+      const tokensOut = currentVTokens - newVTokens;
+      
+      estOutputText = `${(tokensOut / 1000000).toFixed(2)}M ${displayToken.symbol}`;
+      estPriceImpact = ((netSol / currentVSol) * 100).toFixed(2);
+    } else {
+      // Handles both raw token count (32,998) or input in Millions (0.03M)
+      const tokensIn = cleanNumericAmount < 1000 ? cleanNumericAmount * 1000000 : cleanNumericAmount;
+      const newVTokens = currentVTokens + tokensIn;
+      const newVSol = (currentVSol * currentVTokens) / newVTokens;
+      const solOut = (currentVSol - newVSol) * 0.99;
+
+      estOutputText = `${solOut.toFixed(4)} SOL`;
+      estPriceImpact = ((tokensIn / currentVTokens) * 100).toFixed(2);
+    }
+  }
+
   return (
     <div className="flex flex-col w-full h-[100dvh] bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative z-50">
       
