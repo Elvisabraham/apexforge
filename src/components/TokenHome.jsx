@@ -207,6 +207,20 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     setLiveUsdPrice(calculatedUsdPrice);
   }, [calculatedUsdPrice]);
 
+  // 🚀 DYNAMIC 24H VOLUME & PERCENTAGE MATH
+  const initialSpotPrice = (30 / 1000000000); // The math base of the curve
+  const initialUsdPrice = initialSpotPrice * 72.57;
+  
+  // Calculate % change from launch
+  const priceChangePct = (((liveUsdPrice - initialUsdPrice) / initialUsdPrice) * 100).toFixed(2);
+  const isPositiveChange = priceChangePct >= 0;
+
+  // Calculate total Volume by adding up all SOL in recent trades
+  const volume24hUsd = recentTrades.reduce((acc, trade) => {
+    const solAmount = parseFloat(trade.amountSol);
+    return acc + (isNaN(solAmount) ? 0 : solAmount * 72.57);
+  }, 0);
+
   // 🚀 3. DYNAMIC MARKET CAP (Using $72.57 SOL price)
   const dynamicMarketCapString = calculateMarketCap(currentVirtualSol, currentVirtualTokens, 72.57);
 
@@ -474,8 +488,9 @@ const handleExecuteTrade = async () => {
             <span className="text-[38px] sm:text-[44px] font-black tracking-tighter leading-none">
               {formatProPrice(`$${liveUsdPrice.toFixed(7)}`)}
             </span>
-            <span className={`${trendTextColor} font-bold text-xs sm:text-sm mt-1.5 tracking-wide flex items-center gap-1`}>
-              {isPositive ? '▲' : '▼'} {formatProPrice(displayToken.change)} <span className="text-[#787B86] font-medium ml-1">{timeframeLabels[chartTimeframe]}</span>
+            {/* 🚀 FIX: Dynamic Percentage Color and Math */}
+            <span className={`${isPositiveChange ? 'text-[#00FF66]' : 'text-[#FF3B69]'} font-bold text-xs sm:text-sm mt-1.5 tracking-wide flex items-center gap-1`}>
+              {isPositiveChange ? '▲' : '▼'} {Math.abs(priceChangePct)}% <span className="text-[#787B86] font-medium ml-1">Today</span>
             </span>
           </div>
 
@@ -550,8 +565,8 @@ const handleExecuteTrade = async () => {
               <div className="flex justify-between items-start mb-5 bg-[#121212] border border-white/5 p-4 rounded-2xl shadow-inner">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Total Value</span>
-                  {/* 🚀 FIX: Now uses liveUsdPrice to calculate exact portfolio value */}
-                  <span className="text-2xl font-black text-white font-mono">{formatProPrice(`$${((userTokenBalance / 1000000) * liveUsdPrice).toFixed(2)}`)}</span>
+                  {/* 🚀 FIX: Removed the / 1000000 division so it multiplies your full token balance! */}
+                  <span className="text-2xl font-black text-white font-mono">{formatProPrice(`$${(userTokenBalance * liveUsdPrice).toFixed(2)}`)}</span>
                 </div>
                 <div className="flex flex-col items-end">
                   <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Balance ({displayToken.symbol})</span>
@@ -590,9 +605,10 @@ const handleExecuteTrade = async () => {
                 <span className="text-sm font-mono font-bold text-white mt-1.5">{dynamicMarketCapString}</span>
               </div>
               <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
-                <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Volume (24h)</span>
-                <span className="text-sm font-mono font-bold text-white mt-1.5">$409.90</span>
-              </div>
+              <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Volume (24H)</span>
+              {/* 🚀 FIX: Dynamic Volume connected to your Trades Ledger */}
+              <span className="text-sm font-mono font-bold text-white mt-1.5">${volume24hUsd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+            </div>
               <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
                 <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Holders</span>
                 <span className="text-sm font-mono font-bold text-white mt-1.5">{displayToken.holders}</span>
