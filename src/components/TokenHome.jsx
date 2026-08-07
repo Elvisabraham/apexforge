@@ -5,9 +5,19 @@ import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import ActiveTvStream from './ActiveTvStream';
 import { useTrade } from '../hooks/useTrade';
 
-// 🚀 HELPER: Format address... (Leave this here)
+// 🚀 1. IMPORT THE NEW MATH ENGINE
+import { 
+  calculateBuyEstimation, 
+  calculateSellEstimation, 
+  calculateCurveProgress, 
+  calculateMarketCap 
+} from '../services/mathService';
+
+// HELPER: Format address...
 const formatCreator = (val, email) => {
-  // ...
+  if (email) return email.split('@')[0];
+  if (val && val.length > 10) return `${val.slice(0,4)}...${val.slice(-4)}`;
+  return val || 'Anonymous';
 };
 
 export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
@@ -30,7 +40,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [showAllTrades, setShowAllTrades] = useState(false);
-  const [tradeFilter, setTradeFilter] = useState('all'); // 'all' | 'buys' | 'sells' | 'whales'
+  const [tradeFilter, setTradeFilter] = useState('all'); 
   
   const [tradeMode, setTradeMode] = useState('buy');
   const [tradeAmount, setTradeAmount] = useState('');
@@ -43,7 +53,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const [headerCopied, setHeaderCopied] = useState(false);
   const [bodyCopied, setBodyCopied] = useState(false);
 
-  // 🚀 FORMATTER HELPER: Adds thousand commas while preserving decimals
   const formatInputWithCommas = (val) => {
     if (!val && val !== 0) return '';
     const parts = val.toString().replace(/,/g, '').split('.');
@@ -51,7 +60,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     return parts.join('.');
   };
 
-  // 🚀 SAFETY REDIRECT EFFECT: Auto-exit with 500ms Rescue Timer
   useEffect(() => {
     const isInvalid = !token || !token.name || token.name === 'Unknown Token' || (!token.symbol && !token.id);
     if (isInvalid) {
@@ -60,19 +68,12 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       localStorage.removeItem('apex_active_token');
       localStorage.removeItem('apex_current_view');
 
-      if (typeof onBack === 'function') {
-        onBack();
-      }
-
-      const rescueTimer = setTimeout(() => {
-        window.location.href = window.location.origin;
-      }, 500);
-
+      if (typeof onBack === 'function') onBack();
+      const rescueTimer = setTimeout(() => { window.location.href = window.location.origin; }, 500);
       return () => clearTimeout(rescueTimer); 
     }
   }, [token, onBack]);
 
-  // 🚀 EARLY NULL GUARD
   if (!token || (!token.name && !token.symbol && !token.id) || token.name === 'Unknown Token') {
     return (
       <div className="flex flex-col items-center justify-center w-full min-h-screen bg-[#0A0A0B] text-white p-6 text-center z-[200] absolute inset-0">
@@ -82,12 +83,10 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     );
   }
 
-  // DATA ENGINE
   const rawProgress = token?.progress || 0;
-  const initialMcap = parseFloat((token?.mcap || token?.marketCap || '$10.0K').toString().replace(/[^0-9.]/g, '')) || 10;
+  const initialMcap = parseFloat((token?.mcap || token?.marketCap || '10.0').toString().replace(/[^0-9.]/g, '')) || 10;
   const isActuallyGraduated = token?.isGraduated === true || rawProgress >= 100 || initialMcap >= 69;
 
-  // Raw creator address/ID used strictly for permissions check
   const rawCreator = token?.creatorAddress || token?.creator || token?.deployer || connectedAddress || '47ZT1q3mR...';
 
   const displayToken = {
@@ -96,15 +95,11 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     change: token?.change || '+0.0%',
     icon: token?.icon || '🪙',
     imagePreview: token?.imagePreview || token?.image || null, 
-    // 🚀 THIS IS THE MAGIC FIX LINE RIGHT HERE:
     mintAddress: token?.mintAddress || token?.mint_address || '8AVmX9aQwZoonSolanaNet11oHEZforge',
     description: token?.description || `A community-driven asset deployed fairly on the Apex Forge platform. Smart contract initialized.`,
     links: { twitter: token?.links?.twitter || '', telegram: token?.links?.telegram || '', website: token?.links?.website || '' },
-    
-    // 🚀 Store raw address for stream checks, formatted username for the UI
     rawCreatorAddress: rawCreator,
     creator: formatCreator(rawCreator, token?.creatorEmail),
-    
     holders: '1,204',
     supply: '1.0B',
     createdTime: 'Just now',
@@ -120,51 +115,10 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     if (cached) {
       try { return JSON.parse(cached).curveState; } catch(e) {}
     }
-    return { price: initialBasePrice, mcap: initialMcap, progress: displayToken.progress, solInCurve: (displayToken.progress / 100) * 85 };
+    return { price: initialBasePrice, progress: displayToken.progress, solInCurve: (displayToken.progress / 100) * 85 };
   });
 
   const [userBalanceSol, setUserBalanceSol] = useState(0);
-
-  // 🚀 FETCH REAL SOL & SPL TOKEN BALANCES
-  useEffect(() => {
-    let isMounted = true;
-    const fetchLiveBalances = async () => {
-      if (publicKey && connection) {
-        try {
-          // 1. Fetch Native SOL Balance
-          const balanceLamports = await connection.getBalance(publicKey, 'confirmed');
-          if (isMounted) setUserBalanceSol(balanceLamports / LAMPORTS_PER_SOL);
-
-          // 2. Fetch Custom Token Balance
-          if (displayToken.mintAddress && displayToken.mintAddress !== '8AVmX9aQwZoonSolanaNet11oHEZforge') {
-            const tokenAccounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
-              mint: new PublicKey(displayToken.mintAddress)
-            });
-
-            if (tokenAccounts.value.length > 0) {
-              // Get the actual human-readable token amount
-              const actualBalance = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
-              // Multiply by 1,000,000 to match your existing UI math scaling
-              if (isMounted) setUserTokenBalance(actualBalance * 1000000); 
-            } else {
-              if (isMounted) setUserTokenBalance(0);
-            }
-          }
-        } catch (err) {
-          console.error("Failed to fetch live balances:", err);
-        }
-      }
-    };
-
-    fetchLiveBalances();
-    const id = setInterval(fetchLiveBalances, 5000); // Auto-refresh every 5s for snappy trades
-    
-    // Attach to window so we can manually force a refresh after a trade
-    window.forceBalanceRefresh = fetchLiveBalances; 
-
-    return () => { isMounted = false; clearInterval(id); };
-  }, [publicKey, connection, displayToken.mintAddress]);
-
   const [userTokenBalance, setUserTokenBalance] = useState(() => {
     const cached = localStorage.getItem(localCacheKey);
     if (cached) {
@@ -173,16 +127,27 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     return 0;
   });
 
-  // 🚀 DEDICATED TOKEN BALANCE FETCHER
   useEffect(() => {
     let isMounted = true;
-    
+    const fetchLiveBalances = async () => {
+      if (publicKey && connection) {
+        try {
+          const balanceLamports = await connection.getBalance(publicKey, 'confirmed');
+          if (isMounted) setUserBalanceSol(balanceLamports / LAMPORTS_PER_SOL);
+        } catch (err) {}
+      }
+    };
+    fetchLiveBalances();
+    const id = setInterval(fetchLiveBalances, 5000); 
+    window.forceBalanceRefresh = fetchLiveBalances; 
+    return () => { isMounted = false; clearInterval(id); };
+  }, [publicKey, connection]);
+
+  useEffect(() => {
+    let isMounted = true;
     const fetchMyTokenBalance = async () => {
-      // Don't fetch if wallet isn't connected or if it's the dummy "8AVmX..." address
       if (!publicKey || !connection || !displayToken.mintAddress) return;
       if (displayToken.mintAddress === '8AVmX9aQwZoonSolanaNet11oHEZforge') return;
-
-      console.log("🟢 [BALANCE CHECK] Querying Solana for:", displayToken.mintAddress);
 
       try {
         const accounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
@@ -190,34 +155,18 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
         });
 
         if (accounts.value.length > 0) {
-          // Grab the actual token amount from the blockchain
           const rawBalance = accounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
-          console.log("🟢 [BALANCE CHECK] Found Tokens! Raw Amount:", rawBalance);
-          
-          // If your smart contract minted exactly 3.32 tokens instead of 3,320,000, 
-          // we must scale it up by 1,000,000 so your UI math (userTokenBalance / 1000000) works perfectly!
           const scaledBalance = rawBalance < 1000 ? (rawBalance * 1000000) : rawBalance; 
-          
           if (isMounted) setUserTokenBalance(scaledBalance);
-        } else {
-          // 🟢 DO NOT overwrite local balance to 0 if standard SPL ATA doesn't exist yet
-          console.log("ℹ️ [BALANCE CHECK] No SPL Token Account in Phantom yet. Retaining session balance.");
         }
-      } catch (error) {
-        console.error("🔴 [BALANCE CHECK] RPC Error:", error);
-      }
+      } catch (error) {}
     };
 
     fetchMyTokenBalance();
-    const intervalId = setInterval(fetchMyTokenBalance, 4000); // Aggressively check every 4 seconds
-    
-    return () => { 
-      isMounted = false; 
-      clearInterval(intervalId); 
-    };
+    const intervalId = setInterval(fetchMyTokenBalance, 4000); 
+    return () => { isMounted = false; clearInterval(intervalId); };
   }, [publicKey, connection, displayToken.mintAddress]);
 
-  // Persistent Trades Logic
   const [recentTrades, setRecentTrades] = useState(() => {
     const cachedTrades = localStorage.getItem(`${localCacheKey}_trades`);
     if (cachedTrades) {
@@ -226,10 +175,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     return [
       { id: 1, type: 'buy', amountToken: '25.0M', amountSol: '1.85', price: `$${initialBasePrice.toFixed(7)}`, time: '5m ago', user: 'Whale_0x', txHash: '5K2a...9x1Z' },
       { id: 2, type: 'sell', amountToken: '12.4M', amountSol: '0.85', price: `$${initialBasePrice.toFixed(7)}`, time: '28m ago', user: 'sold', txHash: '3F1b...8y2Y' },
-      { id: 3, type: 'buy', amountToken: '2.1M', amountSol: '0.15', price: `$${initialBasePrice.toFixed(7)}`, time: '31m ago', user: 'bought', txHash: '9L4c...1z3W' },
-      { id: 4, type: 'buy', amountToken: '18.0M', amountSol: '1.25', price: `$${(initialBasePrice * 0.98).toFixed(7)}`, time: '45m ago', user: 'AlphaTrader', txHash: '2M8d...4w5V' },
-      { id: 5, type: 'sell', amountToken: '1.2M', amountSol: '0.08', price: `$${(initialBasePrice * 0.95).toFixed(7)}`, time: '1h ago', user: 'sold', txHash: '7P3e...6v7U' },
-      { id: 6, type: 'buy', amountToken: '15.0M', amountSol: '1.10', price: `$${(initialBasePrice * 0.92).toFixed(7)}`, time: '2h ago', user: 'bought', txHash: '4R9f...2u8T' },
     ];
   });
 
@@ -245,12 +190,31 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     }
   }, [recentTrades, localCacheKey, displayToken.symbol]);
 
-  // 🚀 SANITIZED PRICE IMPACT: Strips commas before running float calculations
+  // 🚀 2. DYNAMIC VIRTUAL RESERVES CALCULATION
+  const currentVirtualSol = (30 + curveState.solInCurve) * 1e9;
+  const invariantK = (30 * 1e9) * (1_000_000_000 * 1e6);
+  const currentVirtualTokens = invariantK / currentVirtualSol;
+
+  // 🚀 3. DYNAMIC MARKET CAP (Using $72.57 SOL price)
+  const dynamicMarketCapString = calculateMarketCap(currentVirtualSol, currentVirtualTokens, 72.57);
+
+  // 🚀 4. LIVE TRADE MATH INJECTION
   const cleanNumericAmount = tradeAmount ? parseFloat(tradeAmount.toString().replace(/,/g, '')) : 0;
-  const rawImpact = !isNaN(cleanNumericAmount) && cleanNumericAmount > 0 
-    ? (cleanNumericAmount * (tradeMode === 'buy' ? 0.12 : 0.08)) 
-    : 0;
-  const dynamicPriceImpact = Math.min(99.99, Math.max(0, rawImpact)).toFixed(2);
+  
+  let estimatedOutput = "0.00";
+  let calculatedImpact = "0.00";
+
+  if (cleanNumericAmount > 0) {
+    if (tradeMode === 'buy') {
+      const est = calculateBuyEstimation(cleanNumericAmount, currentVirtualSol, currentVirtualTokens);
+      estimatedOutput = est.tokensOut;
+      calculatedImpact = est.priceImpact;
+    } else {
+      const est = calculateSellEstimation(cleanNumericAmount, currentVirtualSol, currentVirtualTokens);
+      estimatedOutput = est.solOut;
+      calculatedImpact = est.priceImpact;
+    }
+  }
 
   const isPositive = displayToken.change.includes('+') || parseFloat(displayToken.change) >= 0;
   const trendColorHex = isPositive ? '#089981' : '#F23645'; 
@@ -271,50 +235,36 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     if (str.startsWith('$')) return <><span className="font-bold mr-[2px]">$</span>{str.slice(1)}</>;
     return str;
   };
-// 🚀 AMM CONSTANT PRODUCT MATH (k = x * y)
-  const calculateExpectedOutput = (inputAmount, isBuying) => {
-    if (!inputAmount || isNaN(inputAmount)) return '0.00';
-    const input = parseFloat(inputAmount);
-
-    const VIRTUAL_SOL = 30 + curveState.solInCurve; 
-    const k = 30 * 1000000000;
-    const currentTokens = k / VIRTUAL_SOL;
-
-    if (isBuying) {
-      const newSol = VIRTUAL_SOL + input;
-      const newTokens = k / newSol;
-      const tokensReceived = currentTokens - newTokens;
-      return (tokensReceived / 1000000).toFixed(2); // In Millions (M)
-    } else {
-      const realTokenInput = input * 1000000;
-      const newTokens = currentTokens + realTokenInput;
-      const newSol = k / newTokens;
-      const solReceived = VIRTUAL_SOL - newSol;
-      return solReceived.toFixed(4); // In SOL
-    }
-  };
 
   const handleExecuteTrade = async () => {
     const amount = parseFloat(tradeAmount.toString().replace(/,/g, ''));
     if (!amount || amount <= 0) return;
 
-    // 🚀 Send transaction to Solana blockchain
     const success = await executeTradeOnChain(tradeMode, amount, displayToken.mintAddress);
     
     if (success) {
-      // 1. Calculate estimated tokens received
-      const estimatedTokens = calculateExpectedOutput(amount, tradeMode === 'buy');
-      const tokenAmountInUnits = parseFloat(estimatedTokens) * 1000000;
+      // 🚀 5. FIXING THE DATA SWAP BUG
+      const tradeSol = tradeMode === 'buy' ? amount.toFixed(4) : estimatedOutput;
+      const tradeTokenDisplay = tradeMode === 'buy' ? `${estimatedOutput}M` : `${(amount >= 1000000 ? (amount/1000000).toFixed(2) + 'M' : amount.toLocaleString())}`;
+      const internalTokenUpdate = tradeMode === 'buy' ? parseFloat(estimatedOutput) * 1000000 : amount;
 
-      // 2. 🟢 INSTANT BALANCE UPDATE: Add bought tokens to your state immediately
-      setUserTokenBalance(prev => tradeMode === 'buy' ? prev + tokenAmountInUnits : Math.max(0, prev - tokenAmountInUnits));
+      setUserTokenBalance(prev => tradeMode === 'buy' ? prev + internalTokenUpdate : Math.max(0, prev - internalTokenUpdate));
 
-      // 3. Inject into Recent Trades feed
+      // Update local curve progress
+      const solAdded = tradeMode === 'buy' ? parseFloat(tradeSol) : -parseFloat(tradeSol);
+      const newSolInCurve = Math.max(0, curveState.solInCurve + solAdded);
+      
+      setCurveState(prev => ({
+        ...prev,
+        solInCurve: newSolInCurve,
+        progress: parseFloat(calculateCurveProgress(newSolInCurve * 1e9))
+      }));
+
       const newTrade = { 
         id: Date.now(), 
         type: tradeMode, 
-        amountToken: `${estimatedTokens}M`, 
-        amountSol: amount.toFixed(2), 
+        amountToken: tradeTokenDisplay, 
+        amountSol: tradeSol, 
         price: `$${curveState.price.toFixed(7)}`, 
         time: 'Just now', 
         user: 'You', 
@@ -322,8 +272,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
       };
       
       setRecentTrades(prev => [newTrade, ...prev]);
-
-      // 4. Close modal and clear input
       setIsBuyModalOpen(false);
       setTradeAmount('');
     }
@@ -347,7 +295,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   };
 
   const executeNativeShare = async () => {
-    const shareData = { title: `${displayToken.name} on Apex Forge`, text: `Check out ${displayToken.name} (${displayToken.symbol}). Market Cap: $${curveState.mcap.toFixed(2)}K 🚀`, url: `https://apexforge.app/token/${displayToken.mintAddress}` };
+    const shareData = { title: `${displayToken.name} on Apex Forge`, text: `Check out ${displayToken.name} (${displayToken.symbol}). Market Cap: ${dynamicMarketCapString} 🚀`, url: `https://apexforge.app/token/${displayToken.mintAddress}` };
     if (navigator.share) { try { await navigator.share(shareData); } catch (err) {} } else { handleCopyShareLink(); }
   };
 
@@ -430,16 +378,9 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
         .animate-slideUpNative { animation: slideUpNative 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* 🚀 HIDE DESKTOP BROWSER SPINNER ARROWS */
         input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-          -webkit-appearance: none; 
-          margin: 0; 
-        }
-        input[type=number] { 
-          -moz-appearance: textfield; 
-        }
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
       `}</style>
 
       {/* --- UNMOVABLE HEADER --- */}
@@ -448,21 +389,15 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
           
           <button 
             onClick={(e) => { 
-              e.preventDefault(); 
-              e.stopPropagation(); 
-              
+              e.preventDefault(); e.stopPropagation(); 
               localStorage.removeItem('apex_mock_state_TKN');
               localStorage.removeItem('apex_mock_state_TKN_trades');
               localStorage.removeItem('apex_active_token');
-
               if (typeof onBack === 'function') {
                 onBack();
               } else {
-                if (window.history.length > 1) {
-                  window.history.back();
-                } else {
-                  window.location.hash = '';
-                }
+                if (window.history.length > 1) window.history.back();
+                else window.location.hash = '';
               }
             }} 
             className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-1 -ml-1 shrink-0 relative z-[100] cursor-pointer"
@@ -495,7 +430,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
           <button 
             onClick={() => onOpenLiveModal && onOpenLiveModal()} 
             className="px-2 py-1 sm:px-2.5 sm:py-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-500 text-[10px] font-black uppercase tracking-widest rounded-xl flex items-center gap-1 hover:bg-rose-500/20 transition-all active:scale-95 shadow-sm cursor-pointer shrink-0"
-            title="Launch TV Stream"
           >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -503,7 +437,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
             </span>
             <span>LIVE</span>
           </button>
-
           <button onClick={() => setIsShareOpen(true)} className="text-white hover:text-zinc-300 transition-colors p-1"><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-4-6l-4-4-4 4m4-4v13" /></svg></button>
           <button onClick={() => setIsFavorited(!isFavorited)} className="transition-colors p-1"><svg className={`w-5 h-5 sm:w-6 sm:h-6 ${isFavorited ? 'text-amber-400 fill-amber-400' : 'text-white'}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg></button>
         </div>
@@ -521,7 +454,8 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
           <div className="w-full relative bg-[#0A0A0B] border-y border-white/[0.05]">
              <div className="absolute top-2 right-14 z-20 flex flex-col items-end pointer-events-none">
                <span className="text-sm font-black text-white/50 tracking-widest">{displayToken.symbol}</span>
-               <span className="text-[10px] font-bold text-white/40">MC: ${curveState.mcap.toFixed(2)}K</span>
+               {/* 🚀 DYNAMIC MCAP IMPLEMENTED HERE */}
+               <span className="text-[10px] font-bold text-white/40">MC: {dynamicMarketCapString}</span>
              </div>
              <div ref={chartContainerRef} className="w-full h-full" />
           </div>
@@ -621,7 +555,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
             <div className="grid grid-cols-2 gap-3 mt-2 border-t border-white/[0.05] pt-6">
               <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
                 <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Market Cap</span>
-                <span className="text-sm font-mono font-bold text-white mt-1.5">{formatProPrice(`$${curveState.mcap.toFixed(2)}K`)}</span>
+                <span className="text-sm font-mono font-bold text-white mt-1.5">{dynamicMarketCapString}</span>
               </div>
               <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
                 <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Volume (24h)</span>
@@ -664,7 +598,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                             {trade.user === 'You' && <span className="bg-white/10 text-zinc-400 text-[8px] px-1 py-0.5 rounded font-black uppercase">Me</span>}
                             {isWhale && <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[8px] px-1.5 py-0.5 rounded uppercase font-black tracking-wider">🐋 WHALE</span>}
                           </div>
-                          <span className="text-[11px] font-mono text-[#787B86] mt-0.5">{trade.amountToken} TKN</span>
+                          <span className="text-[11px] font-mono text-[#787B86] mt-0.5">{trade.amountToken}</span>
                         </div>
                       </div>
                       
@@ -756,7 +690,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                             {trade.user === 'You' && <span className="bg-white/10 text-zinc-400 text-[8px] px-1 py-0.5 rounded font-black uppercase">Me</span>}
                             {isWhale && <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[8px] px-1.5 py-0.5 rounded uppercase font-black tracking-wider">🐋 WHALE</span>}
                           </div>
-                          <span className="text-[11px] font-mono text-[#787B86] mt-0.5">{trade.amountToken} TKN</span>
+                          <span className="text-[11px] font-mono text-[#787B86] mt-0.5">{trade.amountToken}</span>
                         </div>
                       </div>
 
@@ -818,7 +752,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
              <p className="text-[11px] font-medium text-zinc-400 mb-6 text-center">Get notified instantly when {displayToken.symbol} hits your target.</p>
              <div className="bg-[#0A0A0B] border border-white/10 rounded-xl p-4 flex items-center justify-between gap-4 mb-6">
                 <span className="text-xl font-bold text-white">$</span>
-                {/* 🚀 FORMATTED INPUT: Shows live commas (e.g. 859,898) as user types */}
                 <input 
                   type="text" 
                   inputMode="decimal"
@@ -890,7 +823,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                    </div>
                    <div className="flex flex-col items-end">
                       <span className={`text-[9px] font-black ${trendTextColor} uppercase tracking-widest mb-0.5`}>Market Cap</span>
-                      <span className="text-2xl font-black text-white tracking-wide">{formatProPrice(`$${curveState.mcap.toFixed(2)}K`)}</span>
+                      <span className="text-2xl font-black text-white tracking-wide">{dynamicMarketCapString}</span>
                    </div>
                 </div>
 
@@ -979,7 +912,6 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                   )}
                 </div>
 
-                {/* 🚀 FORMATTED INPUT: Shows live commas (e.g. 85,849) as user types */}
                 <input 
                   type="text" 
                   inputMode="decimal"
@@ -1013,8 +945,8 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                    {/* 🚀 DYNAMIC INJECTED MATH */}
                    {cleanNumericAmount > 0 ? (
                      tradeMode === 'buy' 
-                       ? `${calculateExpectedOutput(cleanNumericAmount, true)}M ${displayToken.symbol}`
-                       : `${calculateExpectedOutput(cleanNumericAmount, false)} SOL`
+                       ? `${estimatedOutput}M ${displayToken.symbol}`
+                       : `${estimatedOutput} SOL`
                    ) : '0.00'}
 
                  </span>
@@ -1028,7 +960,7 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
                ) : (
                  <div className="flex justify-between items-center">
                    <span className="text-[10px] font-bold text-zinc-500 uppercase">Price Impact</span>
-                   <span className="text-[10px] font-black text-zinc-300">~{dynamicPriceImpact}%</span>
+                   <span className="text-[10px] font-black text-zinc-300">~{calculatedImpact}%</span>
                  </div>
                )}
              </div>
