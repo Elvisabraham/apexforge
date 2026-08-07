@@ -221,6 +221,15 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
     return acc + (isNaN(solAmount) ? 0 : solAmount * 72.57);
   }, 0);
 
+// 🚀 FIX: Dynamic Timestamp Calculator
+  const formatTimeAgo = (timestamp) => {
+    if (!timestamp) return 'Just now';
+    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    return `${Math.floor(seconds / 3600)}h ago`;
+  };
+
   // 🚀 3. DYNAMIC MARKET CAP (Using $72.57 SOL price)
   const dynamicMarketCapString = calculateMarketCap(currentVirtualSol, currentVirtualTokens, 72.57);
 
@@ -652,9 +661,12 @@ const handleExecuteTrade = async () => {
                       
                       <div className="flex items-center gap-3">
                         <div className="flex flex-col items-end">
-                          <span className="text-[12px] font-mono font-bold text-white">◎ {trade.amountSol}</span>
-                          <span className={`text-[10px] font-mono mt-0.5 ${trade.type === 'buy' ? 'text-[#089981]' : 'text-zinc-500'}`}>{trade.time}</span>
-                        </div>
+                  <span className="text-[12px] font-mono font-bold text-white">◎ {trade.amountSol}</span>
+                  {/* 🚀 FIX: Dynamic time calculation */}
+                  <span className="text-[10px] font-mono text-zinc-500 mt-0.5">
+                    {formatTimeAgo(trade.timestamp)}
+                  </span>
+                </div>
                         <a 
                           href={`https://solscan.io/tx/${trade.txHash || '5K2a'}`} 
                           target="_blank" 
@@ -811,7 +823,7 @@ const handleExecuteTrade = async () => {
                       setAlertPrice(rawVal);
                     }
                   }} 
-                  placeholder={curveState.price.toFixed(7)} 
+                  placeholder={liveUsdPrice.toFixed(7)}
                   className="bg-transparent text-right text-3xl font-black text-white w-full focus:outline-none placeholder-zinc-700 font-mono" 
                 />
              </div>
@@ -877,9 +889,11 @@ const handleExecuteTrade = async () => {
                 </div>
 
                 <div className="flex flex-col mt-6 z-10">
-                   <span className="text-4xl font-black text-white tracking-tighter">{formatProPrice(`$${curveState.price.toFixed(7)}`)}</span>
-                   <span className={`text-sm font-bold ${trendTextColor} mt-1 tracking-wide`}>{isPositive ? '▲' : '▼'} {displayToken.change}</span>
-                </div>
+              <span className="text-4xl font-black text-white tracking-tighter">{formatProPrice(`$${liveUsdPrice.toFixed(7)}`)}</span>
+              <span className={`${isPositiveChange ? 'text-[#00FF66]' : 'text-[#FF3B69]'} text-sm font-bold mt-1 tracking-wide flex items-center gap-1`}>
+                 {isPositiveChange ? '▲' : '▼'} {Math.abs(priceChangePct)}%
+              </span>
+            </div>
 
                 <div className="flex justify-between items-end mt-6 pt-4 border-t border-white/10 z-10">
                    <div className="flex items-center gap-2">
