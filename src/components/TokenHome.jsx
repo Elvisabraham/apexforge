@@ -196,8 +196,16 @@ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, 
   const currentVirtualTokens = invariantK / currentVirtualSol;
 
   // 🚀 2.5 LIVE PRICE MATH
-  const liveSpotPriceSol = (currentVirtualSol / 1e9) / (currentVirtualTokens / 1e6);
-  const liveUsdPrice = liveSpotPriceSol * 72.57; // Converts SOL price to USD
+  const calculatedSpotPriceSol = (currentVirtualSol / 1e9) / (currentVirtualTokens / 1e6);
+  const calculatedUsdPrice = calculatedSpotPriceSol * 72.57; // Converts SOL price to USD
+
+  // 🚀 NEW STATE: Store the live price so the UI re-renders instantly!
+  const [liveUsdPrice, setLiveUsdPrice] = useState(calculatedUsdPrice);
+
+  // 🚀 Effect to update the state whenever the curve math changes
+  useEffect(() => {
+    setLiveUsdPrice(calculatedUsdPrice);
+  }, [calculatedUsdPrice]);
 
   // 🚀 3. DYNAMIC MARKET CAP (Using $72.57 SOL price)
   const dynamicMarketCapString = calculateMarketCap(currentVirtualSol, currentVirtualTokens, 72.57);
@@ -542,11 +550,12 @@ const handleExecuteTrade = async () => {
               <div className="flex justify-between items-start mb-5 bg-[#121212] border border-white/5 p-4 rounded-2xl shadow-inner">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Total Value</span>
-                  <span className="text-2xl font-black text-white font-mono">{formatProPrice(`$${((userTokenBalance / 1000000) * curveState.price).toFixed(2)}`)}</span>
+                  {/* 🚀 FIX: Now uses liveUsdPrice to calculate exact portfolio value */}
+                  <span className="text-2xl font-black text-white font-mono">{formatProPrice(`$${((userTokenBalance / 1000000) * liveUsdPrice).toFixed(2)}`)}</span>
                 </div>
                 <div className="flex flex-col items-end">
                   <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Balance ({displayToken.symbol})</span>
-                  <span className="text-2xl font-black text-[#089981] font-mono">{userTokenBalance > 0 ? `${(userTokenBalance / 1000000).toFixed(2)}M` : '0'}</span>
+                  <span className="text-2xl font-black text-[#089981] font-mono">{userTokenBalance > 0 ? `${(userTokenBalance / 1000000).toFixed(2)}M` : '0.00M'}</span>
                 </div>
               </div>
               <div className="flex gap-3 w-full">
@@ -563,8 +572,11 @@ const handleExecuteTrade = async () => {
 
             <div className="flex flex-col w-full">
               <h2 className="text-xl font-black mb-3">About {displayToken.symbol}</h2>
-              <p className="text-[13px] font-medium text-zinc-400 leading-relaxed mb-5 whitespace-pre-wrap">{displayToken.description}</p>
-              
+              {/* 🚀 FIX: Fallback to ensure description always renders */}
+              <p className="text-[13px] font-medium text-zinc-400 leading-relaxed mb-5 whitespace-pre-wrap">
+                {displayToken.description || "A community-driven asset deployed fairly on the Apex Forge platform. Smart contract initialized."}
+              </p>
+
               <div className="flex flex-wrap gap-2">
                 {displayToken.links.twitter && <a href={formatLink(displayToken.links.twitter)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner"><span className="font-black text-sm text-zinc-500">𝕏</span> Twitter</a>}
                 {displayToken.links.telegram && <a href={formatLink(displayToken.links.telegram)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner"><span className="text-zinc-500">✈</span> Telegram</a>}
@@ -754,8 +766,9 @@ const handleExecuteTrade = async () => {
                 </svg>
              </div>
              <div className="bg-[#0A0A0B] border border-white/10 w-full p-4 rounded-xl flex justify-between items-center mb-6">
-                <span className="font-mono text-xs text-white truncate">FzVQv...9xCuH</span>
-                <button onClick={() => { navigator.clipboard.writeText('FzVQv...9xCuH'); alert('Address Copied!'); }} className="text-[#089981] font-black text-[10px] uppercase tracking-widest bg-[#089981]/10 px-3 py-1.5 rounded">Copy</button>
+                {/* 🚀 FIX: Shows your REAL connected wallet address! */}
+                <span className="font-mono text-xs text-white truncate w-3/4">{connectedAddress || 'Connect Wallet'}</span>
+                <button onClick={() => { if(connectedAddress){ navigator.clipboard.writeText(connectedAddress); alert('Address Copied!'); } }} className="text-[#089981] font-black text-[10px] uppercase tracking-widest bg-[#089981]/10 px-3 py-1.5 rounded">Copy</button>
              </div>
              <button onClick={() => setIsDepositOpen(false)} className="w-full py-4 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-zinc-400">Done</button>
           </div>
