@@ -144,6 +144,9 @@ const formatCreator = (val, email) => {
     };
   });
 
+  // 🚀 LIVE OVERRIDE: Triggers graduation UI the moment the live on-chain pool hits 85 SOL
+  displayToken.isGraduated = displayToken.isGraduated || curveState.solInCurve >= 85;
+
   const [userBalanceSol, setUserBalanceSol] = useState(0);
   const [userTokenBalance, setUserTokenBalance] = useState(() => {
     const cached = localStorage.getItem(localCacheKey);
@@ -517,10 +520,12 @@ const handleExecuteTrade = async () => {
         basePrice = close;
       }
       
-      // 🚀 THE LIVE CANDLE: Reacts instantly to liveUsdPrice
+      // 🚀 THE LIVE CANDLE: Reacts instantly, protected against 0 drops!
+      const safeLivePrice = liveUsdPrice > 0 ? liveUsdPrice : basePrice;
+      
       const finalPoint = chartType === 'candle' 
-        ? { time: time + (40 * 90), open: basePrice, high: Math.max(basePrice, liveUsdPrice), low: Math.min(basePrice, liveUsdPrice), close: liveUsdPrice } 
-        : { time: time + (40 * 90), value: liveUsdPrice };
+        ? { time: time + (40 * 90), open: basePrice, high: Math.max(basePrice, safeLivePrice), low: Math.min(basePrice, safeLivePrice), close: safeLivePrice } 
+        : { time: time + (40 * 90), value: safeLivePrice };
         
       data.push(finalPoint);
       return data;
@@ -683,7 +688,7 @@ const handleExecuteTrade = async () => {
                    <div className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-[#089981]/50 to-[#00FF66] transition-all duration-500 shadow-[0_0_10px_rgba(0,255,102,0.5)]" style={{ width: `${curveState.progress}%` }} />
                 </div>
                 <p className="text-[10px] text-zinc-500 font-medium mt-3 text-right font-mono">
-                  {curveState.solInCurve.toFixed(2)} / 85.00 SOL Filled
+                  {Math.min(curveState.solInCurve, 85).toFixed(2)} / 85.00 SOL Filled
                 </p>
               </div>
             )}
