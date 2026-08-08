@@ -129,9 +129,19 @@ const formatCreator = (val, email) => {
   const [curveState, setCurveState] = useState(() => {
     const cached = localStorage.getItem(localCacheKey);
     if (cached) {
-      try { return JSON.parse(cached).curveState; } catch(e) {}
+      try { 
+        const parsed = JSON.parse(cached).curveState;
+        // This is the magic line that rejects the broken 0 cache!
+        if (parsed && parsed.solInCurve > 0) return parsed;
+      } catch(e) {}
     }
-    return { price: initialBasePrice, progress: displayToken.progress, solInCurve: (displayToken.progress / 100) * 85 };
+    // Fallback if cache is 0 or empty:
+    const initialSol = ((displayToken.progress || 0) / 100) * 85;
+    return { 
+      price: initialBasePrice, 
+      progress: displayToken.progress || 0, 
+      solInCurve: initialSol 
+    };
   });
 
   const [userBalanceSol, setUserBalanceSol] = useState(0);
