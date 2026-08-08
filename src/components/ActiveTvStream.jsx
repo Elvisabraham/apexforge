@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { supabase } from './supabaseClient';
+import { supabase } from '../supabaseClient';
 
 export default function ActiveTvStream({ currentTokenSymbol, creatorAddress, closeStream }) {
   const { publicKey } = useWallet();

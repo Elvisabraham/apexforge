@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTrade } from '../hooks/useTrade';
 import TradeWidget from './TradeWidget';
+import { supabase } from '../supabaseClient';
 
 export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile }) {
   const { executeTradeOnChain, isProcessing } = useTrade();
@@ -19,6 +20,44 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const myName = `@${(userProfile?.username || 'User').replace('@', '')}`;
   const myAvatar = userProfile?.avatar;
   const tokenSymbol = token?.symbol || 'TKN';
+
+  // 🚀 SUPABASE LIVE CHAT ENGINE
+  const [messages, setMessages] = useState([]);
+  const [isChatLoading, setIsChatLoading] = useState(true);
+  const tokenMint = token?.mint || token?.address || token?.symbol; // Fallback identifier
+
+  useEffect(() => {
+    if (!tokenMint) return;
+
+    // 1. Fetch historical messages
+    const fetchMessages = async () => {
+      setIsChatLoading(true);
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('token_mint', tokenMint)
+        .order('created_at', { ascending: true });
+
+      if (!error && data) setMessages(data);
+      setIsChatLoading(false);
+    };
+
+    fetchMessages();
+
+    // 2. Subscribe to live WebSockets
+    const channel = supabase
+      .channel(`chat:${tokenMint}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `token_mint=eq.${tokenMint}` },
+        (payload) => {
+          setMessages((prev) => [...prev, payload.new]);
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [tokenMint]);
 
   // 🚀 FORMATTER HELPER: Adds thousand commas while preserving decimals
   const formatInputWithCommas = (val) => {
@@ -199,23 +238,23 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     setMessages(prev => [...prev, newMsg]);
   };
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || !tokenMint) return;
 
-    const newMessage = {
-      id: Date.now().toString(),
-      sender: myName,
-      avatar: myAvatar,
-      text: inputText,
-      time: 'Just now',
-      badge: formatBadge(userTokenBalance),
-      isMe: true,
-      reactions: {}
-    };
+    const textToSend = inputText.trim();
+    setInputText(''); // Clear UI instantly for a smooth feel
 
-    setMessages([...messages, newMessage]);
-    setInputText('');
+    // Push live to Supabase
+    const { error } = await supabase.from('messages').insert([
+      {
+        token_mint: tokenMint,
+        user_address: myName || 'Anon',
+        content: textToSend
+      }
+    ]);
+
+    if (error) console.error('Error sending message:', error);
   };
 
   const handleAddReaction = (msgId, emoji) => {
@@ -327,8 +366,22 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
       {/* --- CHAT FEED --- */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide bg-[#050505]" onClick={() => setActiveReactionId(null)}>
-        {messages.map((msg) => {
-          if (msg.isSystem) {
+        {messages.map((dbMsg) => {
+            // 🚀 ADAPTER: Translate Supabase database fields into your custom UI fields
+            const msg = {
+              id: dbMsg.id,
+              text: dbMsg.content,
+              sender: dbMsg.user_address,
+              isMe: dbMsg.user_address === (myName || 'Anon'),
+              time: dbMsg.created_at ? new Date(dbMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
+              avatar: null, // Fallbacks for features we will add to the DB later
+              badge: null,
+              isDev: false, 
+              reactions: {},
+              isSystem: false
+            };
+
+            if (msg.isSystem) {
             return (
               <div key={msg.id} className="flex justify-center w-full my-2 animate-slideUpNative">
                 <div className="bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66] px-4 py-2 rounded-xl text-xs font-mono font-bold text-center max-w-[90%] shadow-[0_0_10px_rgba(0,255,102,0.1)]">

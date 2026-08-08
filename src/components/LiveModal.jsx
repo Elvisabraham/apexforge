@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { supabase } from './supabaseClient';
+import { supabase } from '../supabaseClient';
 
 export default function LiveModal({ isOpen, onClose, token = { symbol: 'FORGE', name: 'Apex Forge', creatorAddress: '' } }) {
   const { publicKey } = useWallet();

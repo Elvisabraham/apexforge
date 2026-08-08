@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import MediaUploader from './MediaUploader'; 
-import { supabase } from './supabaseClient';
+import { supabase } from '../supabaseClient';
 import { useLaunchToken } from '../hooks/useLaunchToken'; // 🚀 IMPORTED YOUR NEW HOOK
 
 export default function Launch({ onForgeSuccess }) {
