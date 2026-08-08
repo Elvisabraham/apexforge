@@ -34,9 +34,8 @@ export const calculateBuyEstimation = (solAmountStr, virtualSol = VIRTUAL_SOL_IN
 
   const tokensToMint = (curveAmount * virtualTokens) / (virtualSol + curveAmount);
   
-  const spotPrice = virtualSol / virtualTokens; 
-  const executionPrice = curveAmount / tokensToMint;
-  const impact = ((executionPrice - spotPrice) / spotPrice) * 100;
+  // 🚀 FIX: Standard Bounded Price Impact Formula (0-100%)
+  const impact = (curveAmount / (virtualSol + curveAmount)) * 100;
 
   return {
     tokensOut: (tokensToMint / 1e6).toFixed(2),
@@ -59,9 +58,8 @@ export const calculateSellEstimation = (tokenAmountStr, virtualSol = VIRTUAL_SOL
   const totalFee = Math.floor(solOut / 100);
   const userSolAmount = solOut - totalFee;
 
-  const spotPrice = virtualSol / virtualTokens;
-  const executionPrice = solOut / tokenAmount;
-  const impact = ((spotPrice - executionPrice) / spotPrice) * 100;
+  // 🚀 FIX: Standard Bounded Price Impact Formula (0-100%)
+  const impact = (tokenAmount / (virtualTokens + tokenAmount)) * 100;
 
   return {
     solOut: (userSolAmount / 1e9).toFixed(4),
