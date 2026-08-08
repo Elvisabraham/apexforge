@@ -10,6 +10,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [inputText, setInputText] = useState('');
   const [activeReactionId, setActiveReactionId] = useState(null);
   const [isHoldersModalOpen, setIsHoldersModalOpen] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
 
   // INLINE TRADE MODAL STATE
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
@@ -118,7 +119,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     localStorage.setItem(localCacheKey, JSON.stringify({ curveState, userBalanceSol, userTokenBalance }));
   }, [curveState, userBalanceSol, userTokenBalance, localCacheKey]);
 
-  const userPnlPercent = userTokenBalance > 0 ? '+14.2%' : '0.0%';
+  const userPnlPercent = token?.change || '0.0%';
   const isPnlPositive = !userPnlPercent.includes('-');
 
   // 🚀 SANITIZED PRICE IMPACT: Strips commas before running float calculations
@@ -328,14 +329,16 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
             
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_5px_#00FF66]"></span>
-              <span className="text-[10px] font-black text-[#00FF66] uppercase tracking-widest">1,420 Online</span>
+              <span className="text-[10px] font-black text-[#00FF66] uppercase tracking-widest">
+    {token?.onlineCount || '1,420'} Online
+  </span>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="flex flex-col items-end">
-            <span className="text-sm font-black text-[#00FF66] font-mono">{formatProPrice(`$${curveState.price.toFixed(7)}`)}</span>
+            <span className="text-sm font-black text-[#00FF66] font-mono">${token?.price || '0.0000'}</span>
             <span className={`text-[10px] font-black font-mono ${isPnlPositive ? 'text-[#089981]' : 'text-rose-500'}`}>
               PnL: {userPnlPercent}
             </span>
@@ -439,8 +442,13 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
                   <div className={`rounded-2xl text-sm shadow-md flex flex-col ${msg.isDev ? 'bg-gradient-to-r from-amber-500/20 to-[#1A1A24] border border-amber-500/40 text-amber-100 rounded-bl-sm shadow-[0_0_15px_rgba(251,191,36,0.15)]' : msg.isMe ? 'bg-[#089981] text-white rounded-br-sm' : 'bg-[#1A1A24] border border-white/5 text-zinc-200 rounded-bl-sm'} ${msg.text ? 'px-4 py-2.5' : 'p-1'}`}>
                     {msg.image && (
-                      <img src={msg.image} alt="attachment" className="max-w-[200px] sm:max-w-[250px] rounded-xl object-cover" />
-                    )}
+    <img 
+      src={msg.image} 
+      alt="attachment" 
+      onClick={() => setFullscreenImage(msg.image)}
+      className="max-w-[200px] sm:max-w-[250px] rounded-xl object-cover cursor-pointer hover:opacity-90 transition-opacity active:scale-95" 
+    />
+  )}
                     {msg.text && renderFormattedText(msg.text, msg.isMe)}
                   </div>
 
@@ -566,6 +574,26 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
         </div>
       )}
 
+{/* --- FULLSCREEN IMAGE POPUP --- */}
+      {fullscreenImage && (
+        <div 
+          className="fixed inset-0 z-[300] flex items-center justify-center bg-black/95 backdrop-blur-md animate-fadeIn cursor-zoom-out p-4"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+            onClick={() => setFullscreenImage(null)}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+          <img 
+            src={fullscreenImage} 
+            alt="Fullscreen attachment" 
+            className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] animate-slideUpNative"
+            onClick={(e) => e.stopPropagation()} 
+          />
+        </div>
+      )}
     </div>
   );
 }
