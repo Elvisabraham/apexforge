@@ -28,20 +28,44 @@ export default function TradeWidget({
       const tokensOut = currentVTokens - newVTokens;
       
       estOutputText = `${(tokensOut / 1000000).toFixed(2)}M ${displayToken?.symbol || 'TKN'}`;
-      // 🚀 FIX: Bounded Price Impact Formula (0-100%)
       estPriceImpact = ((netSol / newVSol) * 100).toFixed(2);
     } else {
-      // Raw token input mapping
       const tokensIn = cleanNumericAmount;
       const newVTokens = currentVTokens + tokensIn;
       const newVSol = (currentVSol * currentVTokens) / newVTokens;
       const solOut = (currentVSol - newVSol) * 0.99;
 
       estOutputText = `${solOut.toFixed(4)} SOL`;
-      // 🚀 FIX: Bounded Price Impact Formula (0-100%)
       estPriceImpact = ((tokensIn / newVTokens) * 100).toFixed(2);
     }
   }
+
+  // 🚀 FIX: Smart Max Handler (Leaves gas buffer for SOL, passes raw integers for tokens)
+  const handleMaxClick = () => {
+    if (tradeMode === 'buy') {
+      const maxSol = Math.max(0, (userBalanceSol || 0) - 0.005).toFixed(4);
+      setTradeAmount(maxSol);
+    } else {
+      // Pass raw token amount without commas so the contract and parser don't choke
+      setTradeAmount(Math.floor(userTokenBalance || 0).toString());
+    }
+  };
+
+  const handleHalfClick = () => {
+    if (tradeMode === 'buy') {
+      const halfSol = Math.max(0, ((userBalanceSol || 0) / 2)).toFixed(4);
+      setTradeAmount(halfSol);
+    } else {
+      setTradeAmount(Math.floor((userTokenBalance || 0) / 2).toString());
+    }
+  };
+
+  const onSubmitClick = async () => {
+    const success = await handleExecuteTrade();
+    if (success) {
+      setTradeAmount('');
+    }
+  };
 
   return (
     <div className="w-full">
@@ -69,7 +93,6 @@ export default function TradeWidget({
       <div className="bg-[#0A0A0A] border border-white/5 rounded-xl p-4 mb-4 shadow-sm">
         <div className="flex justify-between items-center mb-2">
           
-          {/* 🚀 FIX: Dynamic Icon Swapping */}
           <div className="flex items-center gap-2 bg-zinc-900 px-3 py-1.5 rounded-full border border-white/5">
             {tradeMode === 'buy' ? (
               <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-[8px] text-white">
@@ -93,24 +116,24 @@ export default function TradeWidget({
             value={tradeAmount}
             onChange={(e) => setTradeAmount(e.target.value)}
             placeholder="0.00"
-            className="bg-transparent text-right text-3xl font-black text-white outline-none w-[60%] placeholder:text-zinc-700"
+            className="bg-transparent text-right text-3xl font-black text-white outline-none w-[60%] placeholder:text-zinc-700 font-mono"
           />
         </div>
         
         {/* BALANCE & HALF/MAX CONTROLS */}
         <div className="flex justify-between items-center mt-4">
           <span className="text-[10px] font-bold text-zinc-500 uppercase">
-            Balance: {tradeMode === 'buy' ? `${(userBalanceSol || 0).toFixed(2)} SOL` : `${((userTokenBalance || 0) / 1000000).toFixed(2)}M ${displayToken?.symbol || 'TKN'}`}
+            Balance: {tradeMode === 'buy' ? `${(userBalanceSol || 0).toFixed(4)} SOL` : `${((userTokenBalance || 0) / 1000000).toLocaleString()}M ${displayToken?.symbol || 'TKN'}`}
           </span>
           <div className="flex gap-2">
             <button 
-              onClick={() => setTradeAmount(tradeMode === 'buy' ? ((userBalanceSol || 0) * 0.5).toFixed(2) : Math.floor((userTokenBalance || 0) * 0.5).toLocaleString())} 
+              onClick={handleHalfClick}
               className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors"
             >
               Half
             </button>
             <button 
-              onClick={() => setTradeAmount(tradeMode === 'buy' ? (userBalanceSol || 0).toFixed(2) : Math.floor(userTokenBalance || 0).toLocaleString())} 
+              onClick={handleMaxClick}
               className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors"
             >
               Max
@@ -137,7 +160,7 @@ export default function TradeWidget({
 
       {/* SUBMIT BUTTON */}
       <button
-        onClick={handleExecuteTrade}
+        onClick={onSubmitClick}
         disabled={!cleanNumericAmount || cleanNumericAmount <= 0 || isProcessing}
         className={`w-full py-4 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${
           displayToken?.isGraduated 
