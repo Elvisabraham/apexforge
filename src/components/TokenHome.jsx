@@ -216,6 +216,59 @@ const formatCreator = (val, email) => {
     }
   }, [recentTrades, localCacheKey, displayToken.symbol]);
 
+  // 🚀 LIVE ON-CHAIN CURVE SYNC
+  // This bypasses the database and reads the actual SOL inside the smart contract PDA
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchLiveCurveData = async () => {
+      if (!connection || displayToken.mintAddress === '8AVmX9aQwZoonSolanaNet11oHEZforge') return;
+      
+      try {
+        const programID = new PublicKey("cbVU2Yavor2XCxK8bnXoLjd1Lw11JngQAnkKjTu9PL3");
+        const mintPubkey = new PublicKey(displayToken.mintAddress);
+        
+        // Derive the curve address just like useTrade.js does
+        const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
+          [Buffer.from("bonding_curve"), mintPubkey.toBuffer()],
+          programID
+        );
+        
+        // Read the absolute truth from the Solana blockchain
+        const balanceLamports = await connection.getBalance(bondingCurvePDA);
+        const rawSolBalance = balanceLamports / 1e9;
+        
+        // Subtract standard account rent (approx 0.002 SOL) to get the true tradeable amount
+        const realSolInCurve = Math.max(0, rawSolBalance - 0.002); 
+
+        if (isMounted && realSolInCurve > 0.1) {
+          setCurveState(prev => {
+            // Only update if the on-chain data is different to prevent infinite re-renders
+            if (Math.abs(prev.solInCurve - realSolInCurve) > 0.01) {
+              return {
+                ...prev,
+                solInCurve: realSolInCurve,
+                progress: Math.min(100, (realSolInCurve / 85) * 100).toFixed(2)
+              };
+            }
+            return prev;
+          });
+        }
+      } catch (err) {
+        console.error("🔴 Failed to fetch live curve state from Solana:", err);
+      }
+    };
+    
+    fetchLiveCurveData();
+    // Poll the blockchain every 5 seconds to keep the UI perfectly in sync
+    const interval = setInterval(fetchLiveCurveData, 5000); 
+    
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [connection, displayToken.mintAddress]);
+
   // 🚀 2. DYNAMIC VIRTUAL RESERVES CALCULATION
   const currentVirtualSol = (30 + curveState.solInCurve) * 1e9;
   const invariantK = (30 * 1e9) * (1_000_000_000 * 1e6);
