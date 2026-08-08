@@ -195,41 +195,41 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
   const fileInputRef = useRef(null);
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
-        const newMsg = {
-          id: Date.now().toString(),
-          sender: myName,
-          avatar: myAvatar,
-          text: '', 
-          image: event.target.result, 
-          time: 'Just now',
-          badge: formatBadge(userTokenBalance),
-          isMe: true,
-          reactions: {}
-        };
-        setMessages(prev => [...prev, newMsg]);
+      reader.onload = async (event) => {
+        const base64Image = event.target.result;
+        
+        // 🚀 Push Image live to Supabase
+        const { error } = await supabase.from('messages').insert([
+          {
+            token_mint: tokenMint,
+            user_address: myName || 'Anon',
+            avatar: myAvatar || null,
+            content: '', 
+            image: base64Image
+          }
+        ]);
+        if (error) console.error('Error sending image:', error);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSendMockGif = () => {
-    const newMsg = {
-      id: Date.now().toString(),
-      sender: myName,
-      avatar: myAvatar,
-      text: '',
-      image: 'https://media.giphy.com/media/amrNGnZUeWhZC/giphy.gif', 
-      time: 'Just now',
-      badge: formatBadge(userTokenBalance),
-      isMe: true,
-      reactions: {}
-    };
-    setMessages(prev => [...prev, newMsg]);
+  const handleSendMockGif = async () => {
+    // 🚀 Push GIF live to Supabase
+    const { error } = await supabase.from('messages').insert([
+      {
+        token_mint: tokenMint,
+        user_address: myName || 'Anon',
+        avatar: myAvatar || null,
+        content: '',
+        image: 'https://media.giphy.com/media/amrNGnZUeWhZC/giphy.gif'
+      }
+    ]);
+    if (error) console.error('Error sending GIF:', error);
   };
 
   const handleSendMessage = async (e) => {
@@ -239,28 +239,42 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     const textToSend = inputText.trim();
     setInputText(''); // Clear UI instantly for a smooth feel
 
-    // Push live to Supabase
+    // 🚀 Push Text live to Supabase
     const { error } = await supabase.from('messages').insert([
       {
         token_mint: tokenMint,
         user_address: myName || 'Anon',
-        content: textToSend
+        avatar: myAvatar || null,
+        content: textToSend,
+        image: null
       }
     ]);
 
     if (error) console.error('Error sending message:', error);
   };
 
-  const handleAddReaction = (msgId, emoji) => {
-    setMessages(prev => prev.map(m => {
-      if (m.id === msgId) {
-        const currentReactions = m.reactions || {};
-        const count = currentReactions[emoji] || 0;
-        return { ...m, reactions: { ...currentReactions, [emoji]: count + 1 } };
-      }
-      return m;
-    }));
+  const handleAddReaction = async (msgId, emoji) => {
+    // Find the current message and increment the emoji count
+    const targetMsg = messages.find(m => m.id === msgId);
+    if (!targetMsg) return;
+
+    const currentReactions = targetMsg.reactions || {};
+    const newCount = (currentReactions[emoji] || 0) + 1;
+    const updatedReactions = { ...currentReactions, [emoji]: newCount };
+
+    // Optimistic UI update so it feels instant for the user
+    setMessages(prev => prev.map(m => 
+      m.id === msgId ? { ...m, reactions: updatedReactions } : m
+    ));
     setActiveReactionId(null);
+
+    // 🚀 Push Reaction Update live to Supabase
+    const { error } = await supabase
+      .from('messages')
+      .update({ reactions: updatedReactions })
+      .eq('id', msgId);
+      
+    if (error) console.error('Error updating reaction:', error);
   };
 
   const handleExecuteTrade = async () => {
@@ -368,10 +382,11 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
               sender: dbMsg.user_address,
               isMe: dbMsg.user_address === (myName || 'Anon'),
               time: dbMsg.created_at ? new Date(dbMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
-              avatar: null, // Fallbacks for features we will add to the DB later
+              avatar: dbMsg.avatar || null,
               badge: null,
               isDev: false, 
-              reactions: {},
+              reactions: dbMsg.reactions || {},
+              image: dbMsg.image || null,
               isSystem: false
             };
 
