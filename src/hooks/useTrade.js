@@ -63,7 +63,7 @@ export const useTrade = () => {
       // 2. Derive the unique Bonding Curve PDA
       const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
         [Buffer.from("bonding_curve"), mintPubkey.toBuffer()],
-        programID // 🟢 FIXED typo: programId -> programID
+        programID 
       );
 
       // 3. Derive User's Associated Token Account (ATA)
@@ -75,30 +75,30 @@ export const useTrade = () => {
       const transaction = new Transaction();
 
       if (mode === 'buy') {
-        // Amount is in SOL (9 decimals)
-        const amountInLamports = new BN(Math.floor(parseFloat(amount) * 1e9));
+        // Amount is in SOL (9 decimals) - 🚀 FIX: Strip commas before parsing
+        const amountInLamports = new BN(Math.floor(parseFloat(amount.toString().replace(/,/g, '')) * 1e9));
         
         const buyIx = await program.methods
           .buyTokens(amountInLamports)
           .accounts({
             bondingCurve: bondingCurvePDA,
             mint: mintPubkey,
-            buyerTokenAccount: userTokenAccount, // 🟢 Added for V2
+            buyerTokenAccount: userTokenAccount,
             buyer: wallet.publicKey,
-            apexTreasury: APEX_TREASURY,         // 🟢 Added for V2
-            tokenCreator: TOKEN_CREATOR,         // 🟢 Added for V2
-            referrer: REFERRER,                  // 🟢 Added for V2
+            apexTreasury: APEX_TREASURY,
+            tokenCreator: TOKEN_CREATOR,
+            referrer: REFERRER,
             systemProgram: SystemProgram.programId,
             tokenProgram: TOKEN_PROGRAM_ID,
-            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, // 🟢 Added for V2
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           })
           .instruction();
         
         transaction.add(buyIx);
 
       } else if (mode === 'sell') {
-        // Amount is in Tokens (6 decimals)
-        const tokenAmountRaw = new BN(Math.floor(parseFloat(amount) * 1_000_000));
+        // Amount is in Tokens (6 decimals) - 🚀 FIX: Strip commas before parsing
+        const tokenAmountRaw = new BN(Math.floor(parseFloat(amount.toString().replace(/,/g, '')) * 1_000_000));
         
         const sellIx = await program.methods
           .sellTokens(tokenAmountRaw)
@@ -126,7 +126,6 @@ export const useTrade = () => {
 
       const signedTx = await provider.wallet.signTransaction(transaction);
       
-      // We removed skipPreflight so Phantom catches errors early!
       const tx = await connection.sendRawTransaction(signedTx.serialize()); 
 
       console.log("⏳ Waiting for Solana to confirm trade...");
