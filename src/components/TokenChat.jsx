@@ -44,14 +44,19 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
     fetchMessages();
 
-    // 2. Subscribe to live WebSockets
+    // 2. Subscribe to live WebSockets (Now listens for both INSERTS and UPDATES)
     const channel = supabase
       .channel(`chat:${tokenMint}`)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `token_mint=eq.${tokenMint}` },
+        { event: '*', schema: 'public', table: 'messages', filter: `token_mint=eq.${tokenMint}` },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new]);
+          if (payload.eventType === 'INSERT') {
+            setMessages((prev) => [...prev, payload.new]);
+          } else if (payload.eventType === 'UPDATE') {
+            // 🚀 Replaces the old message with the newly updated message (containing live reactions)
+            setMessages((prev) => prev.map(m => m.id === payload.new.id ? payload.new : m));
+          }
         }
       )
       .subscribe();
