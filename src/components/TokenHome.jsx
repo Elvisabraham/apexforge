@@ -7,6 +7,7 @@ import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddres
 import ActiveTvStream from './ActiveTvStream';
 import { useTrade } from '../hooks/useTrade';
 import TradeWidget from './TradeWidget';
+import { calculateMarketCap } from '../mathService';
 
 // HELPER: Format address...
 const formatCreator = (val, email) => {
