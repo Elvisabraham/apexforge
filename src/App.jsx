@@ -345,12 +345,17 @@ function AppContent() {
           <TokenHome 
             token={selectedTokenData} 
             onBack={() => {
-              const targetPage = (previousPage === 'tokenHome' || previousPage === 'tokenchat') ? 'home' : (previousPage || 'home');
+              // 🚀 FIX: Bulletproof routing to break the infinite back-loop
+              const loopPages = ['tokenhome', 'tokenchat', 'tokenHome', 'tokenChat'];
+              const targetPage = loopPages.includes(previousPage) ? 'home' : (previousPage || 'home');
               setActivePage(targetPage);
             }} 
             onTradeClick={handleOpenTradePortal}
             onOpenProfile={() => handleOpenPublicProfile({ name: 'Apex Deployer', handle: '@ApexDeployer_0x1', avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=ApexDeployer_0x1` })}
-            onOpenChat={() => setActivePage('tokenChat')}
+            onOpenChat={() => {
+              // Do not update previousPage here, so we preserve the original root origin (Home/Wallet)
+              setActivePage('tokenchat');
+            }}
             onOpenLiveModal={() => toggleModal('live', true)}
           />
         );
@@ -362,7 +367,9 @@ function AppContent() {
         return (
           <TokenChat 
             token={selectedTokenData}
-            onBack={() => setActivePage('tokenHome')}
+            onBack={() => {
+              setActivePage('tokenhome'); // Go straight back to the token hub
+            }}
             userProfile={userProfile}
             userBalance={userPortfolio.find(t => t.symbol === selectedTokenData?.symbol)?.balance || 0}
             onOpenProfile={handleOpenPublicProfile} 
