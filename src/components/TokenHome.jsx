@@ -296,53 +296,82 @@ const handleExecuteTrade = async () => {
     const amount = parseFloat(tradeAmount.toString().replace(/,/g, ''));
     if (!amount || amount <= 0) return;
 
+    // 1. Calculate math locally to avoid ReferenceErrors!
+    const currentVSol = 30 + (curveState.solInCurve || 0);
+    const currentVTokens = (30 * 1000000000) / currentVSol;
+    
+    let solToTrade = 0;
+    let tokensToTrade = 0;
+
+    if (tradeMode === 'buy') {
+      solToTrade = amount;
+      const netSol = amount * 0.99;
+      const newVSol = currentVSol + netSol;
+      const newVTokens = (30 * 1000000000) / newVSol;
+      tokensToTrade = currentVTokens - newVTokens;
+    } else {
+      tokensToTrade = amount;
+      const newVTokens = currentVTokens + tokensToTrade;
+      const newVSol = (currentVSol * currentVTokens) / newVTokens;
+      solToTrade = (currentVSol - newVSol) * 0.99;
+    }
+
     const success = await executeTradeOnChain(tradeMode, amount, displayToken.mintAddress);
     
     if (success) {
-      const tradeSol = tradeMode === 'buy' ? amount.toFixed(4) : estimatedOutput;
-      
-      // 🚀 FIX 1: Divide by 1,000,000 so 30,923,165 becomes "30.92M" in the Trade Feed
+      // 2. Format exact numbers for the UI
+      const tradeSolDisplay = solToTrade.toFixed(4);
       const tradeTokenDisplay = tradeMode === 'buy' 
-        ? `${(parseFloat(estimatedOutput) / 1000000).toFixed(2)}M` 
+        ? `${(tokensToTrade / 1000000).toFixed(2)}M` 
         : `${(amount >= 1000000 ? (amount/1000000).toFixed(2) + 'M' : amount.toLocaleString())}`;
-      
-      // 🚀 FIX 2: Stop multiplying by 1,000,000, it is already the correct raw amount!
-      const internalTokenUpdate = tradeMode === 'buy' ? parseFloat(estimatedOutput) : amount;
 
-      setUserTokenBalance(prev => tradeMode === 'buy' ? prev + internalTokenUpdate : Math.max(0, prev - internalTokenUpdate));
+      // 3. Update Token Balance (Optimistic UI)
+      setUserTokenBalance(prev => tradeMode === 'buy' ? prev + tokensToTrade : Math.max(0, prev - amount));
 
-      // Update local curve progress
-      const solAdded = tradeMode === 'buy' ? parseFloat(tradeSol) : -parseFloat(tradeSol);
+      // 4. Update Curve State & Price! (This instantly shakes the Chart & Header!)
+      const solAdded = tradeMode === 'buy' ? solToTrade : -solToTrade;
       const newSolInCurve = Math.max(0, curveState.solInCurve + solAdded);
       
+      const newProgress = Math.min(100, (newSolInCurve / 85) * 100).toFixed(2);
+      
+      // Calculate the new Spot Price natively
+      const nextVirtualSol = (30 + newSolInCurve) * 1e9;
+      const invariant = (30 * 1e9) * (1_000_000_000 * 1e6);
+      const nextVirtualTokens = invariant / nextVirtualSol;
+      const newSpotPrice = (nextVirtualSol / 1e9) / (nextVirtualTokens / 1e6);
+
       setCurveState(prev => ({
         ...prev,
         solInCurve: newSolInCurve,
-        progress: parseFloat(calculateCurveProgress(newSolInCurve * 1e9))
+        progress: parseFloat(newProgress),
+        price: newSpotPrice // 🚀 Updates the base price which forces the chart to jump!
       }));
 
+      // 5. Instantly push to Recent Trades feed
       const newTrade = {
-            id: Date.now(),
-            type: tradeMode,
-            amountToken: tradeTokenDisplay,
-            amountSol: tradeSol,
-            price: `$${curveState.price.toFixed(7)}`,
-            timestamp: Date.now(), // 🚀 FIX: Real-time tracking added here
-            time: 'Just now',
-            user: 'You',
-            txHash: 'Confirmed'
-          };
+        id: Date.now(),
+        type: tradeMode,
+        amountToken: tradeTokenDisplay,
+        amountSol: tradeSolDisplay,
+        price: `$${(newSpotPrice * 72.57).toFixed(7)}`,
+        timestamp: Date.now(),
+        time: 'Just now',
+        user: 'You',
+        txHash: 'Confirmed'
+      };
       
       setRecentTrades(prev => [newTrade, ...prev]);
       setIsBuyModalOpen(false);
       setTradeAmount('');
 
-      // 🚀 PASTE THIS HERE: Re-sync actual on-chain wallet balance 1.5s after trade confirms
+      // 6. Force sync true on-chain balances after network settlement
       setTimeout(() => {
         fetchUserBalances();
       }, 1500);
 
+      return true; // Let TradeWidget know it can clear its state
     }
+    return false;
   };
     
   const handleCopyCA = (source) => {
