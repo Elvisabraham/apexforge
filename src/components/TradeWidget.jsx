@@ -113,8 +113,17 @@ export default function TradeWidget({
           <input
             type="text"
             inputMode="decimal"
-            value={tradeAmount}
-            onChange={(e) => setTradeAmount(e.target.value)}
+            value={
+              tradeAmount 
+                ? Number(tradeAmount.toString().replace(/,/g, '')).toLocaleString() 
+                : ''
+            }
+            onChange={(e) => {
+              const rawVal = e.target.value.replace(/,/g, '');
+              if (!isNaN(rawVal) || rawVal === '') {
+                setTradeAmount(rawVal);
+              }
+            }}
             placeholder="0.00"
             className="bg-transparent text-right text-3xl font-black text-white outline-none w-[60%] placeholder:text-zinc-700 font-mono"
           />
@@ -172,4 +181,4 @@ export default function TradeWidget({
       </button>
     </div>
   );
-}
+} 
