@@ -88,7 +88,8 @@ export default function TradeWidget({
           </div>
 
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={tradeAmount}
             onChange={(e) => setTradeAmount(e.target.value)}
             placeholder="0.00"
@@ -103,13 +104,13 @@ export default function TradeWidget({
           </span>
           <div className="flex gap-2">
             <button 
-              onClick={() => setTradeAmount(tradeMode === 'buy' ? ((userBalanceSol || 0) * 0.5).toFixed(2) : Math.floor((userTokenBalance || 0) * 0.5))} 
+              onClick={() => setTradeAmount(tradeMode === 'buy' ? ((userBalanceSol || 0) * 0.5).toFixed(2) : Math.floor((userTokenBalance || 0) * 0.5).toLocaleString())} 
               className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors"
             >
               Half
             </button>
             <button 
-              onClick={() => setTradeAmount(tradeMode === 'buy' ? (userBalanceSol || 0).toFixed(2) : Math.floor(userTokenBalance || 0))} 
+              onClick={() => setTradeAmount(tradeMode === 'buy' ? (userBalanceSol || 0).toFixed(2) : Math.floor(userTokenBalance || 0).toLocaleString())} 
               className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1 rounded-md transition-colors"
             >
               Max
