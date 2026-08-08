@@ -28,7 +28,8 @@ export default function TradeWidget({
       const tokensOut = currentVTokens - newVTokens;
       
       estOutputText = `${(tokensOut / 1000000).toFixed(2)}M ${displayToken?.symbol || 'TKN'}`;
-      estPriceImpact = ((netSol / currentVSol) * 100).toFixed(2);
+      // 🚀 FIX: Bounded Price Impact Formula (0-100%)
+      estPriceImpact = ((netSol / newVSol) * 100).toFixed(2);
     } else {
       // Raw token input mapping
       const tokensIn = cleanNumericAmount;
@@ -37,7 +38,8 @@ export default function TradeWidget({
       const solOut = (currentVSol - newVSol) * 0.99;
 
       estOutputText = `${solOut.toFixed(4)} SOL`;
-      estPriceImpact = ((tokensIn / currentVTokens) * 100).toFixed(2);
+      // 🚀 FIX: Bounded Price Impact Formula (0-100%)
+      estPriceImpact = ((tokensIn / newVTokens) * 100).toFixed(2);
     }
   }
 
@@ -66,15 +68,25 @@ export default function TradeWidget({
       {/* INPUT AREA */}
       <div className="bg-[#0A0A0A] border border-white/5 rounded-xl p-4 mb-4 shadow-sm">
         <div className="flex justify-between items-center mb-2">
+          
+          {/* 🚀 FIX: Dynamic Icon Swapping */}
           <div className="flex items-center gap-2 bg-zinc-900 px-3 py-1.5 rounded-full border border-white/5">
-            {/* Fallback avatar if no image exists */}
-            <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-[8px]">
-               {tradeMode === 'buy' ? '◎' : '🚀'}
-            </div>
+            {tradeMode === 'buy' ? (
+              <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-[8px] text-white">
+                ◎
+              </div>
+            ) : displayToken?.image ? (
+              <img src={displayToken.image} alt={displayToken.symbol} className="w-4 h-4 rounded-full object-cover" />
+            ) : (
+              <div className="w-4 h-4 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 flex items-center justify-center text-[8px] text-black">
+                🚀
+              </div>
+            )}
             <span className="text-xs font-bold text-white uppercase">
               {tradeMode === 'buy' ? 'SOL' : displayToken?.symbol || 'TKN'}
             </span>
           </div>
+
           <input
             type="number"
             value={tradeAmount}
