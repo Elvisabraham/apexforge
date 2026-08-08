@@ -566,7 +566,7 @@ function AppContent() {
         )}
 
         {/* --- LOCKED BOTTOM NAVIGATION --- */}
-        {activePage !== 'tokenHome' && activePage !== 'tokenChat' && activePage !== 'settings' && activePage !== 'profile' && (
+        {activePage?.toLowerCase() !== 'tokenhome' && activePage?.toLowerCase() !== 'tokenchat' && activePage?.toLowerCase() !== 'settings' && activePage?.toLowerCase() !== 'profile' && (
           <div className="md:hidden absolute bottom-0 left-0 right-0 z-50 bg-[#050505]">
             <BottomNav activePage={activePage} setActivePage={setActivePage} userProfile={userProfile} />
           </div>
