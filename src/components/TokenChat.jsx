@@ -147,12 +147,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     { id: 5, name: 'MoonShot_99', address: '5mN7...1wQ9', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Moon', holding: '1.2%', value: '$3,600' },
   ];
 
-  const [messages, setMessages] = useState([
-    { id: 1, sender: 'ApexDeployer_0x1', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Dev', text: `Official contract deployed for $${tokenSymbol}. Liquidity locked on bonding curve! ⚡`, time: '10:30 AM', badge: 'DEV', isDev: true, reactions: { '🚀': 24, '💎': 15 } },
-    { id: 2, sender: 'Apex Sniper', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sniper', text: `This chart for $${tokenSymbol} is looking incredibly primed. 🚀`, time: '10:42 AM', badge: '42M', isMe: false, reactions: { '🚀': 12, '🐳': 3 } },
-    { id: 3, sender: '0xDegen', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Degen', text: 'Just swept the floor. Nobody is selling!', time: '10:45 AM', badge: '38M', isMe: false, reactions: { '💎': 8 } },
-  ]);
-
   // FOMO BUY BOT INJECTION
   useEffect(() => {
     const timer = setTimeout(() => {
