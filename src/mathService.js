@@ -24,17 +24,20 @@ export const calculateMaxWithGas = (balance, gasFee = 0.000005) => {
  * BUY ESTIMATION: Calculates tokens received for a given SOL input
  */
 export const calculateBuyEstimation = (solAmountStr, virtualSol = VIRTUAL_SOL_INITIAL, virtualTokens = VIRTUAL_TOKEN_INITIAL) => {
-  if (!solAmountStr || isNaN(solAmountStr) || parseFloat(solAmountStr) <= 0) {
+  // 🚀 FIX 1: Strip commas before parsing to prevent calculation failures
+  const cleanStr = solAmountStr ? solAmountStr.toString().replace(/,/g, '') : "0";
+  
+  if (!cleanStr || isNaN(cleanStr) || parseFloat(cleanStr) <= 0) {
     return { tokensOut: "0.00", priceImpact: "0.00" };
   }
 
-  const solAmount = parseFloat(solAmountStr) * 1e9;
+  const solAmount = parseFloat(cleanStr) * 1e9;
   const totalFee = Math.floor(solAmount / 100); 
   const curveAmount = solAmount - totalFee; 
 
   const tokensToMint = (curveAmount * virtualTokens) / (virtualSol + curveAmount);
   
-  // 🚀 FIX: Standard Bounded Price Impact Formula (0-100%)
+  // 🚀 FIX 2: Bounded Price Impact Formula (0-100%)
   const impact = (curveAmount / (virtualSol + curveAmount)) * 100;
 
   return {
@@ -47,18 +50,21 @@ export const calculateBuyEstimation = (solAmountStr, virtualSol = VIRTUAL_SOL_IN
  * SELL ESTIMATION: Calculates SOL received for a given Token input
  */
 export const calculateSellEstimation = (tokenAmountStr, virtualSol = VIRTUAL_SOL_INITIAL, virtualTokens = VIRTUAL_TOKEN_INITIAL) => {
-  if (!tokenAmountStr || isNaN(tokenAmountStr) || parseFloat(tokenAmountStr) <= 0) {
+  // 🚀 FIX 1: Strip commas before parsing to prevent calculation failures
+  const cleanStr = tokenAmountStr ? tokenAmountStr.toString().replace(/,/g, '') : "0";
+
+  if (!cleanStr || isNaN(cleanStr) || parseFloat(cleanStr) <= 0) {
     return { solOut: "0.00", priceImpact: "0.00" };
   }
 
-  const tokenAmount = parseFloat(tokenAmountStr) * 1e6;
+  const tokenAmount = parseFloat(cleanStr) * 1e6;
 
   const solOut = (tokenAmount * virtualSol) / (virtualTokens + tokenAmount);
   
   const totalFee = Math.floor(solOut / 100);
   const userSolAmount = solOut - totalFee;
 
-  // 🚀 FIX: Standard Bounded Price Impact Formula (0-100%)
+  // 🚀 FIX 2: Bounded Price Impact Formula (0-100%)
   const impact = (tokenAmount / (virtualTokens + tokenAmount)) * 100;
 
   return {
