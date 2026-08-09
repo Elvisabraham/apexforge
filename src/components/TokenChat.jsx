@@ -111,7 +111,6 @@ const [tradeAmount, setTradeAmount] = useState('');
   }, [curveState, userBalanceSol, userTokenBalance, localCacheKey]);
 
   // 🚀 Map incoming props to match your component variables
-  const userBalanceSol = userBalance;
   const userPnlPercent = token?.change || '0.0%';
   const isPnlPositive = !userPnlPercent.includes('-');
 
