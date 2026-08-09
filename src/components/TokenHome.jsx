@@ -444,7 +444,19 @@ const handleExecuteTrade = async () => {
         price: newSpotPrice // 🚀 Updates the base price which forces the chart to jump!
       }));
 
-      // 5. Instantly push to Recent Trades feed
+      // 🌍 5. Instantly push to Recent Trades feed AND Global Database
+      try {
+        await supabase.from('trades').insert([{
+          token_mint: displayToken.mintAddress,
+          wallet: publicKey ? publicKey.toBase58() : 'Anonymous',
+          type: tradeMode,
+          amount: tokensToTrade,
+          sol_amount: solToTrade
+        }]);
+      } catch (err) {
+        console.error("Failed to broadcast trade globally:", err);
+      }
+
       const newTrade = {
         id: Date.now(),
         type: tradeMode,
