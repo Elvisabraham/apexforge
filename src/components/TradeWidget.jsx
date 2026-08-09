@@ -43,33 +43,37 @@ export default function TradeWidget({
   // 🚀 FIX: Pro-level MAX calculation (0 dust for sells, gas buffer for buys)
   const handleMaxClick = async () => {
     if (tradeMode === 'buy') {
-      // Keeping your 0.005 SOL buffer for gas fees
+      // BUY SIDE: Reserve 0.005 SOL for transaction gas fees
       const maxSol = Math.max(0, (userBalanceSol || 0) - 0.005).toFixed(4);
       setTradeAmount(maxSol.toString());
     } else {
-      // SELL SIDE: Fetch exact raw balance to eliminate dust
-      if (!publicKey) return;
+      // SELL SIDE: Support both displayToken and token props passed from parent components
+      const activeToken = (typeof displayToken !== 'undefined' && displayToken) ? displayToken : token;
+      const targetMint = activeToken?.mintAddress || activeToken?.mint || activeToken?.address;
+
+      if (!publicKey || !targetMint) {
+        // Fallback: If mint lookup is unavailable, use the passed userTokenBalance
+        if (typeof userTokenBalance !== 'undefined' && userTokenBalance > 0) {
+          setTradeAmount(userTokenBalance.toString());
+        }
+        return;
+      }
 
       try {
-        // ⚠️ Ensure 'token' matches whatever prop holds the mint address in this file!
-        const targetMint = token?.mintAddress || token?.mint;
-        if (!targetMint) return;
-
         const userTokenAccount = getAssociatedTokenAddressSync(
           new PublicKey(targetMint),
           publicKey
         );
 
         const accountInfo = await getAccount(connection, userTokenAccount);
-        
-        // Convert atomic units to standard format (assuming 6 decimals)
         const exactBalance = Number(accountInfo.amount) / 1_000_000;
+        
         setTradeAmount(exactBalance.toString());
-
       } catch (err) {
-        console.error("Failed to fetch exact raw balance:", err);
-        // Fallback to the state balance if on-chain fetch fails (without Math.floor!)
-        setTradeAmount((userTokenBalance || 0).toString());
+        console.warn("Failed to fetch on-chain account info, using fallback balance:", err);
+        if (typeof userTokenBalance !== 'undefined') {
+          setTradeAmount(userTokenBalance.toString());
+        }
       }
     }
   };
@@ -134,20 +138,30 @@ export default function TradeWidget({
           </div>
 
           <input
-            type="text"
-            inputMode="decimal"
-            value={
-              tradeAmount 
-                ? Number(tradeAmount.toString().replace(/,/g, '')).toLocaleString() 
-                : ''
+          type="text"
+          inputMode="decimal"
+          value={
+            tradeAmount
+              ? (() => {
+                  // 1. Strip existing commas to get the raw string
+                  const cleanString = tradeAmount.toString().replace(/,/g, '');
+                  // 2. Split by the decimal point
+                  const parts = cleanString.split('.');
+                  // 3. Add commas ONLY to the whole number side
+                  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                  // 4. Rejoin them (this protects your trailing dot and zeros!)
+                  return parts.join('.');
+                })()
+              : ''
+          }
+          onChange={(e) => {
+            const rawVal = e.target.value.replace(/,/g, '');
+            // 🚀 Regex ensures only valid numbers and a single decimal point can pass
+            if (rawVal === '' || /^\d*\.?\d*$/.test(rawVal)) {
+              setTradeAmount(rawVal);
             }
-            onChange={(e) => {
-              const rawVal = e.target.value.replace(/,/g, '');
-              if (!isNaN(rawVal) || rawVal === '') {
-                setTradeAmount(rawVal);
-              }
-            }}
-            placeholder="0.00"
+          }}
+          placeholder="0.00"
             className="bg-transparent text-right text-3xl font-black text-white outline-none w-[60%] placeholder:text-zinc-700 font-mono"
           />
         </div>
