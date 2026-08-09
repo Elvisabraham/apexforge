@@ -3,7 +3,7 @@ import { useTrade } from '../hooks/useTrade';
 import TradeWidget from './TradeWidget';
 import { supabase } from '../supabaseClient';
 
-export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile }) {
+export default function TokenChat({ token, onBack, userBalance, userTokenBalance, userProfile, onOpenProfile }) {
   const { executeTradeOnChain, isProcessing } = useTrade();
 
   const messagesEndRef = useRef(null);
@@ -565,7 +565,7 @@ const [tradeAmount, setTradeAmount] = useState('');
             tradeAmount={tradeAmount}
             setTradeAmount={setTradeAmount}
             userBalanceSol={userBalance} 
-            userTokenBalance={userProfile?.tokenBalance || 0} 
+            userTokenBalance={userTokenBalance}
             handleExecuteTrade={handleExecuteTrade}
             isProcessing={isProcessing}
             curveState={curveState}
