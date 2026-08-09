@@ -212,28 +212,43 @@ const formatCreator = (val, email) => {
     return () => { isMounted = false; clearInterval(intervalId); };
   }, [publicKey, connection, displayToken.mintAddress]);
 
-  const [recentTrades, setRecentTrades] = useState(() => {
-    const cachedTrades = localStorage.getItem(`${localCacheKey}_trades`);
-    if (cachedTrades) {
-      try { return JSON.parse(cachedTrades); } catch(e) {}
-    }
-    return [
-            { id: 1, type: 'buy', user: 'Whale_0x', amountToken: '25.0M', amountSol: '1.85', price: `$${initialBasePrice.toFixed(7)}`, timestamp: Date.now() - 600000 },
-            { id: 2, type: 'sell', user: 'sold', amountToken: '12.4M', amountSol: '0.85', price: `$${initialBasePrice.toFixed(7)}`, timestamp: Date.now() - 1500000 }
-          ];
-  });
+ // 1. Start with an empty list for everyone
+  const [recentTrades, setRecentTrades] = useState([]);
+
+  // 2. Fetch the global live trades feed from Supabase
+  useEffect(() => {
+    if (!displayToken?.mintAddress) return;
+
+    const fetchGlobalTrades = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('trades')
+          .select('*')
+          .eq('token_mint', displayToken.mintAddress)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (error) throw error;
+        if (data) setRecentTrades(data);
+      } catch (err) {
+        console.error("Failed to fetch global trades:", err);
+      }
+    };
+
+    // Fetch immediately on load
+    fetchGlobalTrades();
+
+    // Poll every 10 seconds so the feed stays live for all viewers
+    const tradesInterval = setInterval(fetchGlobalTrades, 10000);
+    
+    return () => clearInterval(tradesInterval);
+  }, [displayToken?.mintAddress]); 
 
   useEffect(() => {
     if (displayToken.symbol !== 'TKN') {
       localStorage.setItem(localCacheKey, JSON.stringify({ curveState, userBalanceSol, userTokenBalance }));
     }
   }, [curveState, userBalanceSol, userTokenBalance, localCacheKey, displayToken.symbol]);
-
-  useEffect(() => {
-    if (displayToken.symbol !== 'TKN') {
-      localStorage.setItem(`${localCacheKey}_trades`, JSON.stringify(recentTrades));
-    }
-  }, [recentTrades, localCacheKey, displayToken.symbol]);
 
   // 🚀 LIVE ON-CHAIN CURVE SYNC
   // This bypasses the database and reads the actual SOL inside the smart contract PDA
