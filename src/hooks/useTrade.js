@@ -4,7 +4,7 @@ import { BN, Program, AnchorProvider, setProvider } from '@coral-xyz/anchor';
 import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { getAssociatedTokenAddress, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token'; // 🟢 Added SPL import
 import idl from '../idl/idl.json';
-import { supabase } from '../client';
+import { supabase } from '../supabaseClient';
 
 export const useTrade = () => {
   const wallet = useWallet();
