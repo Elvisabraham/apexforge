@@ -22,7 +22,7 @@ export default function SolanaProvider({ children }) {
   const network = WalletAdapterNetwork.Devnet;
 
   const endpoint = useMemo(() => {
-    return 'https://devnet.helius-rpc.com/?api-key=056770e5-c485-4c48-83b7-e50e01dde199';
+    return `https://devnet.helius-rpc.com/?api-key=${import.meta.env.VITE_HELIUS_API_KEY}`;
   }, []);
 
   // 🚀 REGISTER WALLET ADAPTERS FOR MOBILE BROWSERS & EXTENSIONS
