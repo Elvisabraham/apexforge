@@ -13,9 +13,9 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [fullscreenImage, setFullscreenImage] = useState(null);
 
   // INLINE TRADE MODAL STATE
-  const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
-  const [tradeMode, setTradeMode] = useState('buy');
-  const [tradeAmount, setTradeAmount] = useState('');
+const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
+const [tradeMode, setTradeMode] = useState('buy');
+const [tradeAmount, setTradeAmount] = useState('');
 
   // Identity Context
   const myName = `@${(userProfile?.username || 'User').replace('@', '')}`;
