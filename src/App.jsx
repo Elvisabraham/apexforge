@@ -372,8 +372,12 @@ function AppContent() {
           }}
           userProfile={userProfile}
           // 🚀 FIX: Correctly separate the SOL balance and the Token balance!
-          userBalance={userPortfolio.find(t => t.symbol === 'SOL')?.balance || 0} 
-          userTokenBalance={userPortfolio.find(t => t.symbol === selectedTokenData?.symbol)?.balance || 0}
+          userBalance={userPortfolio.find(t => t.symbol === 'SOL')?.balance || 0}
+          userTokenBalance={
+            userPortfolio.find(t => t.symbol === selectedTokenData?.symbol)?.balance || 
+            selectedTokenData?.balance || 
+            0
+          }
           onOpenProfile={handleOpenPublicProfile}
           onOpenTrade={handleOpenTradePortal}
         />
