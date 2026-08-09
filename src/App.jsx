@@ -208,7 +208,7 @@ function AppContent() {
     }
 
     // 🚀 Send the transaction straight to your deployed Solana hook and Phantom wallet!
-    const success = await executeTradeOnChain(tradeMode, amount, selectedTokenData?.mintAddress);
+    const success = await executeTradeOnChain(tradeMode, amount, selectedTokenData?.mintAddress, null, null, selectedTokenData?.isGraduated);
     
     if (success) {
       setIsTradePortalOpen(false);
