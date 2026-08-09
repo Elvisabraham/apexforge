@@ -40,41 +40,15 @@ export default function TradeWidget({
     }
   }
 
-  // 🚀 FIX: Pro-level MAX calculation (0 dust for sells, gas buffer for buys)
-  const handleMaxClick = async () => {
+  // 🚀 FIX: Streamlined Pro-level MAX calculation
+  const handleMaxClick = () => {
     if (tradeMode === 'buy') {
       // BUY SIDE: Reserve 0.005 SOL for transaction gas fees
       const maxSol = Math.max(0, (userBalanceSol || 0) - 0.005).toFixed(4);
       setTradeAmount(maxSol.toString());
     } else {
-      // SELL SIDE: Support both displayToken and token props passed from parent components
-      const activeToken = (typeof displayToken !== 'undefined' && displayToken) ? displayToken : token;
-      const targetMint = activeToken?.mintAddress || activeToken?.mint || activeToken?.address;
-
-      if (!publicKey || !targetMint) {
-        // Fallback: If mint lookup is unavailable, use the passed userTokenBalance
-        if (typeof userTokenBalance !== 'undefined' && userTokenBalance > 0) {
-          setTradeAmount(userTokenBalance.toString());
-        }
-        return;
-      }
-
-      try {
-        const userTokenAccount = getAssociatedTokenAddressSync(
-          new PublicKey(targetMint),
-          publicKey
-        );
-
-        const accountInfo = await getAccount(connection, userTokenAccount);
-        const exactBalance = Number(accountInfo.amount) / 1_000_000;
-        
-        setTradeAmount(exactBalance.toString());
-      } catch (err) {
-        console.warn("Failed to fetch on-chain account info, using fallback balance:", err);
-        if (typeof userTokenBalance !== 'undefined') {
-          setTradeAmount(userTokenBalance.toString());
-        }
-      }
+      // SELL SIDE: Directly use the perfect live balance fed down from the parent component
+      setTradeAmount(userTokenBalance ? userTokenBalance.toString() : "0");
     }
   };
 
