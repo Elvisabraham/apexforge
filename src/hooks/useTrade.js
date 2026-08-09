@@ -4,6 +4,7 @@ import { BN, Program, AnchorProvider, setProvider } from '@coral-xyz/anchor';
 import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { getAssociatedTokenAddress, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token'; // 🟢 Added SPL import
 import idl from '../idl/idl.json';
+import { supabase } from '../client';
 
 export const useTrade = () => {
   const wallet = useWallet();
@@ -184,7 +185,7 @@ export const useTrade = () => {
 
       console.log("⏳ Waiting for Solana to confirm trade...");
       
-      // Force React to wait for the official blockchain receipt
+     // Force React to wait for the official blockchain receipt
       const confirmation = await connection.confirmTransaction({
         signature: tx,
         blockhash: latestBlockhash.blockhash,
@@ -192,10 +193,39 @@ export const useTrade = () => {
       }, 'confirmed');
 
       if (confirmation.value.err) {
-        throw new Error("Transaction rejected by the blockchain (Insufficient funds or liquidity).");
+        throw new Error("Transaction rejected by the blockchain.");
       }
 
       console.log(`🚀 ${mode.toUpperCase()} Successful! Signature:`, tx);
+      
+      // 🚀 SUPABASE VOLUME TRACKER: Update the token's 24H volume directly
+      try {
+        const solPrice = 72.57; // Your current static SOL price
+const parsedAmount = parseFloat(amount.toString().replace(/,/g, ''));
+const tradeVolumeUsd = parsedAmount * solPrice;
+
+        // 1. Fetch the token's current volume from your Supabase table
+        const { data: tokenData, error: fetchError } = await supabase
+          .from('tokens') // ⚠️ Change 'tokens' if your table is named differently!
+          .select('volume_24h')
+          .eq('mint_address', tokenMint)
+          .single();
+
+        if (!fetchError && tokenData) {
+          const newVolume = (tokenData.volume_24h || 0) + tradeVolumeUsd;
+          
+          // 2. Update the table with the new total
+          await supabase
+            .from('tokens')
+            .update({ volume_24h: newVolume })
+            .eq('mint_address', tokenMint);
+            
+          console.log(`✅ Supabase Volume Updated: +$${tradeVolumeUsd.toFixed(2)}`);
+        }
+      } catch (dbErr) {
+        console.error("Volume update failed, but trade succeeded:", dbErr);
+      }
+
       alert(`🚀 Trade Successful! Tx: ${tx}`);
       
       setIsProcessing(false);
