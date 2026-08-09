@@ -382,7 +382,7 @@ const handleExecuteTrade = async () => {
       solToTrade = (currentVSol - newVSol) * 0.99;
     }
 
-    const success = await executeTradeOnChain(tradeMode, amount, displayToken.mintAddress);
+    const success = await executeTradeOnChain(tradeMode, amount, displayToken.mintAddress, null, null, displayToken.isGraduated);
     
     if (success) {
       // 2. Format exact numbers for the UI
