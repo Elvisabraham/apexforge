@@ -150,7 +150,7 @@ function AppContent() {
       };
 
       fetchLiveBalance();
-      const interval = setInterval(fetchLiveBalance, 10000);
+      const interval = setInterval(fetchLiveBalance, 20000);
       return () => clearInterval(interval);
 
     } else {

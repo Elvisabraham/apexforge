@@ -183,7 +183,7 @@ const formatCreator = (val, email) => {
       }
     };
     fetchLiveBalances();
-    const id = setInterval(fetchLiveBalances, 5000); 
+    const id = setInterval(fetchLiveBalances, 15000); 
     window.forceBalanceRefresh = fetchLiveBalances; 
     return () => { isMounted = false; clearInterval(id); };
   }, [publicKey, connection]);
@@ -208,7 +208,7 @@ const formatCreator = (val, email) => {
     };
 
     fetchMyTokenBalance();
-    const intervalId = setInterval(fetchMyTokenBalance, 4000); 
+    const intervalId = setInterval(fetchMyTokenBalance, 15000); 
     return () => { isMounted = false; clearInterval(intervalId); };
   }, [publicKey, connection, displayToken.mintAddress]);
 
@@ -280,7 +280,7 @@ const formatCreator = (val, email) => {
     
     fetchLiveCurveData();
     // Poll the blockchain every 5 seconds to keep the UI perfectly in sync
-    const interval = setInterval(fetchLiveCurveData, 5000); 
+    const interval = setInterval(fetchLiveCurveData, 15000); 
     
     return () => {
       isMounted = false;

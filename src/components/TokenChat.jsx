@@ -39,7 +39,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     };
 
     fetchMyTokenBalance();
-    const intervalId = setInterval(fetchMyTokenBalance, 4000); 
+    const intervalId = setInterval(fetchMyTokenBalance, 15000); 
     return () => { isMounted = false; clearInterval(intervalId); };
   }, [publicKey, connection, token]);
 
