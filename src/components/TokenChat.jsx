@@ -103,22 +103,12 @@ const [tradeAmount, setTradeAmount] = useState('');
     return { price: initialBasePrice, mcap: initialMcap, progress: displayToken.progress, solInCurve: (displayToken.progress / 100) * 85 };
   });
 
-  const [userBalanceSol, setUserBalanceSol] = useState(() => {
-    const cached = localStorage.getItem(localCacheKey);
-    if (cached) return JSON.parse(cached).userBalanceSol;
-    return 4.50; 
-  });
-
-  const [userTokenBalance, setUserTokenBalance] = useState(() => {
-    const cached = localStorage.getItem(localCacheKey);
-    if (cached) return JSON.parse(cached).userTokenBalance;
-    return 0;
-  });
-
   useEffect(() => {
     localStorage.setItem(localCacheKey, JSON.stringify({ curveState, userBalanceSol, userTokenBalance }));
   }, [curveState, userBalanceSol, userTokenBalance, localCacheKey]);
 
+  // 🚀 Map incoming props to match your component variables
+  const userBalanceSol = userBalance;
   const userPnlPercent = token?.change || '0.0%';
   const isPnlPositive = !userPnlPercent.includes('-');
 
