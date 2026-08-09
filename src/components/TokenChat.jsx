@@ -4,6 +4,9 @@ import TradeWidget from './TradeWidget';
 import { supabase } from '../supabaseClient';
 
 export default function TokenChat({ token, onBack, userBalance, userTokenBalance, userProfile, onOpenProfile }) {
+  // 🚀 INJECT IT RIGHT HERE BEFORE ANY HOOKS
+  const userBalanceSol = userBalance;
+
   const { executeTradeOnChain, isProcessing } = useTrade();
 
   const messagesEndRef = useRef(null);
