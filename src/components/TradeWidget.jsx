@@ -40,14 +40,37 @@ export default function TradeWidget({
     }
   }
 
-  // 🚀 FIX: Smart Max Handler (Leaves gas buffer for SOL, passes raw integers for tokens)
-  const handleMaxClick = () => {
+  // 🚀 FIX: Pro-level MAX calculation (0 dust for sells, gas buffer for buys)
+  const handleMaxClick = async () => {
     if (tradeMode === 'buy') {
+      // Keeping your 0.005 SOL buffer for gas fees
       const maxSol = Math.max(0, (userBalanceSol || 0) - 0.005).toFixed(4);
-      setTradeAmount(maxSol);
+      setTradeAmount(maxSol.toString());
     } else {
-      // Pass raw token amount without commas so the contract and parser don't choke
-      setTradeAmount(Math.floor(userTokenBalance || 0).toString());
+      // SELL SIDE: Fetch exact raw balance to eliminate dust
+      if (!publicKey) return;
+
+      try {
+        // ⚠️ Ensure 'token' matches whatever prop holds the mint address in this file!
+        const targetMint = token?.mintAddress || token?.mint;
+        if (!targetMint) return;
+
+        const userTokenAccount = getAssociatedTokenAddressSync(
+          new PublicKey(targetMint),
+          publicKey
+        );
+
+        const accountInfo = await getAccount(connection, userTokenAccount);
+        
+        // Convert atomic units to standard format (assuming 6 decimals)
+        const exactBalance = Number(accountInfo.amount) / 1_000_000;
+        setTradeAmount(exactBalance.toString());
+
+      } catch (err) {
+        console.error("Failed to fetch exact raw balance:", err);
+        // Fallback to the state balance if on-chain fetch fails (without Math.floor!)
+        setTradeAmount((userTokenBalance || 0).toString());
+      }
     }
   };
 
