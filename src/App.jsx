@@ -365,16 +365,18 @@ function AppContent() {
           return null;
         }
         return (
-          <TokenChat 
-            token={selectedTokenData}
-            onBack={() => {
-              setActivePage('tokenhome'); // Go straight back to the token hub
-            }}
-            userProfile={userProfile}
-            userBalance={userPortfolio.find(t => t.symbol === selectedTokenData?.symbol)?.balance || 0}
-            onOpenProfile={handleOpenPublicProfile} 
-            onOpenTrade={handleOpenTradePortal} 
-          />
+          <TokenChat
+          token={selectedTokenData}
+          onBack={() => {
+            setActivePage('tokenhome'); // Go straight back to the token hub
+          }}
+          userProfile={userProfile}
+          // 🚀 FIX: Correctly separate the SOL balance and the Token balance!
+          userBalance={userPortfolio.find(t => t.symbol === 'SOL')?.balance || 0} 
+          userTokenBalance={userPortfolio.find(t => t.symbol === selectedTokenData?.symbol)?.balance || 0}
+          onOpenProfile={handleOpenPublicProfile}
+          onOpenTrade={handleOpenTradePortal}
+        />
         );
       default: 
         return <Home 
