@@ -10,7 +10,7 @@ export const useTrade = () => {
   const { connection } = useConnection();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const executeTradeOnChain = async (mode, amount, tokenMint, creatorAddress = null, referrerAddress = null) => {
+  const executeTradeOnChain = async (mode, amount, tokenMint, creatorAddress = null, referrerAddress = null, isGraduated = false) => {
     if (!wallet.publicKey) {
       alert("❌ Wallet not connected! Please connect Phantom.");
       return false;
@@ -18,6 +18,60 @@ export const useTrade = () => {
 
     setIsProcessing(true);
 
+    // 🚀 THE BRIDGE: Intercept graduated tokens and route to DEX
+    if (isGraduated) {
+      console.log(`⚡ Token ${tokenMint} is graduated. Routing to Jupiter DEX...`);
+      
+      try {
+        /* 
+        // ==========================================
+        // 🚀 MAINNET JUPITER API LOGIC (Keep commented for Devnet)
+        // ==========================================
+        const quoteResponse = await (
+          await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=${mode === 'buy' ? 'So11111111111111111111111111111111111111112' : tokenMint}&outputMint=${mode === 'buy' ? tokenMint : 'So11111111111111111111111111111111111111112'}&amount=${mode === 'buy' ? amount * 1e9 : amount * 1e6}&slippageBps=50`)
+        ).json();
+
+        const { swapTransaction } = await (
+          await fetch('https://quote-api.jup.ag/v6/swap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              quoteResponse,
+              userPublicKey: wallet.publicKey.toString(),
+              wrapAndUnwrapSol: true,
+            })
+          })
+        ).json();
+
+        const swapTransactionBuf = Buffer.from(swapTransaction, 'base64');
+        var transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+        const signedTransaction = await wallet.signTransaction(transaction);
+        const rawTransaction = signedTransaction.serialize();
+        const txid = await connection.sendRawTransaction(rawTransaction, { skipPreflight: true, maxRetries: 2 });
+        await connection.confirmTransaction(txid);
+        
+        setIsProcessing(false);
+        return true; 
+        */
+
+        // ==========================================
+        // 🛠️ DEVNET SIMULATION (Active while testing)
+        // ==========================================
+        alert("⚡ Token is graduated! On Mainnet, this will instantly swap via Jupiter Liquidity Pools right here on the UI. (Devnet simulated success)");
+        setIsProcessing(false);
+        return false; 
+
+      } catch (error) {
+        console.error("Jupiter Swap Failed:", error);
+        alert("DEX Swap Failed. Pool may still be migrating to Raydium.");
+        setIsProcessing(false);
+        return false;
+      }
+    }
+
+    // ==========================================
+    // 🏦 STANDARD BONDING CURVE LOGIC (Pre-Graduation)
+    // ==========================================
     try {
       const provider = new AnchorProvider(connection, wallet, { preflightCommitment: 'confirmed' });
       setProvider(provider);
