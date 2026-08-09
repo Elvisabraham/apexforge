@@ -3,7 +3,7 @@ import { createChart, CandlestickSeries, AreaSeries } from 'lightweight-charts';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL, PublicKey, SystemProgram } from '@solana/web3.js'; // 👈 Added SystemProgram
 import { BN } from '@coral-xyz/anchor'; // 👈 Added BN
-import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync, getAccount } from '@solana/spl-token';
 import ActiveTvStream from './ActiveTvStream';
 import { useTrade } from '../hooks/useTrade';
 import TradeWidget from './TradeWidget';
@@ -16,31 +16,47 @@ const formatCreator = (val, email) => {
   return val || 'Anonymous';
 };
 
-  export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
+ export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
   const { executeTradeOnChain, isProcessing } = useTrade();
+  const { connection } = useConnection();
+  const { publicKey } = useWallet();
 
-  // 🚀 FIX: Smart MAX calculation (Cap dust at half a cent ~$0.005 regardless of bag size)
-  const handleMaxClick = () => {
+  // 🚀 Pro-level MAX calculation (0 dust for sells, 0.01 SOL buffer for buys)
+  const handleMaxClick = async () => {
     if (tradeMode === 'sell') {
-      // 1. Target leaving exactly $0.005 (half a cent) worth of tokens
-      const targetDustInUsd = 0.005; 
-      
-      // 2. Convert $0.005 into token count using the live USD price
-      const dustTokens = liveUsdPrice > 0 ? (targetDustInUsd / liveUsdPrice) : 1000;
-      
-      // 3. Subtract half a cent worth of tokens, sell the rest!
-      const sellAmount = Math.max(0, userTokenBalance - dustTokens);
-      
-      setTradeAmount(sellAmount.toFixed(6).toString());
+      if (!publicKey) return;
+
+      try {
+        const targetMint = token?.mintAddress || token?.mint;
+        if (!targetMint) return;
+
+        // 1. Get the user's Associated Token Account
+        const userTokenAccount = getAssociatedTokenAddressSync(
+          new PublicKey(targetMint),
+          publicKey
+        );
+
+        // 2. Query Solana for the raw balance down to the atomic decimal
+        const accountInfo = await getAccount(connection, userTokenAccount);
+        
+        // 3. Convert atomic units to human-readable format (6 decimals)
+        const exactBalance = Number(accountInfo.amount) / 1_000_000;
+        setTradeAmount(exactBalance.toString());
+
+      } catch (err) {
+        console.error("Failed to fetch exact raw balance:", err);
+        // Fallback: use state balance if on-chain fetch fails
+        if (typeof userTokenBalance !== 'undefined') {
+          setTradeAmount(userTokenBalance.toString());
+        }
+      }
     } else {
-      // BUY SIDE: Pass raw SOL balance MINUS a small buffer for network gas fees
+      // BUY SIDE: Reserve 0.01 SOL for gas fees
       const maxSol = userBalanceSol > 0.01 ? (userBalanceSol - 0.01).toFixed(4) : "0";
       setTradeAmount(maxSol.toString());
     }
   };
 
-  const { connection } = useConnection();
-  const { publicKey } = useWallet();
   const connectedAddress = publicKey ? publicKey.toBase58() : null;
 
   const chartContainerRef = useRef(null);
