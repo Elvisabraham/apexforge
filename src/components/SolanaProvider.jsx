@@ -22,7 +22,7 @@ export default function SolanaProvider({ children }) {
   const network = WalletAdapterNetwork.Devnet;
 
   const endpoint = useMemo(() => {
-    return `https://devnet.helius-rpc.com/?api-key=${import.meta.env.VITE_HELIUS_API_KEY}`;
+    return 'https://devnet.helius-rpc.com/?api-key=056770e5-c485-4c48-83b7-e50e01dde199';
   }, []);
 
   // 🚀 REGISTER WALLET ADAPTERS FOR MOBILE BROWSERS & EXTENSIONS
@@ -60,10 +60,10 @@ export const useApexForgeProgram = () => {
     try {
       console.log("🟢 Anchor Wallet Connected:", wallet.publicKey.toBase58());
       
-      const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
-      const provider = new AnchorProvider(connection, wallet, {
-        preflightCommitment: 'confirmed',
-      });
+     const connection = new Connection('https://devnet.helius-rpc.com/?api-key=056770e5-c485-4c48-83b7-e50e01dde199', 'confirmed');
+        const provider = new AnchorProvider(connection, wallet, {
+          preflightCommitment: 'confirmed',
+        });
 
       if (!idl || Object.keys(idl).length === 0) {
         console.error("🔴 CRITICAL: IDL is empty!");
