@@ -288,7 +288,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     if (!amount || amount <= 0) return;
 
     // 🚀 Send the transaction to the blockchain using your new hook!
-    const success = await executeTradeOnChain(tradeMode, amount, displayToken.mintAddress);
+    const success = await executeTradeOnChain(tradeMode, amount, displayToken.mintAddress, null, null, displayToken.isGraduated);
     
     if (success) {
       // If the Phantom wallet transaction succeeds, close the modal
