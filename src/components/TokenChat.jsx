@@ -2,10 +2,46 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTrade } from '../hooks/useTrade';
 import TradeWidget from './TradeWidget';
 import { supabase } from '../supabaseClient';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
 
-export default function TokenChat({ token, onBack, userBalance, userTokenBalance, userProfile, onOpenProfile }) {
-  // 🚀 INJECT IT RIGHT HERE BEFORE ANY HOOKS
-  const userBalanceSol = userBalance;
+export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile }) {
+  
+  // 🚀 1. Set up independent local states for the balances
+  const [userBalanceSol, setUserBalanceSol] = useState(userBalance || 0);
+  const [userTokenBalance, setUserTokenBalance] = useState(0);
+
+  // 🚀 2. Hook directly into the wallet to fetch the live Token Balance just like TokenHome does!
+  const { publicKey } = useWallet();
+  const { connection } = useConnection();
+  
+  useEffect(() => {
+    let isMounted = true;
+    const fetchMyTokenBalance = async () => {
+      // Need displayToken to exist for the mint address! 
+      // (Make sure displayToken is defined in your file, or use token.mintAddress if displayToken isn't defined yet)
+      const targetMint = token?.mintAddress || token?.mint_address || token?.mint;
+      
+      if (!publicKey || !connection || !targetMint) return;
+      if (targetMint === '8AVmX9aQwZoonSolanaNet11oHEZforge') return;
+
+      try {
+        const accounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
+          mint: new PublicKey(targetMint)
+        });
+
+        if (accounts.value.length > 0) {
+          const rawBalance = accounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
+          const scaledBalance = rawBalance < 1000 ? (rawBalance * 1000000) : rawBalance; 
+          if (isMounted) setUserTokenBalance(scaledBalance);
+        }
+      } catch (error) {}
+    };
+
+    fetchMyTokenBalance();
+    const intervalId = setInterval(fetchMyTokenBalance, 4000); 
+    return () => { isMounted = false; clearInterval(intervalId); };
+  }, [publicKey, connection, token]);
 
   const { executeTradeOnChain, isProcessing } = useTrade();
 
