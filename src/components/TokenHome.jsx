@@ -8,6 +8,7 @@ import ActiveTvStream from './ActiveTvStream';
 import { useTrade } from '../hooks/useTrade';
 import TradeWidget from './TradeWidget';
 import { calculateMarketCap } from '../mathService';
+import { supabase } from '../supabaseClient';
 
 // HELPER: Format address...
 const formatCreator = (val, email) => {
@@ -215,7 +216,7 @@ const formatCreator = (val, email) => {
  // 1. Start with an empty list for everyone
   const [recentTrades, setRecentTrades] = useState([]);
 
-  // 2. Fetch the global live trades feed from Supabase
+  // 🌍 2. Fetch the global live trades feed from Supabase
   useEffect(() => {
     if (!displayToken?.mintAddress) return;
 
@@ -229,20 +230,40 @@ const formatCreator = (val, email) => {
           .limit(20);
 
         if (error) throw error;
-        if (data) setRecentTrades(data);
+        
+        if (data) {
+          // 🚀 Map the raw database rows into the exact format your UI expects!
+          const formattedTrades = data.map(dbTrade => {
+            // Check if the trade was made by the currently connected wallet
+            const isMe = publicKey && dbTrade.wallet === publicKey.toBase58();
+            
+            return {
+              id: dbTrade.id,
+              type: dbTrade.type,
+              // Format tokens: "25.00M"
+              amountToken: dbTrade.type === 'buy' 
+                ? `${(dbTrade.amount / 1000000).toFixed(2)}M` 
+                : (dbTrade.amount >= 1000000 ? `${(dbTrade.amount/1000000).toFixed(2)}M` : Number(dbTrade.amount).toLocaleString()),
+              // Format SOL: "1.5000"
+              amountSol: Number(dbTrade.sol_amount).toFixed(4),
+              // Show "You" if it's the connected wallet, otherwise shorten the wallet string
+              user: isMe ? 'You' : `${dbTrade.wallet.slice(0, 4)}...${dbTrade.wallet.slice(-4)}`,
+              time: new Date(dbTrade.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              txHash: 'Confirmed'
+            };
+          });
+          
+          setRecentTrades(formattedTrades);
+        }
       } catch (err) {
         console.error("Failed to fetch global trades:", err);
       }
     };
 
-    // Fetch immediately on load
     fetchGlobalTrades();
-
-    // Poll every 10 seconds so the feed stays live for all viewers
     const tradesInterval = setInterval(fetchGlobalTrades, 10000);
-    
     return () => clearInterval(tradesInterval);
-  }, [displayToken?.mintAddress]); 
+  }, [displayToken?.mintAddress, publicKey]);
 
   useEffect(() => {
     if (displayToken.symbol !== 'TKN') {
