@@ -17,32 +17,26 @@ const formatCreator = (val, email) => {
   return val || 'Anonymous';
 };
 
-// 🕒 HELPER: The Ultimate Time Engine (Handles Strings & Unix Numbers)
+// 🕒 HELPER: The Ultimate Bulletproof Time Engine
 const formatTimeAgo = (timestamp) => {
   if (!timestamp) return 'Just now';
 
   let tradeTime;
 
-  // 1. If it's a raw Unix Number from your optimistic trade (Date.now())
   if (typeof timestamp === 'number') {
     tradeTime = timestamp;
-  } 
-  // 2. If it's a Date String from the Supabase database
-  else if (typeof timestamp === 'string') {
-    const safeTimestamp = timestamp.includes('Z') || timestamp.includes('+') 
-      ? timestamp 
-      : `${timestamp}Z`;
-    tradeTime = new Date(safeTimestamp).getTime();
-  }
-  else {
+  } else if (typeof timestamp === 'string') {
+    // Clean up Supabase timestamp strings safely
+    const cleaned = timestamp.trim();
+    tradeTime = new Date(cleaned.includes('Z') || cleaned.includes('+') ? cleaned : `${cleaned}Z`).getTime();
+  } else {
     return 'Just now';
   }
 
-  // 3. Safety net: If the date is still invalid, bail out safely
+  // Fallback if date is invalid
   if (isNaN(tradeTime)) return 'Just now';
 
-  const now = Date.now();
-  const seconds = Math.floor(Math.abs(now - tradeTime) / 1000);
+  const seconds = Math.floor(Math.abs(Date.now() - tradeTime) / 1000);
 
   if (seconds < 60) return 'Just now';
   
