@@ -17,6 +17,22 @@ const formatCreator = (val, email) => {
   return val || 'Anonymous';
 };
 
+// 🕒 HELPER: Format time as "5m ago", "2h ago", "1d ago"
+const formatTimeAgo = (timestamp) => {
+  const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000);
+  
+  if (seconds < 60) return 'Just now';
+  
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+};
+
  export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
   const { executeTradeOnChain, isProcessing } = useTrade();
   const { connection } = useConnection();
@@ -248,7 +264,7 @@ const formatCreator = (val, email) => {
               amountSol: Number(dbTrade.sol_amount).toFixed(4),
               // Show "You" if it's the connected wallet, otherwise shorten the wallet string
               user: isMe ? 'You' : `${dbTrade.wallet.slice(0, 4)}...${dbTrade.wallet.slice(-4)}`,
-              time: new Date(dbTrade.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              time: formatTimeAgo(dbTrade.created_at),
               txHash: 'Confirmed'
             };
           });
