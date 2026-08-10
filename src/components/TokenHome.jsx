@@ -16,8 +16,7 @@ const formatCreator = (val, email) => {
   if (val && val.length > 10) return `${val.slice(0,4)}...${val.slice(-4)}`;
   return val || 'Anonymous';
 };
-
-// 🕒 HELPER: Format time as "5m ago", "2h ago", "1d ago"
+// 🕒 HELPER: Format time as "5m ago", "2h ago", "1d ago", "3w ago", "2mo ago", "1y ago"
 const formatTimeAgo = (timestamp) => {
   const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000);
   
@@ -30,7 +29,16 @@ const formatTimeAgo = (timestamp) => {
   if (hours < 24) return `${hours}h ago`;
   
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  if (days < 7) return `${days}d ago`;
+  
+  const weeks = Math.floor(days / 7);
+  if (days < 30) return `${weeks}w ago`;
+  
+  const months = Math.floor(days / 30);
+  if (days < 365) return `${months}mo ago`;
+  
+  const years = Math.floor(days / 365);
+  return `${years}y ago`;
 };
 
  export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
