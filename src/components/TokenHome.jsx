@@ -63,6 +63,12 @@ const formatTimeAgo = (timestamp) => {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
 
+  // 🌍 GLOBAL STATE PLUG-IN
+  const globalMarketCap = token?.marketCap || "0.00";
+  const globalVolume = token?.volume24h || "0.00";
+  const globalHolders = token?.holdersCount || "1";
+  const globalSupply = token?.totalSupply || "1.0B";
+
   // 🚀 Pro-level MAX calculation (0 dust for sells, 0.01 SOL buffer for buys)
   const handleMaxClick = async () => {
     if (tradeMode === 'sell') {
@@ -174,8 +180,8 @@ const formatTimeAgo = (timestamp) => {
     links: { twitter: token?.links?.twitter || '', telegram: token?.links?.telegram || '', website: token?.links?.website || '' },
     rawCreatorAddress: rawCreator,
     creator: formatCreator(rawCreator, token?.creatorEmail),
-    holders: '1,204',
-    supply: '1.0B',
+    holders: globalHolders,
+    supply: globalSupply,
     createdTime: 'Just now',
     isGraduated: isActuallyGraduated,
     progress: rawProgress
@@ -839,25 +845,24 @@ const handleExecuteTrade = async () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-2 border-t border-white/[0.05] pt-6">
-              <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
-                <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Market Cap</span>
-                <span className="text-sm font-mono font-bold text-white mt-1.5">{dynamicMarketCapString}</span>
-              </div>
-              <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
-              <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Volume (24H)</span>
-              {/* 🚀 FIX: Dynamic Volume connected to your Trades Ledger */}
-              <span className="text-sm font-mono font-bold text-white mt-1.5">${volume24hUsd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-            </div>
-              <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
-                <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Holders</span>
-                <span className="text-sm font-mono font-bold text-white mt-1.5">{displayToken.holders}</span>
-              </div>
-              <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
-                <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Circulating Supply</span>
-                <span className="text-sm font-mono font-bold text-white mt-1.5">{displayToken.supply}</span>
-              </div>
-            </div>
+           <div className="grid grid-cols-2 gap-3 mt-2 border-t border-white/[0.05] pt-6">
+  <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
+    <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Market Cap</span>
+    <span className="text-sm font-mono font-bold text-white mt-1.5">${globalMarketCap}</span>
+  </div>
+  <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
+    <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Volume (24H)</span>
+    <span className="text-sm font-mono font-bold text-white mt-1.5">${globalVolume}</span>
+  </div>
+  <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
+    <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Holders</span>
+    <span className="text-sm font-mono font-bold text-white mt-1.5">{globalHolders}</span>
+  </div>
+  <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
+    <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Circulating Supply</span>
+    <span className="text-sm font-mono font-bold text-white mt-1.5">{globalSupply}</span>
+  </div>
+</div>
 
             {/* RECENT TRADES */}
             <div className="flex flex-col w-full mt-4">
