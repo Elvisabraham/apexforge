@@ -862,11 +862,11 @@ const handleExecuteTrade = async () => {
            <div className="grid grid-cols-2 gap-3 mt-2 border-t border-white/[0.05] pt-6">
   <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
     <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Market Cap</span>
-    <span className="text-sm font-mono font-bold text-white mt-1.5">${globalMarketCap}</span>
+    <span className="text-sm font-mono font-bold text-white mt-1.5">{globalMarketCap}</span>
   </div>
   <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
     <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Volume (24H)</span>
-    <span className="text-sm font-mono font-bold text-white mt-1.5">${globalVolume}</span>
+    <span className="text-sm font-mono font-bold text-white mt-1.5">{globalVolume}</span>
   </div>
   <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
     <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Holders</span>
