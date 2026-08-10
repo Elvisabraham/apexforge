@@ -17,7 +17,7 @@ const formatCreator = (val, email) => {
   return val || 'Anonymous';
 };
 
-// 🕒 HELPER: The Ultimate Bulletproof Time Engine
+// 🕒 HELPER: Bulletproof Time Engine (Guarded Against NaN)
 const formatTimeAgo = (timestamp) => {
   if (!timestamp) return 'Just now';
 
@@ -26,15 +26,14 @@ const formatTimeAgo = (timestamp) => {
   if (typeof timestamp === 'number') {
     tradeTime = timestamp;
   } else if (typeof timestamp === 'string') {
-    // Clean up Supabase timestamp strings safely
     const cleaned = timestamp.trim();
     tradeTime = new Date(cleaned.includes('Z') || cleaned.includes('+') ? cleaned : `${cleaned}Z`).getTime();
   } else {
     return 'Just now';
   }
 
-  // Fallback if date is invalid
-  if (isNaN(tradeTime)) return 'Just now';
+  // 🛡️ Absolute safety net: if date parsing fails, never output NaN
+  if (!tradeTime || isNaN(tradeTime)) return 'Just now';
 
   const seconds = Math.floor(Math.abs(Date.now() - tradeTime) / 1000);
 
