@@ -589,6 +589,7 @@ const handleExecuteTrade = async () => {
   const getFilteredTrades = () => {
     return recentTrades.filter(trade => {
       const isWhale = parseFloat(trade.amountSol) >= 1.0;
+      if (tradeFilter === 'mine') return trade.user === 'You';
       if (tradeFilter === 'buys') return trade.type === 'buy';
       if (tradeFilter === 'sells') return trade.type === 'sell';
       if (tradeFilter === 'whales') return isWhale;
@@ -901,7 +902,7 @@ const handleExecuteTrade = async () => {
                   <span className="text-[12px] font-mono font-bold text-white">◎ {trade.amountSol}</span>
                   {/* 🚀 FIX: Dynamic time calculation */}
                   <span className="text-[10px] font-mono text-zinc-500 mt-0.5">
-                    {formatTimeAgo(trade.timestamp)}
+                    {trade.time}
                   </span>
                 </div>
                         <a 
@@ -955,6 +956,7 @@ const handleExecuteTrade = async () => {
             <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
               {[
                 { id: 'all', label: 'All Trades' },
+                { id: 'mine', label: '👤 My Trades' },
                 { id: 'buys', label: '🟢 Buys Only' },
                 { id: 'sells', label: '🔴 Sells Only' },
                 { id: 'whales', label: '🐋 Whales (≥1 SOL)' },
