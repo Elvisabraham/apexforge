@@ -277,7 +277,7 @@ const formatTimeAgo = (timestamp) => {
     return () => { isMounted = false; clearInterval(intervalId); };
   }, [publicKey, connection, displayToken.mintAddress]);
 
-  // 🌍 2. Fetch the global live trades feed from Supabase
+ // 🌍 2. Fetch the global live trades feed & sync in real-time
   useEffect(() => {
     if (!displayToken?.mintAddress) return;
 
@@ -293,21 +293,16 @@ const formatTimeAgo = (timestamp) => {
         if (error) throw error;
         
         if (data) {
-          // 🚀 Map the raw database rows into the exact format your UI expects!
           const formattedTrades = data.map(dbTrade => {
-            // Check if the trade was made by the currently connected wallet
             const isMe = publicKey && dbTrade.wallet === publicKey.toBase58();
             
             return {
               id: dbTrade.id,
               type: dbTrade.type,
-              // Format tokens: "25.00M"
               amountToken: dbTrade.type === 'buy' 
                 ? `${(dbTrade.amount / 1000000).toFixed(2)}M` 
                 : (dbTrade.amount >= 1000000 ? `${(dbTrade.amount/1000000).toFixed(2)}M` : Number(dbTrade.amount).toLocaleString()),
-              // Format SOL: "1.5000"
               amountSol: Number(dbTrade.sol_amount).toFixed(4),
-              // Show "You" if it's the connected wallet, otherwise shorten the wallet string
               user: isMe ? 'You' : `${dbTrade.wallet.slice(0, 4)}...${dbTrade.wallet.slice(-4)}`,
               time: formatTimeAgo(dbTrade.created_at),
               txHash: 'Confirmed'
@@ -321,9 +316,41 @@ const formatTimeAgo = (timestamp) => {
       }
     };
 
+    // 1️⃣ Run the initial fetch when the component loads
     fetchGlobalTrades();
-    const tradesInterval = setInterval(fetchGlobalTrades, 10000);
-    return () => clearInterval(tradesInterval);
+
+    // 2️⃣ Listen for live trades coming from ANY other device or browser instantly
+    const channel = supabase
+      .channel(`public:trades:${displayToken.mintAddress}`)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'trades', 
+        filter: `token_mint=eq.${displayToken.mintAddress}` 
+      }, payload => {
+        const dbTrade = payload.new;
+        const isMe = publicKey && dbTrade.wallet === publicKey.toBase58();
+        
+        const formattedNewTrade = {
+          id: dbTrade.id,
+          type: dbTrade.type,
+          amountToken: dbTrade.type === 'buy' 
+            ? `${(dbTrade.amount / 1000000).toFixed(2)}M` 
+            : (dbTrade.amount >= 1000000 ? `${(dbTrade.amount/1000000).toFixed(2)}M` : Number(dbTrade.amount).toLocaleString()),
+          amountSol: Number(dbTrade.sol_amount).toFixed(4),
+          user: isMe ? 'You' : `${dbTrade.wallet.slice(0, 4)}...${dbTrade.wallet.slice(-4)}`,
+          time: formatTimeAgo(dbTrade.created_at),
+          txHash: 'Confirmed'
+        };
+
+        setRecentTrades(prev => [formattedNewTrade, ...prev]);
+      })
+      .subscribe();
+
+    // 3️⃣ Cleanup channel on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [displayToken?.mintAddress, publicKey]);
 
   useEffect(() => {
