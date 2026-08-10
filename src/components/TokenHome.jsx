@@ -17,44 +17,18 @@ const formatCreator = (val, email) => {
   return val || 'Anonymous';
 };
 
-// 🕒 HELPER: Format time securely (Fixed Timezone Mismatch)
+// 🕒 HELPER: Diagnostic Time Engine
 const formatTimeAgo = (timestamp) => {
-  if (!timestamp) return 'Just now';
+  // 1. Check if the database is even sending a timestamp!
+  if (!timestamp) return 'No Time Data';
 
-  // 1. Force the database string into absolute UTC if it's missing the tag
-  const safeTimestamp = timestamp.includes('Z') || timestamp.includes('+') 
-    ? timestamp 
-    : `${timestamp}Z`;
-
-  const tradeTime = new Date(safeTimestamp).getTime();
+  // 2. Calculate raw seconds (No safety nets)
+  const tradeTime = new Date(timestamp).getTime();
   const now = Date.now();
-  
-  // 2. Calculate seconds and force it to be a positive number
-  // (Math.max prevents it from ever being negative if server clocks are out of sync)
-  const seconds = Math.max(0, Math.floor((now - tradeTime) / 1000));
+  const seconds = Math.floor((now - tradeTime) / 1000);
 
-  // DEBUG: Watch the clock tick in your F12 Console!
-  console.log(`[Time Engine] Seconds elapsed: ${seconds}`);
-
-  if (seconds < 60) return 'Just now';
-  
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  
-  const weeks = Math.floor(days / 7);
-  if (days < 30) return `${weeks}w ago`;
-  
-  const months = Math.floor(days / 30);
-  if (days < 365) return `${months}mo ago`;
-  
-  const years = Math.floor(days / 365);
-  return `${years}y ago`;
+  // 3. Print the raw seconds directly to your screen
+  return `${seconds}s`;
 };
 
  export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
