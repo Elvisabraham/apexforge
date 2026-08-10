@@ -78,7 +78,6 @@ const formatTimeAgo = (timestamp) => {
   const calculatedHolders = uniqueUsers.size > 0 ? uniqueUsers.size + 1 : 1;
 
   // 3. OUTPUT VARIABLES
-  const currentSolPrice = 145; 
   const virtualSolReserves = (30 * 1e9) + (liveVolumeSol * 1e9); 
   const virtualTokenReserves = 1_000_000_000 * 1e6;
 
