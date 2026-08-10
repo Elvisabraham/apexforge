@@ -68,8 +68,8 @@ const formatTimeAgo = (timestamp) => {
 // 2. THE ENGINE
   const safeTrades = recentTrades || [];
   
-  // 🟢 VOLUME
-  const currentSolPrice = 145; 
+  // 🟢 Updated to current live market rate
+  const currentSolPrice = 76.50; 
   const liveVolumeSol = safeTrades.reduce((sum, trade) => sum + parseFloat(trade.amountSol || 0), 0);
   const liveVolumeUsd = liveVolumeSol * currentSolPrice;
 
