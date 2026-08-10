@@ -78,17 +78,12 @@ const formatTimeAgo = (timestamp) => {
   const calculatedHolders = uniqueUsers.size > 0 ? uniqueUsers.size + 1 : 1;
 
   // 3. OUTPUT VARIABLES
-  // 🟢 DYNAMIC PRICE ENGINE: Calculate price upward as volume increases
-  // Base starting price is 0.00000218, and scales up slightly with every SOL traded
-  const baseTokenPrice = 0.00000218;
-  const priceImpactMultiplier = 0.0000005; // Adjust how fast the price climbs per SOL
-  const liveTokenPrice = baseTokenPrice + (liveVolumeSol * priceImpactMultiplier);
-  
-  const dynamicMarketCap = (liveTokenPrice * 1000000000).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const currentSolPrice = 145; 
+  const virtualSolReserves = (30 * 1e9) + (liveVolumeSol * 1e9); 
+  const virtualTokenReserves = 1_000_000_000 * 1e6;
 
-  // Pipe it to the UI
-  const globalMarketCap = dynamicMarketCap; 
-  const globalVolume = liveVolumeUsd > 0 ? liveVolumeUsd.toFixed(2) : "0.00";
+  const globalMarketCap = calculateMarketCap(virtualSolReserves, virtualTokenReserves, currentSolPrice);
+  const globalVolume = liveVolumeUsd > 0 ? `$${liveVolumeUsd.toFixed(2)}` : "$0.00";
   const globalHolders = calculatedHolders;
   const globalSupply = token?.totalSupply || "1.0B";
 
