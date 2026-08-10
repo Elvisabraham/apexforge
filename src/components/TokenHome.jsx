@@ -17,22 +17,34 @@ const formatCreator = (val, email) => {
   return val || 'Anonymous';
 };
 
-// 🕒 HELPER: The Tracer Round Engine
+// 🕒 HELPER: The Ultimate Time Engine (Handles Strings & Unix Numbers)
 const formatTimeAgo = (timestamp) => {
-  // If the database sends nothing:
-  if (!timestamp) return 'DB SENT NOTHING';
+  if (!timestamp) return 'Just now';
 
-  const safeTimestamp = timestamp.includes('Z') || timestamp.includes('+') 
-    ? timestamp 
-    : `${timestamp}Z`;
-    
-  const tradeTime = new Date(safeTimestamp).getTime();
+  let tradeTime;
+
+  // 1. If it's a raw Unix Number from your optimistic trade (Date.now())
+  if (typeof timestamp === 'number') {
+    tradeTime = timestamp;
+  } 
+  // 2. If it's a Date String from the Supabase database
+  else if (typeof timestamp === 'string') {
+    const safeTimestamp = timestamp.includes('Z') || timestamp.includes('+') 
+      ? timestamp 
+      : `${timestamp}Z`;
+    tradeTime = new Date(safeTimestamp).getTime();
+  }
+  else {
+    return 'Just now';
+  }
+
+  // 3. Safety net: If the date is still invalid, bail out safely
+  if (isNaN(tradeTime)) return 'Just now';
+
   const now = Date.now();
-  
   const seconds = Math.floor(Math.abs(now - tradeTime) / 1000);
 
-  // If the math is actually calculating under 60s:
-  if (seconds < 60) return `MATH SAYS ${seconds}s`;
+  if (seconds < 60) return 'Just now';
   
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}m ago`;
@@ -41,7 +53,16 @@ const formatTimeAgo = (timestamp) => {
   if (hours < 24) return `${hours}h ago`;
   
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  if (days < 7) return `${days}d ago`;
+  
+  const weeks = Math.floor(days / 7);
+  if (days < 30) return `${weeks}w ago`;
+  
+  const months = Math.floor(days / 30);
+  if (days < 365) return `${months}mo ago`;
+  
+  const years = Math.floor(days / 365);
+  return `${years}y ago`;
 };
 
  export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
