@@ -68,21 +68,27 @@ const formatTimeAgo = (timestamp) => {
 // 2. THE ENGINE
   const safeTrades = recentTrades || [];
   
-  // 🟢 VOLUME FIX: Sum the SOL, then multiply by SOL Price to get USD
-  const currentSolPrice = 145; // Update this to your global SOL price variable if you have one
+  // 🟢 VOLUME: (Replace 145 if you ever add a live SOL price feed!)
+  const currentSolPrice = 145; 
   const liveVolumeSol = safeTrades.reduce((sum, trade) => sum + parseFloat(trade.amountSol || 0), 0);
   const liveVolumeUsd = liveVolumeSol * currentSolPrice;
 
-  // 🟢 HOLDERS: Calculate unique users + 1 for the vault
+  // 🟢 HOLDERS
   const uniqueUsers = new Set(safeTrades.map(trade => trade.user));
   const calculatedHolders = uniqueUsers.size > 0 ? uniqueUsers.size + 1 : 1;
 
   // 3. OUTPUT VARIABLES
-  // 🟢 MARKET CAP FIX: Multiply live token price by 1 Billion supply
-  const liveTokenPrice = parseFloat(token?.price || 0.00000218);
+  // 🟢 MARKET CAP FIX: Block the fake 0.0001 database price!
+  let liveTokenPrice = parseFloat(token?.price || 0);
+  
+  // If the DB tries to pass 0.0001 (or higher) on a fresh launch, force it to the real base price
+  if (liveTokenPrice === 0 || liveTokenPrice >= 0.0001) {
+    liveTokenPrice = 0.00000218; 
+  }
+  
   const dynamicMarketCap = (liveTokenPrice * 1000000000).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  // Pipe the calculated data directly to the UI
+  // Pipe it to the UI
   const globalMarketCap = dynamicMarketCap; 
   const globalVolume = liveVolumeUsd > 0 ? liveVolumeUsd.toFixed(2) : "0.00";
   const globalHolders = calculatedHolders;
