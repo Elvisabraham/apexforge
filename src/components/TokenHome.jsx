@@ -17,14 +17,25 @@ const formatCreator = (val, email) => {
   return val || 'Anonymous';
 };
 
-// 🕒 HELPER: Format time securely regardless of Timezones
+// 🕒 HELPER: Format time securely (Fixed Timezone Mismatch)
 const formatTimeAgo = (timestamp) => {
-  // Force both to UTC to ensure the math is perfectly accurate
-  const tradeTime = new Date(timestamp).getTime();
+  if (!timestamp) return 'Just now';
+
+  // 1. Force the database string into absolute UTC if it's missing the tag
+  const safeTimestamp = timestamp.includes('Z') || timestamp.includes('+') 
+    ? timestamp 
+    : `${timestamp}Z`;
+
+  const tradeTime = new Date(safeTimestamp).getTime();
   const now = Date.now();
-  const seconds = Math.floor((now - tradeTime) / 1000);
   
-  // If the time is slightly in the future due to clock sync issues, default to Just now
+  // 2. Calculate seconds and force it to be a positive number
+  // (Math.max prevents it from ever being negative if server clocks are out of sync)
+  const seconds = Math.max(0, Math.floor((now - tradeTime) / 1000));
+
+  // DEBUG: Watch the clock tick in your F12 Console!
+  console.log(`[Time Engine] Seconds elapsed: ${seconds}`);
+
   if (seconds < 60) return 'Just now';
   
   const minutes = Math.floor(seconds / 60);
