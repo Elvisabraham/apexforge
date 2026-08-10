@@ -17,11 +17,11 @@ const formatCreator = (val, email) => {
   return val || 'Anonymous';
 };
 
-// 🕒 HELPER: The Ultimate Time Engine (Timezone & Clock-Sync Proof)
+// 🕒 HELPER: The Tracer Round Engine
 const formatTimeAgo = (timestamp) => {
-  if (!timestamp) return 'Just now';
+  // If the database sends nothing:
+  if (!timestamp) return 'DB SENT NOTHING';
 
-  // Force a safe parse of the Supabase timestamp
   const safeTimestamp = timestamp.includes('Z') || timestamp.includes('+') 
     ? timestamp 
     : `${timestamp}Z`;
@@ -29,11 +29,10 @@ const formatTimeAgo = (timestamp) => {
   const tradeTime = new Date(safeTimestamp).getTime();
   const now = Date.now();
   
-  // 🚀 Math.abs() obliterates clock-sync bugs. 
-  // It measures the absolute time difference, even if the PC clock is wrong!
   const seconds = Math.floor(Math.abs(now - tradeTime) / 1000);
 
-  if (seconds < 60) return 'Just now';
+  // If the math is actually calculating under 60s:
+  if (seconds < 60) return `MATH SAYS ${seconds}s`;
   
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}m ago`;
@@ -42,16 +41,7 @@ const formatTimeAgo = (timestamp) => {
   if (hours < 24) return `${hours}h ago`;
   
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  
-  const weeks = Math.floor(days / 7);
-  if (days < 30) return `${weeks}w ago`;
-  
-  const months = Math.floor(days / 30);
-  if (days < 365) return `${months}mo ago`;
-  
-  const years = Math.floor(days / 365);
-  return `${years}y ago`;
+  return `${days}d ago`;
 };
 
  export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
