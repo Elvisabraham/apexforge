@@ -419,7 +419,7 @@ const formatTimeAgo = (timestamp) => {
 
   // 🚀 2.5 LIVE PRICE MATH
   const calculatedSpotPriceSol = (currentVirtualSol / 1e9) / (currentVirtualTokens / 1e6);
-  const calculatedUsdPrice = calculatedSpotPriceSol * 72.57; // Converts SOL price to USD
+  const calculatedUsdPrice = calculatedSpotPriceSol * 76.50; // Converts SOL price to USD
 
   // 🚀 NEW STATE: Store the live price so the UI re-renders instantly!
   const [liveUsdPrice, setLiveUsdPrice] = useState(calculatedUsdPrice);
@@ -431,7 +431,7 @@ const formatTimeAgo = (timestamp) => {
 
   // 🚀 DYNAMIC 24H VOLUME & PERCENTAGE MATH
   const initialSpotPrice = (30 / 1000000000); // The math base of the curve
-  const initialUsdPrice = initialSpotPrice * 72.57;
+  const initialUsdPrice = initialSpotPrice * 76.50;
   
   // Calculate % change from launch
   const priceChangePct = (((liveUsdPrice - initialUsdPrice) / initialUsdPrice) * 100).toFixed(2);
@@ -440,7 +440,7 @@ const formatTimeAgo = (timestamp) => {
   // Calculate total Volume by adding up all SOL in recent trades
   const volume24hUsd = recentTrades.reduce((acc, trade) => {
     const solAmount = parseFloat(trade.amountSol);
-    return acc + (isNaN(solAmount) ? 0 : solAmount * 72.57);
+    return acc + (isNaN(solAmount) ? 0 : solAmount * 76.50);
   }, 0);
 
 // 🚀 FIX: Dynamic Timestamp Calculator
@@ -452,8 +452,8 @@ const formatTimeAgo = (timestamp) => {
     return `${Math.floor(seconds / 3600)}h ago`;
   };
 
-  // 🚀 3. DYNAMIC MARKET CAP (Using $72.57 SOL price)
-  const dynamicMarketCapString = calculateMarketCap(currentVirtualSol, currentVirtualTokens, 72.57);
+  // 🚀 3. DYNAMIC MARKET CAP (Using $76.50 SOL price)
+  const dynamicMarketCapString = calculateMarketCap(currentVirtualSol, currentVirtualTokens, 76.50);
 
   const isPositive = displayToken.change.includes('+') || parseFloat(displayToken.change) >= 0;
   const trendColorHex = isPositive ? '#089981' : '#F23645'; 
@@ -571,7 +571,7 @@ const handleExecuteTrade = async () => {
         type: tradeMode,
         amountToken: tradeTokenDisplay,
         amountSol: tradeSolDisplay,
-        price: `$${(newSpotPrice * 72.57).toFixed(7)}`,
+        price: `$${(newSpotPrice * 76.50).toFixed(7)}`,
         timestamp: Date.now(),
         time: 'Just now',
         user: 'You',
