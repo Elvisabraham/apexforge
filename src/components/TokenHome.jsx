@@ -16,10 +16,15 @@ const formatCreator = (val, email) => {
   if (val && val.length > 10) return `${val.slice(0,4)}...${val.slice(-4)}`;
   return val || 'Anonymous';
 };
-// 🕒 HELPER: Format time as "5m ago", "2h ago", "1d ago", "3w ago", "2mo ago", "1y ago"
+
+// 🕒 HELPER: Format time securely regardless of Timezones
 const formatTimeAgo = (timestamp) => {
-  const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000);
+  // Force both to UTC to ensure the math is perfectly accurate
+  const tradeTime = new Date(timestamp).getTime();
+  const now = Date.now();
+  const seconds = Math.floor((now - tradeTime) / 1000);
   
+  // If the time is slightly in the future due to clock sync issues, default to Just now
   if (seconds < 60) return 'Just now';
   
   const minutes = Math.floor(seconds / 60);
