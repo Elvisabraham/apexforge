@@ -86,7 +86,7 @@ export const calculateCurveProgress = (realSolReservesLamports) => {
 /**
  * MARKET CAP: Calculates Market Cap based on current ratio
  */
-export const calculateMarketCap = (virtualSol = VIRTUAL_SOL_INITIAL, virtualTokens = VIRTUAL_TOKEN_INITIAL, solUsdPrice = 150) => {
+export const calculateMarketCap = (virtualSol = VIRTUAL_SOL_INITIAL, virtualTokens = VIRTUAL_TOKEN_INITIAL, solUsdPrice = 76.50) => {
   const spotPriceInSol = virtualSol / virtualTokens; 
   const tokenPriceSol = spotPriceInSol / 1e3; 
   
