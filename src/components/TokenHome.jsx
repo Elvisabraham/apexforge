@@ -68,7 +68,7 @@ const formatTimeAgo = (timestamp) => {
 // 2. THE ENGINE
   const safeTrades = recentTrades || [];
   
-  // 🟢 VOLUME: (Replace 145 if you ever add a live SOL price feed!)
+  // 🟢 VOLUME
   const currentSolPrice = 145; 
   const liveVolumeSol = safeTrades.reduce((sum, trade) => sum + parseFloat(trade.amountSol || 0), 0);
   const liveVolumeUsd = liveVolumeSol * currentSolPrice;
@@ -78,13 +78,11 @@ const formatTimeAgo = (timestamp) => {
   const calculatedHolders = uniqueUsers.size > 0 ? uniqueUsers.size + 1 : 1;
 
   // 3. OUTPUT VARIABLES
-  // 🟢 MARKET CAP FIX: Block the fake 0.0001 database price!
-  let liveTokenPrice = parseFloat(token?.price || 0);
-  
-  // If the DB tries to pass 0.0001 (or higher) on a fresh launch, force it to the real base price
-  if (liveTokenPrice === 0 || liveTokenPrice >= 0.0001) {
-    liveTokenPrice = 0.00000218; 
-  }
+  // 🟢 DYNAMIC PRICE ENGINE: Calculate price upward as volume increases
+  // Base starting price is 0.00000218, and scales up slightly with every SOL traded
+  const baseTokenPrice = 0.00000218;
+  const priceImpactMultiplier = 0.0000005; // Adjust how fast the price climbs per SOL
+  const liveTokenPrice = baseTokenPrice + (liveVolumeSol * priceImpactMultiplier);
   
   const dynamicMarketCap = (liveTokenPrice * 1000000000).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
