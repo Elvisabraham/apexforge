@@ -63,11 +63,11 @@ const formatTimeAgo = (timestamp) => {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
 
-  // 🌍 GLOBAL STATE PLUG-IN (Moved to safe execution zone)
+  const [recentTrades, setRecentTrades] = useState([]);
   
-  // Safety check: Fallback to empty array if recentTrades isn't loaded yet
+// Safety check: Fallback to empty array if recentTrades isn't loaded yet
   const safeTrades = recentTrades || [];
-  
+
   // 1. Dynamically calculate Live Volume
   const liveVolume = safeTrades.reduce((sum, trade) => sum + parseFloat(trade.amountSol || 0), 0);
   
@@ -271,9 +271,6 @@ const formatTimeAgo = (timestamp) => {
     const intervalId = setInterval(fetchMyTokenBalance, 15000); 
     return () => { isMounted = false; clearInterval(intervalId); };
   }, [publicKey, connection, displayToken.mintAddress]);
-
- // 1. Start with an empty list for everyone
-  const [recentTrades, setRecentTrades] = useState([]);
 
   // 🌍 2. Fetch the global live trades feed from Supabase
   useEffect(() => {
