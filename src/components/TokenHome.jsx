@@ -81,6 +81,7 @@ const formatTimeAgo = (timestamp) => {
   const virtualSolReserves = (30 * 1e9) + (liveVolumeSol * 1e9); 
   const virtualTokenReserves = 1_000_000_000 * 1e6;
 
+  // 3. OUTPUT VARIABLES (Direct sync with the chart's data source)
   const globalMarketCap = token?.marketCap || token?.mcap || "$2.18K";
   const globalVolume = liveVolumeUsd > 0 ? `$${liveVolumeUsd.toFixed(2)}` : "$0.00";
   const globalHolders = calculatedHolders;
