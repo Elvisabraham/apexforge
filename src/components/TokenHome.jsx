@@ -359,8 +359,7 @@ const formatTimeAgo = (timestamp) => {
     }
   }, [curveState, userBalanceSol, userTokenBalance, localCacheKey, displayToken.symbol]);
 
-  // 🚀 LIVE ON-CHAIN CURVE SYNC
-  // This bypasses the database and reads the actual SOL inside the smart contract PDA
+  // 🚀 LIVE ON-CHAIN CURVE SYNC & GLOBAL AUTO-REFRESH
   useEffect(() => {
     let isMounted = true;
 
@@ -371,7 +370,7 @@ const formatTimeAgo = (timestamp) => {
         const programID = new PublicKey("cbVU2Yavor2XCxK8bnXoLjd1Lw11JngQAnkKjTu9PL3");
         const mintPubkey = new PublicKey(displayToken.mintAddress);
         
-        // Derive the curve address just like useTrade.js does
+        // Derive the curve address
         const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
           [Buffer.from("bonding_curve"), mintPubkey.toBuffer()],
           programID
@@ -380,14 +379,11 @@ const formatTimeAgo = (timestamp) => {
         // Read the absolute truth from the Solana blockchain
         const balanceLamports = await connection.getBalance(bondingCurvePDA);
         const rawSolBalance = balanceLamports / 1e9;
-        
-        // Subtract standard account rent (approx 0.002 SOL) to get the true tradeable amount
         const realSolInCurve = Math.max(0, rawSolBalance - 0.002); 
 
-        if (isMounted && realSolInCurve > 0.1) {
+        if (isMounted && realSolInCurve >= 0) {
           setCurveState(prev => {
-            // Only update if the on-chain data is different to prevent infinite re-renders
-            if (Math.abs(prev.solInCurve - realSolInCurve) > 0.01) {
+            if (Math.abs(prev.solInCurve - realSolInCurve) > 0.0001) {
               return {
                 ...prev,
                 solInCurve: realSolInCurve,
@@ -397,14 +393,22 @@ const formatTimeAgo = (timestamp) => {
             return prev;
           });
         }
+
+        // Automatically refresh user balances on the same cycle to keep wallets in sync globally
+        if (typeof fetchUserBalances === 'function') {
+          fetchUserBalances();
+        }
+
       } catch (err) {
-        console.error("🔴 Failed to fetch live curve state from Solana:", err);
+        // Gracefully absorb RPC 400 errors or network drops so the polling loop NEVER dies
+        console.warn("⚠️ Live sync RPC blip caught, auto-recovering...", err.message);
       }
     };
     
     fetchLiveCurveData();
-    // Poll the blockchain every 5 seconds to keep the UI perfectly in sync
-    const interval = setInterval(fetchLiveCurveData, 15000); 
+    
+    // Snappy 5-second polling interval for real-time terminal synchronization
+    const interval = setInterval(fetchLiveCurveData, 5000); 
     
     return () => {
       isMounted = false;
