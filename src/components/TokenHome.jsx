@@ -429,13 +429,26 @@ const formatTimeAgo = (timestamp) => {
     setLiveUsdPrice(calculatedUsdPrice);
   }, [calculatedUsdPrice]);
 
-  // 🚀 DYNAMIC 24H VOLUME & PERCENTAGE MATH
-  const initialSpotPrice = (30 / 1000000000); // The math base of the curve
-  const initialUsdPrice = initialSpotPrice * 76.50;
-  
-  // Calculate % change from launch
-  const priceChangePct = (((liveUsdPrice - initialUsdPrice) / initialUsdPrice) * 100).toFixed(2);
-  const isPositiveChange = priceChangePct >= 0;
+ // 🟢 Dynamic Session Open Baseline (Triggers Doom Red on Dips)
+  const [baselinePrice, setBaselinePrice] = useState(() => {
+    const saved = localStorage.getItem(`baseline_${displayToken?.symbol || 'token'}`);
+    return saved ? parseFloat(saved) : (calculatedUsdPrice || (30 / 1000000000) * 76.50);
+  });
+
+  // Lock in the session baseline once live price hydrates
+  useEffect(() => {
+    const key = `baseline_${displayToken?.symbol || 'token'}`;
+    if (calculatedUsdPrice && calculatedUsdPrice > 0 && !localStorage.getItem(key)) {
+      localStorage.setItem(key, calculatedUsdPrice.toString());
+      setBaselinePrice(calculatedUsdPrice);
+    }
+  }, [calculatedUsdPrice, displayToken?.symbol]);
+
+  // Calculate rolling percentage change
+  const priceChangePct = baselinePrice > 0 
+    ? (((liveUsdPrice - baselinePrice) / baselinePrice) * 100).toFixed(2) 
+    : '0.00';
+  const isPositiveChange = Number(priceChangePct) >= 0;
 
   // Calculate total Volume by adding up all SOL in recent trades
   const volume24hUsd = recentTrades.reduce((acc, trade) => {
