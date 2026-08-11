@@ -460,6 +460,10 @@ const formatTimeAgo = (timestamp) => {
     return acc + (isNaN(solAmount) ? 0 : solAmount * 76.50);
   }, 0);
 
+// 🚀 DYNAMIC HOLDERS CALCULATOR
+  // This instantly counts unique wallets the second Supabase pushes a new trade!
+  const liveHoldersCount = new Set(recentTrades.map(trade => trade.user)).size;
+
 // 🚀 FIX: Dynamic Timestamp Calculator
   const formatTimeAgo = (timestamp) => {
     if (!timestamp) return 'Just now';
@@ -910,11 +914,11 @@ const handleExecuteTrade = async () => {
   </div>
   <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
     <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Volume (24H)</span>
-    <span className="text-sm font-mono font-bold text-white mt-1.5">{globalVolume}</span>
+    <span className="text-sm font-mono font-bold text-white mt-1.5">${volume24hUsd.toFixed(2)}</span>
   </div>
   <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
     <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Holders</span>
-    <span className="text-sm font-mono font-bold text-white mt-1.5">{globalHolders}</span>
+   <span className="text-sm font-mono font-bold text-white mt-1.5">{liveHoldersCount}</span>
   </div>
   <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
     <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Circulating Supply</span>
