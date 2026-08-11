@@ -343,7 +343,13 @@ const formatTimeAgo = (timestamp) => {
           txHash: 'Confirmed'
         };
 
-        setRecentTrades(prev => [formattedNewTrade, ...prev]);
+       // Smart update: Only add the trade if it isn't already on the screen!
+        setRecentTrades(prev => {
+          const alreadyExists = prev.some(t => t.id === formattedNewTrade.id || t.txHash === formattedNewTrade.txHash);
+          if (alreadyExists) return prev; // If it's already there, ignore the duplicate
+          
+          return [formattedNewTrade, ...prev]; // Otherwise, add it to the top!
+        });
       })
       .subscribe();
 
@@ -463,15 +469,6 @@ const formatTimeAgo = (timestamp) => {
 // 🚀 DYNAMIC HOLDERS CALCULATOR
   // This instantly counts unique wallets the second Supabase pushes a new trade!
   const liveHoldersCount = new Set(recentTrades.map(trade => trade.user)).size;
-
-// 🚀 FIX: Dynamic Timestamp Calculator
-  const formatTimeAgo = (timestamp) => {
-    if (!timestamp) return 'Just now';
-    const seconds = Math.floor((Date.now() - timestamp) / 1000);
-    if (seconds < 60) return `${seconds}s ago`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    return `${Math.floor(seconds / 3600)}h ago`;
-  };
 
   // 🚀 3. DYNAMIC MARKET CAP (Using $76.50 SOL price)
   const dynamicMarketCapString = calculateMarketCap(currentVirtualSol, currentVirtualTokens, 76.50);
