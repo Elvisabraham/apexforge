@@ -478,8 +478,9 @@ const formatTimeAgo = (timestamp) => {
   const trendBgColor = isPositive ? 'bg-[#089981]' : 'bg-[#F23645]'; 
   const trendTextColor = isPositive ? 'text-[#089981]' : 'text-[#F23645]';
 
-  // ⏱️ 1. STRICT ZERO-FALLBACK STOPWATCH
+  // ⏱️ 1. STRICT ZERO-FALLBACK STOPWATCH (With Local Session Timer)
   const [tokenAgeSeconds, setTokenAgeSeconds] = useState(0);
+  const sessionStartTime = useRef(Date.now()); // Secret fallback timer
 
   useEffect(() => {
     const currentToken = displayToken || token || {};
@@ -494,10 +495,11 @@ const formatTimeAgo = (timestamp) => {
       rawDate = firstTrade?.created_at || firstTrade?.createdAt || firstTrade?.timestamp;
     }
 
-    // 🛑 STRICT ZERO: If no date exists, it stays at 0 seconds (only shows 1s and ALL)
+    // 🛑 EMERGENCY FALLBACK: If Supabase didn't send created_at,
+    // start counting from the moment the user opened this page!
     if (!rawDate) {
-      setTokenAgeSeconds(0); 
-      return;
+      console.warn("⚠️ Database didn't send created_at! Using local session timer.");
+      rawDate = sessionStartTime.current; 
     }
 
     let launchTime = typeof rawDate === 'number' ? rawDate : new Date(rawDate).getTime();
