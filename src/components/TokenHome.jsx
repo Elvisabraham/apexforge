@@ -478,24 +478,19 @@ const formatTimeAgo = (timestamp) => {
   const trendBgColor = isPositive ? 'bg-[#089981]' : 'bg-[#F23645]'; 
   const trendTextColor = isPositive ? 'text-[#089981]' : 'text-[#F23645]';
 
- // ⏱️ 1. Live Stopwatch: Track token age in seconds (With Debug & Fallbacks)
+ // ⏱️ 1. Live Stopwatch (Starts at 0 seconds for new launches)
   const [tokenAgeSeconds, setTokenAgeSeconds] = useState(0);
 
   useEffect(() => {
-    // 🔍 Console Debug Logs
-    console.log("DEBUG displayToken:", displayToken);
-    console.log("DEBUG created_at:", displayToken?.created_at);
-
-    // Find valid date across possible key names, or fallback to recent trades
+    // Check for created_at date
     const rawDate = 
       displayToken?.created_at || 
       displayToken?.createdAt || 
-      displayToken?.timestamp || 
-      (recentTrades && recentTrades.length > 0 ? recentTrades[recentTrades.length - 1]?.created_at : null);
+      displayToken?.timestamp;
 
+    // If freshly deployed or created_at hasn't loaded yet, default to 0 seconds (Brand New)
     if (!rawDate) {
-      console.log("DEBUG: No date found, defaulting token age to 24H+");
-      setTokenAgeSeconds(86400); // Unlocks normal tabs if date field is missing
+      setTokenAgeSeconds(0);
       return;
     }
 
@@ -503,7 +498,7 @@ const formatTimeAgo = (timestamp) => {
 
     const updateAge = () => {
       if (isNaN(launchTime)) {
-        setTokenAgeSeconds(86400);
+        setTokenAgeSeconds(0);
         return;
       }
       const currentAge = Math.floor((Date.now() - launchTime) / 1000);
@@ -514,7 +509,7 @@ const formatTimeAgo = (timestamp) => {
     const interval = setInterval(updateAge, 1000);
 
     return () => clearInterval(interval);
-  }, [displayToken, recentTrades]);
+  }, [displayToken]);
 
   // 🎛️ 2. Dynamic Available Timeframe Tabs (Unlocks automatically as token ages)
   const availableChartTabs = [
@@ -874,25 +869,39 @@ const handleExecuteTrade = async () => {
              <div ref={chartContainerRef} className="w-full h-full" />
           </div>
 
-          <div className="flex items-center px-4 py-3 border-b border-white/[0.05] bg-[#0A0A0B] overflow-x-auto scrollbar-hide">
-             <div className="flex items-center gap-1.5">
-               {availableChartTabs.map(tab => (
-  <button
-    key={tab.key}
-    onClick={() => setChartTimeframe(tab.key)}
-    className={`text-[12px] font-bold uppercase px-3 py-1 rounded transition-colors ${
-      chartTimeframe === tab.key ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-white'
-    }`}
-  >
-    {tab.label}
-  </button>
-))}
-               <div className="w-px h-5 bg-white/10 mx-2 shrink-0"></div>
-               <button onClick={() => setChartType(chartType === 'candle' ? 'area' : 'candle')} className="text-zinc-400 hover:text-white transition-colors flex items-center justify-center p-1.5 bg-white/5 rounded-md shrink-0">
-                  {chartType === 'candle' ? <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v2h2v12H7v2H5v-2H3V6h2V4h2zm8 4v2h2v6h-2v2h-2v-2h-2v-6h2V8h2z"/></svg> : <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 8-8" /></svg>}
-               </button>
-             </div>
-          </div>
+          {/* 📊 MOBILE SCROLLABLE CHART TOOLBAR (PUMP.FUN STYLE) */}
+<div className="flex items-center px-4 py-2 border-b border-white/[0.05] bg-[#0A0A0B] overflow-x-auto scrollbar-none w-full touch-pan-x">
+  <div className="flex items-center gap-1.5 shrink-0 min-w-max">
+    {availableChartTabs.map(tab => (
+      <button
+        key={tab.key}
+        onClick={() => setChartTimeframe(tab.key)}
+        className={`shrink-0 text-[12px] font-bold uppercase px-3 py-1 rounded transition-colors ${
+          chartTimeframe === tab.key ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-white'
+        }`}
+      >
+        {tab.label}
+      </button>
+    ))}
+
+    <div className="w-px h-5 bg-white/10 mx-2 shrink-0"></div>
+
+    <button 
+      onClick={() => setChartType(chartType === 'candle' ? 'area' : 'candle')} 
+      className="shrink-0 text-zinc-400 hover:text-white p-1"
+    >
+      {chartType === 'candle' ? (
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M7 3h2v18H7V3zm8 0h2v18h-2V3z"/>
+        </svg>
+      ) : (
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3.5 18.5l6-6 4 4 7-7"/>
+        </svg>
+      )}
+    </button>
+  </div>
+</div>
 
           <div className="flex items-center justify-between px-4 py-4 bg-[#121212]/50 border-b border-white/[0.05] mb-2">
             <div className="flex items-center gap-3">
