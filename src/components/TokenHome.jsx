@@ -478,23 +478,35 @@ const formatTimeAgo = (timestamp) => {
   const trendBgColor = isPositive ? 'bg-[#089981]' : 'bg-[#F23645]'; 
   const trendTextColor = isPositive ? 'text-[#089981]' : 'text-[#F23645]';
 
- // ⏱️ 1. Live Stopwatch (Starts at 0 seconds for new launches)
+ // ⏱️ Multi-Source Auto-Detecting Stopwatch
   const [tokenAgeSeconds, setTokenAgeSeconds] = useState(0);
 
   useEffect(() => {
-    // Check for created_at date
-    const rawDate = 
+    // 1. Check primary token object fields
+    let rawDate = 
       displayToken?.created_at || 
       displayToken?.createdAt || 
-      displayToken?.timestamp;
+      displayToken?.timestamp ||
+      token?.created_at ||
+      token?.createdAt;
 
-    // If freshly deployed or created_at hasn't loaded yet, default to 0 seconds (Brand New)
+    // 2. Fallback: Extract the earliest trade timestamp if token object date is missing
+    if (!rawDate && recentTrades && recentTrades.length > 0) {
+      const timestamps = recentTrades
+        .map(t => new Date(t.created_at || t.createdAt || t.timestamp || t.time).getTime())
+        .filter(t => !isNaN(t) && t > 0);
+
+      if (timestamps.length > 0) {
+        rawDate = Math.min(...timestamps); // Earliest recorded trade
+      }
+    }
+
     if (!rawDate) {
       setTokenAgeSeconds(0);
       return;
     }
 
-    const launchTime = new Date(rawDate).getTime();
+    const launchTime = typeof rawDate === 'number' ? rawDate : new Date(rawDate).getTime();
 
     const updateAge = () => {
       if (isNaN(launchTime)) {
@@ -509,7 +521,7 @@ const formatTimeAgo = (timestamp) => {
     const interval = setInterval(updateAge, 1000);
 
     return () => clearInterval(interval);
-  }, [displayToken]);
+  }, [displayToken, token, recentTrades]);
 
  // 🎛️ Gold Standard Pro Timeframe Config (Clean & Future-Proof)
   const chartTabsConfig = [
