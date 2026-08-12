@@ -866,32 +866,28 @@ const handleExecuteTrade = async () => {
              <div ref={chartContainerRef} className="w-full h-full" />
           </div>
 
-         {/* 📊 PRO-TRADER CHART TOOLBAR (PINNED SWITCH & CLEAN TABS) */}
+        {/* 📊 PRO-TRADER CHART TOOLBAR (AUTO-POPPING TABS & PINNED SWITCH) */}
 <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.05] bg-[#0A0A0B] w-full">
   
-  {/* 1. SCROLLING TIMEFRAMES (Left Side) */}
+  {/* 1. SCROLLING TIMEFRAMES (Auto-Live Update) */}
   <div className="flex items-center overflow-x-auto scrollbar-none mr-2 touch-pan-x">
     <div className="flex items-center gap-1.5 shrink-0 min-w-max">
-      {chartTabsConfig.map(tab => {
-        const isLocked = tokenAgeSeconds < tab.threshold;
-        return (
+      {chartTabsConfig
+        .filter(tab => tokenAgeSeconds >= tab.threshold) /* 🪄 THE MAGIC LIVE FILTER */
+        .map(tab => (
           <button
             key={tab.key}
-            disabled={isLocked}
-            onClick={() => !isLocked && setChartTimeframe(tab.key)}
-            title={isLocked ? `Unlocked after ${tab.label}` : tab.label}
+            onClick={() => setChartTimeframe(tab.key)}
             className={`shrink-0 text-[12px] font-bold px-3 py-1 rounded transition-colors ${
-              isLocked 
-                ? 'text-zinc-700 cursor-not-allowed opacity-30 select-none' 
-                : chartTimeframe === tab.key 
-                  ? 'bg-white/10 text-white' 
-                  : 'text-zinc-400 hover:text-white'
+              chartTimeframe === tab.key 
+                ? 'bg-white/10 text-white' 
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             {tab.label}
           </button>
-        );
-      })}
+        ))
+      }
     </div>
   </div>
 
