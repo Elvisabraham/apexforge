@@ -478,9 +478,8 @@ const formatTimeAgo = (timestamp) => {
   const trendBgColor = isPositive ? 'bg-[#089981]' : 'bg-[#F23645]'; 
   const trendTextColor = isPositive ? 'text-[#089981]' : 'text-[#F23645]';
 
-  // ⏱️ 1. STRICT ZERO-FALLBACK STOPWATCH (With Local Session Timer)
+ // ⏱️ 1. BULLETPROOF PERSISTENT STOPWATCH (With LocalStorage Birth Cache)
   const [tokenAgeSeconds, setTokenAgeSeconds] = useState(0);
-  const sessionStartTime = useRef(Date.now()); // Secret fallback timer
 
   useEffect(() => {
     const currentToken = displayToken || token || {};
@@ -495,11 +494,18 @@ const formatTimeAgo = (timestamp) => {
       rawDate = firstTrade?.created_at || firstTrade?.createdAt || firstTrade?.timestamp;
     }
 
-    // 🛑 EMERGENCY FALLBACK: If Supabase didn't send created_at,
-    // start counting from the moment the user opened this page!
+    // 🛡️ PERSISTENT LOCALSTORAGE FALLBACK: If database didn't send created_at,
+    // lock in a birth timestamp in localStorage so refreshes never reset it!
+    const tokenIdentifier = currentToken?.symbol || currentToken?.name || currentToken?.id || 'unknown_token';
+    const storageKey = `apex_token_birth_${tokenIdentifier}`;
+
     if (!rawDate) {
-      console.warn("⚠️ Database didn't send created_at! Using local session timer.");
-      rawDate = sessionStartTime.current; 
+      rawDate = localStorage.getItem(storageKey);
+      if (!rawDate) {
+        rawDate = Date.now();
+        localStorage.setItem(storageKey, rawDate);
+        console.warn(`⚠️ No created_at found for ${tokenIdentifier}! Generated & saved persistent birth time.`);
+      }
     }
 
     let launchTime = typeof rawDate === 'number' ? rawDate : new Date(rawDate).getTime();
