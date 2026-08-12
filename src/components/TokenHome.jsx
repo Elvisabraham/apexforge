@@ -478,61 +478,47 @@ const formatTimeAgo = (timestamp) => {
   const trendBgColor = isPositive ? 'bg-[#089981]' : 'bg-[#F23645]'; 
   const trendTextColor = isPositive ? 'text-[#089981]' : 'text-[#F23645]';
 
- // ⏱️ Auto-Detecting Stopwatch (With Unix Seconds Fix & Debug Logs)
+ // ⏱️ Bulletproof Auto-Detecting Stopwatch with Fallbacks
   const [tokenAgeSeconds, setTokenAgeSeconds] = useState(0);
 
   useEffect(() => {
-    // 1. Check primary token date fields
+    // 1. Log token object to inspect database keys
+    const currentToken = displayToken || token || {};
+    console.log("⚡ ApexForge Token Object:", currentToken);
+
+    // 2. Try grabbing date from token object keys
     let rawDate = 
-      displayToken?.created_at || 
-      displayToken?.createdAt || 
-      displayToken?.timestamp ||
-      token?.created_at ||
-      token?.createdAt;
+      currentToken.created_at || 
+      currentToken.createdAt || 
+      currentToken.timestamp || 
+      currentToken.created_time || 
+      currentToken.time;
 
-    // 2. Fallback: Check trades array if token object date is missing
-    const tradesList = recentTrades || displayToken?.trades || [];
-    if (!rawDate && tradesList.length > 0) {
-      const timestamps = tradesList
-        .map(t => t.created_at || t.createdAt || t.timestamp || t.time)
-        .filter(Boolean);
-
-      if (timestamps.length > 0) {
-        rawDate = timestamps[timestamps.length - 1]; // Earliest trade
-      }
+    // 3. Fallback: Use earliest trade timestamp if token object date is missing
+    const tradeList = recentTrades || currentToken.trades || [];
+    if (!rawDate && tradeList.length > 0) {
+      const firstTrade = tradeList[tradeList.length - 1];
+      rawDate = firstTrade?.created_at || firstTrade?.createdAt || firstTrade?.timestamp || firstTrade?.time;
     }
 
+    // 4. Emergency Fallback: If no created_at exists in DB for an active token, unlock timeframes
     if (!rawDate) {
-      console.log("⚠️ DEBUG Stopwatch: No valid date found in displayToken or trades.");
-      setTokenAgeSeconds(0);
+      console.warn("⚠️ No created_at timestamp found in DB. Defaulting to unlock active timeframes.");
+      setTokenAgeSeconds(86400); // 24 hours fallback
       return;
     }
 
-    // 3. Parse launch time
+    // 5. Calculate live age in seconds
     let launchTime = typeof rawDate === 'number' ? rawDate : new Date(rawDate).getTime();
-
-    // 💡 Unix Timestamp Fix: If in seconds (< 10 Billion), convert to milliseconds
-    if (launchTime < 10000000000) {
-      launchTime = launchTime * 1000;
-    }
-
-    const calculatedAge = Math.floor((Date.now() - launchTime) / 1000);
-
-    console.log("🔍 DEBUG Stopwatch Output:", {
-      rawDate,
-      parsedLaunchTime: new Date(launchTime).toLocaleString(),
-      currentTime: new Date().toLocaleString(),
-      calculatedAgeInSeconds: calculatedAge
-    });
+    if (launchTime < 10000000000) launchTime *= 1000; // Unix seconds fix
 
     const updateAge = () => {
       if (isNaN(launchTime)) {
-        setTokenAgeSeconds(0);
+        setTokenAgeSeconds(86400);
         return;
       }
-      const currentAge = Math.floor((Date.now() - launchTime) / 1000);
-      // Allow a small negative buffer for slight server clock offsets
-      setTokenAgeSeconds(currentAge > -10 ? Math.max(0, currentAge) : 0);
+      const age = Math.floor((Date.now() - launchTime) / 1000);
+      setTokenAgeSeconds(age > 0 ? age : 0);
     };
 
     updateAge();
