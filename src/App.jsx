@@ -216,12 +216,13 @@ function AppContent() {
     }
   };
 
-  const handleForgeSuccess = (newToken) => {
+ const handleForgeSuccess = (newToken) => {
     const forgedToken = {
-        ...newToken,
-        isGraduated: false,
-        isMine: true,
-        progress: newToken.initialSnipe ? ((parseFloat(newToken.initialSnipe)/85)*100) : 0
+      ...newToken,
+      isGraduated: false,
+      isMine: true,
+      progress: newToken.initialSnipe ? ((parseFloat(newToken.initialSnipe)/85)*100) : 0,
+      created_at: newToken?.created_at || newToken?.createdAt || new Date().toISOString()
     };
 
     setGlobalTokens(prev => [forgedToken, ...prev]);
