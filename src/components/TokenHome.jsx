@@ -478,11 +478,11 @@ const formatTimeAgo = (timestamp) => {
   const trendBgColor = isPositive ? 'bg-[#089981]' : 'bg-[#F23645]'; 
   const trendTextColor = isPositive ? 'text-[#089981]' : 'text-[#F23645]';
 
- // ⏱️ Multi-Source Auto-Detecting Stopwatch
+ // ⏱️ Auto-Detecting Stopwatch (With Unix Seconds Fix & Debug Logs)
   const [tokenAgeSeconds, setTokenAgeSeconds] = useState(0);
 
   useEffect(() => {
-    // 1. Check primary token object fields
+    // 1. Check primary token date fields
     let rawDate = 
       displayToken?.created_at || 
       displayToken?.createdAt || 
@@ -490,23 +490,40 @@ const formatTimeAgo = (timestamp) => {
       token?.created_at ||
       token?.createdAt;
 
-    // 2. Fallback: Extract the earliest trade timestamp if token object date is missing
-    if (!rawDate && recentTrades && recentTrades.length > 0) {
-      const timestamps = recentTrades
-        .map(t => new Date(t.created_at || t.createdAt || t.timestamp || t.time).getTime())
-        .filter(t => !isNaN(t) && t > 0);
+    // 2. Fallback: Check trades array if token object date is missing
+    const tradesList = recentTrades || displayToken?.trades || [];
+    if (!rawDate && tradesList.length > 0) {
+      const timestamps = tradesList
+        .map(t => t.created_at || t.createdAt || t.timestamp || t.time)
+        .filter(Boolean);
 
       if (timestamps.length > 0) {
-        rawDate = Math.min(...timestamps); // Earliest recorded trade
+        rawDate = timestamps[timestamps.length - 1]; // Earliest trade
       }
     }
 
     if (!rawDate) {
+      console.log("⚠️ DEBUG Stopwatch: No valid date found in displayToken or trades.");
       setTokenAgeSeconds(0);
       return;
     }
 
-    const launchTime = typeof rawDate === 'number' ? rawDate : new Date(rawDate).getTime();
+    // 3. Parse launch time
+    let launchTime = typeof rawDate === 'number' ? rawDate : new Date(rawDate).getTime();
+
+    // 💡 Unix Timestamp Fix: If in seconds (< 10 Billion), convert to milliseconds
+    if (launchTime < 10000000000) {
+      launchTime = launchTime * 1000;
+    }
+
+    const calculatedAge = Math.floor((Date.now() - launchTime) / 1000);
+
+    console.log("🔍 DEBUG Stopwatch Output:", {
+      rawDate,
+      parsedLaunchTime: new Date(launchTime).toLocaleString(),
+      currentTime: new Date().toLocaleString(),
+      calculatedAgeInSeconds: calculatedAge
+    });
 
     const updateAge = () => {
       if (isNaN(launchTime)) {
@@ -514,7 +531,8 @@ const formatTimeAgo = (timestamp) => {
         return;
       }
       const currentAge = Math.floor((Date.now() - launchTime) / 1000);
-      setTokenAgeSeconds(currentAge > 0 ? currentAge : 0);
+      // Allow a small negative buffer for slight server clock offsets
+      setTokenAgeSeconds(currentAge > -10 ? Math.max(0, currentAge) : 0);
     };
 
     updateAge();
