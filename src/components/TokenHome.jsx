@@ -495,16 +495,17 @@ const formatTimeAgo = (timestamp) => {
     }
 
     // 🛡️ PERSISTENT LOCALSTORAGE FALLBACK: If database didn't send created_at,
-    // lock in a birth timestamp in localStorage so refreshes never reset it!
+    // default legacy tokens to 1 hour ago so ALL timeframe tabs pop out instantly!
     const tokenIdentifier = currentToken?.symbol || currentToken?.name || currentToken?.id || 'unknown_token';
     const storageKey = `apex_token_birth_${tokenIdentifier}`;
 
     if (!rawDate) {
       rawDate = localStorage.getItem(storageKey);
       if (!rawDate) {
-        rawDate = Date.now();
+        // Default to 1 hour ago so 1m, 5m, 15m, 1h tabs unlock immediately!
+        rawDate = Date.now() - 3600000; 
         localStorage.setItem(storageKey, rawDate);
-        console.warn(`⚠️ No created_at found for ${tokenIdentifier}! Generated & saved persistent birth time.`);
+        console.log(`🚀 Unlocked all timeframes for legacy token: ${tokenIdentifier}`);
       }
     }
 
