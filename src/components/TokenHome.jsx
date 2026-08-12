@@ -511,16 +511,19 @@ const formatTimeAgo = (timestamp) => {
     return () => clearInterval(interval);
   }, [displayToken]);
 
-  // 🎛️ 2. Full Timeframe Config (Shows all, locks future ones)
- const chartTabsConfig = [
-    { key: '1s', label: '1s', threshold: 0 },
-    { key: '1m', label: '1m', threshold: 60 },
-    { key: '5m', label: '5m', threshold: 300 },
-    { key: '15m', label: '15m', threshold: 900 },
-    { key: '1h', label: '1h', threshold: 3600 },
-    { key: '4h', label: '4h', threshold: 14400 },
-    { key: '1d', label: '1d', threshold: 86400 },
-    { key: 'MAX', label: 'ALL', threshold: 0 }
+ // 🎛️ Gold Standard Pro Timeframe Config (Clean & Future-Proof)
+  const chartTabsConfig = [
+    { key: '1s', label: '1s', threshold: 0 },                  // Always show
+    { key: '1m', label: '1m', threshold: 60 },                 // 1 minute
+    { key: '5m', label: '5m', threshold: 300 },                // 5 minutes
+    { key: '15m', label: '15m', threshold: 900 },              // 15 minutes
+    { key: '1h', label: '1h', threshold: 3600 },               // 1 hour
+    { key: '4h', label: '4h', threshold: 14400 },              // 4 hours
+    { key: '1d', label: '1d', threshold: 86400 },              // 24 hours
+    { key: '1W', label: '1w', threshold: 604800 },             // 7 days
+    { key: '1M', label: '1mth', threshold: 2592000 },          // 30 days
+    { key: '1Y', label: '1y', threshold: 31536000 },           // 365 days
+    { key: 'MAX', label: 'ALL', threshold: 0 }                 // Always show
   ];
 
   // 🏷️ 3. Full Timeframe Labels Map
@@ -866,14 +869,14 @@ const handleExecuteTrade = async () => {
              <div ref={chartContainerRef} className="w-full h-full" />
           </div>
 
-        {/* 📊 PRO-TRADER CHART TOOLBAR (AUTO-POPPING TABS & PINNED SWITCH) */}
+       {/* 📊 PRO-TRADER CHART TOOLBAR (AUTO-POPPING TABS & PINNED SWITCH) */}
 <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.05] bg-[#0A0A0B] w-full">
   
-  {/* 1. SCROLLING TIMEFRAMES (Auto-Live Update) */}
+  {/* 1. SCROLLING TIMEFRAMES (Auto-Unlocks as Token Ages) */}
   <div className="flex items-center overflow-x-auto scrollbar-none mr-2 touch-pan-x">
     <div className="flex items-center gap-1.5 shrink-0 min-w-max">
       {chartTabsConfig
-        .filter(tab => tokenAgeSeconds >= tab.threshold) /* 🪄 THE MAGIC LIVE FILTER */
+        .filter(tab => tokenAgeSeconds >= tab.threshold)
         .map(tab => (
           <button
             key={tab.key}
@@ -891,7 +894,7 @@ const handleExecuteTrade = async () => {
     </div>
   </div>
 
-  {/* 2. PINNED CHART TOGGLE (Right Side - Never Scrolls!) */}
+  {/* 2. PINNED CHART TOGGLE (Stays Fixed on the Right Edge) */}
   <div className="flex items-center shrink-0 pl-3 border-l border-white/10">
     <button 
       onClick={() => setChartType(chartType === 'candle' ? 'area' : 'candle')} 
