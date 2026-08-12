@@ -478,7 +478,54 @@ const formatTimeAgo = (timestamp) => {
   const trendBgColor = isPositive ? 'bg-[#089981]' : 'bg-[#F23645]'; 
   const trendTextColor = isPositive ? 'text-[#089981]' : 'text-[#F23645]';
 
-  const timeframeLabels = { '15m': 'Past 15 mins', '1h': 'Past hour', '4h': 'Past 4 hours', '1d': 'Today', 'MAX': 'All time' };
+  // ⏱️ 1. Live Stopwatch: Track token age in seconds
+  const [tokenAgeSeconds, setTokenAgeSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!displayToken?.created_at) return;
+
+    const launchTime = new Date(displayToken.created_at).getTime();
+
+    const updateAge = () => {
+      const currentAge = Math.floor((Date.now() - launchTime) / 1000);
+      setTokenAgeSeconds(currentAge > 0 ? currentAge : 0);
+    };
+
+    updateAge();
+    const interval = setInterval(updateAge, 1000);
+
+    return () => clearInterval(interval);
+  }, [displayToken?.created_at]);
+
+  // 🎛️ 2. Dynamic Available Timeframe Tabs (Unlocks automatically as token ages)
+  const availableChartTabs = [
+    { key: '1s', label: '1s', threshold: 0 },
+    { key: '1m', label: '1m', threshold: 60 },
+    { key: '5m', label: '5m', threshold: 300 },
+    { key: '15m', label: '15m', threshold: 900 },
+    { key: '1h', label: '1h', threshold: 3600 },
+    { key: '4h', label: '4h', threshold: 14400 },
+    { key: '1d', label: '1d', threshold: 86400 },
+    { key: '1W', label: '1W', threshold: 604800 },
+    { key: '1M', label: '1M', threshold: 2592000 },
+    { key: '1Y', label: '1Y', threshold: 31536000 },
+    { key: 'MAX', label: 'ALL', threshold: 0 }
+  ].filter(tab => tokenAgeSeconds >= tab.threshold);
+
+  // 🏷️ 3. Full Timeframe Labels Map
+  const timeframeLabels = {
+    '1s': '1 second',
+    '1m': 'Past minute',
+    '5m': 'Past 5 mins',
+    '15m': 'Past 15 mins',
+    '1h': 'Past hour',
+    '4h': 'Past 4 hours',
+    '1d': 'Today',
+    '1W': 'Past week',
+    '1M': 'Past month',
+    '1Y': 'Past year',
+    'MAX': 'All time'
+  };
 
   const getShortCA = (address) => {
     if (!address || typeof address !== 'string') return '8AVm...forge';
@@ -810,9 +857,17 @@ const handleExecuteTrade = async () => {
 
           <div className="flex items-center px-4 py-3 border-b border-white/[0.05] bg-[#0A0A0B] overflow-x-auto scrollbar-hide">
              <div className="flex items-center gap-1.5">
-               {['15m', '1h', '4h', '1d', 'MAX'].map(tf => (
-                 <button key={tf} onClick={() => setChartTimeframe(tf)} className={`text-[12px] font-bold uppercase px-3 py-1.5 rounded-lg transition-colors shrink-0 ${chartTimeframe === tf ? `bg-[#2B2B43] text-white shadow-sm` : 'text-zinc-500 hover:text-white bg-transparent'}`}>{tf}</button>
-               ))}
+               {availableChartTabs.map(tab => (
+  <button
+    key={tab.key}
+    onClick={() => setChartTimeframe(tab.key)}
+    className={`text-[12px] font-bold uppercase px-3 py-1 rounded transition-colors ${
+      chartTimeframe === tab.key ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-white'
+    }`}
+  >
+    {tab.label}
+  </button>
+))}
                <div className="w-px h-5 bg-white/10 mx-2 shrink-0"></div>
                <button onClick={() => setChartType(chartType === 'candle' ? 'area' : 'candle')} className="text-zinc-400 hover:text-white transition-colors flex items-center justify-center p-1.5 bg-white/5 rounded-md shrink-0">
                   {chartType === 'candle' ? <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v2h2v12H7v2H5v-2H3V6h2V4h2zm8 4v2h2v6h-2v2h-2v-2h-2v-6h2V8h2z"/></svg> : <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 8-8" /></svg>}
