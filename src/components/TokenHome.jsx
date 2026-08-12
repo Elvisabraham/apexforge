@@ -888,15 +888,24 @@ const handleExecuteTrade = async () => {
 
     <button 
       onClick={() => setChartType(chartType === 'candle' ? 'area' : 'candle')} 
-      className="shrink-0 text-zinc-400 hover:text-white p-1"
+      className="shrink-0 text-zinc-400 hover:text-white p-1.5 rounded-md hover:bg-white/10 transition-all"
+      title={chartType === 'candle' ? 'Switch to Area Chart' : 'Switch to Candle Chart'}
     >
       {chartType === 'candle' ? (
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M7 3h2v18H7V3zm8 0h2v18h-2V3z"/>
+        // 🕯️ PREMIUM CANDLESTICK ICON
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 5v4"></path>
+          <rect width="4" height="6" x="7" y="9" rx="1"></rect>
+          <path d="M9 15v2"></path>
+          <path d="M17 3v2"></path>
+          <rect width="4" height="8" x="15" y="5" rx="1"></rect>
+          <path d="M17 13v3"></path>
         </svg>
       ) : (
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M3.5 18.5l6-6 4 4 7-7"/>
+        // 📈 PREMIUM AREA/LINE CHART ICON
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 3v18h18"></path>
+          <path d="m19 9-5 5-4-4-3 3"></path>
         </svg>
       )}
     </button>
