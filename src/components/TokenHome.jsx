@@ -494,20 +494,18 @@ const formatTimeAgo = (timestamp) => {
       rawDate = firstTrade?.created_at || firstTrade?.createdAt || firstTrade?.timestamp;
     }
 
-    // 🛡️ PERSISTENT LOCALSTORAGE FALLBACK: If database didn't send created_at,
-    // default legacy tokens to 1 hour ago so ALL timeframe tabs pop out instantly!
+   // 🛡️ PERSISTENT LOCALSTORAGE FALLBACK: Lock in the EXACT current time for new tokens
     const tokenIdentifier = currentToken?.symbol || currentToken?.name || currentToken?.id || 'unknown_token';
     const storageKey = `apex_token_birth_${tokenIdentifier}`;
 
     if (!rawDate) {
       rawDate = localStorage.getItem(storageKey);
       
-      // If it doesn't exist, OR if it's the old corrupted number string, reset it!
+      // If it doesn't exist, or it's the old corrupted number string, set it to RIGHT NOW!
       if (!rawDate || !rawDate.includes('T')) {
-        // Save as a proper ISO string (e.g. "2026-08-12T...") so JS doesn't crash on reload!
-        rawDate = new Date(Date.now() - 3600000).toISOString(); 
+        rawDate = new Date().toISOString(); // 👈 EXACTLY NOW! (Removed the 1-hour hack)
         localStorage.setItem(storageKey, rawDate);
-        console.log(`🚀 Unlocked all timeframes for legacy token: ${tokenIdentifier}`);
+        console.log(`⏱️ Stamped exact birth time for token: ${tokenIdentifier}`);
       }
       
       // Force inject this timestamp directly into the token so the Chart tabs see it!
