@@ -478,43 +478,34 @@ const formatTimeAgo = (timestamp) => {
   const trendBgColor = isPositive ? 'bg-[#089981]' : 'bg-[#F23645]'; 
   const trendTextColor = isPositive ? 'text-[#089981]' : 'text-[#F23645]';
 
- // ⏱️ Bulletproof Auto-Detecting Stopwatch with Fallbacks
+  // ⏱️ 1. STRICT ZERO-FALLBACK STOPWATCH
   const [tokenAgeSeconds, setTokenAgeSeconds] = useState(0);
 
   useEffect(() => {
-    // 1. Log token object to inspect database keys
     const currentToken = displayToken || token || {};
-    console.log("⚡ ApexForge Token Object:", currentToken);
+    
+    // Check token object first
+    let rawDate = currentToken.created_at || currentToken.createdAt || currentToken.timestamp;
 
-    // 2. Try grabbing date from token object keys
-    let rawDate = 
-      currentToken.created_at || 
-      currentToken.createdAt || 
-      currentToken.timestamp || 
-      currentToken.created_time || 
-      currentToken.time;
-
-    // 3. Fallback: Use earliest trade timestamp if token object date is missing
+    // Check trades if token object is missing the date
     const tradeList = recentTrades || currentToken.trades || [];
     if (!rawDate && tradeList.length > 0) {
       const firstTrade = tradeList[tradeList.length - 1];
-      rawDate = firstTrade?.created_at || firstTrade?.createdAt || firstTrade?.timestamp || firstTrade?.time;
+      rawDate = firstTrade?.created_at || firstTrade?.createdAt || firstTrade?.timestamp;
     }
 
-    // 4. Emergency Fallback: If no created_at exists in DB for an active token, unlock timeframes
+    // 🛑 STRICT ZERO: If no date exists, it stays at 0 seconds (only shows 1s and ALL)
     if (!rawDate) {
-      console.warn("⚠️ No created_at timestamp found in DB. Defaulting to unlock active timeframes.");
-      setTokenAgeSeconds(86400); // 24 hours fallback
+      setTokenAgeSeconds(0); 
       return;
     }
 
-    // 5. Calculate live age in seconds
     let launchTime = typeof rawDate === 'number' ? rawDate : new Date(rawDate).getTime();
-    if (launchTime < 10000000000) launchTime *= 1000; // Unix seconds fix
+    if (launchTime < 10000000000) launchTime *= 1000;
 
     const updateAge = () => {
       if (isNaN(launchTime)) {
-        setTokenAgeSeconds(86400);
+        setTokenAgeSeconds(0);
         return;
       }
       const age = Math.floor((Date.now() - launchTime) / 1000);
@@ -527,7 +518,7 @@ const formatTimeAgo = (timestamp) => {
     return () => clearInterval(interval);
   }, [displayToken, token, recentTrades]);
 
- // 🎛️ Gold Standard Pro Timeframe Config (Clean & Future-Proof)
+  // 🎛️ 2. THE COMPLETE CONFIG (Includes 1w, 1mth, and 1y)
   const chartTabsConfig = [
     { key: '1s', label: '1s', threshold: 0 },                  // Always show
     { key: '1m', label: '1m', threshold: 60 },                 // 1 minute
@@ -556,7 +547,7 @@ const formatTimeAgo = (timestamp) => {
     '1Y': 'Past year',
     'MAX': 'All time'
   };
-
+ 
   const getShortCA = (address) => {
     if (!address || typeof address !== 'string') return '8AVm...forge';
     return `${address.slice(0, 4)}...${address.slice(-5)}`;
