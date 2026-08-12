@@ -511,8 +511,8 @@ const formatTimeAgo = (timestamp) => {
     return () => clearInterval(interval);
   }, [displayToken]);
 
-  // 🎛️ 2. Dynamic Available Timeframe Tabs (Unlocks automatically as token ages)
-  const availableChartTabs = [
+  // 🎛️ 2. Full Timeframe Config (Shows all, locks future ones)
+  const chartTabsConfig = [
     { key: '1s', label: '1s', threshold: 0 },
     { key: '1m', label: '1m', threshold: 60 },
     { key: '5m', label: '5m', threshold: 300 },
@@ -524,7 +524,7 @@ const formatTimeAgo = (timestamp) => {
     { key: '1M', label: '1M', threshold: 2592000 },
     { key: '1Y', label: '1Y', threshold: 31536000 },
     { key: 'MAX', label: 'ALL', threshold: 0 }
-  ].filter(tab => tokenAgeSeconds >= tab.threshold);
+  ];
 
   // 🏷️ 3. Full Timeframe Labels Map
   const timeframeLabels = {
@@ -869,30 +869,41 @@ const handleExecuteTrade = async () => {
              <div ref={chartContainerRef} className="w-full h-full" />
           </div>
 
-          {/* 📊 MOBILE SCROLLABLE CHART TOOLBAR (PUMP.FUN STYLE) */}
+         {/* 📊 FULL SCROLLABLE CHART TOOLBAR (LOCKED STATE FOR NEW TOKENS) */}
 <div className="flex items-center px-4 py-2 border-b border-white/[0.05] bg-[#0A0A0B] overflow-x-auto scrollbar-none w-full touch-pan-x">
   <div className="flex items-center gap-1.5 shrink-0 min-w-max">
-    {availableChartTabs.map(tab => (
-      <button
-        key={tab.key}
-        onClick={() => setChartTimeframe(tab.key)}
-        className={`shrink-0 text-[12px] font-bold uppercase px-3 py-1 rounded transition-colors ${
-          chartTimeframe === tab.key ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-white'
-        }`}
-      >
-        {tab.label}
-      </button>
-    ))}
+    {chartTabsConfig.map(tab => {
+      // Check if token is too young for this timeframe
+      const isLocked = tokenAgeSeconds < tab.threshold;
+      
+      return (
+        <button
+          key={tab.key}
+          disabled={isLocked}
+          onClick={() => !isLocked && setChartTimeframe(tab.key)}
+          title={isLocked ? `Unlocked after ${tab.label}` : tab.label}
+          className={`shrink-0 text-[12px] font-bold px-3 py-1 rounded transition-colors ${
+            isLocked 
+              ? 'text-zinc-700 cursor-not-allowed opacity-30 select-none' // Locked & Dimmed
+              : chartTimeframe === tab.key 
+                ? 'bg-white/10 text-white' // Active tab
+                : 'text-zinc-400 hover:text-white' // Unlocked & Clickable
+          }`}
+        >
+          {tab.label}
+        </button>
+      );
+    })}
 
     <div className="w-px h-5 bg-white/10 mx-2 shrink-0"></div>
 
+    {/* Chart Type Toggle Icon Button */}
     <button 
       onClick={() => setChartType(chartType === 'candle' ? 'area' : 'candle')} 
       className="shrink-0 text-zinc-400 hover:text-white p-1.5 rounded-md hover:bg-white/10 transition-all"
       title={chartType === 'candle' ? 'Switch to Area Chart' : 'Switch to Candle Chart'}
     >
       {chartType === 'candle' ? (
-        // 🕯️ PREMIUM CANDLESTICK ICON
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M9 5v4"></path>
           <rect width="4" height="6" x="7" y="9" rx="1"></rect>
@@ -902,7 +913,6 @@ const handleExecuteTrade = async () => {
           <path d="M17 13v3"></path>
         </svg>
       ) : (
-        // 📈 PREMIUM AREA/LINE CHART ICON
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 3v18h18"></path>
           <path d="m19 9-5 5-4-4-3 3"></path>
