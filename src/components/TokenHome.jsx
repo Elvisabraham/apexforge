@@ -495,17 +495,17 @@ const formatTimeAgo = (timestamp) => {
 
 // 🚀 ON-CHAIN BALANCE REFRESHER
   const fetchUserBalances = async () => {
-    if (!wallet.publicKey || !connection || !displayToken.mintAddress) return;
+    if (!publicKey || !connection || !displayToken.mintAddress) return;
 
     try {
       // 1. Fetch live SOL balance
-      const solLamports = await connection.getBalance(wallet.publicKey);
+      const solLamports = await connection.getBalance(publicKey);
       setUserBalanceSol(solLamports / LAMPORTS_PER_SOL);
 
       // 2. Fetch live Token balance from Associated Token Account
       const mintPublicKey = new PublicKey(displayToken.mintAddress);
       // NOTE: Ensure getAssociatedTokenAddressSync is imported from '@solana/spl-token' at the top of your file
-      const userTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, wallet.publicKey);
+      const userTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, publicKey);
       
       const tokenAccountInfo = await connection.getTokenAccountBalance(userTokenAccount);
       if (tokenAccountInfo?.value?.uiAmount !== undefined) {
