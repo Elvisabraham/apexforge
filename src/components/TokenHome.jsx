@@ -478,15 +478,34 @@ const formatTimeAgo = (timestamp) => {
   const trendBgColor = isPositive ? 'bg-[#089981]' : 'bg-[#F23645]'; 
   const trendTextColor = isPositive ? 'text-[#089981]' : 'text-[#F23645]';
 
-  // ⏱️ 1. Live Stopwatch: Track token age in seconds
+ // ⏱️ 1. Live Stopwatch: Track token age in seconds (With Debug & Fallbacks)
   const [tokenAgeSeconds, setTokenAgeSeconds] = useState(0);
 
   useEffect(() => {
-    if (!displayToken?.created_at) return;
+    // 🔍 Console Debug Logs
+    console.log("DEBUG displayToken:", displayToken);
+    console.log("DEBUG created_at:", displayToken?.created_at);
 
-    const launchTime = new Date(displayToken.created_at).getTime();
+    // Find valid date across possible key names, or fallback to recent trades
+    const rawDate = 
+      displayToken?.created_at || 
+      displayToken?.createdAt || 
+      displayToken?.timestamp || 
+      (recentTrades && recentTrades.length > 0 ? recentTrades[recentTrades.length - 1]?.created_at : null);
+
+    if (!rawDate) {
+      console.log("DEBUG: No date found, defaulting token age to 24H+");
+      setTokenAgeSeconds(86400); // Unlocks normal tabs if date field is missing
+      return;
+    }
+
+    const launchTime = new Date(rawDate).getTime();
 
     const updateAge = () => {
+      if (isNaN(launchTime)) {
+        setTokenAgeSeconds(86400);
+        return;
+      }
       const currentAge = Math.floor((Date.now() - launchTime) / 1000);
       setTokenAgeSeconds(currentAge > 0 ? currentAge : 0);
     };
@@ -495,7 +514,7 @@ const formatTimeAgo = (timestamp) => {
     const interval = setInterval(updateAge, 1000);
 
     return () => clearInterval(interval);
-  }, [displayToken?.created_at]);
+  }, [displayToken, recentTrades]);
 
   // 🎛️ 2. Dynamic Available Timeframe Tabs (Unlocks automatically as token ages)
   const availableChartTabs = [
