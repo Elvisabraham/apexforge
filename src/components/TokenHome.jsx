@@ -501,11 +501,18 @@ const formatTimeAgo = (timestamp) => {
 
     if (!rawDate) {
       rawDate = localStorage.getItem(storageKey);
-      if (!rawDate) {
-        // Default to 1 hour ago so 1m, 5m, 15m, 1h tabs unlock immediately!
-        rawDate = Date.now() - 3600000; 
+      
+      // If it doesn't exist, OR if it's the old corrupted number string, reset it!
+      if (!rawDate || !rawDate.includes('T')) {
+        // Save as a proper ISO string (e.g. "2026-08-12T...") so JS doesn't crash on reload!
+        rawDate = new Date(Date.now() - 3600000).toISOString(); 
         localStorage.setItem(storageKey, rawDate);
         console.log(`🚀 Unlocked all timeframes for legacy token: ${tokenIdentifier}`);
+      }
+      
+      // Force inject this timestamp directly into the token so the Chart tabs see it!
+      if (currentToken) {
+        currentToken.created_at = rawDate;
       }
     }
 
