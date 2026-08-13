@@ -808,11 +808,11 @@ const handleExecuteTrade = async () => {
         priceLineWidth: 1,
         priceLineColor: isPositive ? '#089981' : '#F23645',
         priceLineStyle: 2,
-        // 🚀 PRO MARKET CAP FORMATTER ON THE SERIES AXIS
+        // 🚀 PRO FORMATTER ADDED TO CANDLESTICK
         priceFormat: {
           type: 'custom',
           formatter: (price) => {
-            const estimatedMcap = price * 250000;
+            const estimatedMcap = price * 100000000;
             if (estimatedMcap >= 1000000) return `$${(estimatedMcap / 1000000).toFixed(2)}M`;
             if (estimatedMcap >= 1000) return `$${(estimatedMcap / 1000).toFixed(1)}K`;
             return `$${estimatedMcap.toFixed(0)}`;
@@ -831,6 +831,7 @@ const handleExecuteTrade = async () => {
         priceLineWidth: 1,
         priceLineColor: trendColorHex,
         priceLineStyle: 2,
+        // 🚀 PRO FORMATTER ADDED TO AREA CHART
         priceFormat: {
           type: 'custom',
           formatter: (price) => {
