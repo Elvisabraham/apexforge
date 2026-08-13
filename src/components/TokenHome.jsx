@@ -762,7 +762,19 @@ const handleExecuteTrade = async () => {
 
     const generateChartData = () => {
       let data = [];
-      let time = Math.floor(Date.now() / 1000) - 3600; 
+      
+      // 1. Get real birth time (fallback to 1 hour if somehow missing)
+      const nowInSeconds = Math.floor(Date.now() / 1000);
+      const rawCreatedAt = displayToken?.created_at || token?.created_at;
+      const birthTime = rawCreatedAt ? Math.floor(new Date(rawCreatedAt).getTime() / 1000) : nowInSeconds - 3600;
+      
+      // 2. Calculate exact token age (minimum 40 seconds to safely draw 40 candles)
+      const ageInSeconds = Math.max(40, nowInSeconds - birthTime);
+      
+      // 3. Dynamically space out the 40 mock candles perfectly across the token's real life!
+      const spacing = Math.floor(ageInSeconds / 40);
+      
+      let time = birthTime; 
       let basePrice = initialBasePrice; 
       
       for (let i = 0; i < 40; i++) {
@@ -772,16 +784,19 @@ const handleExecuteTrade = async () => {
         let high = Math.max(open, close) + Math.random() * (volatility * 0.2);
         let low = Math.min(open, close) - Math.random() * (volatility * 0.2);
         
-        chartType === 'candle' ? data.push({ time: time + (i * 90), open, high, low, close }) : data.push({ time: time + (i * 90), value: close });
+        // Use our dynamic timeframe spacing instead of hardcoded 90!
+        let candleTime = time + (i * spacing);
+        chartType === 'candle' ? data.push({ time: candleTime, open, high, low, close }) : data.push({ time: candleTime, value: close });
         basePrice = close;
       }
       
-      // 🚀 THE LIVE CANDLE: Reacts instantly, protected against 0 drops!
+      // 🚀 THE LIVE CANDLE: Anchored perfectly to current time
       const safeLivePrice = liveUsdPrice > 0 ? liveUsdPrice : basePrice;
+      const finalTime = time + (40 * spacing);
       
       const finalPoint = chartType === 'candle' 
-        ? { time: time + (40 * 90), open: basePrice, high: Math.max(basePrice, safeLivePrice), low: Math.min(basePrice, safeLivePrice), close: safeLivePrice } 
-        : { time: time + (40 * 90), value: safeLivePrice };
+        ? { time: finalTime, open: basePrice, high: Math.max(basePrice, safeLivePrice), low: Math.min(basePrice, safeLivePrice), close: safeLivePrice } 
+        : { time: finalTime, value: safeLivePrice };
         
       data.push(finalPoint);
       return data;
@@ -793,7 +808,7 @@ const handleExecuteTrade = async () => {
     const handleResize = () => chart.applyOptions({ width: chartContainerRef.current.clientWidth });
     window.addEventListener('resize', handleResize);
     return () => { window.removeEventListener('resize', handleResize); chart.remove(); };
-  }, [chartTimeframe, chartType, liveUsdPrice, trendColorHex, isPositive]);
+  }, [chartTimeframe, chartType, liveUsdPrice, trendColorHex, isPositive, displayToken, token]);
 
   const formatLink = (url) => url.startsWith('http') ? url : `https://${url}`;
 
