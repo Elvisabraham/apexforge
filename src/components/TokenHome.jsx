@@ -64,6 +64,13 @@ const formatTimeAgo = (timestamp) => {
   const { publicKey } = useWallet();
 
   const [recentTrades, setRecentTrades] = useState([]);
+
+  // ⏱️ LIVE TICKER STATE: Keeps the relative launch timer ticking live on screen
+  const [_, setTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 30000);
+    return () => clearInterval(interval);
+  }, []);
   
 // 2. THE ENGINE
   const safeTrades = recentTrades || [];
@@ -186,7 +193,7 @@ const formatTimeAgo = (timestamp) => {
 
   const rawCreator = token?.creatorAddress || token?.creator || token?.deployer || connectedAddress || '47ZT1q3mR...';
 
-  const displayToken = {
+  const [displayToken, setDisplayToken] = useState(() => ({
     name: token?.name || token?.token || 'Token',
     symbol: token?.symbol || 'TKN',
     change: token?.change || '+0.0%',
@@ -201,8 +208,25 @@ const formatTimeAgo = (timestamp) => {
     supply: globalSupply,
     createdTime: 'Just now',
     isGraduated: isActuallyGraduated,
-    progress: rawProgress
-  };
+    progress: rawProgress,
+    created_at: token?.created_at || token?.createdAt || new Date().toISOString()
+  }));
+
+  // ⚡ SUPABASE REALTIME LISTENER (For cross-device synchronization)
+  useEffect(() => {
+    const channel = supabase
+      .channel('public:tokens')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tokens' }, (payload) => {
+        if (payload.new && (payload.new.mintAddress === displayToken.mintAddress || payload.new.symbol === displayToken.symbol)) {
+          setDisplayToken(prev => ({ ...prev, ...payload.new }));
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [displayToken.mintAddress, displayToken.symbol]);
 
   const localCacheKey = `apex_mock_state_${displayToken.symbol}`;
   const initialBasePrice = parseFloat(token?.price || '0.0000100');
