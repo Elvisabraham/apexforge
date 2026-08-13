@@ -787,13 +787,6 @@ const handleExecuteTrade = async () => {
         borderColor: '#1F2937', 
         visible: true,
         scaleMargins: { top: 0.1, bottom: 0.1 },
-        // 🚀 CUSTOM MARKET CAP FORMATTER FOR THE RIGHT AXIS
-        priceFormatter: (price) => {
-          const estimatedMcap = price * 250000;
-          if (estimatedMcap >= 1000000) return `$${(estimatedMcap / 1000000).toFixed(2)}M`;
-          if (estimatedMcap >= 1000) return `$${(estimatedMcap / 1000).toFixed(1)}K`;
-          return `$${estimatedMcap.toFixed(0)}`;
-        }
       }, 
       crosshair: {
         mode: 1,
@@ -815,6 +808,16 @@ const handleExecuteTrade = async () => {
         priceLineWidth: 1,
         priceLineColor: isPositive ? '#089981' : '#F23645',
         priceLineStyle: 2,
+        // 🚀 PRO MARKET CAP FORMATTER ON THE SERIES AXIS
+        priceFormat: {
+          type: 'custom',
+          formatter: (price) => {
+            const estimatedMcap = price * 250000;
+            if (estimatedMcap >= 1000000) return `$${(estimatedMcap / 1000000).toFixed(2)}M`;
+            if (estimatedMcap >= 1000) return `$${(estimatedMcap / 1000).toFixed(1)}K`;
+            return `$${estimatedMcap.toFixed(0)}`;
+          },
+        },
       });
     } else {
       series = chart.addSeries(AreaSeries, { 
@@ -828,6 +831,15 @@ const handleExecuteTrade = async () => {
         priceLineWidth: 1,
         priceLineColor: trendColorHex,
         priceLineStyle: 2,
+        priceFormat: {
+          type: 'custom',
+          formatter: (price) => {
+            const estimatedMcap = price * 250000;
+            if (estimatedMcap >= 1000000) return `$${(estimatedMcap / 1000000).toFixed(2)}M`;
+            if (estimatedMcap >= 1000) return `$${(estimatedMcap / 1000).toFixed(1)}K`;
+            return `$${estimatedMcap.toFixed(0)}`;
+          },
+        },
       });
     }
 
