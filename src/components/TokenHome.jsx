@@ -834,14 +834,13 @@ const handleExecuteTrade = async () => {
         priceFormat: {
           type: 'custom',
           formatter: (price) => {
-            const estimatedMcap = price * 250000;
+            // 🚀 Scaled up to match your true $2.30K+ Market Cap baseline
+            const estimatedMcap = price * 100000000; 
             if (estimatedMcap >= 1000000) return `$${(estimatedMcap / 1000000).toFixed(2)}M`;
             if (estimatedMcap >= 1000) return `$${(estimatedMcap / 1000).toFixed(1)}K`;
             return `$${estimatedMcap.toFixed(0)}`;
           },
         },
-      });
-    }
 
     const generateChartData = () => {
       let data = [];
