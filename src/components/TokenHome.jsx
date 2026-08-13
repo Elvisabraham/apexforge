@@ -813,44 +813,68 @@ const handleExecuteTrade = async () => {
 
       {/* --- UNMOVABLE HEADER --- */}
       <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-3 sm:px-4 py-2.5 border-b border-white/[0.04] flex items-center justify-between relative gap-1.5">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+       <div className="flex flex-col gap-3 min-w-0 flex-1 py-0.5">
           
-          <button 
-            onClick={(e) => { 
-              e.preventDefault(); e.stopPropagation(); 
-              localStorage.removeItem('apex_mock_state_TKN');
-              localStorage.removeItem('apex_mock_state_TKN_trades');
-              localStorage.removeItem('apex_active_token');
-              if (typeof onBack === 'function') {
-                onBack();
-              } else {
-                if (window.history.length > 1) window.history.back();
-                else window.location.hash = '';
-              }
-            }} 
-            className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-1 -ml-1 shrink-0 relative z-[100] cursor-pointer"
-          >
-            <svg className="w-6 h-6 text-white pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          
-          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#1A1A24] border border-white/10 rounded-full flex items-center justify-center text-lg sm:text-xl shrink-0 overflow-hidden shadow-inner">
-            {displayToken.imagePreview ? <img src={displayToken.imagePreview} className="w-full h-full object-cover" alt="icon" /> : <span className="select-none">{displayToken.icon}</span>}
+          {/* --- ROW 1: Navigation, Ticker, & Age --- */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button 
+              onClick={(e) => { 
+                e.preventDefault(); e.stopPropagation(); 
+                localStorage.removeItem('apex_mock_state_TKN');
+                localStorage.removeItem('apex_mock_state_TKN_trades');
+                localStorage.removeItem('apex_active_token');
+                if (typeof onBack === 'function') {
+                  onBack();
+                } else {
+                  if (window.history.length > 1) window.history.back();
+                  else window.location.hash = '';
+                }
+              }} 
+              className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-1 -ml-1 shrink-0 relative z-[100] cursor-pointer"
+            >
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            
+            <span className="font-black text-white text-base sm:text-lg tracking-tight">${displayToken.symbol}</span>
+            <span className="text-zinc-600">|</span>
+            <div className="text-[10px] text-emerald-400 font-mono flex items-center gap-1.5 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              {formatTimeAgo(displayToken?.created_at || token?.created_at)}
+            </div>
           </div>
-          <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-1.5">
-               <span className="text-base sm:text-lg font-black text-white leading-tight tracking-wide truncate">{displayToken.name}</span>
-               {displayToken.isGraduated && <span className="bg-amber-400/10 text-amber-400 border border-amber-400/20 text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-widest font-black shrink-0">Graduated</span>}
+
+          {/* --- ROW 2: Identity (Logo, Name, & Contract Address) --- */}
+          <div className="flex items-center gap-3 pl-1">
+            {/* Logo with Built-in Fallback for Broken Images */}
+            <div className="w-10 h-10 sm:w-11 sm:h-11 bg-[#1A1A24] border border-white/10 rounded-full flex items-center justify-center text-lg sm:text-xl shrink-0 overflow-hidden shadow-inner">
+              {displayToken.imagePreview ? (
+                <img 
+                  src={displayToken.imagePreview} 
+                  className="w-full h-full object-cover" 
+                  alt="icon" 
+                  onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<span class="text-xl">🪙</span>'; }}
+                />
+              ) : (
+                <span className="select-none">{displayToken.icon}</span>
+              )}
             </div>
             
-            <div onClick={() => handleCopyCA('header')} className="flex items-center gap-1 text-[11px] sm:text-[12px] font-bold text-zinc-400 mt-0.5 cursor-pointer hover:text-white transition-colors">
-              <span className="font-mono tracking-tight">{displayToken.symbol}</span>
-              <span className="text-zinc-600">|</span>
-              <span className="font-mono tracking-tight truncate max-w-[70px] sm:max-w-none">{shortCA}</span>
-              {headerCopied ? <span className="text-[#089981] text-[9px] font-black tracking-wider ml-1">COPIED</span> : <svg className="w-3 h-3 shrink-0 opacity-70 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeWidth="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeWidth="2"></path></svg>}
+            {/* Name and Copy Address Block */}
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-1.5">
+                 <span className="text-base sm:text-lg font-black text-white leading-tight tracking-wide truncate">{displayToken.name}</span>
+                 {displayToken.isGraduated && <span className="bg-amber-400/10 text-amber-400 border border-amber-400/20 text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-widest font-black shrink-0">Graduated</span>}
+              </div>
+              <div onClick={() => handleCopyCA('header')} className="flex items-center gap-1 text-[11px] sm:text-[12px] font-bold text-zinc-400 mt-0.5 cursor-pointer hover:text-white transition-colors">
+                <span className="font-mono tracking-tight truncate max-w-[100px] sm:max-w-none bg-white/5 px-1 rounded">{shortCA}</span>
+                <svg className="w-3 h-3 opacity-70 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                {headerCopied && <span className="text-[#089981] text-[9px] font-black tracking-wider ml-1">COPIED</span>}
+              </div>
             </div>
           </div>
+
         </div>
         
         {/* RIGHT ACTION BUTTONS */}
