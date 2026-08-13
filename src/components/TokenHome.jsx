@@ -788,11 +788,15 @@ const handleExecuteTrade = async () => {
         fixLeftEdge: true,
         rightOffset: 5
       },
-      rightPriceScale: { 
+   rightPriceScale: { 
         borderColor: '#1F2937', 
         visible: true,
-        scaleMargins: { top: 0.1, bottom: 0.1 },
-      }, 
+        // 🚀 PERFECT HEADROOM: Lifts the ceiling higher so the pump candle floats nicely inside the box!
+        scaleMargins: { 
+          top: 0.40,    // Gives massive breathing room at the top so pumps never hit the roof
+          bottom: 0.15  // Keeps the floor tight and clean
+        },
+      },
       crosshair: {
         mode: 1,
         vertLine: { color: '#4B5563', width: 1, style: 2, labelBackgroundColor: '#1F2937' },
@@ -813,11 +817,10 @@ const handleExecuteTrade = async () => {
         priceLineWidth: 1,
         priceLineColor: isPositive ? '#089981' : '#F23645',
         priceLineStyle: 2,
-        priceFormat: {
+       priceFormat: {
           type: 'custom',
-          minMove: 0.000000000001,
           formatter: (price) => {
-            const mcap = price * 1000000000;
+            const mcap = price; // 🚀 FIX: Direct value since chart data is already scaled to Market Cap!
             if (mcap <= 0) return '0.00';
             if (mcap >= 1000000000000) return (mcap / 1000000000000).toFixed(2) + 'T';
             if (mcap >= 1000000000) return (mcap / 1000000000).toFixed(2) + 'B';
@@ -839,11 +842,10 @@ const handleExecuteTrade = async () => {
         priceLineWidth: 1,
         priceLineColor: trendColorHex,
         priceLineStyle: 2,
-        priceFormat: {
+       priceFormat: {
           type: 'custom',
-          minMove: 0.000000000001,
           formatter: (price) => {
-            const mcap = price * 1000000000;
+            const mcap = price; // 🚀 FIX: Direct value since chart data is already scaled to Market Cap!
             if (mcap <= 0) return '0.00';
             if (mcap >= 1000000000000) return (mcap / 1000000000000).toFixed(2) + 'T';
             if (mcap >= 1000000000) return (mcap / 1000000000).toFixed(2) + 'B';
@@ -857,42 +859,53 @@ const handleExecuteTrade = async () => {
 
     const generateChartData = () => {
       let data = [];
-      
+
       // 1. Get real birth time (fallback to 1 hour if somehow missing)
       const nowInSeconds = Math.floor(Date.now() / 1000);
       const rawCreatedAt = displayToken?.created_at || token?.created_at;
       const birthTime = rawCreatedAt ? Math.floor(new Date(rawCreatedAt).getTime() / 1000) : nowInSeconds - 3600;
-      
+
       // 2. Calculate exact token age (minimum 40 seconds to safely draw 40 candles)
       const ageInSeconds = Math.max(40, nowInSeconds - birthTime);
-      
-      // 3. Dynamically space out the 40 mock candles perfectly across the token's real life!
+
+      // 3. Dynamically space out the 40 mock candles
       const spacing = Math.floor(ageInSeconds / 40);
+
+      // Setup initial base price anchored tightly to the current token value (e.g., 90% of current price)
+      let basePrice = liveUsdPrice > 0 ? liveUsdPrice * 0.90 : 2100; 
       
-      let time = birthTime; 
-      let basePrice = initialBasePrice; 
-      
+      // Tight volatility so candles stay grouped nicely like the reference terminal
+      let volatility = basePrice * 0.02;
+
+      // 🚀 THE MISSING LOOP RESTORED: This locks the brackets back into place!
       for (let i = 0; i < 40; i++) {
-        let volatility = basePrice * 0.08;
-        let open = basePrice + (Math.random() - 0.5) * volatility;
-        let close = isPositive ? open + (Math.random() - 0.4) * volatility : open + (Math.random() - 0.6) * volatility; 
+        let open = basePrice;
+        let close = basePrice + (Math.random() - 0.45) * volatility;
         let high = Math.max(open, close) + Math.random() * (volatility * 0.2);
         let low = Math.min(open, close) - Math.random() * (volatility * 0.2);
+
+        let candleTime = birthTime + (i * spacing);
         
-        // Use our dynamic timeframe spacing instead of hardcoded 90!
-        let candleTime = time + (i * spacing);
-        chartType === 'candle' ? data.push({ time: candleTime, open, high, low, close }) : data.push({ time: candleTime, value: close });
+        // 🚀 MULTIPLY BY 1 BILLION: The chart natively reads Market Cap!
+        chartType === 'candle' 
+          ? data.push({ time: candleTime, open: open * 1000000000, high: high * 1000000000, low: low * 1000000000, close: close * 1000000000 }) 
+          : data.push({ time: candleTime, value: close * 1000000000 });
+          
         basePrice = close;
       }
-      
+
       // 🚀 THE LIVE CANDLE: Anchored perfectly to current time
       const safeLivePrice = liveUsdPrice > 0 ? liveUsdPrice : basePrice;
-      const finalTime = time + (40 * spacing);
-      
-      const finalPoint = chartType === 'candle' 
-        ? { time: finalTime, open: basePrice, high: Math.max(basePrice, safeLivePrice), low: Math.min(basePrice, safeLivePrice), close: safeLivePrice } 
-        : { time: finalTime, value: safeLivePrice };
-        
+      const finalTime = birthTime + (40 * spacing);
+
+      // Convert live points to Market Cap before pushing
+      const mcapBase = basePrice * 1000000000;
+      const mcapLive = safeLivePrice * 1000000000;
+
+      const finalPoint = chartType === 'candle'
+        ? { time: finalTime, open: mcapBase, high: Math.max(mcapBase, mcapLive), low: Math.min(mcapBase, mcapLive), close: mcapLive }
+        : { time: finalTime, value: mcapLive };
+
       data.push(finalPoint);
       return data;
     };
@@ -903,7 +916,7 @@ const handleExecuteTrade = async () => {
     const handleResize = () => chart.applyOptions({ width: chartContainerRef.current.clientWidth });
     window.addEventListener('resize', handleResize);
     return () => { window.removeEventListener('resize', handleResize); chart.remove(); };
-  }, [chartTimeframe, chartType, liveUsdPrice, trendColorHex, isPositive, displayToken, token]);
+ }, [chartTimeframe, chartType, liveUsdPrice, trendColorHex, isPositive, displayToken, token]);
 
   const formatLink = (url) => url.startsWith('http') ? url : `https://${url}`;
 
