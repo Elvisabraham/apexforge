@@ -807,12 +807,11 @@ const handleExecuteTrade = async () => {
         priceLineVisible: true,
         priceLineWidth: 1,
         priceLineColor: isPositive ? '#089981' : '#F23645',
-        priceLineStyle: 2,
-        // 🚀 PRO FORMATTER ADDED TO CANDLESTICK
         priceFormat: {
           type: 'custom',
           formatter: (price) => {
-            const estimatedMcap = price * 100000000;
+            // 🚀 1 BILLION SUPPLY MULTIPLIER (Added the missing zero!)
+            const estimatedMcap = price * 1000000000; 
             if (estimatedMcap >= 1000000) return `$${(estimatedMcap / 1000000).toFixed(2)}M`;
             if (estimatedMcap >= 1000) return `$${(estimatedMcap / 1000).toFixed(1)}K`;
             return `$${estimatedMcap.toFixed(0)}`;
@@ -835,7 +834,8 @@ const handleExecuteTrade = async () => {
         priceFormat: {
           type: 'custom',
           formatter: (price) => {
-            const estimatedMcap = price * 100000000;
+            // 🚀 1 BILLION SUPPLY MULTIPLIER (Added the missing zero!)
+            const estimatedMcap = price * 1000000000; 
             if (estimatedMcap >= 1000000) return `$${(estimatedMcap / 1000000).toFixed(2)}M`;
             if (estimatedMcap >= 1000) return `$${(estimatedMcap / 1000).toFixed(1)}K`;
             return `$${estimatedMcap.toFixed(0)}`;
