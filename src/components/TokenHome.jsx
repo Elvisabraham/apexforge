@@ -768,20 +768,67 @@ const handleExecuteTrade = async () => {
     if (!chartContainerRef.current) return;
     const showGrid = chartType === 'candle';
 
-    const chart = createChart(chartContainerRef.current, {
-      layout: { background: { type: 'solid', color: '#0A0A0B' }, textColor: '#D1D5DB', attributionLogo: false },
-      grid: { vertLines: { color: '#1E2028', style: 0, visible: showGrid }, horzLines: { color: '#1E2028', style: 0, visible: showGrid } },
+   const chart = createChart(chartContainerRef.current, {
+      layout: { background: { type: 'solid', color: '#0A0A0B' }, textColor: '#9CA3AF', attributionLogo: false },
+      grid: { 
+        vertLines: { color: '#16161A', style: 1, visible: showGrid }, 
+        horzLines: { color: '#16161A', style: 1, visible: showGrid } 
+      },
       width: chartContainerRef.current.clientWidth,
       height: 320, 
-      timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#1E2028' },
-      rightPriceScale: { borderColor: '#1E2028', visible: true }, 
+      timeScale: { 
+        timeVisible: true, 
+        secondsVisible: false, 
+        borderColor: '#1F2937',
+        fixLeftEdge: true,
+        rightOffset: 5
+      },
+      rightPriceScale: { 
+        borderColor: '#1F2937', 
+        visible: true,
+        scaleMargins: { top: 0.1, bottom: 0.1 },
+        // 🚀 CUSTOM MARKET CAP FORMATTER FOR THE RIGHT AXIS
+        priceFormatter: (price) => {
+          const estimatedMcap = price * 250000;
+          if (estimatedMcap >= 1000000) return `$${(estimatedMcap / 1000000).toFixed(2)}M`;
+          if (estimatedMcap >= 1000) return `$${(estimatedMcap / 1000).toFixed(1)}K`;
+          return `$${estimatedMcap.toFixed(0)}`;
+        }
+      }, 
+      crosshair: {
+        mode: 1,
+        vertLine: { color: '#4B5563', width: 1, style: 2, labelBackgroundColor: '#1F2937' },
+        horzLine: { color: '#4B5563', width: 1, style: 2, labelBackgroundColor: '#1F2937' },
+      }
     });
 
     let series;
     if (chartType === 'candle') {
-      series = chart.addSeries(CandlestickSeries, { upColor: '#089981', downColor: '#F23645', borderVisible: false, wickUpColor: '#089981', wickDownColor: '#F23645' });
+      series = chart.addSeries(CandlestickSeries, { 
+        upColor: '#089981', 
+        downColor: '#F23645', 
+        borderVisible: false, 
+        wickUpColor: '#089981', 
+        wickDownColor: '#F23645',
+        lastValueVisible: true,
+        priceLineVisible: true,
+        priceLineWidth: 1,
+        priceLineColor: isPositive ? '#089981' : '#F23645',
+        priceLineStyle: 2,
+      });
     } else {
-      series = chart.addSeries(AreaSeries, { lineColor: trendColorHex, topColor: isPositive ? 'rgba(8, 153, 129, 0.15)' : 'rgba(242, 54, 69, 0.15)', bottomColor: isPositive ? 'rgba(8, 153, 129, 0.00)' : 'rgba(242, 54, 69, 0.00)', lineWidth: 2, crosshairMarkerRadius: 5 });
+      series = chart.addSeries(AreaSeries, { 
+        lineColor: trendColorHex, 
+        topColor: isPositive ? 'rgba(8, 153, 129, 0.15)' : 'rgba(242, 54, 69, 0.15)', 
+        bottomColor: isPositive ? 'rgba(8, 153, 129, 0.00)' : 'rgba(242, 54, 69, 0.00)', 
+        lineWidth: 2, 
+        crosshairMarkerRadius: 5,
+        lastValueVisible: true,
+        priceLineVisible: true,
+        priceLineWidth: 1,
+        priceLineColor: trendColorHex,
+        priceLineStyle: 2,
+      });
     }
 
     const generateChartData = () => {
