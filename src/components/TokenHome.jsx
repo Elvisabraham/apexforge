@@ -815,7 +815,7 @@ const handleExecuteTrade = async () => {
         priceLineStyle: 2,
         priceFormat: {
           type: 'custom',
-          minMove: 0.00000001,
+          minMove: 0.000000000001,
           formatter: (price) => {
             const mcap = price * 1000000000;
             if (mcap <= 0) return '0.00';
@@ -841,7 +841,7 @@ const handleExecuteTrade = async () => {
         priceLineStyle: 2,
         priceFormat: {
           type: 'custom',
-          minMove: 0.00000001,
+          minMove: 0.000000000001,
           formatter: (price) => {
             const mcap = price * 1000000000;
             if (mcap <= 0) return '0.00';
