@@ -769,13 +769,18 @@ const handleExecuteTrade = async () => {
     const showGrid = chartType === 'candle';
 
   const chart = createChart(chartContainerRef.current, {
-      layout: { background: { type: 'solid', color: '#0A0A0B' }, textColor: '#9CA3AF', attributionLogo: false },
+      layout: { 
+        background: { type: 'solid', color: '#0A0A0B' }, 
+        textColor: '#9CA3AF', 
+        attributionLogo: false,
+        fontSize: 11 // 🚀 1. PRO FONT SIZE: Shrinks the massive green tag
+      },
       grid: { 
         vertLines: { color: '#16161A', style: 1, visible: showGrid }, 
         horzLines: { color: '#16161A', style: 1, visible: showGrid } 
       },
       width: chartContainerRef.current.clientWidth,
-      height: 320, 
+      height: 260, // 🚀 2. NATIVE MOBILE HEIGHT: Fits perfectly on the screen
       timeScale: { 
         timeVisible: true, 
         secondsVisible: false, 
@@ -807,31 +812,19 @@ const handleExecuteTrade = async () => {
         priceLineVisible: true,
         priceLineWidth: 1,
         priceLineColor: isPositive ? '#089981' : '#F23645',
+        priceLineStyle: 2,
         priceFormat: {
           type: 'custom',
           formatter: (price) => {
             const mcap = price * 1000000000;
-            
-            // 1 Trillion and above -> 1.00T, 10.00T
-            if (mcap >= 1000000000000) {
-              return (mcap / 1000000000000).toFixed(2) + 'T';
-            }
-            // 1 Billion and above -> 1.00B, 10.00B, 100.00B
-            if (mcap >= 1000000000) {
-              return (mcap / 1000000000).toFixed(2) + 'B';
-            }
-            // 1 Million up to 999M -> 1.00M, 10.00M, 100.00M
-            if (mcap >= 1000000) {
-              return (mcap / 1000000).toFixed(2) + 'M';
-            }
-            // 10k up to 999k -> 10.00k, 100.00k
-            if (mcap >= 10000) {
-              return (mcap / 1000).toFixed(2) + 'k';
-            }
-            // Below 10k -> 2300.00, 8000.00
+            if (mcap <= 0) return '0.00';
+            if (mcap >= 1000000000000) return (mcap / 1000000000000).toFixed(2) + 'T';
+            if (mcap >= 1000000000) return (mcap / 1000000000).toFixed(2) + 'B';
+            if (mcap >= 1000000) return (mcap / 1000000).toFixed(2) + 'M';
+            if (mcap >= 10000) return (mcap / 1000).toFixed(2) + 'k';
             return mcap.toFixed(2);
           },
-        }
+        },
       });
     } else {
       series = chart.addSeries(AreaSeries, { 
@@ -849,27 +842,14 @@ const handleExecuteTrade = async () => {
           type: 'custom',
           formatter: (price) => {
             const mcap = price * 1000000000;
-            
-            // 1 Trillion and above -> 1.00T, 10.00T
-            if (mcap >= 1000000000000) {
-              return (mcap / 1000000000000).toFixed(2) + 'T';
-            }
-            // 1 Billion and above -> 1.00B, 10.00B, 100.00B
-            if (mcap >= 1000000000) {
-              return (mcap / 1000000000).toFixed(2) + 'B';
-            }
-            // 1 Million up to 999M -> 1.00M, 10.00M, 100.00M
-            if (mcap >= 1000000) {
-              return (mcap / 1000000).toFixed(2) + 'M';
-            }
-            // 10k up to 999k -> 10.00k, 100.00k
-            if (mcap >= 10000) {
-              return (mcap / 1000).toFixed(2) + 'k';
-            }
-            // Below 10k -> 2300.00, 8000.00
+            if (mcap <= 0) return '0.00';
+            if (mcap >= 1000000000000) return (mcap / 1000000000000).toFixed(2) + 'T';
+            if (mcap >= 1000000000) return (mcap / 1000000000).toFixed(2) + 'B';
+            if (mcap >= 1000000) return (mcap / 1000000).toFixed(2) + 'M';
+            if (mcap >= 10000) return (mcap / 1000).toFixed(2) + 'k';
             return mcap.toFixed(2);
           },
-        }
+        },
       });
     }
 
