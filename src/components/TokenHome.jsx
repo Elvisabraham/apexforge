@@ -860,51 +860,25 @@ const handleExecuteTrade = async () => {
     const generateChartData = () => {
       let data = [];
 
-      // 1. Get real birth time (fallback to 1 hour if somehow missing)
       const nowInSeconds = Math.floor(Date.now() / 1000);
       const rawCreatedAt = displayToken?.created_at || token?.created_at;
       const birthTime = rawCreatedAt ? Math.floor(new Date(rawCreatedAt).getTime() / 1000) : nowInSeconds - 3600;
-
-      // 2. Calculate exact token age (minimum 40 seconds to safely draw 40 candles)
-      const ageInSeconds = Math.max(40, nowInSeconds - birthTime);
-
-      // 3. Dynamically space out the 40 mock candles
-      const spacing = Math.floor(ageInSeconds / 40);
-
-      // Setup initial base price anchored tightly to the current token value (e.g., 90% of current price)
-      let basePrice = liveUsdPrice > 0 ? liveUsdPrice * 0.90 : 2100; 
       
-      // Tight volatility so candles stay grouped nicely like the reference terminal
-      let volatility = basePrice * 0.02;
+      const currentMcap = (liveUsdPrice > 0 ? liveUsdPrice : (token?.price || 0.00000023)) * 1000000000;
 
-      // 🚀 THE MISSING LOOP RESTORED: This locks the brackets back into place!
-      for (let i = 0; i < 40; i++) {
-        let open = basePrice;
-        let close = basePrice + (Math.random() - 0.45) * volatility;
-        let high = Math.max(open, close) + Math.random() * (volatility * 0.2);
-        let low = Math.min(open, close) - Math.random() * (volatility * 0.2);
+      // 🚀 THE REAL LAUNCH BASELINE: Starts clean and flat at the exact launch price/market cap
+      data.push({
+        time: birthTime,
+        open: currentMcap,
+        high: currentMcap,
+        low: currentMcap,
+        close: currentMcap,
+      });
 
-        let candleTime = birthTime + (i * spacing);
-        
-        // 🚀 MULTIPLY BY 1 BILLION: The chart natively reads Market Cap!
-        chartType === 'candle' 
-          ? data.push({ time: candleTime, open: open * 1000000000, high: high * 1000000000, low: low * 1000000000, close: close * 1000000000 }) 
-          : data.push({ time: candleTime, value: close * 1000000000 });
-          
-        basePrice = close;
-      }
-
-      // 🚀 THE LIVE CANDLE: Anchored perfectly to current time
-      const safeLivePrice = liveUsdPrice > 0 ? liveUsdPrice : basePrice;
-      const finalTime = birthTime + (40 * spacing);
-
-      // Convert live points to Market Cap before pushing
-      const mcapBase = basePrice * 1000000000;
-      const mcapLive = safeLivePrice * 1000000000;
-
+      // Anchor the live point to present time
       const finalPoint = chartType === 'candle'
-        ? { time: finalTime, open: mcapBase, high: Math.max(mcapBase, mcapLive), low: Math.min(mcapBase, mcapLive), close: mcapLive }
-        : { time: finalTime, value: mcapLive };
+        ? { time: nowInSeconds, open: currentMcap, high: currentMcap, low: currentMcap, close: currentMcap }
+        : { time: nowInSeconds, value: currentMcap };
 
       data.push(finalPoint);
       return data;
