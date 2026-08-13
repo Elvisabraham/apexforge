@@ -768,7 +768,7 @@ const handleExecuteTrade = async () => {
     if (!chartContainerRef.current) return;
     const showGrid = chartType === 'candle';
 
-   const chart = createChart(chartContainerRef.current, {
+  const chart = createChart(chartContainerRef.current, {
       layout: { background: { type: 'solid', color: '#0A0A0B' }, textColor: '#9CA3AF', attributionLogo: false },
       grid: { 
         vertLines: { color: '#16161A', style: 1, visible: showGrid }, 
@@ -834,13 +834,14 @@ const handleExecuteTrade = async () => {
         priceFormat: {
           type: 'custom',
           formatter: (price) => {
-            // 🚀 Scaled up to match your true $2.30K+ Market Cap baseline
-            const estimatedMcap = price * 100000000; 
+            const estimatedMcap = price * 100000000;
             if (estimatedMcap >= 1000000) return `$${(estimatedMcap / 1000000).toFixed(2)}M`;
             if (estimatedMcap >= 1000) return `$${(estimatedMcap / 1000).toFixed(1)}K`;
             return `$${estimatedMcap.toFixed(0)}`;
           },
         },
+      });
+    }
 
     const generateChartData = () => {
       let data = [];
