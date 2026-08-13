@@ -483,6 +483,9 @@ const formatTimeAgo = (timestamp) => {
 
   useEffect(() => {
     const currentToken = displayToken || token || {};
+
+    // 🕵️ THE X-RAY: Let's see exactly what the chart is receiving!
+    console.log("🔍 FULL TOKEN DATA:", currentToken);
     
     // Check token object first
     let rawDate = currentToken.created_at || currentToken.createdAt || currentToken.timestamp;
