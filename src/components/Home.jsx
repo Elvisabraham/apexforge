@@ -78,7 +78,8 @@ export default function Home({
               change: '+0.0%',
               isGraduated: (item.progress || 0) >= 100,
               progress: item.progress || 0,
-              links: item.links || {}
+              links: item.links || {},
+              created_at: item.created_at,
             };
 
             setDbTokens(prev => {
