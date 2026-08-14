@@ -1077,30 +1077,40 @@ const handleExecuteTrade = async () => {
       <div className="flex-1 overflow-y-auto scrollbar-hide relative">
         <div className="flex flex-col w-full pb-8">
           
-         {/* 🚀 INTERACTIVE HEADER TOGGLE: Click to switch between Price and Market Cap */}
-          <div 
-            onClick={() => setDisplayMode(prev => prev === 'price' ? 'mcap' : 'price')}
-            className="cursor-pointer select-none group inline-block w-fit"
-            title="Click to switch between Price and Market Cap"
-          >
-            <span className="text-[38px] sm:text-[44px] font-black tracking-tighter leading-none text-white group-hover:text-emerald-400 transition-colors">
-              {displayMode === 'price' 
-                ? formatProPrice(`$${(liveUsdPrice > 0 ? liveUsdPrice : 0.00000023).toFixed(8)}`)
-                : `MC: $${(liveUsdPrice > 0 ? liveUsdPrice * 1000000000 : 2300).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-              }
-            </span>
-          </div>
+        {/* 🚀 SPACIOUS PADDING & SHORTENED PROFESSIONAL MC FORMATTER */}
+    <div className="flex flex-col px-6 pt-6 pb-3">
+      <div 
+        onClick={() => setDisplayMode(prev => prev === 'price' ? 'mcap' : 'price')}
+        className="cursor-pointer select-none group inline-block w-fit"
+        title="Click to switch between Price and Market Cap"
+      >
+        <span className="text-[38px] sm:text-[44px] font-black tracking-tighter leading-none text-white group-hover:text-emerald-400 transition-colors">
+          {displayMode === 'price' 
+            ? formatProPrice(`$${(liveUsdPrice > 0 ? liveUsdPrice : 0.00000023).toFixed(8)}`)
+            : (() => {
+                const mcapVal = liveUsdPrice > 0 ? liveUsdPrice * 1000000000 : 2300;
+                const formatted = mcapVal >= 1e9 
+                  ? `${(mcapVal / 1e9).toFixed(2)}B` 
+                  : mcapVal >= 1e6 
+                  ? `${(mcapVal / 1e6).toFixed(2)}M` 
+                  : `${(mcapVal / 1e3).toFixed(2)}K`;
+                return `MC: $${formatted}`;
+              })()
+          }
+        </span>
+      </div>
 
-          {/* 🚀 FIX: Dynamic Percentage Color and Math */}
-          <span className={`${isPositiveChange ? 'text-[#00FF66]' : 'text-[#FF3B69]'} font-bold text-xs sm:text-sm flex items-center gap-1 mt-1`}>
-            {isPositiveChange ? '▲' : '▼'} {Math.abs(priceChangePct)}% <span className="text-[#787B86] font-normal">Today</span>
-          </span>
-        </div>
+      {/* 🚀 Dynamic Percentage Color and Math */}
+      <span className={`${isPositiveChange ? 'text-[#00FF66]' : 'text-[#FF3B69]'} font-bold text-xs sm:text-sm flex items-center gap-1 mt-1.5`}>
+        {isPositiveChange ? '▲' : '▼'} {Math.abs(priceChangePct)}% <span className="text-[#787B86] font-normal">Today</span>
+      </span>
+    </div>
 
-        {/* 🚀 CLEAN CHART CONTAINER */}
-        <div className="w-full relative bg-[#0A0A0B] border-y border-white/[0.05]">
-          <div ref={chartContainerRef} className="w-full h-full" />
-        </div>
+    {/* 🚀 CLEAN CHART CONTAINER */}
+    <div className="w-full relative bg-[#0A0A0B] border-y border-white/[0.05]">
+      <div ref={chartContainerRef} className="w-full h-full" />
+    </div>
+    </div>
 
        {/* 📊 PRO-TRADER CHART TOOLBAR (AUTO-POPPING TABS & PINNED SWITCH) */}
 <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.05] bg-[#0A0A0B] w-full">
