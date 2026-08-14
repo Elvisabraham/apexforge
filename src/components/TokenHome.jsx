@@ -864,31 +864,39 @@ const handleExecuteTrade = async () => {
 
     seriesRef.current = series;
 
-     const generateChartData = () => {
+   const generateChartData = () => {
       const launchMcap = 2300; // $2.30K starting floor
       const rawLivePrice = Number(liveUsdPrice);
       const currentMcap = (!isNaN(rawLivePrice) && rawLivePrice > 0) ? rawLivePrice * 1000000000 : launchMcap;
       
-      const rawCreatedAt = displayToken?.created_at || token?.created_at;
       const nowInSeconds = Math.floor(Date.now() / 1000);
+      const rawCreatedAt = displayToken?.created_at || token?.created_at;
       const birthTime = rawCreatedAt 
         ? Math.floor(new Date(rawCreatedAt).getTime() / 1000) 
-        : nowInSeconds - 60;
+        : nowInSeconds - 300; // Default to 5 minutes ago if no birth time
 
-      const interval = 15; 
+      // Dynamic timeframe interval selector
+      let interval = 15;
+      if (chartTimeframe === '1s') interval = 1;
+      else if (chartTimeframe === '1m') interval = 60;
+      else if (chartTimeframe === '5m') interval = 300;
+      else if (chartTimeframe === '15m') interval = 900;
+      else if (chartTimeframe === '1h') interval = 3600;
+      else if (chartTimeframe === 'ALL') interval = Math.max(15, Math.floor((nowInSeconds - birthTime) / 50));
+
       const startTime = birthTime - (birthTime % interval);
-      const endTime = nowInSeconds - (nowInSeconds % interval) + interval; 
+      const endTime = nowInSeconds - (nowInSeconds % interval) + interval;
 
-      // 1. Sanitize and group trades safely
+      // 1. Group real trades into chronological time buckets
       const tradeBuckets = {};
       if (recentTrades && recentTrades.length > 0) {
-        const sortedTrades = [...recentTrades].reverse(); 
+        const sortedTrades = [...recentTrades].reverse(); // Oldest first
         sortedTrades.forEach((trade) => {
           const tradeTimeStr = trade?.created_at || trade?.timestamp || new Date().toISOString();
           const parsedTime = Math.floor(new Date(tradeTimeStr).getTime() / 1000);
           const tradeTime = isNaN(parsedTime) ? nowInSeconds : parsedTime;
           const roundedTime = tradeTime - (tradeTime % interval);
-          
+
           const rawPrice = Number(trade?.usd_price ?? trade?.price ?? trade?.token_price ?? 0.0000023);
           const priceValue = (isNaN(rawPrice) || rawPrice <= 0) ? 0.0000023 : rawPrice;
           const tradeMcap = priceValue * 1000000000;
@@ -903,24 +911,25 @@ const handleExecuteTrade = async () => {
         });
       }
 
-      // 2. Build continuous timeline with NaN protections
+      // 2. Build a continuous, gapless timeline from launch to present
       let data = [];
       let lastClose = launchMcap;
 
       for (let t = startTime; t <= endTime; t += interval) {
         if (tradeBuckets[t]) {
           const candle = tradeBuckets[t];
-          candle.open = isNaN(lastClose) ? launchMcap : lastClose; 
-          candle.high = Math.max(candle.high, candle.open);
-          candle.low = Math.min(candle.low, candle.open);
-          
+          candle.open = lastClose;
+          candle.high = Math.max(candle.high, candle.open, candle.close);
+          candle.low = Math.min(candle.low, candle.open, candle.close);
+
           if (chartType === 'candle') {
             data.push({ time: t, ...candle });
           } else {
             data.push({ time: t, value: candle.close });
           }
-          lastClose = isNaN(candle.close) ? lastClose : candle.close;
+          lastClose = candle.close;
         } else {
+          // Carry the previous price forward smoothly across empty intervals
           if (chartType === 'candle') {
             data.push({ time: t, open: lastClose, high: lastClose, low: lastClose, close: lastClose });
           } else {
@@ -929,15 +938,15 @@ const handleExecuteTrade = async () => {
         }
       }
 
-      // 3. Live price anchor protection
+      // 3. Anchor the final active candle to the live market cap feed
       if (data.length > 0) {
         const last = data.length - 1;
         if (chartType === 'candle') {
-            data[last].high = Math.max(data[last].high, currentMcap);
-            data[last].low = Math.min(data[last].low, currentMcap);
-            data[last].close = currentMcap;
+          data[last].high = Math.max(data[last].high, currentMcap);
+          data[last].low = Math.min(data[last].low, currentMcap);
+          data[last].close = currentMcap;
         } else {
-            data[last].value = currentMcap;
+          data[last].value = currentMcap;
         }
       }
 
