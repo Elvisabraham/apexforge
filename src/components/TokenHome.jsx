@@ -1077,36 +1077,37 @@ const handleExecuteTrade = async () => {
       <div className="flex-1 overflow-y-auto scrollbar-hide relative">
         <div className="flex flex-col w-full pb-8">
           
-        {/* 🚀 SPACIOUS PADDING & SHORTENED PROFESSIONAL MC FORMATTER */}
-    <div className="flex flex-col px-6 pt-6 pb-3">
+   {/* 🚀 BOTH PRICE AND MARKET CAP USE THE SAME FORMATPROPRICE STYLING */}
+    <div className="flex flex-col px-6 pt-1.5 pb-1.5">
       <div 
         onClick={() => setDisplayMode(prev => prev === 'price' ? 'mcap' : 'price')}
         className="cursor-pointer select-none group inline-block w-fit"
         title="Click to switch between Price and Market Cap"
       >
-        <span className="text-[38px] sm:text-[44px] font-black tracking-tighter leading-none text-white group-hover:text-emerald-400 transition-colors">
-          {displayMode === 'price' 
-            ? formatProPrice(`$${(liveUsdPrice > 0 ? liveUsdPrice : 0.00000023).toFixed(8)}`)
-            : (() => {
-                const mcapVal = liveUsdPrice > 0 ? liveUsdPrice * 1000000000 : 2300;
-                const formatted = mcapVal >= 1e9 
-                  ? `${(mcapVal / 1e9).toFixed(2)}B` 
-                  : mcapVal >= 1e6 
-                  ? `${(mcapVal / 1e6).toFixed(2)}M` 
-                  : `${(mcapVal / 1e3).toFixed(2)}K`;
-                return `MC: $${formatted}`;
-              })()
-          }
-        </span>
+        <div className="text-[34px] sm:text-[40px] font-extrabold tracking-tight leading-none text-white group-hover:text-emerald-400 transition-colors flex items-center">
+          {displayMode === 'price' ? (
+            formatProPrice(`$${(liveUsdPrice > 0 ? liveUsdPrice : 0.00000023).toFixed(8)}`)
+          ) : (
+            (() => {
+              const mcapVal = liveUsdPrice > 0 ? liveUsdPrice * 1000000000 : 2300;
+              const formatted = mcapVal >= 1e9 
+                ? `${(mcapVal / 1e9).toFixed(2)}B` 
+                : mcapVal >= 1e6 
+                ? `${(mcapVal / 1e6).toFixed(2)}M` 
+                : `${(mcapVal / 1e3).toFixed(2)}K`;
+              return formatProPrice(`$${formatted}`);
+            })()
+          )}
+        </div>
       </div>
 
-      {/* 🚀 Dynamic Percentage Color and Math */}
-      <span className={`${isPositiveChange ? 'text-[#00FF66]' : 'text-[#FF3B69]'} font-bold text-xs sm:text-sm flex items-center gap-1 mt-1.5`}>
+      {/* Balanced Sub-line */}
+      <span className={`${isPositiveChange ? 'text-[#00FF66]' : 'text-[#FF3B69]'} font-semibold text-xs flex items-center gap-1 mt-1`}>
         {isPositiveChange ? '▲' : '▼'} {Math.abs(priceChangePct)}% <span className="text-[#787B86] font-normal">Today</span>
       </span>
     </div>
 
-    {/* 🚀 CLEAN CHART CONTAINER */}
+    {/* CLEAN CHART CONTAINER */}
     <div className="w-full relative bg-[#0A0A0B] border-y border-white/[0.05]">
       <div ref={chartContainerRef} className="w-full h-full" />
     </div>
