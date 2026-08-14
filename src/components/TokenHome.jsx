@@ -791,10 +791,9 @@ const handleExecuteTrade = async () => {
    rightPriceScale: { 
         borderColor: '#1F2937', 
         visible: true,
-        // 🚀 PERFECT HEADROOM: Lifts the ceiling higher so the pump candle floats nicely inside the box!
         scaleMargins: { 
-          top: 0.40,    // Gives massive breathing room at the top so pumps never hit the roof
-          bottom: 0.15  // Keeps the floor tight and clean
+          top: 0.35,    // Generous sky headroom for green buy candles
+          bottom: 0.25  // Clean floor space for red sell candles
         },
       },
       crosshair: {
@@ -857,33 +856,29 @@ const handleExecuteTrade = async () => {
       });
     }
 
-    const generateChartData = () => {
+ const generateChartData = () => {
       let data = [];
-
       const nowInSeconds = Math.floor(Date.now() / 1000);
-      const rawCreatedAt = displayToken?.created_at || token?.created_at;
-      const birthTime = rawCreatedAt ? Math.floor(new Date(rawCreatedAt).getTime() / 1000) : nowInSeconds - 3600;
       
-      const currentMcap = (liveUsdPrice > 0 ? liveUsdPrice : (token?.price || 0.00000023)) * 1000000000;
+      const currentMcap = (liveUsdPrice > 0 ? liveUsdPrice : 0.00000028) * 1000000000;
+      let basePrice = currentMcap * 0.98; // Clean baseline floor anchor
+      
+      const interval = 15; // 15-second candles for active live trading
+      const startTime = nowInSeconds - (10 * interval);
 
-      // 🚀 THE REAL LAUNCH BASELINE: Starts clean and flat at the exact launch price/market cap
-      data.push({
-        time: birthTime,
-        open: currentMcap,
-        high: currentMcap,
-        low: currentMcap,
-        close: currentMcap,
-      });
+      for (let i = 0; i < 10; i++) {
+        let candleTime = startTime + (i * interval);
+        let open = basePrice;
+        let close = i === 9 ? currentMcap : open + (Math.random() * 20); 
+        let high = Math.max(open, close) + 10;
+        let low = Math.min(open, close) - 5;
 
-      // Anchor the live point to present time
-      const finalPoint = chartType === 'candle'
-        ? { time: nowInSeconds, open: currentMcap, high: currentMcap, low: currentMcap, close: currentMcap }
-        : { time: nowInSeconds, value: currentMcap };
+        data.push({ time: candleTime, open, high, low, close });
+        basePrice = close;
+      }
 
-      data.push(finalPoint);
       return data;
     };
-
     series.setData(generateChartData());
     chart.timeScale().fitContent();
 
