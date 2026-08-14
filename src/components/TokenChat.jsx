@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 
-export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile }) {
+export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile, liveUsdPrice, priceChangePct, isPositiveChange }) {
   
   // 🚀 1. Set up independent local states for the balances
   const [userBalanceSol, setUserBalanceSol] = useState(userBalance || 0);
@@ -364,13 +364,15 @@ const [tradeAmount, setTradeAmount] = useState('');
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex flex-col items-end">
-            <span className="text-sm font-black text-[#00FF66] font-mono">${token?.price || '0.0000'}</span>
-            <span className={`text-[10px] font-black font-mono ${isPnlPositive ? 'text-[#089981]' : 'text-rose-500'}`}>
-              PnL: {userPnlPercent}
-            </span>
-          </div>
+        <div className="flex flex-col items-end">
+          <div className="flex items-center gap-3">
+          <span className={`${isPositiveChange ? 'text-[#00FF66]' : 'text-[#FF3B69]'} font-extrabold text-sm sm:text-base tracking-tight`}>
+            ${(liveUsdPrice > 0 ? liveUsdPrice : 0.00000229).toFixed(8)}
+          </span>
+          <span className={`${isPositiveChange ? 'text-[#00FF66]' : 'text-[#FF3B69]'} flex items-center gap-1 text-[10px] font-semibold mt-0.5`}>
+            {isPositiveChange ? '▲' : '▼'} {Math.abs(priceChangePct || 0).toFixed(2)}% <span className="text-[#787B86] font-normal">24H</span>
+          </span>
+        </div>
           <button 
             onClick={() => setIsBuyModalOpen(true)}
             className={`px-3.5 py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-white shadow-lg transition-colors active:scale-95 ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 shadow-[0_0_15px_rgba(245,158,11,0.3)] text-black' : 'bg-[#089981] hover:bg-[#06806b] shadow-[0_0_15px_rgba(8,153,129,0.3)]'}`}
