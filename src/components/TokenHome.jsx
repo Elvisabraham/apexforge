@@ -865,32 +865,79 @@ const handleExecuteTrade = async () => {
     seriesRef.current = series;
 
      const generateChartData = () => {
-      let data = [];
-      const nowInSeconds = Math.floor(Date.now() / 1000);
+      const launchMcap = 2300; // $2.30K starting floor
+      const rawLivePrice = Number(liveUsdPrice);
+      const currentMcap = (!isNaN(rawLivePrice) && rawLivePrice > 0) ? rawLivePrice * 1000000000 : launchMcap;
       
-      // 🚀 THE ZERO TYPO FIX: 0.0000028 has 5 zeros, mapping correctly to the 2300+ scale
-      const currentMcap = (liveUsdPrice > 0 ? liveUsdPrice : 0.0000028) * 1000000000;
-      const launchMcap = 0.0000023 * 1000000000; // Matches your 2.30K starting floor
+      const rawCreatedAt = displayToken?.created_at || token?.created_at;
+      const nowInSeconds = Math.floor(Date.now() / 1000);
+      const birthTime = rawCreatedAt 
+        ? Math.floor(new Date(rawCreatedAt).getTime() / 1000) 
+        : nowInSeconds - 60;
 
       const interval = 15; 
-      const startTime = nowInSeconds - (10 * interval);
+      const startTime = birthTime - (birthTime % interval);
+      const endTime = nowInSeconds - (nowInSeconds % interval) + interval; 
 
-      // 🚀 THE BLACK SCREEN FIX: TradingView needs a timeline of points to render a grid
-      for (let i = 0; i < 10; i++) {
-        let candleTime = startTime + (i * interval);
-        let isLastCandle = (i === 9);
-        let hasTrades = recentTrades && recentTrades.length > 0;
+      // 1. Sanitize and group trades safely
+      const tradeBuckets = {};
+      if (recentTrades && recentTrades.length > 0) {
+        const sortedTrades = [...recentTrades].reverse(); 
+        sortedTrades.forEach((trade) => {
+          const tradeTimeStr = trade?.created_at || trade?.timestamp || new Date().toISOString();
+          const parsedTime = Math.floor(new Date(tradeTimeStr).getTime() / 1000);
+          const tradeTime = isNaN(parsedTime) ? nowInSeconds : parsedTime;
+          const roundedTime = tradeTime - (tradeTime % interval);
+          
+          const rawPrice = Number(trade?.usd_price ?? trade?.price ?? trade?.token_price ?? 0.0000023);
+          const priceValue = (isNaN(rawPrice) || rawPrice <= 0) ? 0.0000023 : rawPrice;
+          const tradeMcap = priceValue * 1000000000;
 
-        // 9 candles stay flat on the floor. The 10th candle pumps if a trade happened!
-        let open = launchMcap;
-        let close = (hasTrades && isLastCandle) ? currentMcap : launchMcap;
-        let high = Math.max(open, close);
-        let low = Math.min(open, close);
+          if (!tradeBuckets[roundedTime]) {
+            tradeBuckets[roundedTime] = { open: tradeMcap, high: tradeMcap, low: tradeMcap, close: tradeMcap };
+          } else {
+            tradeBuckets[roundedTime].high = Math.max(tradeBuckets[roundedTime].high, tradeMcap);
+            tradeBuckets[roundedTime].low = Math.min(tradeBuckets[roundedTime].low, tradeMcap);
+            tradeBuckets[roundedTime].close = tradeMcap;
+          }
+        });
+      }
 
-        if (chartType === 'candle') {
-          data.push({ time: candleTime, open, high, low, close });
+      // 2. Build continuous timeline with NaN protections
+      let data = [];
+      let lastClose = launchMcap;
+
+      for (let t = startTime; t <= endTime; t += interval) {
+        if (tradeBuckets[t]) {
+          const candle = tradeBuckets[t];
+          candle.open = isNaN(lastClose) ? launchMcap : lastClose; 
+          candle.high = Math.max(candle.high, candle.open);
+          candle.low = Math.min(candle.low, candle.open);
+          
+          if (chartType === 'candle') {
+            data.push({ time: t, ...candle });
+          } else {
+            data.push({ time: t, value: candle.close });
+          }
+          lastClose = isNaN(candle.close) ? lastClose : candle.close;
         } else {
-          data.push({ time: candleTime, value: close });
+          if (chartType === 'candle') {
+            data.push({ time: t, open: lastClose, high: lastClose, low: lastClose, close: lastClose });
+          } else {
+            data.push({ time: t, value: lastClose });
+          }
+        }
+      }
+
+      // 3. Live price anchor protection
+      if (data.length > 0) {
+        const last = data.length - 1;
+        if (chartType === 'candle') {
+            data[last].high = Math.max(data[last].high, currentMcap);
+            data[last].low = Math.min(data[last].low, currentMcap);
+            data[last].close = currentMcap;
+        } else {
+            data[last].value = currentMcap;
         }
       }
 
