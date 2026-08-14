@@ -989,122 +989,122 @@ const handleExecuteTrade = async () => {
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
       `}</style>
-
-      {/* --- UNMOVABLE HEADER --- */}
-      <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-3 sm:px-4 py-2.5 border-b border-white/[0.04] flex items-center justify-between relative gap-1.5">
-       <div className="flex flex-col gap-3 min-w-0 flex-1 py-0.5">
           
-          {/* --- ROW 1: Navigation, Ticker, & Age --- */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button 
-              onClick={(e) => { 
-                e.preventDefault(); e.stopPropagation(); 
-                localStorage.removeItem('apex_mock_state_TKN');
-                localStorage.removeItem('apex_mock_state_TKN_trades');
-                localStorage.removeItem('apex_active_token');
-                if (typeof onBack === 'function') {
-                  onBack();
-                } else {
-                  if (window.history.length > 1) window.history.back();
-                  else window.location.hash = '';
-                }
-              }} 
-              className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-1 -ml-1 shrink-0 relative z-[100] cursor-pointer"
-            >
-              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            
-            <span className="font-black text-white text-base sm:text-lg tracking-tight">${displayToken.symbol}</span>
-            <span className="text-zinc-600">|</span>
-            <div className="text-[10px] text-emerald-400 font-mono flex items-center gap-1.5 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              {formatTimeAgo(displayToken?.created_at || token?.created_at)}
-            </div>
-          </div>
-
-          {/* --- ROW 2: Identity (Logo, Name, & Contract Address) --- */}
-          <div className="flex items-center gap-3 pl-1">
-            {/* Logo with Built-in Fallback for Broken Images */}
-            <div className="w-10 h-10 sm:w-11 sm:h-11 bg-[#1A1A24] border border-white/10 rounded-full flex items-center justify-center text-lg sm:text-xl shrink-0 overflow-hidden shadow-inner">
-              {displayToken.imagePreview ? (
-                <img 
-                  src={displayToken.imagePreview} 
-                  className="w-full h-full object-cover" 
-                  alt="icon" 
-                  onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<span class="text-xl">🪙</span>'; }}
-                />
-              ) : (
-                <span className="select-none">{displayToken.icon}</span>
-              )}
-            </div>
-            
-            {/* Name and Copy Address Block */}
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-1.5">
-                 <span className="text-base sm:text-lg font-black text-white leading-tight tracking-wide truncate">{displayToken.name}</span>
-                 {displayToken.isGraduated && <span className="bg-amber-400/10 text-amber-400 border border-amber-400/20 text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-widest font-black shrink-0">Graduated</span>}
-              </div>
-              <div onClick={() => handleCopyCA('header')} className="flex items-center gap-1 text-[11px] sm:text-[12px] font-bold text-zinc-400 mt-0.5 cursor-pointer hover:text-white transition-colors">
-                <span className="font-mono tracking-tight truncate max-w-[100px] sm:max-w-none bg-white/5 px-1 rounded">{shortCA}</span>
-                <svg className="w-3 h-3 opacity-70 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                {headerCopied && <span className="text-[#089981] text-[9px] font-black tracking-wider ml-1">COPIED</span>}
-              </div>
-            </div>
-          </div>
-
-        </div>
-        
-        {/* RIGHT ACTION BUTTONS */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <header className="flex items-start justify-between px-4 sm:px-6 pt-2 pb-1.5 w-full">
+      {/* LEFT WRAPPER: Stacked Row 1 and Row 2 */}
+      <div className="flex flex-col gap-2">
+        {/* --- ROW 1: Navigation, Ticker, & Age --- */}
+        <div className="flex items-center gap-2 sm:gap-3">
           <button 
-            onClick={() => onOpenLiveModal && onOpenLiveModal()} 
-            className="px-2 py-1 sm:px-2.5 sm:py-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-500 text-[10px] font-black uppercase tracking-widest rounded-xl flex items-center gap-1 hover:bg-rose-500/20 transition-all active:scale-95 shadow-sm cursor-pointer shrink-0"
+            onClick={(e) => { 
+              e.preventDefault(); e.stopPropagation(); 
+              localStorage.removeItem('apex_mock_state_TKN');
+              localStorage.removeItem('apex_mock_state_TKN_trades');
+              localStorage.removeItem('apex_active_token');
+              if (typeof onBack === 'function') {
+                onBack();
+              } else {
+                if (window.history.length > 1) window.history.back();
+                else window.location.hash = '';
+              }
+            }} 
+            className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-1 -ml-1 shrink-0 relative z-[100] cursor-pointer"
           >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-            </span>
-            <span>LIVE</span>
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
           </button>
-          <button onClick={() => setIsShareOpen(true)} className="text-white hover:text-zinc-300 transition-colors p-1"><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-4-6l-4-4-4 4m4-4v13" /></svg></button>
-          <button onClick={() => setIsFavorited(!isFavorited)} className="transition-colors p-1"><svg className={`w-5 h-5 sm:w-6 sm:h-6 ${isFavorited ? 'text-amber-400 fill-amber-400' : 'text-white'}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg></button>
+          
+          <span className="font-black text-white text-base sm:text-lg tracking-tight">${displayToken.symbol}</span>
+          <span className="text-zinc-600">|</span>
+          <div className="text-[10px] text-emerald-400 font-mono flex items-center gap-1.5 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            {formatTimeAgo(displayToken?.created_at || token?.created_at)}
+          </div>
         </div>
-      </header>
+
+        {/* --- ROW 2: Identity (Logo, Name, & Contract Address) --- */}
+        <div className="flex items-center gap-3 pl-1">
+          {/* Logo with Built-in Fallback for Broken Images */}
+          <div className="w-10 h-10 sm:w-11 sm:h-11 bg-[#1A1A24] border border-white/10 rounded-full flex items-center justify-center text-lg sm:text-xl shrink-0 overflow-hidden shadow-inner">
+            {displayToken.imagePreview ? (
+              <img 
+                src={displayToken.imagePreview} 
+                className="w-full h-full object-cover" 
+                alt="icon" 
+                onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<span class="text-xl">🪙</span>'; }}
+              />
+            ) : (
+              <span className="select-none">{displayToken.icon}</span>
+            )}
+          </div>
+          
+          {/* Name and Copy Address Block */}
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-1.5">
+               <span className="text-base sm:text-lg font-black text-white leading-tight tracking-wide truncate">{displayToken.name}</span>
+               {displayToken.isGraduated && <span className="bg-amber-400/10 text-amber-400 border border-amber-400/20 text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-widest font-black shrink-0">Graduated</span>}
+            </div>
+            <div onClick={() => handleCopyCA('header')} className="flex items-center gap-1 text-[11px] sm:text-[12px] font-bold text-zinc-400 mt-0.5 cursor-pointer hover:text-white transition-colors">
+              <span className="font-mono tracking-tight truncate max-w-[100px] sm:max-w-none bg-white/5 px-1 rounded">{shortCA}</span>
+              <svg className="w-3 h-3 opacity-70 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+              {headerCopied && <span className="text-[#089981] text-[9px] font-black tracking-wider ml-1">COPIED</span>}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* RIGHT ACTION BUTTONS (Aligned directly with the Ticker row) */}
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <button 
+          onClick={() => onOpenLiveModal && onOpenLiveModal()} 
+          className="px-2 py-1 sm:px-2.5 sm:py-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-500 text-[10px] font-black uppercase tracking-widest rounded-xl flex items-center gap-1 hover:bg-rose-500/20 transition-all active:scale-95 shadow-sm cursor-pointer shrink-0"
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+          </span>
+          <span>LIVE</span>
+        </button>
+        <button onClick={() => setIsShareOpen(true)} className="text-white hover:text-zinc-300 transition-colors p-1"><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-4-6l-4-4-4 4m4-4v13" /></svg></button>
+        <button onClick={() => setIsFavorited(!isFavorited)} className="transition-colors p-1"><svg className={`w-5 h-5 sm:w-6 sm:h-6 ${isFavorited ? 'text-amber-400 fill-amber-400' : 'text-white'}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg></button>
+      </div>
+    </header>
 
       {/* --- SCROLLABLE CONTENT --- */}
       <div className="flex-1 overflow-y-auto scrollbar-hide relative">
         <div className="flex flex-col w-full pb-8">
           
-   {/* 🚀 BOTH PRICE AND MARKET CAP USE THE SAME FORMATPROPRICE STYLING */}
-    <div className="flex flex-col px-6 pt-1.5 pb-1.5">
-      <div 
-        onClick={() => setDisplayMode(prev => prev === 'price' ? 'mcap' : 'price')}
-        className="cursor-pointer select-none group inline-block w-fit"
-        title="Click to switch between Price and Market Cap"
-      >
-        <div className="text-[34px] sm:text-[40px] font-extrabold tracking-tight leading-none text-white group-hover:text-emerald-400 transition-colors flex items-center">
-          {displayMode === 'price' ? (
-            formatProPrice(`$${(liveUsdPrice > 0 ? liveUsdPrice : 0.00000023).toFixed(8)}`)
-          ) : (
-            (() => {
-              const mcapVal = liveUsdPrice > 0 ? liveUsdPrice * 1000000000 : 2300;
-              const formatted = mcapVal >= 1e9 
-                ? `${(mcapVal / 1e9).toFixed(2)}B` 
-                : mcapVal >= 1e6 
-                ? `${(mcapVal / 1e6).toFixed(2)}M` 
-                : `${(mcapVal / 1e3).toFixed(2)}K`;
-              return formatProPrice(`$${formatted}`);
-            })()
-          )}
+   {/* 🚀 LEFT-ALIGNED ON PAGE, WITH PERCENTAGE PERFECTLY CENTERED UNDER THE PRICE/MC */}
+    <div className="px-6 pt-2 pb-2">
+      <div className="inline-flex flex-col items-center">
+        <div 
+          onClick={() => setDisplayMode(prev => prev === 'price' ? 'mcap' : 'price')}
+          className="cursor-pointer select-none group"
+          title="Click to switch between Price and Market Cap"
+        >
+          <div className="text-[34px] sm:text-[40px] font-extrabold tracking-tight leading-none text-white group-hover:text-emerald-400 transition-colors flex items-center">
+            {displayMode === 'price' ? (
+              formatProPrice(`$${(liveUsdPrice > 0 ? liveUsdPrice : 0.00000023).toFixed(8)}`)
+            ) : (
+              (() => {
+                const mcapVal = liveUsdPrice > 0 ? liveUsdPrice * 1000000000 : 2300;
+                const formatted = mcapVal >= 1e9 
+                  ? `${(mcapVal / 1e9).toFixed(2)}B` 
+                  : mcapVal >= 1e6 
+                  ? `${(mcapVal / 1e6).toFixed(2)}M` 
+                  : `${(mcapVal / 1e3).toFixed(2)}K`;
+                return formatProPrice(`$${formatted}`);
+              })()
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Balanced Sub-line */}
-      <span className={`${isPositiveChange ? 'text-[#00FF66]' : 'text-[#FF3B69]'} font-semibold text-xs flex items-center gap-1 mt-1`}>
-        {isPositiveChange ? '▲' : '▼'} {Math.abs(priceChangePct)}% <span className="text-[#787B86] font-normal">Today</span>
-      </span>
+        {/* Centered 24H Percentage Sub-line */}
+        <span className={`${isPositiveChange ? 'text-[#00FF66]' : 'text-[#FF3B69]'} font-semibold text-xs flex items-center gap-1.5 mt-1`}>
+          {isPositiveChange ? '▲' : '▼'} {Math.abs(priceChangePct)}% <span className="text-[#787B86] font-normal">24H</span>
+        </span>
+      </div>
     </div>
 
     {/* CLEAN CHART CONTAINER */}
