@@ -132,6 +132,7 @@ const formatTimeAgo = (timestamp) => {
   const connectedAddress = publicKey ? publicKey.toBase58() : null;
 
   const chartContainerRef = useRef(null);
+  const seriesRef = useRef(null);
   const [chartTimeframe, setChartTimeframe] = useState('1d');
   const [chartType, setChartType] = useState('candle'); // 🚀 FIX: Defaults to candlestick!
   const [isFavorited, setIsFavorited] = useState(false);
@@ -463,10 +464,14 @@ const formatTimeAgo = (timestamp) => {
     setLiveUsdPrice(calculatedUsdPrice);
   }, [calculatedUsdPrice]);
 
- // 🟢 Dynamic Session Open Baseline (Triggers Doom Red on Dips)
+// 🚀 PERMANENT FLOOR LOCK: Disables live overrides and locks the baseline to the bottom floor (2240)
   const [baselinePrice, setBaselinePrice] = useState(() => {
-    const saved = localStorage.getItem(`baseline_${displayToken?.symbol || 'token'}`);
-    return saved ? parseFloat(saved) : (calculatedUsdPrice || (30 / 1000000000) * 76.50);
+    const key = `baseline_${displayToken?.symbol || 'token'}`;
+    // Force clean slate by ignoring old localStorage values that stored the live price
+    localStorage.removeItem(key);
+    
+    // Explicitly lock the baseline to the bottom chart floor where candles begin
+    return 2240; 
   });
 
   // Lock in the session baseline once live price hydrates
@@ -788,12 +793,13 @@ const handleExecuteTrade = async () => {
         fixLeftEdge: true,
         rightOffset: 5
       },
-   rightPriceScale: { 
+    rightPriceScale: { 
         borderColor: '#1F2937', 
         visible: true,
+        autoScale: true,
         scaleMargins: { 
-          top: 0.35,    // Generous sky headroom for green buy candles
-          bottom: 0.25  // Clean floor space for red sell candles
+          top: 0.75,    // 75% sky: Massive headroom, but doesn't crush the candles
+          bottom: 0.12  // 12% floor: Lifts the 2280 line up just enough to reveal that empty space below it!
         },
       },
       crosshair: {
@@ -856,25 +862,36 @@ const handleExecuteTrade = async () => {
       });
     }
 
- const generateChartData = () => {
+    seriesRef.current = series;
+
+     const generateChartData = () => {
       let data = [];
       const nowInSeconds = Math.floor(Date.now() / 1000);
       
-      const currentMcap = (liveUsdPrice > 0 ? liveUsdPrice : 0.00000028) * 1000000000;
-      let basePrice = currentMcap * 0.98; // Clean baseline floor anchor
-      
-      const interval = 15; // 15-second candles for active live trading
+      // 🚀 THE ZERO TYPO FIX: 0.0000028 has 5 zeros, mapping correctly to the 2300+ scale
+      const currentMcap = (liveUsdPrice > 0 ? liveUsdPrice : 0.0000028) * 1000000000;
+      const launchMcap = 0.0000023 * 1000000000; // Matches your 2.30K starting floor
+
+      const interval = 15; 
       const startTime = nowInSeconds - (10 * interval);
 
+      // 🚀 THE BLACK SCREEN FIX: TradingView needs a timeline of points to render a grid
       for (let i = 0; i < 10; i++) {
         let candleTime = startTime + (i * interval);
-        let open = basePrice;
-        let close = i === 9 ? currentMcap : open + (Math.random() * 20); 
-        let high = Math.max(open, close) + 10;
-        let low = Math.min(open, close) - 5;
+        let isLastCandle = (i === 9);
+        let hasTrades = recentTrades && recentTrades.length > 0;
 
-        data.push({ time: candleTime, open, high, low, close });
-        basePrice = close;
+        // 9 candles stay flat on the floor. The 10th candle pumps if a trade happened!
+        let open = launchMcap;
+        let close = (hasTrades && isLastCandle) ? currentMcap : launchMcap;
+        let high = Math.max(open, close);
+        let low = Math.min(open, close);
+
+        if (chartType === 'candle') {
+          data.push({ time: candleTime, open, high, low, close });
+        } else {
+          data.push({ time: candleTime, value: close });
+        }
       }
 
       return data;
@@ -886,6 +903,19 @@ const handleExecuteTrade = async () => {
     window.addEventListener('resize', handleResize);
     return () => { window.removeEventListener('resize', handleResize); chart.remove(); };
  }, [chartTimeframe, chartType, liveUsdPrice, trendColorHex, isPositive, displayToken, token]);
+
+ // 🚀 DYNAMIC TREND COLORS: Forces the horizontal line and price label to turn Red or Green
+  useEffect(() => {
+    if (seriesRef.current && baselinePrice) {
+      // Check if the live price has dropped below the locked starting floor
+      const isDown = calculatedUsdPrice < (baselinePrice / 1000000000); 
+      
+      seriesRef.current.applyOptions({
+        priceLineColor: isDown ? '#ef4444' : '#10b981', // Red if dumping, Green if pumping
+        crosshairMarkerBorderColor: isDown ? '#ef4444' : '#10b981',
+      });
+    }
+  }, [calculatedUsdPrice, baselinePrice]);
 
   const formatLink = (url) => url.startsWith('http') ? url : `https://${url}`;
 
