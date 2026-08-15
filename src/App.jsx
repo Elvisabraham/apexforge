@@ -379,6 +379,11 @@ function AppContent() {
             selectedTokenData?.balance || 
             0
           }
+
+            liveUsdPrice={selectedTokenData?.price || selectedTokenData?.usd_price || 0}
+            priceChangePct={selectedTokenData?.priceChange24h || selectedTokenData?.price_change_24h || 0}
+            isPositiveChange={(selectedTokenData?.priceChange24h || selectedTokenData?.price_change_24h || 0) >= 0}
+      
           onOpenProfile={handleOpenPublicProfile}
           onOpenTrade={handleOpenTradePortal}
         />

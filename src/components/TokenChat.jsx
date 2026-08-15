@@ -9,6 +9,51 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
  
  const [displayMode, setDisplayMode] = useState('price'); 
 
+ // 🚀 THE MINI-ENGINE: Fetches live trades and calculates exact bonding curve price!
+  const [realUsdPrice, setRealUsdPrice] = useState(liveUsdPrice || 0);
+  const [realPriceChangePct, setRealPriceChangePct] = useState(priceChangePct || 0);
+  const [realIsPositive, setRealIsPositive] = useState(isPositiveChange || true);
+
+  useEffect(() => {
+    if (!token?.mintAddress) return;
+
+    const fetchLiveTicker = async () => {
+      const { data: trades } = await supabase
+        .from('trades')
+        .select('sol_amount')
+        .eq('token_mint', token.mintAddress);
+
+      if (trades) {
+        const currentSolPrice = 76.50;
+        const liveVolumeSol = trades.reduce((sum, t) => sum + (parseFloat(t.sol_amount) || 0), 0);
+
+        // Exactly matching your TokenHome Bonding Curve!
+        const virtualSolReserves = (30 * 1e9) + (liveVolumeSol * 1e9);
+        const virtualTokenReserves = 1_000_000_000 * 1e9; // 9 Decimals
+
+        const livePriceUsd = (virtualSolReserves / virtualTokenReserves) * currentSolPrice;
+        const basePriceUsd = ((30 * 1e9) / virtualTokenReserves) * currentSolPrice;
+        const pctChange = ((livePriceUsd - basePriceUsd) / basePriceUsd) * 100;
+
+        setRealUsdPrice(livePriceUsd);
+        setRealPriceChangePct(pctChange);
+        setRealIsPositive(pctChange >= 0);
+      }
+    };
+
+    fetchLiveTicker(); // Run immediately on load
+
+    // 📡 Listen for live trades from the blockchain/database instantly!
+    const channel = supabase
+      .channel('chat-ticker')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `token_mint=eq.${token.mintAddress}` }, () => {
+        fetchLiveTicker();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [token]);
+
   // 🚀 1. Set up independent local states for the balances
   const [userBalanceSol, setUserBalanceSol] = useState(userBalance || 0);
   const [userTokenBalance, setUserTokenBalance] = useState(0);
@@ -369,20 +414,20 @@ const [tradeAmount, setTradeAmount] = useState('');
         {/* Outer wrapper to align the Price block and Trade button perfectly side-by-side */}
     <div className="flex items-center gap-3">
       
-      {/* 🚀 DYNAMIC TOGGLE: PRICE & MARKET CAP (Fixed Colors & Formatting) */}
+      {/* 🚀 DYNAMIC TOGGLE: PRICE & MARKET CAP (Wired to the Mini-Engine!) */}
       <div className="flex flex-col items-end shrink-0">
         <div 
           onClick={() => setDisplayMode(prev => prev === 'price' ? 'mcap' : 'price')}
           className="cursor-pointer select-none group"
           title="Click to switch between Price and Market Cap"
         >
-          {/* TEXT IS NOW WHITE, HOVERS TO EMERALD, AND USES FORMATPROPRICE FOR A CLEAN DOLLAR SIGN */}
           <div className="text-white font-extrabold text-sm sm:text-base tracking-tight group-hover:text-emerald-400 transition-colors flex items-center justify-end">
             {displayMode === 'price' ? (
-              formatProPrice(`$${(liveUsdPrice > 0 ? liveUsdPrice : 0.00000229).toFixed(8)}`)
+              formatProPrice(`$${(Number(realUsdPrice) > 0 ? Number(realUsdPrice) : 0.00000229).toFixed(8)}`)
             ) : (
               (() => {
-                const mcapVal = liveUsdPrice > 0 ? liveUsdPrice * 1000000000 : 2300;
+                const numPrice = Number(realUsdPrice) > 0 ? Number(realUsdPrice) : 0.00000229;
+                const mcapVal = numPrice * 1000000000;
                 const formatted = mcapVal >= 1e9 
                   ? `${(mcapVal / 1e9).toFixed(2)}B` 
                   : mcapVal >= 1e6 
@@ -394,9 +439,9 @@ const [tradeAmount, setTradeAmount] = useState('');
           </div>
         </div>
         
-        {/* 24H Percentage (Aligned to the right edge against the Trade button) */}
+        {/* 24H Percentage (Forced to mirror App.jsx perfectly) */}
         <span className={`${isPositiveChange ? 'text-[#00FF66]' : 'text-[#FF3B69]'} flex items-center gap-1 text-[10px] font-semibold mt-0.5 justify-end`}>
-          {isPositiveChange ? '▲' : '▼'} {Math.abs(priceChangePct || 0).toFixed(2)}% <span className="text-[#787B86] font-normal">24H</span>
+          {isPositiveChange ? '▲' : '▼'} {Math.abs(Number(priceChangePct) || 0).toFixed(2)}% <span className="text-[#787B86] font-normal">24H</span>
         </span>
       </div>
           <button 
