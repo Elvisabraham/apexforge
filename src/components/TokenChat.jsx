@@ -14,25 +14,32 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [realPriceChangePct, setRealPriceChangePct] = useState(priceChangePct || 0);
   const [realIsPositive, setRealIsPositive] = useState(isPositiveChange || true);
 
-  useEffect(() => {
+ useEffect(() => {
     if (!token?.mintAddress) return;
 
     const fetchLiveTicker = async () => {
+      // 🚀 Grab both amount AND type (to separate buys from sells)
       const { data: trades } = await supabase
         .from('trades')
-        .select('sol_amount')
+        .select('sol_amount, type')
         .eq('token_mint', token.mintAddress);
 
       if (trades) {
         const currentSolPrice = 76.50;
-        const liveVolumeSol = trades.reduce((sum, t) => sum + (parseFloat(t.sol_amount) || 0), 0);
 
-        // Exactly matching your TokenHome Bonding Curve!
-        const virtualSolReserves = (30 * 1e9) + (liveVolumeSol * 1e9);
+        // 🧮 TRUE NET RESERVES: Add Buys, Subtract Sells
+        const netSolInCurve = trades.reduce((sum, t) => {
+          const amount = parseFloat(t.sol_amount) || 0;
+          return t.type === 'sell' ? sum - amount : sum + amount;
+        }, 0);
+
+        const virtualSolReserves = (30 * 1e9) + (netSolInCurve * 1e9);
         const virtualTokenReserves = 1_000_000_000 * 1e9; // 9 Decimals
 
         const livePriceUsd = (virtualSolReserves / virtualTokenReserves) * currentSolPrice;
         const basePriceUsd = ((30 * 1e9) / virtualTokenReserves) * currentSolPrice;
+        
+        // Absolute percentage change from launch (Will never wipe to 0%!)
         const pctChange = ((livePriceUsd - basePriceUsd) / basePriceUsd) * 100;
 
         setRealUsdPrice(livePriceUsd);
@@ -41,9 +48,8 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
       }
     };
 
-    fetchLiveTicker(); // Run immediately on load
+    fetchLiveTicker();
 
-    // 📡 Listen for live trades from the blockchain/database instantly!
     const channel = supabase
       .channel('chat-ticker')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `token_mint=eq.${token.mintAddress}` }, () => {
@@ -53,7 +59,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
     return () => { supabase.removeChannel(channel); };
   }, [token]);
-
+  
   // 🚀 1. Set up independent local states for the balances
   const [userBalanceSol, setUserBalanceSol] = useState(userBalance || 0);
   const [userTokenBalance, setUserTokenBalance] = useState(0);
