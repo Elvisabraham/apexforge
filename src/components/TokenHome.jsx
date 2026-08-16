@@ -1082,22 +1082,12 @@ const handleExecuteTrade = async () => {
           className="cursor-pointer select-none group"
           title="Click to switch between Price and Market Cap"
         >
-          <div className="text-[34px] sm:text-[40px] font-extrabold tracking-tight leading-none text-white group-hover:text-emerald-400 transition-colors flex items-center">
+         <div className="text-[34px] sm:text-[40px] font-extrabold tracking-tight leading-none text-white group-hover:text-emerald-400 transition-colors flex items-center">
             {displayMode === 'price' ? (
-              formatProPrice(`$${(liveUsdPrice > 0 ? liveUsdPrice : 0.00000023).toFixed(8)}`)
+              formatProPrice(`$${(liveUsdPrice > 0 ? liveUsdPrice : 0.00000229).toFixed(8)}`)
             ) : (
-              (() => {
-                const mcapVal = liveUsdPrice > 0 ? liveUsdPrice * 1000000000 : 2300;
-                
-                // 🚀 FIXED ROUNDING: Forces JavaScript to correctly round 2.295 up to 2.30!
-                const formatted = mcapVal >= 1e9 
-                  ? `${(Math.round((mcapVal / 1e9) * 100) / 100).toFixed(2)}B` 
-                  : mcapVal >= 1e6 
-                  ? `${(Math.round((mcapVal / 1e6) * 100) / 100).toFixed(2)}M` 
-                  : `${(Math.round((mcapVal / 1e3) * 100) / 100).toFixed(2)}K`;
-                  
-                return formatProPrice(`$${formatted}`);
-              })()
+              // 🚀 ULTIMATE FIX: Just copy the exact string the Stats Card uses!
+              dynamicMarketCapString
             )}
           </div>
         </div>
