@@ -1084,7 +1084,8 @@ const handleExecuteTrade = async () => {
         >
          <div className="text-[34px] sm:text-[40px] font-extrabold tracking-tight leading-none text-white group-hover:text-emerald-400 transition-colors flex items-center">
             {displayMode === 'price' ? (
-              formatProPrice(`$${(liveUsdPrice > 0 ? liveUsdPrice : 0.00000229).toFixed(8)}`)
+              // 🚀 FIXED ROUNDING: Forces JS to correctly round 0.000002295 up to 0.00000230!
+              formatProPrice(`$${(Math.round((liveUsdPrice > 0 ? liveUsdPrice : 0.000002295) * 100000000) / 100000000).toFixed(8)}`)
             ) : (
               // 🚀 ULTIMATE FIX: Just copy the exact string the Stats Card uses!
               dynamicMarketCapString
