@@ -1088,11 +1088,14 @@ const handleExecuteTrade = async () => {
             ) : (
               (() => {
                 const mcapVal = liveUsdPrice > 0 ? liveUsdPrice * 1000000000 : 2300;
+                
+                // 🚀 FIXED ROUNDING: Forces JavaScript to correctly round 2.295 up to 2.30!
                 const formatted = mcapVal >= 1e9 
-                  ? `${(mcapVal / 1e9).toFixed(2)}B` 
+                  ? `${(Math.round((mcapVal / 1e9) * 100) / 100).toFixed(2)}B` 
                   : mcapVal >= 1e6 
-                  ? `${(mcapVal / 1e6).toFixed(2)}M` 
-                  : `${(mcapVal / 1e3).toFixed(2)}K`;
+                  ? `${(Math.round((mcapVal / 1e6) * 100) / 100).toFixed(2)}M` 
+                  : `${(Math.round((mcapVal / 1e3) * 100) / 100).toFixed(2)}K`;
+                  
                 return formatProPrice(`$${formatted}`);
               })()
             )}
