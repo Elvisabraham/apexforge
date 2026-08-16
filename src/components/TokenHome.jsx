@@ -1084,11 +1084,11 @@ const handleExecuteTrade = async () => {
         >
          <div className="text-[34px] sm:text-[40px] font-extrabold tracking-tight leading-none text-white group-hover:text-emerald-400 transition-colors flex items-center">
             {displayMode === 'price' ? (
-              // 🚀 FIXED ROUNDING: Forces JS to correctly round 0.000002295 up to 0.00000230!
-              formatProPrice(`$${(Math.round((liveUsdPrice > 0 ? liveUsdPrice : 0.000002295) * 100000000) / 100000000).toFixed(8)}`)
+              // 🚀 THE MICRO-FRACTION FIX: Counters JavaScript's floating-point precision error!
+              formatProPrice(`$${(Math.round((liveUsdPrice > 0 ? liveUsdPrice + 0.0000000001 : 0.00000230) * 100000000) / 100000000).toFixed(8)}`)
             ) : (
-              // 🚀 ULTIMATE FIX: Just copy the exact string the Stats Card uses!
-              dynamicMarketCapString
+              // 🚀 WRAPPED IN formatProPrice SO THE DOLLAR SIGN MATCHES EXACTLY!
+              formatProPrice(dynamicMarketCapString)
             )}
           </div>
         </div>
