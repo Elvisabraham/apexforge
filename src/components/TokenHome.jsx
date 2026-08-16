@@ -952,14 +952,51 @@ const handleExecuteTrade = async () => {
 
       return data;
     };
-    series.setData(generateChartData());
-    chart.timeScale().fitContent();
 
-    const handleResize = () => chart.applyOptions({ width: chartContainerRef.current.clientWidth });
-    window.addEventListener('resize', handleResize);
-    return () => { window.removeEventListener('resize', handleResize); chart.remove(); };
- }, [chartTimeframe, chartType, liveUsdPrice, trendColorHex, isPositive, displayToken, token]);
+ // 🚀 1. INTERCEPT DATA: Get raw Market Cap data from your engine
+        const rawData = generateChartData();
+        
+        // 🚀 2. THE SYNCER: Converts MC to Price on the fly based on the toggle!
+        const syncedData = rawData.map(point => {
+          if (displayMode === 'price') {
+            return point.value !== undefined 
+              ? { ...point, value: point.value / 1000000000 }
+              : { ...point, open: point.open / 1000000000, high: point.high / 1000000000, low: point.low / 1000000000, close: point.close / 1000000000 };
+          }
+          return point;
+        });
 
+        // 🚀 3. DYNAMIC Y-AXIS: Adds padding spaces and strips dead zeros so it breathes!
+        series.applyOptions({
+          priceFormat: {
+            type: 'custom',
+            minMove: displayMode === 'price' ? 0.00000001 : 0.01,
+            formatter: (rawPrice) => {
+              if (displayMode === 'price') {
+                const price = rawPrice + 0.0000000001; 
+                // 🚀 parseFloat deletes dead zeros, and the extra spaces push it off the screen edge!
+                return ` $${parseFloat(price.toFixed(10))} `; 
+              } else {
+                const price = rawPrice + 0.0001; 
+                if (price >= 1e9) return ` $${(Math.round((price / 1e9) * 100) / 100).toFixed(2)}B `;
+                if (price >= 1e6) return ` $${(Math.round((price / 1e6) * 100) / 100).toFixed(2)}M `;
+                if (price >= 1e3) return ` $${(Math.round((price / 1e3) * 100) / 100).toFixed(2)}K `;
+                return ` $${(Math.round(price * 100) / 100).toFixed(2)} `;
+              }
+            }
+          }
+        });
+
+        series.setData(syncedData);
+        chart.timeScale().fitContent();
+
+        const handleResize = () => chart.applyOptions({ width: chartContainerRef.current.clientWidth });
+        window.addEventListener('resize', handleResize);
+        return () => { window.removeEventListener('resize', handleResize); chart.remove(); };
+        
+      // 🚀 4. ADDED displayMode BELOW SO THE CHART REDRAWS INSTANTLY ON CLICK!
+      }, [chartTimeframe, chartType, liveUsdPrice, trendColorHex, isPositive, displayToken, token, displayMode]);
+      
  // 🚀 DYNAMIC TREND COLORS: Forces the horizontal line and price label to turn Red or Green
   useEffect(() => {
     if (seriesRef.current && baselinePrice) {
