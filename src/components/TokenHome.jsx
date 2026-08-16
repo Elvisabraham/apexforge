@@ -966,22 +966,23 @@ const handleExecuteTrade = async () => {
           return point;
         });
 
-        // 🚀 3. DYNAMIC Y-AXIS: Adds padding spaces and strips dead zeros so it breathes!
+        // 🚀 3. DYNAMIC Y-AXIS: Independent rounding fixes for BOTH modes!
         series.applyOptions({
           priceFormat: {
             type: 'custom',
             minMove: displayMode === 'price' ? 0.00000001 : 0.01,
             formatter: (rawPrice) => {
               if (displayMode === 'price') {
+                // 🚀 PRICE MICRO-BUMP
                 const price = rawPrice + 0.0000000001; 
-                // 🚀 parseFloat deletes dead zeros, and the extra spaces push it off the screen edge!
-                return ` $${parseFloat(price.toFixed(10))} `; 
+                return `$${(Math.round(price * 100000000) / 100000000).toFixed(8)}`;
               } else {
+                // 🚀 MARKET CAP MICRO-BUMP: Forces 2.295 up to 2.30K!
                 const price = rawPrice + 0.0001; 
-                if (price >= 1e9) return ` $${(Math.round((price / 1e9) * 100) / 100).toFixed(2)}B `;
-                if (price >= 1e6) return ` $${(Math.round((price / 1e6) * 100) / 100).toFixed(2)}M `;
-                if (price >= 1e3) return ` $${(Math.round((price / 1e3) * 100) / 100).toFixed(2)}K `;
-                return ` $${(Math.round(price * 100) / 100).toFixed(2)} `;
+                if (price >= 1e9) return `$${(Math.round((price / 1e9) * 100) / 100).toFixed(2)}B`;
+                if (price >= 1e6) return `$${(Math.round((price / 1e6) * 100) / 100).toFixed(2)}M`;
+                if (price >= 1e3) return `$${(Math.round((price / 1e3) * 100) / 100).toFixed(2)}K`;
+                return `$${(Math.round(price * 100) / 100).toFixed(2)}`;
               }
             }
           }
