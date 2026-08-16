@@ -26,11 +26,13 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
       if (trades) {
         const currentSolPrice = 76.50;
 
-        // 1. Get Net SOL
-        const netSolInCurve = trades.reduce((sum, t) => {
+       // 🧮 TRUE NET RESERVES (MINUS 1% SMART CONTRACT PROTOCOL FEE!)
+        const rawNetSol = trades.reduce((sum, t) => {
           const amount = parseFloat(t.sol_amount) || 0;
           return t.type === 'sell' ? sum - amount : sum + amount;
         }, 0);
+
+        const netSolInCurve = rawNetSol * 0.99; // 🚀 Deduct the 1% fee so it matches TokenHome perfectly!
 
         // 2. 🚀 EXACT AMM BONDING CURVE MATH (Mirrors TokenHome)
         const currentVirtualSol = (30 + netSolInCurve) * 1e9;
