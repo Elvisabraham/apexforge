@@ -484,10 +484,9 @@ const formatTimeAgo = (timestamp) => {
     }
   }, [calculatedUsdPrice, displayToken?.symbol]);
 
-  // Calculate rolling percentage change
-  const priceChangePct = baselinePrice > 0 
-    ? (((liveUsdPrice - baselinePrice) / baselinePrice) * 100).toFixed(2) 
-    : '0.00';
+  // 🚀 Calculate absolute percentage change from launch (No more 0% wipes!)
+  const basePriceUsd = ((30 * 1e9) / (1_000_000_000 * 1e9)) * 76.50;
+  const priceChangePct = (((liveUsdPrice - basePriceUsd) / basePriceUsd) * 100).toFixed(2);
   const isPositiveChange = Number(priceChangePct) >= 0;
 
   // Calculate total Volume by adding up all SOL in recent trades
