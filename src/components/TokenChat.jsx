@@ -18,7 +18,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     if (!token?.mintAddress) return;
 
     const fetchLiveTicker = async () => {
-      // 🚀 Grab both amount AND type (to separate buys from sells)
       const { data: trades } = await supabase
         .from('trades')
         .select('sol_amount, type')
@@ -27,19 +26,26 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
       if (trades) {
         const currentSolPrice = 76.50;
 
-        // 🧮 TRUE NET RESERVES: Add Buys, Subtract Sells
+        // 1. Get Net SOL
         const netSolInCurve = trades.reduce((sum, t) => {
           const amount = parseFloat(t.sol_amount) || 0;
           return t.type === 'sell' ? sum - amount : sum + amount;
         }, 0);
 
-        const virtualSolReserves = (30 * 1e9) + (netSolInCurve * 1e9);
-        const virtualTokenReserves = 1_000_000_000 * 1e9; // 9 Decimals
-
-        const livePriceUsd = (virtualSolReserves / virtualTokenReserves) * currentSolPrice;
-        const basePriceUsd = ((30 * 1e9) / virtualTokenReserves) * currentSolPrice;
+        // 2. 🚀 EXACT AMM BONDING CURVE MATH (Mirrors TokenHome)
+        const currentVirtualSol = (30 + netSolInCurve) * 1e9;
+        const invariantK = (30 * 1e9) * (1_000_000_000 * 1e6);
+        const currentVirtualTokens = invariantK / currentVirtualSol;
         
-        // Absolute percentage change from launch (Will never wipe to 0%!)
+        const calculatedSpotPriceSol = (currentVirtualSol / 1e9) / (currentVirtualTokens / 1e6);
+        const livePriceUsd = calculatedSpotPriceSol * currentSolPrice;
+
+        // 3. Calculate True Base Price for Accurate Percentage
+        const baseVirtualSol = 30 * 1e9;
+        const baseVirtualTokens = invariantK / baseVirtualSol;
+        const baseSpotPriceSol = (baseVirtualSol / 1e9) / (baseVirtualTokens / 1e6);
+        const basePriceUsd = baseSpotPriceSol * currentSolPrice;
+        
         const pctChange = ((livePriceUsd - basePriceUsd) / basePriceUsd) * 100;
 
         setRealUsdPrice(livePriceUsd);
@@ -59,7 +65,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
     return () => { supabase.removeChannel(channel); };
   }, [token]);
-  
+
   // 🚀 1. Set up independent local states for the balances
   const [userBalanceSol, setUserBalanceSol] = useState(userBalance || 0);
   const [userTokenBalance, setUserTokenBalance] = useState(0);
@@ -420,7 +426,7 @@ const [tradeAmount, setTradeAmount] = useState('');
         {/* Outer wrapper to align the Price block and Trade button perfectly side-by-side */}
     <div className="flex items-center gap-3">
       
-      {/* 🚀 DYNAMIC TOGGLE: PRICE & MARKET CAP (Wired to the Mini-Engine!) */}
+     {/* 🚀 DYNAMIC TOGGLE: PRICE & MARKET CAP (Wired to the Mini-Engine!) */}
       <div className="flex flex-col items-end shrink-0">
         <div 
           onClick={() => setDisplayMode(prev => prev === 'price' ? 'mcap' : 'price')}
@@ -445,9 +451,9 @@ const [tradeAmount, setTradeAmount] = useState('');
           </div>
         </div>
         
-        {/* 24H Percentage (Forced to mirror App.jsx perfectly) */}
-        <span className={`${isPositiveChange ? 'text-[#00FF66]' : 'text-[#FF3B69]'} flex items-center gap-1 text-[10px] font-semibold mt-0.5 justify-end`}>
-          {isPositiveChange ? '▲' : '▼'} {Math.abs(Number(priceChangePct) || 0).toFixed(2)}% <span className="text-[#787B86] font-normal">24H</span>
+        {/* 24H Percentage (Wired to TRUE REAL values to prevent 0.00% wipe) */}
+        <span className={`${realIsPositive ? 'text-[#00FF66]' : 'text-[#FF3B69]'} flex items-center gap-1 text-[10px] font-semibold mt-0.5 justify-end`}>
+          {realIsPositive ? '▲' : '▼'} {Math.abs(Number(realPriceChangePct) || 0).toFixed(2)}% <span className="text-[#787B86] font-normal">24H</span>
         </span>
       </div>
           <button 
