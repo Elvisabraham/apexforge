@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
-import { ConnectionProvider, WalletProvider, useAnchorWallet } from '@solana/wallet-adapter-react';
+import { ConnectionProvider, WalletProvider, useAnchorWallet, useConnection } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { clusterApiUrl } from '@solana/web3.js';
 import { Program, AnchorProvider } from '@coral-xyz/anchor';
 
-// 🚀 IMPORTS FOR MOBILE AND DESKTOP WALLET ADAPTERS
+// 🚀 WALLET ADAPTERS FOR MOBILE AND DESKTOP
 import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
@@ -16,16 +16,18 @@ import {
 import idl from '../idl/idl.json';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
-const FALLBACK_PROGRAM_ID = 'cbVU2Yavor2XCxK8bnXoLjd1Lw11JngQAnkKjTu9PL3';
-
 export default function SolanaProvider({ children }) {
-  const network = WalletAdapterNetwork.Devnet;
+  // Read network mode dynamically from .env (defaults to Devnet)
+  const networkEnv = import.meta.env.VITE_SOLANA_NETWORK || 'devnet';
+  const network = networkEnv === 'mainnet-beta' 
+    ? WalletAdapterNetwork.Mainnet 
+    : WalletAdapterNetwork.Devnet;
 
+  // Read RPC URL dynamically from .env
   const endpoint = useMemo(() => {
-    return 'https://devnet.helius-rpc.com/?api-key=056770e5-c485-4c48-83b7-e50e01dde199';
-  }, []);
+    return import.meta.env.VITE_SOLANA_RPC_URL || clusterApiUrl(network);
+  }, [network]);
 
-  // 🚀 REGISTER WALLET ADAPTERS FOR MOBILE BROWSERS & EXTENSIONS
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
@@ -47,8 +49,9 @@ export default function SolanaProvider({ children }) {
   );
 }
 
-// 🚀 CRASH-PROOF ANCHOR HOOK (Strictly for Anchor v0.30+)
+// 🚀 CRASH-PROOF ANCHOR HOOK (Anchor v0.30+)
 export const useApexForgeProgram = () => {
+  const { connection } = useConnection();
   const wallet = useAnchorWallet();
 
   return useMemo(() => {
@@ -59,11 +62,11 @@ export const useApexForgeProgram = () => {
 
     try {
       console.log("🟢 Anchor Wallet Connected:", wallet.publicKey.toBase58());
-      
-     const connection = new Connection('https://devnet.helius-rpc.com/?api-key=056770e5-c485-4c48-83b7-e50e01dde199', 'confirmed');
-        const provider = new AnchorProvider(connection, wallet, {
-          preflightCommitment: 'confirmed',
-        });
+
+      // Reuses active connection from ConnectionProvider
+      const provider = new AnchorProvider(connection, wallet, {
+        preflightCommitment: 'confirmed',
+      });
 
       if (!idl || Object.keys(idl).length === 0) {
         console.error("🔴 CRITICAL: IDL is empty!");
@@ -71,14 +74,11 @@ export const useApexForgeProgram = () => {
       }
 
       console.log("🟢 Initializing Smart Contract (Anchor v0.30 Mode)...");
-
-      // 🚀 THE FIX: Anchor v0.30+ ONLY takes 2 arguments!
-      // It will automatically read the Program ID from your 52-line IDL file.
       return new Program(idl, provider);
 
     } catch (err) {
       console.error("🔴 Anchor Provider Crashed. Reason:", err.message);
       return null;
     }
-  }, [wallet]);
+  }, [wallet, connection]);
 };

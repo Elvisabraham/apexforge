@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import MediaUploader from './MediaUploader'; 
 import { supabase } from '../supabaseClient';
-import { useLaunchToken } from '../hooks/useLaunchToken'; // 🚀 IMPORTED YOUR NEW HOOK
+import { useLaunchToken } from '../hooks/useLaunchToken';
 
 export default function Launch({ onForgeSuccess }) {
   const { connected, publicKey } = useWallet();
-  const { executeLaunchOnChain, isLaunching } = useLaunchToken(); // 🚀 INITIALIZED THE HOOK
+  const { executeLaunchOnChain, isLaunching } = useLaunchToken();
 
   const [tokenName, setTokenName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
@@ -24,29 +24,27 @@ export default function Launch({ onForgeSuccess }) {
   const [initialBuy, setInitialBuy] = useState('');
   
   const [acceptedDisclaimer, setAcceptedDisclaimer] = useState(false);
-  const [deployedHistory, setDeployedHistory] = useState([]); 
 
   const [isDeploying, setIsDeploying] = useState(false);
   const [deploySuccess, setDeploySuccess] = useState(false);
   const [deployedTokenAddress, setDeployedTokenAddress] = useState('');
   const [statusMessage, setStatusMessage] = useState('Initializing wallet & contract...');
 
-  // 🚀 DIRECT ON-CHAIN DEPLOYMENT USING YOUR HOOK
   const handleRealDeployment = async () => {
-    if (!tokenName || !tokenSymbol) {
+    if (!tokenName.trim() || !tokenSymbol.trim()) {
       alert("⚠️ Token Name and Symbol are required to forge an asset.");
       return;
     }
     if (!imagePreview) {
-      alert("⚠️ Please upload an asset logo or video to proceed.");
+      alert("⚠️ Please upload an asset logo or media file to proceed.");
       return;
     }
     if (!acceptedDisclaimer) {
-      alert("⚠️ You must acknowledge the disclaimer before launching an asset.");
+      alert("⚠️ You must acknowledge the mandatory disclosure before launching.");
       return;
     }
     if (!connected || !publicKey) {
-      alert("🔒 Wallet Not Connected! Please connect Phantom.");
+      alert("🔒 Wallet Not Connected! Please connect your wallet.");
       return;
     }
 
@@ -55,76 +53,81 @@ export default function Launch({ onForgeSuccess }) {
       setDeploySuccess(false);
       setStatusMessage("> Requesting wallet signature to deploy on Solana...");
 
-      // 1. Prepare Safe Arguments
-      const safeName = (tokenName || "").trim().slice(0, 32) || "Apex Token";
-      const safeSymbol = (tokenSymbol || "").trim().toUpperCase().slice(0, 10) || "APEX";
+      // 1. Prepare Safe Parameters
+      const safeName = tokenName.trim().slice(0, 32);
+      const safeSymbol = tokenSymbol.trim().toUpperCase().slice(0, 10);
       let safeUri = thumbnailUrl || imagePreview || "https://apexforge.app/metadata.json";
-      if (safeUri.startsWith("data:") || safeUri.length > 128) {
+      
+      if (safeUri.startsWith("data:") || safeUri.length > 200) {
         safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
       }
 
-      // 2. 🚀 EXECUTE THE SMART CONTRACT HOOK
+      // 2. Execute On-Chain Deployment
       const mintAddress = await executeLaunchOnChain(safeName, safeSymbol, safeUri);
 
-      // 3. IF SUCCESSFUL, UPDATE UI AND DATABASE
-      if (mintAddress) {
-        setStatusMessage("> Transaction broadcasted! Saving to database...");
-        
-        setDeployedTokenAddress(mintAddress);
-        setDeployedHistory(prev => [...prev, tokenName.toLowerCase()]);
-
-        const newToken = {
-          id: Date.now().toString(),
-          name: safeName,
-          symbol: safeSymbol,
-          description: description, 
-          links: { twitter, telegram, website },
-          mintAddress: mintAddress,
-          creatorAddress: publicKey.toBase58(),
-          imagePreview: safeUri, 
-          videoUrl: mediaType === 'video' ? 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-and-code-31910-large.mp4' : null, 
-          mediaType: mediaType, 
-          icon: '🔥', 
-          mcap: '$10.0K', 
-          price: '0.0001',
-          change: '+0.0%',
-          initialSnipe: parseFloat(initialBuy || '0'),
-          isGraduated: false, 
-          progress: initialBuy ? ((parseFloat(initialBuy) / 85) * 100) : 0
-        };
-
-        if (typeof supabase !== 'undefined' && supabase) {
-          try {
-            await supabase.from('tokens').insert([{
-              name: newToken.name,
-              symbol: newToken.symbol,
-              description: newToken.description,
-              icon: newToken.icon,
-              image_url: newToken.imagePreview,
-              mint_address: newToken.mintAddress,
-              creator_address: newToken.creatorAddress,
-              market_cap: newToken.mcap,
-              progress: newToken.progress,
-              links: newToken.links,
-              created_at: new Date().toISOString()
-            }]);
-          } catch (err) {
-            console.error("Database save failed:", err);
-          }
-        }
-
-        setDeploySuccess(true);
-        if (onForgeSuccess) {
-          onForgeSuccess(newToken);
-        }
-      } else {
-        // The hook handles the alert if it fails, just reset the UI state
+      if (!mintAddress) {
         setIsDeploying(false);
+        return;
+      }
+
+      setStatusMessage("> Transaction broadcasted! Syncing with database...");
+      setDeployedTokenAddress(mintAddress);
+
+      // 3. Construct Token Payload
+      const parsedBuy = parseFloat(initialBuy.replace(/,/g, '')) || 0;
+      const newToken = {
+        id: Date.now().toString(),
+        name: safeName,
+        symbol: safeSymbol,
+        description: description, 
+        links: { 
+          twitter: twitter.trim(), 
+          telegram: telegram.trim(), 
+          website: website.trim() 
+        },
+        mintAddress: mintAddress,
+        creatorAddress: publicKey.toBase58(),
+        imagePreview: safeUri, 
+        mediaType: mediaType, 
+        icon: '🔥', 
+        mcap: '$10.0K', 
+        price: '0.0001',
+        change: '+0.0%',
+        initialSnipe: parsedBuy,
+        isGraduated: false, 
+        progress: parsedBuy ? Math.min((parsedBuy / 85) * 100, 100) : 0
+      };
+
+      // 4. Save to Supabase DB (Failsafe)
+      if (supabase) {
+        try {
+          await supabase.from('tokens').insert([{
+            name: newToken.name,
+            symbol: newToken.symbol,
+            description: newToken.description,
+            icon: newToken.icon,
+            image_url: newToken.imagePreview,
+            mint_address: newToken.mintAddress,
+            creator_address: newToken.creatorAddress,
+            market_cap: newToken.mcap,
+            progress: newToken.progress,
+            links: newToken.links,
+            media_type: newToken.mediaType,
+            created_at: new Date().toISOString()
+          }]);
+        } catch (dbErr) {
+          console.error("Database sync failed, continuing flow:", dbErr);
+        }
+      }
+
+      setDeploySuccess(true);
+      if (onForgeSuccess) {
+        onForgeSuccess(newToken);
       }
 
     } catch (err) {
-      console.error("Deployment failed details:", err);
-      alert(`⚠️ Transaction Failed: ${err?.message || JSON.stringify(err)}`);
+      console.error("Deployment process failed:", err);
+      alert(`⚠️ Transaction Failed: ${err?.message || "User rejected or blockhash expired."}`);
       setIsDeploying(false);
     }
   };
@@ -149,7 +152,7 @@ export default function Launch({ onForgeSuccess }) {
 
     setDescription(val);
     if (isFlagged) {
-      alert("⚠️ App Store Safety Protocol: Certain financial hype words have been sanitized to maintain platform compliance.");
+      alert("⚠️ Compliance Protocol: Certain financial hype words were filtered to maintain store compliance.");
     }
   };
 
@@ -176,8 +179,14 @@ export default function Launch({ onForgeSuccess }) {
     
     setIsDeploying(false);
     setDeploySuccess(false);
+    setDeployedTokenAddress('');
     
     setUploaderKey(prev => prev + 1); 
+  };
+
+  const calculatedProgress = () => {
+    const parsed = parseFloat(initialBuy.replace(/,/g, '')) || 0;
+    return Math.min(((parsed / 85) * 100), 100).toFixed(1);
   };
 
   return (
@@ -205,7 +214,7 @@ export default function Launch({ onForgeSuccess }) {
           
           <div className="flex flex-col gap-1">
             <h2 className="text-3xl font-black text-white tracking-tight">Deploy Asset</h2>
-            <p className="text-[13px] text-zinc-400 font-medium leading-relaxed">Create and launch a fair-launch token on Solana Devnet. Liquidity is securely locked.</p>
+            <p className="text-[13px] text-zinc-400 font-medium leading-relaxed">Create and launch a fair-launch token on Solana. Liquidity is securely locked.</p>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -231,7 +240,7 @@ export default function Launch({ onForgeSuccess }) {
                 <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Description</label>
               </div>
               <textarea 
-                placeholder="Describe your project's utility and vision... (Note: Excessive financial hype will be sanitized)" 
+                placeholder="Describe your project's utility and vision..." 
                 value={description} 
                 onChange={handleDescriptionChange} 
                 rows={4} 
@@ -240,7 +249,7 @@ export default function Launch({ onForgeSuccess }) {
             </div>
           </div>
 
-          {/* SOCIALS WITH REAL TELEGRAM LOGO */}
+          {/* SOCIAL LINKS */}
           <div className="flex flex-col bg-[#121212] border border-white/5 rounded-xl overflow-hidden shadow-inner">
             <button onClick={() => setShowSocials(!showSocials)} className="w-full px-4 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors cursor-pointer">
               <span className="text-sm font-bold text-zinc-300 flex items-center gap-2">
@@ -250,7 +259,7 @@ export default function Launch({ onForgeSuccess }) {
               <svg className={`w-4 h-4 text-zinc-500 transition-transform duration-300 ${showSocials ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
             </button>
             {showSocials && (
-              <div className="p-4 pt-0 flex flex-col gap-3 border-t border-white/5 animate-fadeIn">
+              <div className="p-4 pt-0 flex flex-col gap-3 border-t border-white/5">
                 <div className="flex items-center bg-[#050505] border border-white/5 rounded-lg overflow-hidden focus-within:border-[#089981]/50 transition-colors shadow-inner">
                   <span className="pl-3 pr-2 text-zinc-500 font-black">𝕏</span>
                   <input type="text" placeholder="(Optional) Twitter Link" value={twitter} onChange={(e) => setTwitter(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
@@ -283,7 +292,7 @@ export default function Launch({ onForgeSuccess }) {
             </div>
             
             <p className="text-xs text-zinc-400 font-medium mb-5 leading-relaxed relative z-10">
-              Secure the lowest entry price at block 0. Choose how much SOL to inject instantly upon contract deployment to prevent sniper bots from front-running you.
+              Secure the lowest entry price at block 0. Choose how much SOL to inject instantly upon contract deployment.
             </p>
             
             <div className="flex items-center bg-[#050505] border border-white/10 rounded-2xl px-5 py-2 focus-within:border-[#089981]/80 transition-colors shadow-inner relative z-10">
@@ -302,14 +311,15 @@ export default function Launch({ onForgeSuccess }) {
             <div className="mt-6 pt-5 border-t border-white/5 relative z-10">
               <div className="flex justify-between text-[9px] font-black uppercase text-zinc-600 mb-2">
                 <span>Curve Progress</span>
-                <span>{initialBuy ? ((parseFloat(initialBuy)/85)*100).toFixed(1) : '0.0'}%</span>
+                <span>{calculatedProgress()}%</span>
               </div>
               <div className="w-full h-1.5 bg-[#050505] rounded-full overflow-hidden">
-                <div className="h-full bg-[#089981] transition-all duration-300" style={{width: `${initialBuy ? ((parseFloat(initialBuy)/85)*100) : 0}%`}}></div>
+                <div className="h-full bg-[#089981] transition-all duration-300" style={{width: `${calculatedProgress()}%`}}></div>
               </div>
             </div>
           </div>
 
+          {/* DISCLAIMER */}
           <div className="flex items-start gap-3 bg-[#121212] border border-white/10 p-4 rounded-xl mt-2 mb-2">
             <input 
               type="checkbox" 
@@ -337,9 +347,9 @@ export default function Launch({ onForgeSuccess }) {
 
             <button 
               onClick={handleRealDeployment} 
-              disabled={isLaunching}
+              disabled={isLaunching || !acceptedDisclaimer}
               className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(8,153,129,0.3)] ${
-                acceptedDisclaimer 
+                acceptedDisclaimer && !isLaunching
                   ? 'bg-[#089981] hover:bg-[#06806b] text-white active:scale-95 cursor-pointer' 
                   : 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50'
               }`}
@@ -350,19 +360,9 @@ export default function Launch({ onForgeSuccess }) {
         </div>
       )}
 
-      {/* --- LIVE SUPPORT CHAT WIDGET --- */}
-      {!isDeploying && (
-        <div 
-          onClick={() => alert("Connecting to live Forge Support Agent...")}
-          className="absolute right-4 bottom-[170px] md:bottom-24 z-50 w-12 h-12 bg-[#089981] rounded-full shadow-[0_0_20px_rgba(8,153,129,0.5)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform animate-pulse"
-        >
-          <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-        </div>
-      )}
-
-      {/* --- REAL DEPLOYMENT TERMINAL --- */}
+      {/* --- REAL DEPLOYMENT TERMINAL MODAL --- */}
       {isDeploying && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-md animate-fadeIn">
+        <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-md">
           <div className="w-full max-w-lg bg-[#0A0A0A] border border-[#089981]/40 rounded-xl overflow-hidden shadow-[0_0_80px_rgba(8,153,129,0.15)] flex flex-col relative">
             
             {!deploySuccess && (
@@ -383,10 +383,10 @@ export default function Launch({ onForgeSuccess }) {
                 <>
                   <div className="w-12 h-12 border-4 border-[#089981]/20 border-t-[#089981] rounded-full animate-spin"></div>
                   <p className="text-[#089981] font-bold text-sm animate-pulse">{statusMessage}</p>
-                  <p className="text-[10px] text-zinc-500">Please review and confirm the signature popup in Phantom.</p>
+                  <p className="text-[10px] text-zinc-500">Please review and confirm the signature popup in your wallet.</p>
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center animate-fadeIn gap-4">
+                <div className="flex flex-col items-center justify-center h-full text-center gap-4">
                   <div className="w-16 h-16 bg-[#089981]/20 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(8,153,129,0.5)]">
                     <svg className="w-8 h-8 text-[#089981]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </div>

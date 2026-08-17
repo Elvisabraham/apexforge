@@ -22,6 +22,7 @@
     "buffer": "^6.0.3",
     "html5-qrcode": "^2.3.8",
     "lightweight-charts": "^5.2.0",
+    "lucide-react": "^1.31.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "vite-plugin-node-polyfills": "^0.28.0"
