@@ -966,19 +966,32 @@ const handleExecuteTrade = async () => {
           return point;
         });
 
+        // 🚀 2.5 STABILIZE SCALE MARGINS (CRITICAL FIX FOR CHART OVERLAP)
+        chart.priceScale('right').applyOptions({
+          autoScale: true,
+          entireTextOnly: true, // Prevents axis time markers from clipping into price lanes
+          scaleMargins: {
+            top: 0.1,    // 10% spacing at top
+            bottom: 0.15 // 15% strict spacing at bottom to prevent negative text artifacts
+          }
+        });
+
         // 🚀 3. DYNAMIC Y-AXIS: Independent rounding fixes for BOTH modes!
         series.applyOptions({
           priceFormat: {
             type: 'custom',
             minMove: displayMode === 'price' ? 0.00000001 : 0.01,
             formatter: (rawPrice) => {
+              // 🛡️ FLOATING PROTECTION: Enforce a strict zero-floor cutoff 
+              const safePrice = Math.max(0, rawPrice);
+
               if (displayMode === 'price') {
-                // 🚀 PRICE MICRO-BUMP
-                const price = rawPrice + 0.0000000001; 
+                // 🚀 PRICE MICRO-BUMP & ROUNDING STABILIZER
+                const price = safePrice + 0.0000000001; 
                 return `$${(Math.round(price * 100000000) / 100000000).toFixed(8)}`;
               } else {
                 // 🚀 MARKET CAP MICRO-BUMP: Forces 2.295 up to 2.30K!
-                const price = rawPrice + 0.0001; 
+                const price = safePrice + 0.0001; 
                 if (price >= 1e9) return `$${(Math.round((price / 1e9) * 100) / 100).toFixed(2)}B`;
                 if (price >= 1e6) return `$${(Math.round((price / 1e6) * 100) / 100).toFixed(2)}M`;
                 if (price >= 1e3) return `$${(Math.round((price / 1e3) * 100) / 100).toFixed(2)}K`;
