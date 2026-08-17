@@ -90,7 +90,7 @@ export default function Launch({ onForgeSuccess }) {
       };
 
       if (supabase) {
-        await supabase.from('tokens').insert([{
+        const { error: dbError } = await supabase.from('tokens').insert([{
           mint_address: newToken.mintAddress,
           name: newToken.name,
           symbol: newToken.symbol,
@@ -104,6 +104,11 @@ export default function Launch({ onForgeSuccess }) {
           is_graduated: false,
           created_at: newToken.createdAt
         }]);
+
+        if (dbError) {
+          console.error("Supabase Sync Error:", dbError.message);
+          throw new Error(`Database save failed: ${dbError.message}`);
+        }
       }
 
       setDeploySuccess(true);
@@ -300,36 +305,59 @@ export default function Launch({ onForgeSuccess }) {
 
       </div>
 
-      {/* TERMINAL MODAL */}
+     {/* TERMINAL MODAL */}
       {isDeploying && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <div className="w-full max-w-lg bg-[#0f0f12] border border-[#089981]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col relative">
+            
             {!deploySuccess && (
               <button onClick={resetForge} className="absolute top-3 right-4 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-400 cursor-pointer">Cancel</button>
             )}
+
             <div className="bg-[#1a1b22] px-4 py-3 border-b border-white/5 flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-rose-500/80"></div>
               <div className="w-3 h-3 rounded-full bg-amber-500/80"></div>
               <div className="w-3 h-3 rounded-full bg-[#089981]/80"></div>
               <span className="ml-2 text-[10px] font-mono font-bold text-zinc-500">terminal@apex-forge: ~/deploy/${tokenSymbol || 'token'}</span>
             </div>
+
             <div className="p-8 font-mono text-xs h-64 flex flex-col items-center justify-center gap-4 text-center">
-              {!deploySuccess ? (
+              {!deploySuccess && (
                 <>
                   <div className="w-12 h-12 border-4 border-[#089981]/20 border-t-[#089981] rounded-full animate-spin"></div>
                   <p className="text-[#089981] font-bold text-sm animate-pulse">{statusMessage}</p>
                 </>
-              ) : (
+              )}
+
+              {deploySuccess && (
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-14 h-14 bg-[#089981]/20 rounded-full flex items-center justify-center text-[#089981] text-2xl font-bold">✓</div>
                   <h3 className="text-lg font-black uppercase text-white">Contract Live On-Chain</h3>
+                  
                   <div className="bg-black border border-white/10 px-4 py-2 rounded-lg max-w-xs overflow-hidden">
                     <span className="text-[#089981] font-bold text-xs select-all break-all">{deployedTokenAddress}</span>
                   </div>
-                  <button onClick={resetForge} className="mt-2 px-6 py-2.5 bg-[#089981] text-black font-black uppercase tracking-widest text-xs rounded-lg hover:bg-[#06806b] cursor-pointer">Deploy Another</button>
+
+                  <div className="flex items-center gap-3 mt-2">
+                    <button 
+                      onClick={resetForge} 
+                      className="px-4 py-2 bg-white/10 text-white font-bold uppercase text-xs rounded-lg hover:bg-white/20 transition-colors cursor-pointer"
+                    >
+                      Deploy Another
+                    </button>
+                    <button 
+                      onClick={() => {
+                        resetForge();
+                      }} 
+                      className="px-5 py-2 bg-[#089981] text-black font-black uppercase text-xs rounded-lg hover:bg-[#06806b] transition-colors cursor-pointer"
+                    >
+                      View Terminal 🚀
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
+
           </div>
         </div>
       )}
