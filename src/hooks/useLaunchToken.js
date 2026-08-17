@@ -10,10 +10,21 @@ export const useLaunchToken = () => {
   const { connection } = useConnection();
   const [isLaunching, setIsLaunching] = useState(false);
 
-  const executeLaunchOnChain = async (name, symbol, uri) => {
+  const executeLaunchOnChain = async (rawName, rawSymbol, rawUri) => {
     if (!wallet.publicKey) {
       alert("❌ Wallet not connected! Please connect Phantom.");
       return null;
+    }
+
+    // 🟢 1. SANITIZE & TRUNCATE INPUTS (Prevents Buffer Overrun Errors)
+    const cleanName = (rawName || '').trim().slice(0, 32);
+    const cleanSymbol = (rawSymbol || '').trim().toUpperCase().slice(0, 10);
+    
+    // Ensure URI is a valid short link, not a base64 data string
+    let cleanUri = (rawUri || '').trim();
+    if (cleanUri.startsWith('data:') || cleanUri.length > 200) {
+      console.warn("⚠️ Data URL or oversized URI detected. Falling back to placeholder URI.");
+      cleanUri = 'https://arweave.net/placeholder';
     }
 
     setIsLaunching(true);
@@ -22,20 +33,19 @@ export const useLaunchToken = () => {
       const provider = new AnchorProvider(connection, wallet, { preflightCommitment: 'confirmed' });
       setProvider(provider);
 
-      // 🟢 FIXED: Using the live Apex Forge V2 Program ID
       const programID = new PublicKey("cbVU2Yavor2XCxK8bnXoLjd1Lw11JngQAnkKjTu9PL3");
       const program = new Program(idl, programID, provider);
 
-      // 1. Generate Keypair & Derive PDA
+      // 2. Generate Keypair & Derive PDA
       const mintKeypair = Keypair.generate();
       const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
         [Buffer.from("bonding_curve"), mintKeypair.publicKey.toBuffer()],
-        programID // 🟢 Updated to match the new variable name
+        programID
       );
 
       const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 
-      // 2. 🚀 PREPARE THE MINT ACCOUNT (This fixes the AccountNotInitialized error!)
+      // 3. Prepare Mint Account
       const mintRent = await connection.getMinimumBalanceForRentExemption(MINT_SIZE);
       
       const createMintAccountIx = SystemProgram.createAccount({
@@ -46,18 +56,17 @@ export const useLaunchToken = () => {
         programId: TOKEN_PROGRAM_ID,
       });
 
-      // 🟢 CRITICAL FIX: Hand over Mint Authority to the Bonding Curve PDA
       const initializeMintIx = createInitializeMint2Instruction(
         mintKeypair.publicKey,
-        6, // Decimals
-        bondingCurvePDA, // 🚀 CHANGED: The Smart Contract now owns the mint!
-        null, // Freeze Authority
+        6,
+        bondingCurvePDA,
+        null,
         TOKEN_PROGRAM_ID
       );
       
-      // 3. GET THE RAW INSTRUCTION (Instead of using Anchor's buggy .rpc)
+      // 4. Build Anchor Instruction using Cleaned Strings
       const createTokenIx = await program.methods
-        .createToken(name, symbol, uri)
+        .createToken(cleanName, cleanSymbol, cleanUri)
         .accounts({
           bondingCurve: bondingCurvePDA,
           mint: mintKeypair.publicKey,
@@ -66,26 +75,25 @@ export const useLaunchToken = () => {
           tokenProgram: TOKEN_PROGRAM_ID,
           rent: SYSVAR_RENT_PUBKEY,
         })
-        .instruction(); // 🚀 THIS IS THE KEY! We grab the instruction instead of firing it.
+        .instruction();
 
-      // 4. BUNDLE EVERYTHING MANUALLY (The Bulletproof Way)
+      // 5. Bundle Transaction
       const transaction = new Transaction().add(
         createMintAccountIx,
         initializeMintIx,
         createTokenIx
       );
 
-      // Get the latest blockhash to validate the transaction
       const latestBlockhash = await connection.getLatestBlockhash('confirmed');
       transaction.recentBlockhash = latestBlockhash.blockhash;
       transaction.feePayer = wallet.publicKey;
 
-      // 5. FIRE OFF TO PHANTOM & AWAIT BLOCKCHAIN VERDICT
+      // 6. Sign with Mint Keypair & Prompt Phantom
       const txSignature = await wallet.sendTransaction(transaction, connection, {
         signers: [mintKeypair] 
       });
 
-      console.log("⏳ Waiting for Solana to confirm transaction...");
+      console.log("⏳ Waiting for Solana transaction confirmation...");
       
       const confirmation = await connection.confirmTransaction({
         signature: txSignature,
@@ -95,18 +103,18 @@ export const useLaunchToken = () => {
 
       if (confirmation.value.err) {
         console.error("🔴 ON-CHAIN ERROR:", confirmation.value.err);
-        alert("Launch Failed on the blockchain! Check your console for details.");
+        alert("Launch Failed on the blockchain! Check your console.");
         setIsLaunching(false);
-        return null; // Stops the dead token from saving to your database!
+        return null;
       }
 
-      console.log("✅ Token Officially Live on Solana! Signature:", txSignature);
+      console.log("✅ Token Live On-Chain! Signature:", txSignature);
       setIsLaunching(false);
       return mintKeypair.publicKey.toString();
 
     } catch (err) {
       console.error("🔴 Launch Failed:", err);
-      alert(`Token Launch Failed: ${err?.message || "Check the console for details!"}`);
+      alert(`Token Launch Failed: ${err?.message || "Check console details!"}`);
       setIsLaunching(false);
       return null;
     }
