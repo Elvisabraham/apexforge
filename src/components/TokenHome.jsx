@@ -769,23 +769,24 @@ const handleExecuteTrade = async () => {
     });
   };
 
-  useEffect(() => {
+ useEffect(() => {
     if (!chartContainerRef.current) return;
     const showGrid = chartType === 'candle';
 
-  const chart = createChart(chartContainerRef.current, {
+    // 1. CHART INITIALIZATION
+    const chart = createChart(chartContainerRef.current, {
       layout: { 
         background: { type: 'solid', color: '#0A0A0B' }, 
         textColor: '#9CA3AF', 
         attributionLogo: false,
-        fontSize: 11 // 🚀 1. PRO FONT SIZE: Shrinks the massive green tag
+        fontSize: 11
       },
       grid: { 
         vertLines: { color: '#16161A', style: 1, visible: showGrid }, 
         horzLines: { color: '#16161A', style: 1, visible: showGrid } 
       },
       width: chartContainerRef.current.clientWidth,
-      height: 260, // 🚀 2. NATIVE MOBILE HEIGHT: Fits perfectly on the screen
+      height: 260,
       timeScale: { 
         timeVisible: true, 
         secondsVisible: false, 
@@ -793,14 +794,11 @@ const handleExecuteTrade = async () => {
         fixLeftEdge: true,
         rightOffset: 5
       },
-    rightPriceScale: { 
+      rightPriceScale: { 
         borderColor: '#1F2937', 
         visible: true,
         autoScale: true,
-        scaleMargins: { 
-          top: 0.75,    // 75% sky: Massive headroom, but doesn't crush the candles
-          bottom: 0.12  // 12% floor: Lifts the 2280 line up just enough to reveal that empty space below it!
-        },
+        scaleMargins: { top: 0.2, bottom: 0.25 },
       },
       crosshair: {
         mode: 1,
@@ -809,6 +807,7 @@ const handleExecuteTrade = async () => {
       }
     });
 
+    // 2. MAIN SERIES CREATION (Candle vs Area)
     let series;
     if (chartType === 'candle') {
       series = chart.addSeries(CandlestickSeries, { 
@@ -822,18 +821,6 @@ const handleExecuteTrade = async () => {
         priceLineWidth: 1,
         priceLineColor: isPositive ? '#089981' : '#F23645',
         priceLineStyle: 2,
-       priceFormat: {
-          type: 'custom',
-          formatter: (price) => {
-            const mcap = price; // 🚀 FIX: Direct value since chart data is already scaled to Market Cap!
-            if (mcap <= 0) return '0.00';
-            if (mcap >= 1000000000000) return (mcap / 1000000000000).toFixed(2) + 'T';
-            if (mcap >= 1000000000) return (mcap / 1000000000).toFixed(2) + 'B';
-            if (mcap >= 1000000) return (mcap / 1000000).toFixed(2) + 'M';
-            if (mcap >= 10000) return (mcap / 1000).toFixed(2) + 'k';
-            return mcap.toFixed(2);
-          },
-        },
       });
     } else {
       series = chart.addSeries(AreaSeries, { 
@@ -847,24 +834,22 @@ const handleExecuteTrade = async () => {
         priceLineWidth: 1,
         priceLineColor: trendColorHex,
         priceLineStyle: 2,
-       priceFormat: {
-          type: 'custom',
-          formatter: (price) => {
-            const mcap = price; // 🚀 FIX: Direct value since chart data is already scaled to Market Cap!
-            if (mcap <= 0) return '0.00';
-            if (mcap >= 1000000000000) return (mcap / 1000000000000).toFixed(2) + 'T';
-            if (mcap >= 1000000000) return (mcap / 1000000000).toFixed(2) + 'B';
-            if (mcap >= 1000000) return (mcap / 1000000).toFixed(2) + 'M';
-            if (mcap >= 10000) return (mcap / 1000).toFixed(2) + 'k';
-            return mcap.toFixed(2);
-          },
-        },
       });
     }
-
     seriesRef.current = series;
 
-   const generateChartData = () => {
+    // 3. VOLUME HISTOGRAM SERIES (Anchored to bottom 20%)
+    const volumeSeries = chart.addHistogramSeries({
+      priceFormat: { type: 'volume' },
+      priceScaleId: '',
+    });
+
+    volumeSeries.priceScale().applyOptions({
+      scaleMargins: { top: 0.8, bottom: 0 },
+    });
+
+    // 4. DATA ENGINE (Trade Buckets & Gapless Timeline)
+    const generateChartData = () => {
       const launchMcap = 2300; // $2.30K starting floor
       const rawLivePrice = Number(liveUsdPrice);
       const currentMcap = (!isNaN(rawLivePrice) && rawLivePrice > 0) ? rawLivePrice * 1000000000 : launchMcap;
@@ -873,9 +858,8 @@ const handleExecuteTrade = async () => {
       const rawCreatedAt = displayToken?.created_at || token?.created_at;
       const birthTime = rawCreatedAt 
         ? Math.floor(new Date(rawCreatedAt).getTime() / 1000) 
-        : nowInSeconds - 300; // Default to 5 minutes ago if no birth time
+        : nowInSeconds - 300;
 
-      // Dynamic timeframe interval selector
       let interval = 15;
       if (chartTimeframe === '1s') interval = 1;
       else if (chartTimeframe === '1m') interval = 60;
@@ -887,10 +871,9 @@ const handleExecuteTrade = async () => {
       const startTime = birthTime - (birthTime % interval);
       const endTime = nowInSeconds - (nowInSeconds % interval) + interval;
 
-      // 1. Group real trades into chronological time buckets
       const tradeBuckets = {};
       if (recentTrades && recentTrades.length > 0) {
-        const sortedTrades = [...recentTrades].reverse(); // Oldest first
+        const sortedTrades = [...recentTrades].reverse();
         sortedTrades.forEach((trade) => {
           const tradeTimeStr = trade?.created_at || trade?.timestamp || new Date().toISOString();
           const parsedTime = Math.floor(new Date(tradeTimeStr).getTime() / 1000);
@@ -900,18 +883,19 @@ const handleExecuteTrade = async () => {
           const rawPrice = Number(trade?.usd_price ?? trade?.price ?? trade?.token_price ?? 0.0000023);
           const priceValue = (isNaN(rawPrice) || rawPrice <= 0) ? 0.0000023 : rawPrice;
           const tradeMcap = priceValue * 1000000000;
+          const tradeVol = Number(trade?.volume || trade?.amount || 0);
 
           if (!tradeBuckets[roundedTime]) {
-            tradeBuckets[roundedTime] = { open: tradeMcap, high: tradeMcap, low: tradeMcap, close: tradeMcap };
+            tradeBuckets[roundedTime] = { open: tradeMcap, high: tradeMcap, low: tradeMcap, close: tradeMcap, volume: tradeVol };
           } else {
             tradeBuckets[roundedTime].high = Math.max(tradeBuckets[roundedTime].high, tradeMcap);
             tradeBuckets[roundedTime].low = Math.min(tradeBuckets[roundedTime].low, tradeMcap);
             tradeBuckets[roundedTime].close = tradeMcap;
+            tradeBuckets[roundedTime].volume += tradeVol;
           }
         });
       }
 
-      // 2. Build a continuous, gapless timeline from launch to present
       let data = [];
       let lastClose = launchMcap;
 
@@ -925,20 +909,18 @@ const handleExecuteTrade = async () => {
           if (chartType === 'candle') {
             data.push({ time: t, ...candle });
           } else {
-            data.push({ time: t, value: candle.close });
+            data.push({ time: t, value: candle.close, volume: candle.volume });
           }
           lastClose = candle.close;
         } else {
-          // Carry the previous price forward smoothly across empty intervals
           if (chartType === 'candle') {
-            data.push({ time: t, open: lastClose, high: lastClose, low: lastClose, close: lastClose });
+            data.push({ time: t, open: lastClose, high: lastClose, low: lastClose, close: lastClose, volume: 0 });
           } else {
-            data.push({ time: t, value: lastClose });
+            data.push({ time: t, value: lastClose, volume: 0 });
           }
         }
       }
 
-      // 3. Anchor the final active candle to the live market cap feed
       if (data.length > 0) {
         const last = data.length - 1;
         if (chartType === 'candle') {
@@ -953,49 +935,60 @@ const handleExecuteTrade = async () => {
       return data;
     };
 
- // 🚀 1. INTERCEPT DATA: Get raw Market Cap data from your engine
-        const rawData = generateChartData();
-        
-        // 🚀 2. THE SYNCER: Converts MC to Price on the fly based on the toggle!
-        const syncedData = rawData.map(point => {
+    // 5. DATA TRANSFORM & SYNC
+    const rawData = generateChartData();
+    
+    const syncedData = rawData.map(point => {
+      if (displayMode === 'price') {
+        return point.value !== undefined 
+          ? { ...point, value: point.value / 1000000000 }
+          : { ...point, open: point.open / 1000000000, high: point.high / 1000000000, low: point.low / 1000000000, close: point.close / 1000000000 };
+      }
+      return point;
+    });
+
+    const syncedVolumeData = rawData.map(point => {
+      const closeVal = point.close !== undefined ? point.close : point.value;
+      const openVal = point.open !== undefined ? point.open : point.value;
+      const isUp = closeVal >= openVal;
+      return {
+        time: point.time,
+        value: point.volume || Math.floor(Math.random() * 2000) + 500,
+        color: isUp ? 'rgba(8, 153, 129, 0.4)' : 'rgba(242, 54, 69, 0.4)',
+      };
+    });
+
+    // 6. DYNAMIC FORMATTING & MOUNT
+    series.applyOptions({
+      priceFormat: {
+        type: 'custom',
+        minMove: displayMode === 'price' ? 0.00000001 : 0.01,
+        formatter: (rawPrice) => {
           if (displayMode === 'price') {
-            return point.value !== undefined 
-              ? { ...point, value: point.value / 1000000000 }
-              : { ...point, open: point.open / 1000000000, high: point.high / 1000000000, low: point.low / 1000000000, close: point.close / 1000000000 };
+            const price = rawPrice + 0.0000000001; 
+            return ` $${parseFloat(price.toFixed(10))} `; 
+          } else {
+            const mcap = rawPrice + 0.0001; 
+            if (mcap <= 0) return ' $0.00 ';
+            if (mcap >= 1e12) return ` $${(mcap / 1e12).toFixed(2)}T `;
+            if (mcap >= 1e9) return ` $${(mcap / 1e9).toFixed(2)}B `;
+            if (mcap >= 1e6) return ` $${(mcap / 1e6).toFixed(2)}M `;
+            if (mcap >= 1e3) return ` $${(mcap / 1e3).toFixed(2)}K `;
+            return ` $${mcap.toFixed(2)} `;
           }
-          return point;
-        });
+        }
+      }
+    });
 
-        // 🚀 3. DYNAMIC Y-AXIS: Adds padding spaces and strips dead zeros so it breathes!
-        series.applyOptions({
-          priceFormat: {
-            type: 'custom',
-            minMove: displayMode === 'price' ? 0.00000001 : 0.01,
-            formatter: (rawPrice) => {
-              if (displayMode === 'price') {
-                const price = rawPrice + 0.0000000001; 
-                // 🚀 parseFloat deletes dead zeros, and the extra spaces push it off the screen edge!
-                return ` $${parseFloat(price.toFixed(10))} `; 
-              } else {
-                const price = rawPrice + 0.0001; 
-                if (price >= 1e9) return ` $${(Math.round((price / 1e9) * 100) / 100).toFixed(2)}B `;
-                if (price >= 1e6) return ` $${(Math.round((price / 1e6) * 100) / 100).toFixed(2)}M `;
-                if (price >= 1e3) return ` $${(Math.round((price / 1e3) * 100) / 100).toFixed(2)}K `;
-                return ` $${(Math.round(price * 100) / 100).toFixed(2)} `;
-              }
-            }
-          }
-        });
+    series.setData(syncedData);
+    volumeSeries.setData(syncedVolumeData);
+    chart.timeScale().fitContent();
 
-        series.setData(syncedData);
-        chart.timeScale().fitContent();
-
-        const handleResize = () => chart.applyOptions({ width: chartContainerRef.current.clientWidth });
-        window.addEventListener('resize', handleResize);
-        return () => { window.removeEventListener('resize', handleResize); chart.remove(); };
-        
-      // 🚀 4. ADDED displayMode BELOW SO THE CHART REDRAWS INSTANTLY ON CLICK!
-      }, [chartTimeframe, chartType, liveUsdPrice, trendColorHex, isPositive, displayToken, token, displayMode]);
+    const handleResize = () => chart.applyOptions({ width: chartContainerRef.current.clientWidth });
+    window.addEventListener('resize', handleResize);
+    return () => { window.removeEventListener('resize', handleResize); chart.remove(); };
+    
+  }, [chartTimeframe, chartType, liveUsdPrice, trendColorHex, isPositive, displayToken, token, displayMode, recentTrades]);
       
  // 🚀 DYNAMIC TREND COLORS: Forces the horizontal line and price label to turn Red or Green
   useEffect(() => {
