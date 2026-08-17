@@ -17,7 +17,6 @@ export default function Launch({ onForgeSuccess }) {
   const [mediaType, setMediaType] = useState('image'); 
   const [uploaderKey, setUploaderKey] = useState(0); 
   
-  const [showSocials, setShowSocials] = useState(false);
   const [twitter, setTwitter] = useState('');
   const [telegram, setTelegram] = useState('');
   const [website, setWebsite] = useState('');
@@ -28,96 +27,91 @@ export default function Launch({ onForgeSuccess }) {
   const [isDeploying, setIsDeploying] = useState(false);
   const [deploySuccess, setDeploySuccess] = useState(false);
   const [deployedTokenAddress, setDeployedTokenAddress] = useState('');
-  const [statusMessage, setStatusMessage] = useState('Initializing wallet & contract...');
+  const [statusMessage, setStatusMessage] = useState('Initializing transaction...');
 
   const handleRealDeployment = async () => {
     if (!tokenName.trim() || !tokenSymbol.trim()) {
-      alert("⚠️ Token Name and Symbol are required to forge an asset.");
+      alert("⚠️ Token Name and Ticker Symbol are required.");
       return;
     }
     if (!imagePreview) {
-      alert("⚠️ Please upload an asset logo or media file to proceed.");
+      alert("⚠️ Please upload asset media.");
       return;
     }
     if (!acceptedDisclaimer) {
-      alert("⚠️ You must acknowledge the mandatory disclosure before launching.");
+      alert("⚠️ You must check the disclosure box before initializing contract.");
       return;
     }
     if (!connected || !publicKey) {
-      alert("🔒 Wallet Not Connected! Please connect your wallet.");
+      alert("🔒 Wallet Not Connected! Please connect Phantom.");
       return;
     }
 
     try {
       setIsDeploying(true);
       setDeploySuccess(false);
-      setStatusMessage("> Requesting wallet signature to deploy on Solana...");
+      setStatusMessage("> Requesting wallet signature to deploy on-chain...");
 
       const safeName = tokenName.trim().slice(0, 32);
       const safeSymbol = tokenSymbol.trim().toUpperCase().slice(0, 10);
-      let safeUri = thumbnailUrl || imagePreview || "https://apexforge.app/metadata.json";
-      
-      if (safeUri.startsWith("data:") || safeUri.length > 200) {
-        safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
-      }
+      const realMetadataUri = thumbnailUrl || imagePreview;
 
-      const mintAddress = await executeLaunchOnChain(safeName, safeSymbol, safeUri);
+      const mintAddress = await executeLaunchOnChain(safeName, safeSymbol, realMetadataUri);
 
       if (!mintAddress) {
         setIsDeploying(false);
         return;
       }
 
-      setStatusMessage("> Transaction broadcasted! Syncing with database...");
+      setStatusMessage("> Transaction broadcasted! Syncing database...");
       setDeployedTokenAddress(mintAddress);
 
       const parsedBuy = parseFloat(initialBuy.replace(/,/g, '')) || 0;
+      const socialLinks = {
+        twitter: twitter.trim() || null,
+        telegram: telegram.trim() || null,
+        website: website.trim() || null
+      };
+
       const newToken = {
-        id: Date.now().toString(),
+        id: mintAddress,
         name: safeName,
         symbol: safeSymbol,
-        description: description, 
-        links: { twitter: twitter.trim(), telegram: telegram.trim(), website: website.trim() },
+        description: description.trim(), 
+        links: socialLinks,
         mintAddress: mintAddress,
         creatorAddress: publicKey.toBase58(),
-        imagePreview: safeUri, 
+        imageUrl: realMetadataUri, 
         mediaType: mediaType, 
-        icon: '🔥', 
-        mcap: '$10.0K', 
-        price: '0.0001',
-        change: '+0.0%',
-        initialSnipe: parsedBuy,
+        initialSnipeSol: parsedBuy,
         isGraduated: false, 
-        progress: parsedBuy ? Math.min((parsedBuy / 85) * 100, 100) : 0
+        progress: parsedBuy ? Math.min((parsedBuy / 85) * 100, 100) : 0,
+        createdAt: new Date().toISOString()
       };
 
       if (supabase) {
-        try {
-          await supabase.from('tokens').insert([{
-            name: newToken.name,
-            symbol: newToken.symbol,
-            description: newToken.description,
-            icon: newToken.icon,
-            image_url: newToken.imagePreview,
-            mint_address: newToken.mintAddress,
-            creator_address: newToken.creatorAddress,
-            market_cap: newToken.mcap,
-            progress: newToken.progress,
-            links: newToken.links,
-            media_type: newToken.mediaType,
-            created_at: new Date().toISOString()
-          }]);
-        } catch (dbErr) {
-          console.error("Database sync failed, continuing flow:", dbErr);
-        }
+        await supabase.from('tokens').insert([{
+          mint_address: newToken.mintAddress,
+          name: newToken.name,
+          symbol: newToken.symbol,
+          description: newToken.description,
+          image_url: newToken.imageUrl,
+          creator_address: newToken.creatorAddress,
+          progress: newToken.progress,
+          initial_snipe_sol: newToken.initialSnipeSol,
+          links: newToken.links,
+          media_type: newToken.mediaType,
+          is_graduated: false,
+          created_at: newToken.createdAt
+        }]);
       }
 
       setDeploySuccess(true);
       if (onForgeSuccess) onForgeSuccess(newToken);
 
     } catch (err) {
-      console.error("Deployment process failed:", err);
-      alert(`⚠️ Transaction Failed: ${err?.message || "User rejected or blockhash expired."}`);
+      console.error("Deployment failed:", err);
+      alert(`⚠️ Deployment Error: ${err?.message || "Transaction rejected."}`);
       setIsDeploying(false);
     }
   };
@@ -146,7 +140,6 @@ export default function Launch({ onForgeSuccess }) {
     setTelegram('');
     setWebsite('');
     setInitialBuy('');
-    setShowSocials(false);
     setAcceptedDisclaimer(false);
     setIsDeploying(false);
     setDeploySuccess(false);
@@ -160,9 +153,9 @@ export default function Launch({ onForgeSuccess }) {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#0a0b0d] text-white font-sans p-6 lg:p-10 select-none relative">
+    <div className="w-full min-h-screen bg-[#0a0b0d] text-white font-sans p-6 lg:p-10 select-none pb-24">
       
-      {/* DESKTOP PAGE HEADER */}
+      {/* PAGE HEADER */}
       <div className="max-w-7xl mx-auto mb-8 pb-5 border-b border-white/[0.08] flex items-center justify-between">
         <div>
           <h1 className="text-2xl lg:text-3xl font-black text-white uppercase tracking-wider flex items-center gap-3">
@@ -176,14 +169,14 @@ export default function Launch({ onForgeSuccess }) {
         </div>
         <div className="hidden sm:flex items-center gap-3 bg-[#14161d] border border-white/10 px-4 py-2 rounded-xl text-xs font-mono">
           <span className="w-2 h-2 rounded-full bg-[#089981] animate-pulse"></span>
-          Solana Mainnet-Beta
+          Solana Network
         </div>
       </div>
 
-      {/* DESKTOP 2-COLUMN DASHBOARD GRID */}
+      {/* 2-COLUMN DASHBOARD GRID */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* LEFT COLUMN: MAIN CONFIGURATION FORM (7 COLS) */}
+        {/* LEFT COLUMN: ASSET CONFIGURATION & SOCIAL LINKS (7 COLS) */}
         <div className="lg:col-span-7 flex flex-col gap-6 bg-[#12141a] border border-white/[0.08] rounded-2xl p-6 lg:p-8 shadow-2xl">
           <span className="text-xs font-black uppercase tracking-widest text-[#089981]">01 / Asset Parameters</span>
 
@@ -211,37 +204,34 @@ export default function Launch({ onForgeSuccess }) {
           {/* DESCRIPTION */}
           <div className="flex flex-col gap-2">
             <label className="text-xs font-black text-zinc-400 uppercase tracking-wider">Description</label>
-            <textarea placeholder="Describe token utility, vision, or community link..." value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className="w-full bg-[#0a0b0d] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981] font-medium text-sm resize-none transition-all" />
+            <textarea placeholder="Describe token utility, vision, or community link..." value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full bg-[#0a0b0d] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981] font-medium text-sm resize-none transition-all" />
           </div>
 
-          {/* OPTIONAL SOCIAL LINKS */}
-          <div className="bg-[#0a0b0d] border border-white/10 rounded-xl overflow-hidden">
-            <button type="button" onClick={() => setShowSocials(!showSocials)} className="w-full px-4 py-3 flex items-center justify-between text-xs font-bold text-zinc-300 hover:bg-white/[0.02] cursor-pointer">
-              <span>+ Add Social & Web Links (Optional)</span>
-              <span className="text-zinc-500">{showSocials ? '▲' : '▼'}</span>
-            </button>
-            {showSocials && (
-              <div className="p-4 pt-0 flex flex-col gap-3 border-t border-white/5">
-                <input type="text" placeholder="Twitter / X Link" value={twitter} onChange={(e) => setTwitter(e.target.value)} className="w-full bg-[#12141a] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-[#089981]" />
-                <input type="text" placeholder="Telegram Link" value={telegram} onChange={(e) => setTelegram(e.target.value)} className="w-full bg-[#12141a] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-[#089981]" />
-                <input type="text" placeholder="Website URL" value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full bg-[#12141a] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-[#089981]" />
+          {/* FULLY EXPANDED SOCIAL LINKS */}
+          <div className="flex flex-col gap-3 pt-2 border-t border-white/5">
+            <span className="text-xs font-black text-zinc-400 uppercase tracking-wider">Community & Social Links (Optional)</span>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase">X / Twitter</label>
+                <input type="text" placeholder="https://x.com/..." value={twitter} onChange={(e) => setTwitter(e.target.value)} className="w-full bg-[#0a0b0d] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981]" />
               </div>
-            )}
-          </div>
-
-          {/* DISCLAIMER */}
-          <div className="flex items-start gap-3 bg-[#0a0b0d] border border-white/10 p-4 rounded-xl">
-            <input type="checkbox" checked={acceptedDisclaimer} onChange={(e) => setAcceptedDisclaimer(e.target.checked)} className="mt-1 min-w-[18px] min-h-[18px] accent-[#089981] cursor-pointer" />
-            <p className="text-[11px] text-zinc-400 font-medium leading-relaxed">
-              <strong className="text-white">Mandatory Disclosure:</strong> Assets created on Apex Forge are community tokens designed strictly for entertainment and social utility. They hold no intrinsic financial guarantee.
-            </p>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase">Telegram</label>
+                <input type="text" placeholder="https://t.me/..." value={telegram} onChange={(e) => setTelegram(e.target.value)} className="w-full bg-[#0a0b0d] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981]" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase">Website</label>
+                <input type="text" placeholder="https://..." value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full bg-[#0a0b0d] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981]" />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: REAL-TIME PREVIEW & DEPLOYMENT SIDEBAR (5 COLS) */}
+        {/* RIGHT COLUMN: PREVIEW, SNIPE AMOUNT & DISCLAIMER (5 COLS) */}
         <div className="lg:col-span-5 flex flex-col gap-6 lg:sticky lg:top-8">
           
-          {/* PHANTOM-STYLE TOKEN LIVE PREVIEW CARD */}
+          {/* TOKEN PREVIEW CARD */}
           <div className="bg-[#12141a] border border-white/[0.08] rounded-2xl p-6 shadow-2xl flex flex-col gap-4">
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
               <span className="text-xs font-black uppercase tracking-widest text-zinc-400">Live Asset Preview</span>
@@ -249,10 +239,10 @@ export default function Launch({ onForgeSuccess }) {
             </div>
 
             <div className="flex items-center gap-4 bg-[#0a0b0d] p-4 rounded-xl border border-white/5">
-              <div className="w-16 h-16 rounded-xl bg-zinc-800 border border-white/10 overflow-hidden shrink-0 flex items-center justify-center text-2xl">
+              <div className="w-16 h-16 rounded-xl bg-zinc-800 border border-white/10 overflow-hidden shrink-0 flex items-center justify-center text-2xl text-zinc-600">
                 {imagePreview ? (
                   mediaType === 'video' ? <video src={imagePreview} autoPlay loop muted className="w-full h-full object-cover" /> : <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                ) : '🔥'}
+                ) : '?'}
               </div>
               <div className="flex flex-col min-w-0 flex-1">
                 <h3 className="text-base font-black text-white truncate">{tokenName || 'Asset Name'}</h3>
@@ -264,15 +254,14 @@ export default function Launch({ onForgeSuccess }) {
 
           {/* INITIAL SNIPE & LAUNCH ACTION CARD */}
           <div className="bg-[#12141a] border border-white/[0.08] rounded-2xl p-6 shadow-2xl flex flex-col gap-5">
-            <span className="text-xs font-black uppercase tracking-widest text-[#089981]">02 / Liquidity Snipe</span>
+            <span className="text-xs font-black uppercase tracking-widest text-[#089981]">02 / Liquidity Snipe & Deploy</span>
             
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Incentivize initial market depth by sniping tokens automatically inside block 0 upon contract creation.
-            </p>
-
-            <div className="flex items-center bg-[#0a0b0d] border border-white/10 rounded-xl px-4 py-2 focus-within:border-[#089981] transition-all">
-              <input type="text" inputMode="decimal" placeholder="0.00" value={initialBuy} onChange={handleInitialBuyChange} className="w-full bg-transparent text-2xl font-black text-white outline-none py-1 font-mono" />
-              <span className="text-sm font-black text-[#089981]">SOL</span>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black text-zinc-400 uppercase tracking-wider">Initial SOL Snipe Amount</label>
+              <div className="flex items-center bg-[#0a0b0d] border border-white/10 rounded-xl px-4 py-2 focus-within:border-[#089981] transition-all">
+                <input type="text" inputMode="decimal" placeholder="0.00" value={initialBuy} onChange={handleInitialBuyChange} className="w-full bg-transparent text-2xl font-black text-white outline-none py-1 font-mono" />
+                <span className="text-sm font-black text-[#089981]">SOL</span>
+              </div>
             </div>
 
             <div className="grid grid-cols-4 gap-2">
@@ -291,9 +280,12 @@ export default function Launch({ onForgeSuccess }) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-xs font-mono text-zinc-400 pt-2 border-t border-white/5">
-              <span>Est. Gas & Rent:</span>
-              <span className="text-white font-bold">~0.05 SOL</span>
+            {/* MANDATORY DISCLAIMER CHECKBOX */}
+            <div className="flex items-start gap-3 bg-[#0a0b0d] border border-white/10 p-3 rounded-xl">
+              <input type="checkbox" id="disclaimer" checked={acceptedDisclaimer} onChange={(e) => setAcceptedDisclaimer(e.target.checked)} className="mt-0.5 min-w-[18px] min-h-[18px] accent-[#089981] cursor-pointer" />
+              <label htmlFor="disclaimer" className="text-[11px] text-zinc-400 font-medium leading-relaxed cursor-pointer select-none">
+                <strong className="text-white">Acknowledge Risk:</strong> I confirm this token is a fair-launch asset created for social utility.
+              </label>
             </div>
 
             {/* DEPLOY BUTTON */}
@@ -306,7 +298,7 @@ export default function Launch({ onForgeSuccess }) {
 
       </div>
 
-      {/* DEPLOYMENT TERMINAL MODAL */}
+      {/* TERMINAL MODAL */}
       {isDeploying && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <div className="w-full max-w-lg bg-[#0a0b0d] border border-[#089981]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col relative">
