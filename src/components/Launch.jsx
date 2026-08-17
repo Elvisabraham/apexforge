@@ -53,7 +53,6 @@ export default function Launch({ onForgeSuccess }) {
       setDeploySuccess(false);
       setStatusMessage("> Requesting wallet signature to deploy on Solana...");
 
-      // 1. Prepare Safe Parameters
       const safeName = tokenName.trim().slice(0, 32);
       const safeSymbol = tokenSymbol.trim().toUpperCase().slice(0, 10);
       let safeUri = thumbnailUrl || imagePreview || "https://apexforge.app/metadata.json";
@@ -62,7 +61,6 @@ export default function Launch({ onForgeSuccess }) {
         safeUri = `https://apexforge.app/metadata/${safeSymbol.toLowerCase()}.json`;
       }
 
-      // 2. Execute On-Chain Deployment
       const mintAddress = await executeLaunchOnChain(safeName, safeSymbol, safeUri);
 
       if (!mintAddress) {
@@ -73,18 +71,13 @@ export default function Launch({ onForgeSuccess }) {
       setStatusMessage("> Transaction broadcasted! Syncing with database...");
       setDeployedTokenAddress(mintAddress);
 
-      // 3. Construct Token Payload
       const parsedBuy = parseFloat(initialBuy.replace(/,/g, '')) || 0;
       const newToken = {
         id: Date.now().toString(),
         name: safeName,
         symbol: safeSymbol,
         description: description, 
-        links: { 
-          twitter: twitter.trim(), 
-          telegram: telegram.trim(), 
-          website: website.trim() 
-        },
+        links: { twitter: twitter.trim(), telegram: telegram.trim(), website: website.trim() },
         mintAddress: mintAddress,
         creatorAddress: publicKey.toBase58(),
         imagePreview: safeUri, 
@@ -98,7 +91,6 @@ export default function Launch({ onForgeSuccess }) {
         progress: parsedBuy ? Math.min((parsedBuy / 85) * 100, 100) : 0
       };
 
-      // 4. Save to Supabase DB (Failsafe)
       if (supabase) {
         try {
           await supabase.from('tokens').insert([{
@@ -121,9 +113,7 @@ export default function Launch({ onForgeSuccess }) {
       }
 
       setDeploySuccess(true);
-      if (onForgeSuccess) {
-        onForgeSuccess(newToken);
-      }
+      if (onForgeSuccess) onForgeSuccess(newToken);
 
     } catch (err) {
       console.error("Deployment process failed:", err);
@@ -136,24 +126,6 @@ export default function Launch({ onForgeSuccess }) {
     setImagePreview(mediaData.previewUrl);
     setThumbnailUrl(mediaData.thumbnailUrl);
     setMediaType(mediaData.type);
-  };
-
-  const handleDescriptionChange = (e) => {
-    let val = e.target.value;
-    const bannedWords = [/100x/gi, /guaranteed profit/gi, /rug pull/gi, /moon safe/gi, /financial advice/gi, /risk free/gi];
-    let isFlagged = false;
-
-    bannedWords.forEach(regex => {
-      if (regex.test(val)) {
-        val = val.replace(regex, "***");
-        isFlagged = true;
-      }
-    });
-
-    setDescription(val);
-    if (isFlagged) {
-      alert("⚠️ Compliance Protocol: Certain financial hype words were filtered to maintain store compliance.");
-    }
   };
 
   const handleInitialBuyChange = (e) => {
@@ -176,11 +148,9 @@ export default function Launch({ onForgeSuccess }) {
     setInitialBuy('');
     setShowSocials(false);
     setAcceptedDisclaimer(false);
-    
     setIsDeploying(false);
     setDeploySuccess(false);
     setDeployedTokenAddress('');
-    
     setUploaderKey(prev => prev + 1); 
   };
 
@@ -190,217 +160,182 @@ export default function Launch({ onForgeSuccess }) {
   };
 
   return (
-    <div className="flex flex-col w-full h-full bg-[#050505] text-white font-sans overflow-hidden relative select-none">
+    <div className="w-full min-h-screen bg-[#0a0b0d] text-white font-sans p-6 lg:p-10 select-none relative">
       
-      <style>{`
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
-
-      {/* --- PINNED HEADER --- */}
-      <header className="flex-none z-40 bg-[#050505]/95 backdrop-blur-md px-4 py-4 border-b border-white/[0.04] flex items-center justify-center shadow-md">
-        <h1 className="text-xl font-black tracking-wide text-white uppercase flex items-center gap-2">
-          <svg viewBox="0 0 100 100" className="w-5 h-5 text-[#089981]" fill="currentColor">
-            <path d="M 50 10 L 10 90 L 30 90 L 50 45 L 70 90 L 90 90 Z" fill="#FFFFFF" />
-            <path d="M 50 45 C 35 70, 35 85, 50 85 C 65 85, 65 70, 50 45 Z" fill="#089981" />
-          </svg>
-          The Forge
-        </h1>
-      </header>
-
-      {/* --- SCROLLABLE MIDDLE CONTAINER --- */}
-      <div className={`flex-1 overflow-y-auto scrollbar-hide px-4 pt-6 pb-72 transition-opacity duration-300 ${isDeploying ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
-        <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
-          
-          <div className="flex flex-col gap-1">
-            <h2 className="text-3xl font-black text-white tracking-tight">Deploy Asset</h2>
-            <p className="text-[13px] text-zinc-400 font-medium leading-relaxed">Create and launch a fair-launch token on Solana. Liquidity is securely locked.</p>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Asset Media (Video/GIF/Image) <span className="text-rose-500">*</span></label>
-            <MediaUploader key={uploaderKey} onMediaSelected={handleMediaSelected} />
-          </div>
-
-          {/* TOKEN DETAILS */}
-          <div className="flex flex-col gap-5">
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Token Name <span className="text-rose-500">*</span></label>
-              <input type="text" placeholder="e.g. Apex Forge" value={tokenName} onChange={(e) => setTokenName(e.target.value)} className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981]/50 transition-all font-black text-lg shadow-inner"/>
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Ticker Symbol <span className="text-rose-500">*</span></label>
-              <div className="relative flex flex-col gap-2">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 font-black text-lg">$</span>
-                <input type="text" placeholder="APEX" value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())} className="w-full bg-[#121212] border border-white/5 rounded-xl pl-9 pr-4 py-3.5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981]/50 transition-all font-black text-lg uppercase shadow-inner" />
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-end">
-                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Description</label>
-              </div>
-              <textarea 
-                placeholder="Describe your project's utility and vision..." 
-                value={description} 
-                onChange={handleDescriptionChange} 
-                rows={4} 
-                className="w-full bg-[#121212] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981]/50 transition-all font-medium text-sm resize-none shadow-inner" 
-              />
-            </div>
-          </div>
-
-          {/* SOCIAL LINKS */}
-          <div className="flex flex-col bg-[#121212] border border-white/5 rounded-xl overflow-hidden shadow-inner">
-            <button onClick={() => setShowSocials(!showSocials)} className="w-full px-4 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors cursor-pointer">
-              <span className="text-sm font-bold text-zinc-300 flex items-center gap-2">
-                <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                Add Social Links (Optional)
-              </span>
-              <svg className={`w-4 h-4 text-zinc-500 transition-transform duration-300 ${showSocials ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-            </button>
-            {showSocials && (
-              <div className="p-4 pt-0 flex flex-col gap-3 border-t border-white/5">
-                <div className="flex items-center bg-[#050505] border border-white/5 rounded-lg overflow-hidden focus-within:border-[#089981]/50 transition-colors shadow-inner">
-                  <span className="pl-3 pr-2 text-zinc-500 font-black">𝕏</span>
-                  <input type="text" placeholder="(Optional) Twitter Link" value={twitter} onChange={(e) => setTwitter(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
-                </div>
-                
-                <div className="flex items-center bg-[#050505] border border-white/5 rounded-lg overflow-hidden focus-within:border-[#089981]/50 transition-colors shadow-inner">
-                  <span className="pl-3 pr-2 text-zinc-400 flex items-center justify-center">
-                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.481-.428-.009-1.252-.242-1.865-.442-752-.245-1.349-.375-1.297-.789.027-.216.324-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.14.12.098.153.228.166.32.011.082.025.269.011.415z"/>
-                    </svg>
-                  </span>
-                  <input type="text" placeholder="(Optional) Telegram Link" value={telegram} onChange={(e) => setTelegram(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
-                </div>
-
-                <div className="flex items-center bg-[#050505] border border-white/5 rounded-lg overflow-hidden focus-within:border-[#089981]/50 transition-colors shadow-inner">
-                  <span className="pl-3 pr-2 text-zinc-500 font-black">🌐</span>
-                  <input type="text" placeholder="(Optional) Website URL" value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full bg-transparent py-2.5 pr-3 text-sm text-white placeholder-zinc-600 outline-none" />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ANTI-BOT PROTECTION CARD */}
-          <div className="bg-gradient-to-br from-[#121212] to-[#0A0A0A] border border-[#089981]/30 rounded-3xl p-6 shadow-[0_0_30px_rgba(8,153,129,0.05)] relative overflow-hidden group">
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#089981]/10 rounded-full blur-3xl group-hover:bg-[#089981]/20 transition-colors"></div>
-            
-            <div className="flex justify-between items-center border-b border-white/5 pb-3 mb-5 relative z-10">
-              <h3 className="text-[11px] font-black text-[#089981] uppercase tracking-widest flex items-center gap-2">⚡ Initial Snipe</h3>
-              <span className="text-[9px] font-mono text-zinc-500 bg-black/50 px-2 py-1 rounded">ANTI-BOT PROTECTION</span>
-            </div>
-            
-            <p className="text-xs text-zinc-400 font-medium mb-5 leading-relaxed relative z-10">
-              Secure the lowest entry price at block 0. Choose how much SOL to inject instantly upon contract deployment.
-            </p>
-            
-            <div className="flex items-center bg-[#050505] border border-white/10 rounded-2xl px-5 py-2 focus-within:border-[#089981]/80 transition-colors shadow-inner relative z-10">
-               <input type="text" inputMode="decimal" placeholder="0.00" value={initialBuy} onChange={handleInitialBuyChange} className="w-full bg-transparent text-4xl font-black text-white outline-none py-3 placeholder-zinc-700 font-mono" />
-               <div className="flex flex-col items-end shrink-0">
-                 <span className="text-lg font-black text-[#089981]">SOL</span>
-               </div>
-            </div>
-            
-            <div className="flex gap-2 mt-4 w-full relative z-10">
-               {['0.5', '1.0', '2.5', '5.0'].map(amt => (
-                 <button key={amt} onClick={() => setInitialBuy(amt)} className="flex-1 py-3 bg-white/5 hover:bg-[#089981]/20 rounded-xl text-xs font-black text-zinc-300 hover:text-[#089981] transition-colors border border-white/5 active:scale-95 shadow-sm cursor-pointer">{amt}</button>
-               ))}
-            </div>
-
-            <div className="mt-6 pt-5 border-t border-white/5 relative z-10">
-              <div className="flex justify-between text-[9px] font-black uppercase text-zinc-600 mb-2">
-                <span>Curve Progress</span>
-                <span>{calculatedProgress()}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-[#050505] rounded-full overflow-hidden">
-                <div className="h-full bg-[#089981] transition-all duration-300" style={{width: `${calculatedProgress()}%`}}></div>
-              </div>
-            </div>
-          </div>
-
-          {/* DISCLAIMER */}
-          <div className="flex items-start gap-3 bg-[#121212] border border-white/10 p-4 rounded-xl mt-2 mb-2">
-            <input 
-              type="checkbox" 
-              checked={acceptedDisclaimer} 
-              onChange={(e) => setAcceptedDisclaimer(e.target.checked)} 
-              className="mt-1 min-w-[20px] min-h-[20px] accent-[#089981] cursor-pointer"
-            />
-            <p className="text-[10px] text-zinc-400 font-medium leading-relaxed">
-              <strong className="text-white">Mandatory Disclosure:</strong> I acknowledge that assets deployed on Apex Forge are community digital art concepts intended strictly for entertainment and social engagement. They hold no intrinsic financial value and do not constitute investment products.
-            </p>
-          </div>
-
+      {/* DESKTOP PAGE HEADER */}
+      <div className="max-w-7xl mx-auto mb-8 pb-5 border-b border-white/[0.08] flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-black text-white uppercase tracking-wider flex items-center gap-3">
+            <svg viewBox="0 0 100 100" className="w-7 h-7 text-[#089981]" fill="currentColor">
+              <path d="M 50 10 L 10 90 L 30 90 L 50 45 L 70 90 L 90 90 Z" fill="#FFFFFF" />
+              <path d="M 50 45 C 35 70, 35 85, 50 85 C 65 85, 65 70, 50 45 Z" fill="#089981" />
+            </svg>
+            The Forge
+          </h1>
+          <p className="text-xs lg:text-sm text-zinc-400 font-medium mt-1">Deploy fair-launch tokens on Solana with auto-bonding curve initialization.</p>
+        </div>
+        <div className="hidden sm:flex items-center gap-3 bg-[#14161d] border border-white/10 px-4 py-2 rounded-xl text-xs font-mono">
+          <span className="w-2 h-2 rounded-full bg-[#089981] animate-pulse"></span>
+          Solana Mainnet-Beta
         </div>
       </div>
 
-      {/* --- PINNED BOTTOM ACTION BAR --- */}
-      {!isDeploying && (
-        <div className="absolute bottom-[90px] md:bottom-0 left-0 right-0 z-40 bg-[#050505]/95 backdrop-blur-xl py-3 px-4 border-t border-white/[0.04] shadow-[0_-10px_30px_rgba(0,0,0,0.9)]">
-          <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
-            
-            <div className="flex flex-col shrink-0">
-              <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Network Cost</span>
-              <span className="text-sm font-black text-white font-mono">~0.05 SOL</span>
+      {/* DESKTOP 2-COLUMN DASHBOARD GRID */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        {/* LEFT COLUMN: MAIN CONFIGURATION FORM (7 COLS) */}
+        <div className="lg:col-span-7 flex flex-col gap-6 bg-[#12141a] border border-white/[0.08] rounded-2xl p-6 lg:p-8 shadow-2xl">
+          <span className="text-xs font-black uppercase tracking-widest text-[#089981]">01 / Asset Parameters</span>
+
+          {/* MEDIA UPLOADER */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-black text-zinc-400 uppercase tracking-wider">Asset Media (Video / GIF / Image) <span className="text-rose-500">*</span></label>
+            <MediaUploader key={uploaderKey} onMediaSelected={handleMediaSelected} />
+          </div>
+
+          {/* TOKEN IDENTIFIERS */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black text-zinc-400 uppercase tracking-wider">Token Name <span className="text-rose-500">*</span></label>
+              <input type="text" placeholder="e.g. Apex Forge" value={tokenName} onChange={(e) => setTokenName(e.target.value)} className="w-full bg-[#0a0b0d] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981] font-bold text-sm transition-all" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black text-zinc-400 uppercase tracking-wider">Ticker Symbol <span className="text-rose-500">*</span></label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 font-black">$</span>
+                <input type="text" placeholder="APEX" value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())} className="w-full bg-[#0a0b0d] border border-white/10 rounded-xl pl-8 pr-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981] font-black text-sm uppercase transition-all" />
+              </div>
+            </div>
+          </div>
+
+          {/* DESCRIPTION */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-black text-zinc-400 uppercase tracking-wider">Description</label>
+            <textarea placeholder="Describe token utility, vision, or community link..." value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className="w-full bg-[#0a0b0d] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-[#089981] font-medium text-sm resize-none transition-all" />
+          </div>
+
+          {/* OPTIONAL SOCIAL LINKS */}
+          <div className="bg-[#0a0b0d] border border-white/10 rounded-xl overflow-hidden">
+            <button type="button" onClick={() => setShowSocials(!showSocials)} className="w-full px-4 py-3 flex items-center justify-between text-xs font-bold text-zinc-300 hover:bg-white/[0.02] cursor-pointer">
+              <span>+ Add Social & Web Links (Optional)</span>
+              <span className="text-zinc-500">{showSocials ? '▲' : '▼'}</span>
+            </button>
+            {showSocials && (
+              <div className="p-4 pt-0 flex flex-col gap-3 border-t border-white/5">
+                <input type="text" placeholder="Twitter / X Link" value={twitter} onChange={(e) => setTwitter(e.target.value)} className="w-full bg-[#12141a] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-[#089981]" />
+                <input type="text" placeholder="Telegram Link" value={telegram} onChange={(e) => setTelegram(e.target.value)} className="w-full bg-[#12141a] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-[#089981]" />
+                <input type="text" placeholder="Website URL" value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full bg-[#12141a] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-[#089981]" />
+              </div>
+            )}
+          </div>
+
+          {/* DISCLAIMER */}
+          <div className="flex items-start gap-3 bg-[#0a0b0d] border border-white/10 p-4 rounded-xl">
+            <input type="checkbox" checked={acceptedDisclaimer} onChange={(e) => setAcceptedDisclaimer(e.target.checked)} className="mt-1 min-w-[18px] min-h-[18px] accent-[#089981] cursor-pointer" />
+            <p className="text-[11px] text-zinc-400 font-medium leading-relaxed">
+              <strong className="text-white">Mandatory Disclosure:</strong> Assets created on Apex Forge are community tokens designed strictly for entertainment and social utility. They hold no intrinsic financial guarantee.
+            </p>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: REAL-TIME PREVIEW & DEPLOYMENT SIDEBAR (5 COLS) */}
+        <div className="lg:col-span-5 flex flex-col gap-6 lg:sticky lg:top-8">
+          
+          {/* PHANTOM-STYLE TOKEN LIVE PREVIEW CARD */}
+          <div className="bg-[#12141a] border border-white/[0.08] rounded-2xl p-6 shadow-2xl flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+              <span className="text-xs font-black uppercase tracking-widest text-zinc-400">Live Asset Preview</span>
+              <span className="text-[10px] font-mono bg-[#089981]/20 text-[#089981] px-2.5 py-1 rounded-full font-bold">PRE-LAUNCH</span>
             </div>
 
-            <button 
-              onClick={handleRealDeployment} 
-              disabled={isLaunching || !acceptedDisclaimer}
-              className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(8,153,129,0.3)] ${
-                acceptedDisclaimer && !isLaunching
-                  ? 'bg-[#089981] hover:bg-[#06806b] text-white active:scale-95 cursor-pointer' 
-                  : 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50'
-              }`}
-            >
+            <div className="flex items-center gap-4 bg-[#0a0b0d] p-4 rounded-xl border border-white/5">
+              <div className="w-16 h-16 rounded-xl bg-zinc-800 border border-white/10 overflow-hidden shrink-0 flex items-center justify-center text-2xl">
+                {imagePreview ? (
+                  mediaType === 'video' ? <video src={imagePreview} autoPlay loop muted className="w-full h-full object-cover" /> : <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                ) : '🔥'}
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <h3 className="text-base font-black text-white truncate">{tokenName || 'Asset Name'}</h3>
+                <span className="text-xs font-mono font-bold text-[#089981]">${tokenSymbol || 'SYMBOL'}</span>
+                <p className="text-[11px] text-zinc-500 truncate mt-1">{description || 'No description provided yet.'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* INITIAL SNIPE & LAUNCH ACTION CARD */}
+          <div className="bg-[#12141a] border border-white/[0.08] rounded-2xl p-6 shadow-2xl flex flex-col gap-5">
+            <span className="text-xs font-black uppercase tracking-widest text-[#089981]">02 / Liquidity Snipe</span>
+            
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Incentivize initial market depth by sniping tokens automatically inside block 0 upon contract creation.
+            </p>
+
+            <div className="flex items-center bg-[#0a0b0d] border border-white/10 rounded-xl px-4 py-2 focus-within:border-[#089981] transition-all">
+              <input type="text" inputMode="decimal" placeholder="0.00" value={initialBuy} onChange={handleInitialBuyChange} className="w-full bg-transparent text-2xl font-black text-white outline-none py-1 font-mono" />
+              <span className="text-sm font-black text-[#089981]">SOL</span>
+            </div>
+
+            <div className="grid grid-cols-4 gap-2">
+              {['0.5', '1.0', '2.5', '5.0'].map(amt => (
+                <button key={amt} type="button" onClick={() => setInitialBuy(amt)} className="py-2 bg-white/5 hover:bg-[#089981]/20 rounded-lg text-xs font-bold text-zinc-300 hover:text-[#089981] transition-colors border border-white/5 cursor-pointer">{amt}</button>
+              ))}
+            </div>
+
+            <div className="pt-2 border-t border-white/5">
+              <div className="flex justify-between text-[10px] font-black uppercase text-zinc-500 mb-1">
+                <span>Curve Fill</span>
+                <span>{calculatedProgress()}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-[#0a0b0d] rounded-full overflow-hidden">
+                <div className="h-full bg-[#089981] transition-all duration-300" style={{ width: `${calculatedProgress()}%` }}></div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-xs font-mono text-zinc-400 pt-2 border-t border-white/5">
+              <span>Est. Gas & Rent:</span>
+              <span className="text-white font-bold">~0.05 SOL</span>
+            </div>
+
+            {/* DEPLOY BUTTON */}
+            <button onClick={handleRealDeployment} disabled={isLaunching || !acceptedDisclaimer} className={`w-full py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg ${acceptedDisclaimer && !isLaunching ? 'bg-[#089981] hover:bg-[#06806b] text-white active:scale-[0.98] cursor-pointer' : 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50'}`}>
               Initialize Contract 🚀
             </button>
           </div>
+
         </div>
-      )}
 
-      {/* --- REAL DEPLOYMENT TERMINAL MODAL --- */}
+      </div>
+
+      {/* DEPLOYMENT TERMINAL MODAL */}
       {isDeploying && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-md">
-          <div className="w-full max-w-lg bg-[#0A0A0A] border border-[#089981]/40 rounded-xl overflow-hidden shadow-[0_0_80px_rgba(8,153,129,0.15)] flex flex-col relative">
-            
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="w-full max-w-lg bg-[#0a0b0d] border border-[#089981]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col relative">
             {!deploySuccess && (
-              <button onClick={resetForge} className="absolute top-3 right-4 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-400 transition-colors z-20 cursor-pointer">
-                Cancel
-              </button>
+              <button onClick={resetForge} className="absolute top-3 right-4 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-400 cursor-pointer">Cancel</button>
             )}
-
-            <div className="bg-[#121212] px-4 py-3 border-b border-white/5 flex items-center gap-2">
+            <div className="bg-[#12141a] px-4 py-3 border-b border-white/5 flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-rose-500/80"></div>
               <div className="w-3 h-3 rounded-full bg-amber-500/80"></div>
               <div className="w-3 h-3 rounded-full bg-[#089981]/80"></div>
-              <span className="ml-2 text-[10px] font-mono font-bold text-zinc-500">root@apex-forge: ~/deploy/${tokenSymbol || 'unknown'}</span>
+              <span className="ml-2 text-[10px] font-mono font-bold text-zinc-500">terminal@apex-forge: ~/deploy/${tokenSymbol || 'token'}</span>
             </div>
-
-            <div className="p-6 font-mono text-xs sm:text-sm h-64 flex flex-col items-center justify-center gap-4 text-center">
+            <div className="p-8 font-mono text-xs h-64 flex flex-col items-center justify-center gap-4 text-center">
               {!deploySuccess ? (
                 <>
                   <div className="w-12 h-12 border-4 border-[#089981]/20 border-t-[#089981] rounded-full animate-spin"></div>
                   <p className="text-[#089981] font-bold text-sm animate-pulse">{statusMessage}</p>
-                  <p className="text-[10px] text-zinc-500">Please review and confirm the signature popup in your wallet.</p>
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center gap-4">
-                  <div className="w-16 h-16 bg-[#089981]/20 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(8,153,129,0.5)]">
-                    <svg className="w-8 h-8 text-[#089981]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </div>
-                  <h3 className="text-xl font-black uppercase text-white tracking-widest">Contract Live On-Chain</h3>
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-14 h-14 bg-[#089981]/20 rounded-full flex items-center justify-center text-[#089981] text-2xl font-bold">✓</div>
+                  <h3 className="text-lg font-black uppercase text-white">Contract Live On-Chain</h3>
                   <div className="bg-black border border-white/10 px-4 py-2 rounded-lg max-w-xs overflow-hidden">
                     <span className="text-[#089981] font-bold text-xs select-all break-all">{deployedTokenAddress}</span>
                   </div>
-                  <button onClick={resetForge} className="mt-4 px-6 py-3 bg-[#089981] text-black font-black uppercase tracking-widest text-xs rounded-lg hover:bg-[#06806b] transition-colors cursor-pointer">
-                    Deploy Another
-                  </button>
+                  <button onClick={resetForge} className="mt-2 px-6 py-2.5 bg-[#089981] text-black font-black uppercase tracking-widest text-xs rounded-lg hover:bg-[#06806b] cursor-pointer">Deploy Another</button>
                 </div>
               )}
             </div>
-
           </div>
         </div>
       )}
