@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { createChart, CandlestickSeries, AreaSeries } from 'lightweight-charts';
+import { createChart, CandlestickSeries, AreaSeries, HistogramSeries } from 'lightweight-charts';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL, PublicKey, SystemProgram } from '@solana/web3.js'; // 👈 Added SystemProgram
 import { BN } from '@coral-xyz/anchor'; // 👈 Added BN
@@ -838,12 +838,12 @@ const handleExecuteTrade = async () => {
     }
     seriesRef.current = series;
 
-    // 3. VOLUME HISTOGRAM SERIES (Anchored to bottom 20%)
-    const volumeSeries = chart.addHistogramSeries({
+   // 3. VOLUME HISTOGRAM SERIES (v4 API Fix)
+    const volumeSeries = chart.addSeries(HistogramSeries, {
       priceFormat: { type: 'volume' },
       priceScaleId: '',
     });
-
+    
     volumeSeries.priceScale().applyOptions({
       scaleMargins: { top: 0.8, bottom: 0 },
     });
