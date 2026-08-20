@@ -14,6 +14,8 @@ import ActiveTvStream from './components/ActiveTvStream';
 
 // --- CORE VIEWS ---
 import Home from './components/Home';
+import LaunchesView from './components/LaunchesView';
+import TrackView from './components/TrackView';
 import Launch from './components/Launch';
 import Wallet from './components/Wallet';
 import Watch from './components/Watch';
@@ -58,6 +60,12 @@ function AppContent() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  
+  // 🔍 NEW: Global search query state for header search integration
+  const [searchQuery, setSearchQuery] = useState('');
+  // 🏷️ NEW: Top-bar tab selection state matching Phantom's navigation model
+  const [topNavTab, setTopNavTab] = useState('Discover');
+  const [isHeaderDropdownOpen, setIsHeaderDropdownOpen] = useState(false);
   
   const [modals, setModals] = useState({
     deposit: false,
@@ -275,16 +283,37 @@ function AppContent() {
     switch (activePage.toLowerCase()) {
       case 'home': 
         return <Home 
-                  tokens={globalTokens} 
-                  trendingTokens={trendingTokens} 
-                  graduatedTokens={graduatedTokens}
-                  onTokenClick={handleTokenClick} 
-                  setActivePage={(page) => { setPreviousPage('home'); setActivePage(page); }} 
-                  userProfile={userProfile} 
-                  onOpenSidebar={() => setIsMobileSidebarOpen(true)} 
-                  onOpenAccountDrawer={openAccountDrawer} 
-                  onOpenNotifications={() => setIsNotificationsOpen(true)}
+                 tokens={globalTokens} 
+                 trendingTokens={trendingTokens} 
+                 migratingTokens={[]} // 👈 CHANGE THIS LINE
+                 graduatedTokens={graduatedTokens}
+                 onTokenClick={handleTokenClick} 
+                 setActivePage={(page) => { setPreviousPage('home'); setActivePage(page); }} 
+                 userProfile={userProfile} 
+                 onOpenSidebar={() => setIsMobileSidebarOpen(true)} 
+                 onOpenAccountDrawer={openAccountDrawer} 
+                 onOpenNotifications={() => setIsNotificationsOpen(true)}
+                 searchQuery={searchQuery}
                />;
+
+      case 'launches': 
+        return (
+          <div className="h-full p-4 sm:p-6 overflow-hidden">
+            <LaunchesView 
+              newTokens={trendingTokens} 
+              migratingTokens={[]} // 👈 CHANGE THIS LINE TOO
+              migratedTokens={graduatedTokens} 
+            />
+          </div>
+        );
+
+      case 'track': 
+        return (
+          <div className="h-full p-4 sm:p-6 overflow-hidden">
+            <TrackView searchQuery={searchQuery} />
+          </div>
+        );
+
       case 'watch': 
         return <Watch onTokenClick={handleTokenClick} setActivePage={(page) => { setPreviousPage('watch'); setActivePage(page); }} userProfile={userProfile} onOpenAccountDrawer={openAccountDrawer} onOpenNotifications={() => setIsNotificationsOpen(true)} />;
       case 'forge':
@@ -391,21 +420,22 @@ function AppContent() {
         );
       default: 
         return <Home 
-                  tokens={globalTokens} 
-                  trendingTokens={trendingTokens} 
-                  graduatedTokens={graduatedTokens}
-                  onTokenClick={handleTokenClick} 
-                  setActivePage={(page) => { setPreviousPage('home'); setActivePage(page); }} 
-                  userProfile={userProfile} 
-                  onOpenSidebar={() => setIsMobileSidebarOpen(true)} 
-                  onOpenAccountDrawer={openAccountDrawer} 
-                  onOpenNotifications={() => setIsNotificationsOpen(true)}
+                 tokens={globalTokens} 
+                 trendingTokens={trendingTokens} 
+                 graduatedTokens={graduatedTokens}
+                 onTokenClick={handleTokenClick} 
+                 setActivePage={(page) => { setPreviousPage('home'); setActivePage(page); }} 
+                 userProfile={userProfile} 
+                 onOpenSidebar={() => setIsMobileSidebarOpen(true)} 
+                 onOpenAccountDrawer={openAccountDrawer} 
+                 onOpenNotifications={() => setIsNotificationsOpen(true)}
+                 searchQuery={searchQuery}
                />;
     }
   };
 
-  return (
-<div className="fixed inset-0 bg-[#050505] text-white flex flex-col overflow-hidden select-none">
+ return (
+<div className="fixed inset-0 bg-[#050505] text-white flex overflow-hidden select-none">
   
   <style>{`
         * {
@@ -441,26 +471,125 @@ function AppContent() {
         closeStream={stopStream} 
       />
 
-      {/* --- DESKTOP SIDEBAR --- */}
-      <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[260px] bg-[#0A0A0A] border-r border-white/5 z-40">
-        <Sidebar currentView={activePage} setCurrentView={handleSidebarNavigation} userProfile={userProfile} />
-      </div>
+      return (
+    <div className="fixed inset-0 bg-[#050505] text-white flex w-full h-full overflow-hidden select-none">
+      
+     {/* --- DESKTOP SIDEBAR --- */}
+<div className="hidden md:block w-16 h-full bg-[#0A0A0A] border-r border-white/5 shrink-0 z-40">
+  <Sidebar currentView={activePage} setCurrentView={handleSidebarNavigation} userProfile={userProfile} />
+</div>
 
       {/* --- MOBILE NAVIGATION SIDEBAR OVERLAY --- */}
       {isMobileSidebarOpen && (
         <div className="fixed inset-0 z-[200] md:hidden flex" onClick={() => setIsMobileSidebarOpen(false)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-fadeIn"></div>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-fadeIn" />
           <div 
-            className="w-[260px] h-full bg-[#0A0A0A] border-r border-white/5 shadow-[20px_0_50px_rgba(0,0,0,0.7)] relative z-10 animate-slideRight flex flex-col"
-            onClick={(e) => e.stopPropagation()} 
+            className="w-[260px] h-full bg-[#0A0A0A] border-r border-white/5 shadow-[20px_0_50px_rgba(0,0,0,0.8)] relative z-10 flex flex-col"
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex-1 overflow-y-auto">
-              <Sidebar currentView={activePage} setCurrentView={handleSidebarNavigation} userProfile={userProfile} />
+              <Sidebar currentView={activePage} setCurrentView={(view) => { handleSidebarNavigation(view); setIsMobileSidebarOpen(false); }} userProfile={userProfile} />
             </div>
           </div>
         </div>
       )}
 
+      {/* --- MAIN CONTENT CONTAINER --- */}
+      <div className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
+        
+        {/* --- TOP HEADER BAR --- */}
+        <header className="flex items-center justify-between px-6 py-3 border-b border-zinc-800/80 bg-[#141417] shrink-0 z-30">
+          
+          {/* Left Nav: Discover Dropdown & Sub-tabs */}
+          <div className="flex items-center space-x-8">
+            <div className="relative">
+              <button
+                onClick={() => setIsHeaderDropdownOpen(!isHeaderDropdownOpen)}
+                className="flex items-center space-x-1.5 text-base font-bold text-white hover:text-purple-400 transition-colors focus:outline-none"
+              >
+                <span>{topNavTab}</span>
+                <span className={`text-xs transition-transform duration-200 ${isHeaderDropdownOpen ? 'rotate-180 text-purple-400' : 'text-zinc-400'}`}>▼</span>
+              </button>
+
+              {isHeaderDropdownOpen && (
+                <div className="absolute left-0 top-full mt-2 w-44 bg-[#1a1a1f] border border-zinc-700/80 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] py-1.5 z-50 animate-fadeIn">
+                  {[
+                    { label: 'Discover', action: () => { setTopNavTab('Discover'); setActivePage('home'); } },
+                    { label: 'Launches', action: () => { setTopNavTab('Discover'); setActivePage('launches'); } },
+                    { label: 'Track', action: () => { setTopNavTab('Discover'); setActivePage('track'); } }
+                  ].map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => { 
+                        item.action();
+                        setIsHeaderDropdownOpen(false); 
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-800/80 hover:text-white transition-colors"
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <nav className="hidden md:flex items-center space-x-6 text-sm text-zinc-400 font-medium">
+              <button 
+                onClick={() => { 
+                  setTopNavTab('Tokens'); 
+                  if (!selectedTokenData && globalTokens.length > 0) {
+                    setSelectedTokenData(globalTokens[0]);
+                  }
+                  setActivePage('tokenhome'); 
+                }} 
+                className={`hover:text-white transition-colors ${topNavTab === 'Tokens' ? 'text-white font-bold' : ''}`}
+              >
+                Tokens
+              </button>
+              <button onClick={() => { setTopNavTab('Perps'); setActivePage('perps'); }} className={`hover:text-white transition-colors ${topNavTab === 'Perps' ? 'text-white font-bold' : ''}`}>Perps</button>
+              <button onClick={() => { setTopNavTab('Portfolio'); setActivePage('wallet'); }} className={`hover:text-white transition-colors ${topNavTab === 'Portfolio' ? 'text-white font-bold' : ''}`}>Portfolio</button>
+            </nav>
+          </div>
+
+          {/* Center/Right: Search Bar & Quick Wallet Funds */}
+          <div className="flex items-center space-x-4">
+            <div className="relative w-64 lg:w-80">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-zinc-500">
+                🔍
+              </span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search tokens or CAs..."
+                className="w-full bg-[#1e1e24] border border-zinc-800 focus:border-zinc-700 text-xs text-white placeholder-zinc-500 rounded-xl pl-9 pr-4 py-2 outline-none transition-all shadow-inner"
+              />
+            </div>
+
+            <button 
+              onClick={() => toggleModal('deposit', true)}
+              className="hidden sm:flex items-center space-x-1.5 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 px-3 py-1.5 rounded-xl text-xs font-semibold text-purple-300 transition-colors"
+            >
+              <span>+ Add Funds</span>
+            </button>
+          </div>
+        </header>
+
+        {/* --- DYNAMIC CONTENT AREA --- */}
+      <div className="flex-1 w-full h-full relative overflow-hidden flex flex-col">
+      {renderContent()}
+     </div>
+
+        {/* --- LOCKED BOTTOM NAVIGATION --- */}
+        {activePage?.toLowerCase() !== 'tokenhome' && activePage?.toLowerCase() !== 'tokenchat' && activePage?.toLowerCase() !== 'settings' && activePage?.toLowerCase() !== 'profile' && (
+          <div className="md:hidden absolute bottom-0 left-0 right-0 z-50 bg-[#050505]">
+            <BottomNav activePage={activePage} setActivePage={setActivePage} userProfile={userProfile} />
+          </div>
+        )}
+
+      </div>
+
+      {/* --- DRAWERS & MODALS --- */}
       <AccountDrawer 
         isOpen={isAccountDrawerOpen} 
         onClose={() => setIsAccountDrawerOpen(false)} 
@@ -477,117 +606,100 @@ function AppContent() {
         }}
       />
 
-      {/* --- MAIN CONTENT AREA --- */}
-      <div className="flex-1 relative w-full md:pl-[260px] flex flex-col overflow-hidden">
-        
-        <div className="flex-1 w-full h-full relative overflow-hidden">
-          {renderContent()}
-        </div>
+      {isTradePortalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="absolute inset-0 z-0" onClick={() => setIsTradePortalOpen(false)}></div>
+          <div className="bg-[#121212] border-t border-white/10 sm:border rounded-t-3xl sm:rounded-3xl w-full max-w-[400px] p-6 relative z-10 shadow-[0_0_80px_rgba(0,0,0,0.8)] animate-slideUpNative">
+            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 sm:hidden"></div>
 
-        {isTradePortalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-            <div className="absolute inset-0 z-0" onClick={() => setIsTradePortalOpen(false)}></div>
-            <div className="bg-[#121212] border-t border-white/10 sm:border rounded-t-3xl sm:rounded-3xl w-full max-w-[400px] p-6 relative z-10 shadow-[0_0_80px_rgba(0,0,0,0.8)] animate-slideUpNative">
-              <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 sm:hidden"></div>
-
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex gap-3 items-center min-w-0">
-                   <div className="w-12 h-12 bg-[#0A0A0A] border border-white/5 rounded-full flex items-center justify-center text-xl shadow-inner shrink-0 overflow-hidden">
-                      {selectedTokenData?.imagePreview ? (
-                        <img src={selectedTokenData.imagePreview} alt="token" className="w-full h-full object-cover" />
-                      ) : (
-                        selectedTokenData?.icon || '🪙'
-                      )}
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex gap-3 items-center min-w-0">
+                 <div className="w-12 h-12 bg-[#0A0A0A] border border-white/5 rounded-full flex items-center justify-center text-xl shadow-inner shrink-0 overflow-hidden">
+                    {selectedTokenData?.imagePreview ? (
+                      <img src={selectedTokenData.imagePreview} alt="token" className="w-full h-full object-cover" />
+                    ) : (
+                      selectedTokenData?.icon || '🪙'
+                    )}
+                 </div>
+                 <div className="min-w-0 flex flex-col">
+                   <h2 className="text-base font-black text-white tracking-wide truncate">
+                     {selectedTokenData?.tokenName || selectedTokenData?.name || selectedTokenData?.token || 'Unknown Token'}
+                   </h2>
+                   <div className="flex items-center gap-2 mt-0.5">
+                     <span className="text-[11px] text-[#089981] font-black tracking-wider uppercase">
+                       {selectedTokenData?.symbol || 'TOKEN'}
+                     </span>
+                     <span className="text-[9px] font-mono text-zinc-500 bg-white/[0.03] border border-white/5 px-1.5 py-0.5 rounded tracking-tight truncate max-w-[140px]">
+                       {selectedTokenData?.mintAddress || 'CA: Forge...Solana'}
+                     </span>
                    </div>
-                   <div className="min-w-0 flex flex-col">
-                     <h2 className="text-base font-black text-white tracking-wide truncate">
-                       {selectedTokenData?.tokenName || selectedTokenData?.name || selectedTokenData?.token || 'Unknown Token'}
-                     </h2>
-                     <div className="flex items-center gap-2 mt-0.5">
-                       <span className="text-[11px] text-[#089981] font-black tracking-wider uppercase">
-                         {selectedTokenData?.symbol || 'TOKEN'}
-                       </span>
-                       <span className="text-[9px] font-mono text-zinc-500 bg-white/[0.03] border border-white/5 px-1.5 py-0.5 rounded tracking-tight truncate max-w-[140px]">
-                         {selectedTokenData?.mintAddress || 'CA: Forge...Solana'}
-                       </span>
-                     </div>
-                   </div>
-                </div>
-                <button onClick={() => setIsTradePortalOpen(false)} className="text-zinc-500 hover:text-white bg-white/5 p-2 rounded-full transition-colors hidden sm:block">✕</button>
+                 </div>
               </div>
-
-              <div className="flex p-1 bg-[#050505] rounded-xl mb-4 border border-white/5 shadow-inner">
-                <button onClick={() => setTradeMode('buy')} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${tradeMode === 'buy' ? 'bg-[#089981] text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}>Buy</button>
-                <button onClick={() => setTradeMode('sell')} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}>Sell</button>
-              </div>
-
-              <div className="bg-[#050505] border border-white/5 rounded-xl p-4 flex items-center justify-between mb-2 focus-within:border-[#089981]/50 transition-colors shadow-inner">
-                <div className="flex flex-col flex-1">
-                  <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Amount to {tradeMode}</span>
-                  <input 
-                    type="text" inputMode="decimal" placeholder="0.0" 
-                    value={formatWithCommas(tradeAmount)}
-                    onChange={(e) => {
-                      let val = e.target.value.replace(/[^0-9.]/g, '');
-                      if ((val.match(/\./g) || []).length > 1) val = val.substring(0, val.lastIndexOf('.'));
-                      setTradeAmount(val);
-                    }}
-                    className="bg-transparent text-3xl font-black text-white w-full outline-none placeholder-zinc-700 font-mono tracking-tight"
-                  />
-                </div>
-                <div className="flex flex-col items-end justify-center">
-                  <div className="flex items-center gap-1.5 bg-[#121212] border border-white/10 px-3 py-1.5 rounded-lg shadow-sm">
-                    <span className="text-xs font-black text-white font-mono">SOL</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center px-1 mb-4 min-h-[18px]">
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
-                  {tradeMode === 'buy' ? 'Estimated Receive' : 'Estimated Cost'}
-                </span>
-                <span className="text-xs font-mono font-black text-zinc-300">
-                  {tradeAmount ? `${calculateTokenYield(tradeAmount)}${selectedTokenData?.symbol || 'TOKENS'}` : `0 ${selectedTokenData?.symbol || 'TOKENS'}`}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-4 gap-2 mb-6">
-                {['0.1', '0.5', '1', 'Max'].map(amt => (
-                  <button key={amt} onClick={() => setTradeAmount(amt === 'Max' ? '1' : amt)} className="bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-black text-zinc-300 py-2.5 rounded-lg transition-colors active:scale-95 shadow-sm">{amt}</button>
-                ))}
-              </div>
-
-              <div className="flex justify-between items-center px-1 mb-4">
-                 <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Wallet Balance</span>
-                 <span className={`text-xs font-mono font-black ${userSolBalance <= 0 ? 'text-[#F23645]' : 'text-white'}`}>
-                   {userSolBalance.toFixed(4)} SOL
-                 </span>
-              </div>
-
-              <button 
-                onClick={handleExecuteTrade}
-                className={`w-full py-4 rounded-xl font-black uppercase text-sm tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 ${
-                  tradeMode === 'buy' 
-                    ? 'bg-[#089981] hover:opacity-90 text-white shadow-[0_0_20px_rgba(8,153,129,0.3)]' 
-                    : 'bg-[#F23645] hover:bg-rose-600 text-white shadow-[0_0_20px_rgba(242,54,69,0.2)]'
-                }`}
-              >
-                {tradeMode === 'buy' ? 'Place Buy Order' : 'Execute Sell'}
-              </button>
+              <button onClick={() => setIsTradePortalOpen(false)} className="text-zinc-500 hover:text-white bg-white/5 p-2 rounded-full transition-colors hidden sm:block">✕</button>
             </div>
-          </div>
-        )}
 
-        {/* --- LOCKED BOTTOM NAVIGATION --- */}
-        {activePage?.toLowerCase() !== 'tokenhome' && activePage?.toLowerCase() !== 'tokenchat' && activePage?.toLowerCase() !== 'settings' && activePage?.toLowerCase() !== 'profile' && (
-          <div className="md:hidden absolute bottom-0 left-0 right-0 z-50 bg-[#050505]">
-            <BottomNav activePage={activePage} setActivePage={setActivePage} userProfile={userProfile} />
-          </div>
-        )}
-        
-      </div>
+            <div className="flex p-1 bg-[#050505] rounded-xl mb-4 border border-white/5 shadow-inner">
+              <button onClick={() => setTradeMode('buy')} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${tradeMode === 'buy' ? 'bg-[#089981] text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}>Buy</button>
+              <button onClick={() => setTradeMode('sell')} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}>Sell</button>
+            </div>
 
-      <NotificationCenter 
+            <div className="bg-[#050505] border border-white/5 rounded-xl p-4 flex items-center justify-between mb-2 focus-within:border-[#089981]/50 transition-colors shadow-inner">
+              <div className="flex flex-col flex-1">
+                <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Amount to {tradeMode}</span>
+                <input 
+                  type="text" inputMode="decimal" placeholder="0.0" 
+                  value={formatWithCommas(tradeAmount)}
+                  onChange={(e) => {
+                    let val = e.target.value.replace(/[^0-9.]/g, '');
+                    if ((val.match(/\./g) || []).length > 1) val = val.substring(0, val.lastIndexOf('.'));
+                    setTradeAmount(val);
+                  }}
+                  className="bg-transparent text-3xl font-black text-white w-full outline-none placeholder-zinc-700 font-mono tracking-tight"
+                />
+              </div>
+              <div className="flex flex-col items-end justify-center">
+                <div className="flex items-center gap-1.5 bg-[#121212] border border-white/10 px-3 py-1.5 rounded-lg shadow-sm">
+                  <span className="text-xs font-black text-white font-mono">SOL</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center px-1 mb-4 min-h-[18px]">
+              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+                {tradeMode === 'buy' ? 'Estimated Receive' : 'Estimated Cost'}
+              </span>
+              <span className="text-xs font-mono font-black text-zinc-300">
+                {tradeAmount ? `${calculateTokenYield(tradeAmount)}${selectedTokenData?.symbol || 'TOKENS'}` : `0 ${selectedTokenData?.symbol || 'TOKENS'}`}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-4 gap-2 mb-6">
+              {['0.1', '0.5', '1', 'Max'].map(amt => (
+                <button key={amt} onClick={() => setTradeAmount(amt === 'Max' ? '1' : amt)} className="bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-black text-zinc-300 py-2.5 rounded-lg transition-colors active:scale-95 shadow-sm">{amt}</button>
+              ))}
+            </div>
+
+            <div className="flex justify-between items-center px-1 mb-4">
+               <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Wallet Balance</span>
+               <span className={`text-xs font-mono font-black ${userSolBalance <= 0 ? 'text-[#F23645]' : 'text-white'}`}>
+                 {userSolBalance.toFixed(4)} SOL
+               </span>
+            </div>
+
+            <button 
+              onClick={handleExecuteTrade}
+              className={`w-full py-4 rounded-xl font-black uppercase text-sm tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 ${
+                tradeMode === 'buy' 
+                  ? 'bg-[#089981] hover:opacity-90 text-white shadow-[0_0_20px_rgba(8,153,129,0.3)]' 
+                  : 'bg-[#F23645] hover:bg-rose-600 text-white shadow-[0_0_20px_rgba(242,54,69,0.2)]'
+              }`}
+            >
+              {tradeMode === 'buy' ? 'Place Buy Order' : 'Execute Sell'}
+            </button>
+          </div>
+        </div>
+      )}
+<NotificationCenter 
         isOpen={isNotificationsOpen} 
         onClose={() => setIsNotificationsOpen(false)} 
         notifications={dummyNotifications} 
@@ -599,10 +711,10 @@ function AppContent() {
       {modals.live && <LiveModal isOpen={modals.live} onClose={() => toggleModal('live', false)} token={selectedTokenData} />}
 
     </div>
+    </div>
   );
 }
 
-// 🚀 WRAP WITH SOLANAPROVIDER AT THE ROOT TO TURN MOCK DATA INTO LIVE DEVNET TRANSACTIONS
 export default function App() {
   return (
     <SolanaProvider>
