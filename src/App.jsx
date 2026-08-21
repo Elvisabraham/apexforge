@@ -498,125 +498,127 @@ function AppContent() {
       {/* --- MAIN CONTENT CONTAINER --- */}
       <div className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
         
-       {/* --- TOP HEADER BAR --- */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-zinc-800/80 bg-[#121216] shrink-0 select-none">
-        
-        {/* Left Nav: Discover Dropdown & Sub-tabs */}
-        <div className="flex items-center space-x-8">
-          <div className="relative">
-            <button
-              onClick={() => setIsHeaderDropdownOpen(!isHeaderDropdownOpen)}
-              className="flex items-center space-x-1.5 text-base font-bold text-white hover:text-purple-400 transition-colors"
-            >
-              <span>{topNavTab}</span>
-              <span className={`text-xs transition-transform duration-200 ${isHeaderDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
-            </button>
-
-            {isHeaderDropdownOpen && (
-              <div className="absolute left-0 top-full mt-2 w-44 bg-[#1a1a1f] border border-zinc-700/80 rounded-xl shadow-2xl py-1 z-50">
-                {[
-                  { label: 'Discover', action: () => { setTopNavTab('Discover'); setActivePage('home'); } },
-                  { label: 'Launches', action: () => { setTopNavTab('Discover'); setActivePage('launches'); } },
-                  { label: 'Track', action: () => { setTopNavTab('Discover'); setActivePage('track'); } }
-                ].map((item) => (
-                  <button
-                    key={item.label}
-                    onClick={() => {
-                      item.action();
-                      setIsHeaderDropdownOpen(false);
-                    }}
-                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-800 transition-colors"
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <nav className="hidden md:flex items-center space-x-6 text-sm text-zinc-400 font-medium">
-            <button
-              onClick={() => {
-                setTopNavTab('Tokens');
-                if (!selectedTokenData && globalTokens.length > 0) {
-                  setSelectedTokenData(globalTokens[0]);
-                }
-                setActivePage('tokenhome');
-              }}
-              className={`hover:text-white transition-colors ${topNavTab === 'Tokens' ? 'text-white font-bold' : ''}`}
-            >
-              Tokens
-            </button>
-            <button 
-              onClick={() => { setTopNavTab('Perps'); setActivePage('perps'); }} 
-              className={`hover:text-white transition-colors ${topNavTab === 'Perps' ? 'text-white font-bold' : ''}`}
-            >
-              Perps
-            </button>
-            <button 
-              onClick={() => { setTopNavTab('Portfolio'); setActivePage('wallet'); }} 
-              className={`hover:text-white transition-colors ${topNavTab === 'Portfolio' ? 'text-white font-bold' : ''}`}
-            >
-              Portfolio
-            </button>
-          </nav>
-        </div>
-
-        {/* Center/Right: Search Bar, Quick Buy & Wallet Controls */}
-        <div className="flex items-center space-x-3">
-          
-          {/* Search Input */}
-          <div className="relative w-64 lg:w-80">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-zinc-400">
-              🔍
-            </span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search tokens or CAs..."
-              className="w-full bg-[#1c1c24] border border-white/5 focus:border-[#ab9ff2]/50 text-xs text-white placeholder-zinc-500 rounded-lg pl-9 pr-3 py-2 transition-all outline-none"
-            />
-          </div>
-
-          {/* Quick-Buy Preset Toggle */}
-          <div className="hidden lg:flex items-center bg-[#1c1c24] border border-white/5 rounded-lg px-2.5 py-1.5 space-x-1.5 text-xs font-mono">
-            <span className="text-[#00f2a1]">⚡</span>
-            <span className="text-white font-bold">0.1</span>
-            <span className="text-zinc-400 text-[10px]">SOL</span>
-          </div>
-
-          {/* Quick Slippage Mode (1, 2, 3) */}
-          <div className="hidden xl:flex items-center bg-[#1c1c24] border border-white/5 rounded-lg p-0.5 space-x-0.5">
-            {['1', '2', '3'].map((val) => (
-              <button
-                key={val}
-                className="px-2 py-1 text-xs font-mono font-semibold rounded-md text-zinc-400 hover:text-white focus:bg-[#2a2a36] focus:text-white transition-all"
-              >
-                {val}
-              </button>
-            ))}
-          </div>
-
-          {/* Add Funds Button (Phantom Purple) */}
-     <button
-       onClick={() => toggleModal('deposit', true)}
-      className="hidden sm:flex items-center space-x-1.5 bg-[#ab9ff2] hover:bg-[#9b8df0] text-black font-extrabold text-xs px-3.5 py-2 rounded-lg transition-all active:scale-95 shadow-sm cursor-pointer"
+         {/* --- TOP HEADER BAR --- */}
+<header className="flex items-center justify-between px-6 py-2.5 border-b border-zinc-800/80 bg-[#121216] shrink-0 select-none">
+  
+  {/* Left Nav: Discover Dropdown & Sub-tabs */}
+  <div className="flex items-center space-x-8">
+    <div className="relative">
+      <button
+        onClick={() => setIsHeaderDropdownOpen(!isHeaderDropdownOpen)}
+        className="flex items-center space-x-1.5 text-base font-bold text-white hover:text-[#00E676] transition-colors"
       >
-       <span>+ Add Funds</span>
-       </button>
+        <span>{topNavTab}</span>
+        <span className={`text-xs transition-transform duration-200 ${isHeaderDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
+      </button>
 
-          {/* Wallet Balance Pill */}
-          <button 
-            onClick={() => toggleModal('wallet', true)}
-            className="bg-[#1c1c24] hover:bg-[#252530] text-white text-xs font-semibold px-3 py-2 rounded-lg border border-white/5 flex items-center space-x-2 transition-all cursor-pointer"
-          >
-            <span>0 SOL</span>
-            <span className="text-zinc-400 text-xs">👤</span>
-          </button>
-
+      {isHeaderDropdownOpen && (
+        <div className="absolute left-0 top-full mt-2 w-44 bg-[#1a1a1f] border border-zinc-700/80 rounded-xl shadow-2xl py-1 z-50">
+          {[
+            { label: 'Discover', action: () => { setTopNavTab('Discover'); setActivePage('home'); } },
+            { label: 'Launches', action: () => { setTopNavTab('Discover'); setActivePage('launches'); } },
+            { label: 'Track', action: () => { setTopNavTab('Discover'); setActivePage('track'); } }
+          ].map((item) => (
+            <button
+              key={item.label}
+              onClick={() => {
+                item.action();
+                setIsHeaderDropdownOpen(false);
+              }}
+              className="w-full text-left px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-[#00E676] transition-colors"
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
-      </header>
+      )}
+    </div>
+
+    <nav className="hidden md:flex items-center space-x-6 text-sm text-zinc-400 font-medium">
+      <button
+        onClick={() => {
+          setTopNavTab('Tokens');
+          if (!selectedTokenData && globalTokens.length > 0) {
+            setSelectedTokenData(globalTokens[0]);
+          }
+          setActivePage('tokenhome');
+        }}
+        className={`hover:text-white transition-colors ${topNavTab === 'Tokens' ? 'text-[#00E676] font-bold' : ''}`}
+      >
+        Tokens
+      </button>
+      <button 
+        onClick={() => { setTopNavTab('Perps'); setActivePage('perps'); }} 
+        className={`hover:text-white transition-colors ${topNavTab === 'Perps' ? 'text-[#00E676] font-bold' : ''}`}
+      >
+        Perps
+      </button>
+      <button 
+        onClick={() => { setTopNavTab('Portfolio'); setActivePage('wallet'); }} 
+        className={`hover:text-white transition-colors ${topNavTab === 'Portfolio' ? 'text-[#00E676] font-bold' : ''}`}
+      >
+        Portfolio
+      </button>
+    </nav>
+  </div>
+
+  {/* Center/Right: Search Bar, Quick Buy & Wallet Controls */}
+  <div className="flex items-center space-x-3">
+    
+    {/* Search Input */}
+    <div className="relative w-64 lg:w-80">
+      <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-zinc-400">
+        🔍
+      </span>
+      <input
+        type="text"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Search tokens or CAs..."
+        className="w-full bg-[#1c1c24] border border-white/5 focus:border-[#00E676]/50 text-xs text-white placeholder-zinc-500 rounded-lg pl-9 pr-3 py-2 transition-all outline-none"
+      />
+    </div>
+
+    {/* Quick-Buy Preset Toggle */}
+    <div className="hidden lg:flex items-center bg-[#1c1c24] border border-white/5 rounded-lg px-2.5 py-1.5 space-x-1.5 text-xs font-mono">
+      <span className="text-[#00E676]">⚡</span>
+      <span className="text-white font-bold">0.1</span>
+      <span className="text-zinc-400 text-[10px]">SOL</span>
+    </div>
+
+    {/* Quick Slippage Mode */}
+    <div className="hidden xl:flex items-center bg-[#1c1c24] border border-white/5 rounded-lg p-0.5 space-x-0.5">
+      {['1', '2', '3'].map((val) => (
+        <button
+          key={val}
+          className={`px-2.5 py-1 text-xs font-mono font-semibold rounded-md transition-all ${
+            val === '1' ? 'bg-[#2a2a36] text-[#00E676]' : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          {val}
+        </button>
+      ))}
+    </div>
+
+    {/* Add Funds Button (TradingView Green) */}
+    <button
+      onClick={() => toggleModal('deposit', true)}
+      className="hidden sm:flex items-center bg-[#00E676] hover:bg-[#00c868] text-black font-extrabold text-xs px-3.5 py-2 rounded-lg transition-all active:scale-95 shadow-lg shadow-[#00E676]/10 cursor-pointer"
+    >
+      + Add Funds
+    </button>
+
+    {/* Wallet Balance Pill */}
+    <button 
+      onClick={() => toggleModal('wallet', true)}
+      className="bg-[#1c1c24] hover:bg-[#252530] text-white text-xs font-semibold px-3 py-2 rounded-lg border border-white/5 flex items-center space-x-2 transition-all cursor-pointer"
+    >
+      <span>0 SOL</span>
+      <span className="text-[#00E676] text-xs">👤</span>
+    </button>
+
+  </div>
+</header>
 
         {/* --- DYNAMIC CONTENT AREA --- */}
 <div className="flex-1 w-full h-full relative overflow-y-auto flex flex-col p-0 m-0 bg-[#0d0e12]">
