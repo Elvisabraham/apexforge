@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from './components/Navbar'
+import Navbar from './components/Navbar';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import '@solana/wallet-adapter-react-ui/styles.css';
+
 
 // --- SOLANA PROVIDER INTEGRATION ---
 import SolanaProvider from './components/SolanaProvider'; // 🚀 Added Solana Web3 Context Wrapper
@@ -497,88 +498,131 @@ function AppContent() {
       {/* --- MAIN CONTENT CONTAINER --- */}
       <div className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
         
-        {/* --- TOP HEADER BAR --- */}
-        <header className="flex items-center justify-between px-6 py-3 border-b border-zinc-800/80 bg-[#141417] shrink-0 z-30">
-          
-          {/* Left Nav: Discover Dropdown & Sub-tabs */}
-          <div className="flex items-center space-x-8">
-            <div className="relative">
-              <button
-                onClick={() => setIsHeaderDropdownOpen(!isHeaderDropdownOpen)}
-                className="flex items-center space-x-1.5 text-base font-bold text-white hover:text-purple-400 transition-colors focus:outline-none"
-              >
-                <span>{topNavTab}</span>
-                <span className={`text-xs transition-transform duration-200 ${isHeaderDropdownOpen ? 'rotate-180 text-purple-400' : 'text-zinc-400'}`}>▼</span>
-              </button>
-
-              {isHeaderDropdownOpen && (
-                <div className="absolute left-0 top-full mt-2 w-44 bg-[#1a1a1f] border border-zinc-700/80 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] py-1.5 z-50 animate-fadeIn">
-                  {[
-                    { label: 'Discover', action: () => { setTopNavTab('Discover'); setActivePage('home'); } },
-                    { label: 'Launches', action: () => { setTopNavTab('Discover'); setActivePage('launches'); } },
-                    { label: 'Track', action: () => { setTopNavTab('Discover'); setActivePage('track'); } }
-                  ].map((item) => (
-                    <button
-                      key={item.label}
-                      onClick={() => { 
-                        item.action();
-                        setIsHeaderDropdownOpen(false); 
-                      }}
-                      className="w-full text-left px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-800/80 hover:text-white transition-colors"
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <nav className="hidden md:flex items-center space-x-6 text-sm text-zinc-400 font-medium">
-              <button 
-                onClick={() => { 
-                  setTopNavTab('Tokens'); 
-                  if (!selectedTokenData && globalTokens.length > 0) {
-                    setSelectedTokenData(globalTokens[0]);
-                  }
-                  setActivePage('tokenhome'); 
-                }} 
-                className={`hover:text-white transition-colors ${topNavTab === 'Tokens' ? 'text-white font-bold' : ''}`}
-              >
-                Tokens
-              </button>
-              <button onClick={() => { setTopNavTab('Perps'); setActivePage('perps'); }} className={`hover:text-white transition-colors ${topNavTab === 'Perps' ? 'text-white font-bold' : ''}`}>Perps</button>
-              <button onClick={() => { setTopNavTab('Portfolio'); setActivePage('wallet'); }} className={`hover:text-white transition-colors ${topNavTab === 'Portfolio' ? 'text-white font-bold' : ''}`}>Portfolio</button>
-            </nav>
-          </div>
-
-          {/* Center/Right: Search Bar & Quick Wallet Funds */}
-          <div className="flex items-center space-x-4">
-            <div className="relative w-64 lg:w-80">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-zinc-500">
-                🔍
-              </span>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search tokens or CAs..."
-                className="w-full bg-[#1e1e24] border border-zinc-800 focus:border-zinc-700 text-xs text-white placeholder-zinc-500 rounded-xl pl-9 pr-4 py-2 outline-none transition-all shadow-inner"
-              />
-            </div>
-
-            <button 
-              onClick={() => toggleModal('deposit', true)}
-              className="hidden sm:flex items-center space-x-1.5 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 px-3 py-1.5 rounded-xl text-xs font-semibold text-purple-300 transition-colors"
+       {/* --- TOP HEADER BAR --- */}
+      <header className="flex items-center justify-between px-6 py-3 border-b border-zinc-800/80 bg-[#121216] shrink-0 select-none">
+        
+        {/* Left Nav: Discover Dropdown & Sub-tabs */}
+        <div className="flex items-center space-x-8">
+          <div className="relative">
+            <button
+              onClick={() => setIsHeaderDropdownOpen(!isHeaderDropdownOpen)}
+              className="flex items-center space-x-1.5 text-base font-bold text-white hover:text-purple-400 transition-colors"
             >
-              <span>+ Add Funds</span>
+              <span>{topNavTab}</span>
+              <span className={`text-xs transition-transform duration-200 ${isHeaderDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
             </button>
+
+            {isHeaderDropdownOpen && (
+              <div className="absolute left-0 top-full mt-2 w-44 bg-[#1a1a1f] border border-zinc-700/80 rounded-xl shadow-2xl py-1 z-50">
+                {[
+                  { label: 'Discover', action: () => { setTopNavTab('Discover'); setActivePage('home'); } },
+                  { label: 'Launches', action: () => { setTopNavTab('Discover'); setActivePage('launches'); } },
+                  { label: 'Track', action: () => { setTopNavTab('Discover'); setActivePage('track'); } }
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    onClick={() => {
+                      item.action();
+                      setIsHeaderDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-800 transition-colors"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        </header>
+
+          <nav className="hidden md:flex items-center space-x-6 text-sm text-zinc-400 font-medium">
+            <button
+              onClick={() => {
+                setTopNavTab('Tokens');
+                if (!selectedTokenData && globalTokens.length > 0) {
+                  setSelectedTokenData(globalTokens[0]);
+                }
+                setActivePage('tokenhome');
+              }}
+              className={`hover:text-white transition-colors ${topNavTab === 'Tokens' ? 'text-white font-bold' : ''}`}
+            >
+              Tokens
+            </button>
+            <button 
+              onClick={() => { setTopNavTab('Perps'); setActivePage('perps'); }} 
+              className={`hover:text-white transition-colors ${topNavTab === 'Perps' ? 'text-white font-bold' : ''}`}
+            >
+              Perps
+            </button>
+            <button 
+              onClick={() => { setTopNavTab('Portfolio'); setActivePage('wallet'); }} 
+              className={`hover:text-white transition-colors ${topNavTab === 'Portfolio' ? 'text-white font-bold' : ''}`}
+            >
+              Portfolio
+            </button>
+          </nav>
+        </div>
+
+        {/* Center/Right: Search Bar, Quick Buy & Wallet Controls */}
+        <div className="flex items-center space-x-3">
+          
+          {/* Search Input */}
+          <div className="relative w-64 lg:w-80">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-zinc-400">
+              🔍
+            </span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search tokens or CAs..."
+              className="w-full bg-[#1c1c24] border border-white/5 focus:border-[#ab9ff2]/50 text-xs text-white placeholder-zinc-500 rounded-lg pl-9 pr-3 py-2 transition-all outline-none"
+            />
+          </div>
+
+          {/* Quick-Buy Preset Toggle */}
+          <div className="hidden lg:flex items-center bg-[#1c1c24] border border-white/5 rounded-lg px-2.5 py-1.5 space-x-1.5 text-xs font-mono">
+            <span className="text-[#00f2a1]">⚡</span>
+            <span className="text-white font-bold">0.1</span>
+            <span className="text-zinc-400 text-[10px]">SOL</span>
+          </div>
+
+          {/* Quick Slippage Mode (1, 2, 3) */}
+          <div className="hidden xl:flex items-center bg-[#1c1c24] border border-white/5 rounded-lg p-0.5 space-x-0.5">
+            {['1', '2', '3'].map((val) => (
+              <button
+                key={val}
+                className="px-2 py-1 text-xs font-mono font-semibold rounded-md text-zinc-400 hover:text-white focus:bg-[#2a2a36] focus:text-white transition-all"
+              >
+                {val}
+              </button>
+            ))}
+          </div>
+
+          {/* Add Funds Button (Phantom Purple) */}
+     <button
+       onClick={() => toggleModal('deposit', true)}
+      className="hidden sm:flex items-center space-x-1.5 bg-[#ab9ff2] hover:bg-[#9b8df0] text-black font-extrabold text-xs px-3.5 py-2 rounded-lg transition-all active:scale-95 shadow-sm cursor-pointer"
+      >
+       <span>+ Add Funds</span>
+       </button>
+
+          {/* Wallet Balance Pill */}
+          <button 
+            onClick={() => toggleModal('wallet', true)}
+            className="bg-[#1c1c24] hover:bg-[#252530] text-white text-xs font-semibold px-3 py-2 rounded-lg border border-white/5 flex items-center space-x-2 transition-all cursor-pointer"
+          >
+            <span>0 SOL</span>
+            <span className="text-zinc-400 text-xs">👤</span>
+          </button>
+
+        </div>
+      </header>
 
         {/* --- DYNAMIC CONTENT AREA --- */}
-      <div className="flex-1 w-full h-full relative overflow-hidden flex flex-col">
-      {renderContent()}
-     </div>
+       {/* Change pt-6 or p-6 to pt-3 px-4 */}
+      <div className="flex-1 w-full h-full relative overflow-hidden flex flex-col pt-3 px-4">
+       {renderContent()}
+       </div>
 
         {/* --- LOCKED BOTTOM NAVIGATION --- */}
         {activePage?.toLowerCase() !== 'tokenhome' && activePage?.toLowerCase() !== 'tokenchat' && activePage?.toLowerCase() !== 'settings' && activePage?.toLowerCase() !== 'profile' && (
