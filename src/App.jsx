@@ -566,18 +566,20 @@ function AppContent() {
   <div className="flex items-center space-x-3">
     
     {/* Search Input */}
-    <div className="relative w-64 lg:w-80">
-      <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-zinc-400">
-        🔍
-      </span>
-      <input
-        type="text"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Search tokens or CAs..."
-        className="w-full bg-[#1c1c24] border border-white/5 focus:border-[#00E676]/50 text-xs text-white placeholder-zinc-500 rounded-lg pl-9 pr-3 py-2 transition-all outline-none"
-      />
-    </div>
+<div className="relative w-64 lg:w-80">
+ <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-zinc-400">
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>
+</span>
+  <input
+    type="text"
+    value={searchQuery}
+    onChange={(e) => setSearchQuery(e.target.value)}
+    placeholder="Search tokens or CAs..."
+    className="w-full bg-[#1c1c24] border border-white/5 focus:border-[#08a68c]/50 text-xs text-white placeholder-zinc-500 rounded-lg pl-9 pr-3 py-2 transition-all outline-none"
+  />
+</div>
 
     {/* Quick-Buy Preset Toggle */}
     <div className="hidden lg:flex items-center bg-[#1c1c24] border border-white/5 rounded-lg px-2.5 py-1.5 space-x-1.5 text-xs font-mono">
@@ -587,35 +589,35 @@ function AppContent() {
     </div>
 
     {/* Quick Slippage Mode */}
-    <div className="hidden xl:flex items-center bg-[#1c1c24] border border-white/5 rounded-lg p-0.5 space-x-0.5">
-      {['1', '2', '3'].map((val) => (
-        <button
-          key={val}
-          className={`px-2.5 py-1 text-xs font-mono font-semibold rounded-md transition-all ${
-            val === '1' ? 'bg-[#2a2a36] text-[#00E676]' : 'text-zinc-400 hover:text-white'
-          }`}
-        >
-          {val}
-        </button>
-      ))}
-    </div>
+          <div className="hidden xl:flex items-center bg-[#1c1c24] border border-white/5 rounded-lg p-0.5 space-x-0.5">
+            {['1', '2', '3'].map((val) => (
+              <button
+                key={val}
+                className={`px-2.5 py-1 text-xs font-mono font-semibold rounded-md transition-all ${
+                  val === '1' ? 'bg-[#2a2a36] text-[#08a68c]' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                {val}
+              </button>
+            ))}
+          </div>
 
-    {/* Add Funds Button (TradingView Green) */}
-    <button
-      onClick={() => toggleModal('deposit', true)}
-      className="hidden sm:flex items-center bg-[#00E676] hover:bg-[#00c868] text-black font-extrabold text-xs px-3.5 py-2 rounded-lg transition-all active:scale-95 shadow-lg shadow-[#00E676]/10 cursor-pointer"
-    >
-      + Add Funds
-    </button>
+          {/* Add Funds Button (Exact Apex Forge Teal) */}
+          <button
+            onClick={() => toggleModal('deposit', true)}
+            className="hidden sm:flex items-center bg-[#08a68c] hover:bg-[#07957e] text-black font-extrabold text-xs px-3.5 py-2 rounded-lg transition-all active:scale-95 cursor-pointer"
+          >
+            + Add Funds
+          </button>
 
-    {/* Wallet Balance Pill */}
-    <button 
-      onClick={() => toggleModal('wallet', true)}
-      className="bg-[#1c1c24] hover:bg-[#252530] text-white text-xs font-semibold px-3 py-2 rounded-lg border border-white/5 flex items-center space-x-2 transition-all cursor-pointer"
-    >
-      <span>0 SOL</span>
-      <span className="text-[#00E676] text-xs">👤</span>
-    </button>
+          {/* Wallet Balance Pill */}
+          <button 
+            onClick={() => toggleModal('wallet', true)}
+            className="bg-[#1c1c24] hover:bg-[#252530] text-white text-xs font-semibold px-3 py-2 rounded-lg border border-white/5 flex items-center space-x-2 transition-all cursor-pointer"
+          >
+            <span>0 SOL</span>
+            <span className="text-[#08a68c] text-xs">👤</span>
+          </button>
 
   </div>
 </header>
