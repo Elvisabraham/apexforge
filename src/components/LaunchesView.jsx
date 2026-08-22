@@ -162,7 +162,7 @@ const TokenCard = ({ token, columnType = 'new' }) => {
   );
 };
 
-    export default function LaunchesView({ newTokens = [], migratingTokens = [], migratedTokens = [] }) {
+  export default function LaunchesView({ newTokens = [], migratingTokens = [], migratedTokens = [] }) {
     return (
       <div className="w-full h-full pt-1 px-2 pb-2 bg-[#0c0d10] flex flex-col">
       {/* 3-Column Grid stretched flush */}
