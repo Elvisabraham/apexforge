@@ -164,83 +164,80 @@ const TokenCard = ({ token, columnType = 'new' }) => {
 
   export default function LaunchesView({ newTokens = [], migratingTokens = [], migratedTokens = [] }) {
     return (
-      <div className="w-full h-full pt-1 px-2 pb-2 bg-[#0c0d10] flex flex-col">
-      {/* 3-Column Grid stretched flush */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 w-full h-full flex-1">
-        
-       {/* COLUMN 1: NEW */}
-        <div className="bg-[#121318] border border-zinc-800/60 rounded-xl p-3 flex flex-col h-full overflow-hidden">
-          {/* Column Header & Content */}
-          <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-white/5 bg-[#121216]">
-            <div className="flex items-center space-x-2">
-              <span className="font-bold text-sm text-white tracking-wide">New</span>
-              <span className="text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-zinc-400 px-2 py-0.5 rounded-full">
-                {newTokens.length}
-              </span>
-            </div>
-            <button className="text-zinc-500 hover:text-white transition-colors text-xs font-bold p-1">
-              •••
-            </button>
-          </div>
-
-          <div className="p-2 space-y-1.5 overflow-y-auto flex-1 custom-scrollbar">
-            {newTokens.length === 0 ? (
-              <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No new tokens yet</div>
-            ) : (
-              newTokens.map(t => <TokenCard key={t.id || t.mintAddress || Math.random()} token={t} />)
-            )}
-          </div>
+     <div className="w-full h-full pt-1 px-1.5 pb-2 bg-[#0c0d10] flex flex-col">
+  {/* 3-Column Grid stretched flush */}
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 w-full h-full flex-1">
+    
+    {/* COLUMN 1: NEW */}
+    <div className="bg-[#121318] border border-zinc-800/60 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
+      <div className="flex items-center justify-between px-1 pb-2">
+        <div className="flex items-center space-x-2">
+          <span className="font-bold text-sm text-white tracking-wide">New</span>
+          <span className="text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-zinc-400 px-1.5 py-0.5 rounded-full">
+            {newTokens.length}
+          </span>
         </div>
+        <button className="text-zinc-500 hover:text-white transition-colors text-xs font-bold p-1">
+          •••
+        </button>
+      </div>
 
-       {/* COLUMN 2: MIGRATING */}
-        <div className="bg-[#121318] border border-zinc-800/60 rounded-xl p-3 flex flex-col h-full overflow-hidden">
-          {/* Column Header & Content */}
-          <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-white/5 bg-[#121216]">
-            <div className="flex items-center space-x-2">
-              <span className="font-bold text-sm text-white tracking-wide">Migrating</span>
-              <span className="text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-zinc-400 px-2 py-0.5 rounded-full">
-                {migratingTokens.length}
-              </span>
-            </div>
-            <button className="text-zinc-500 hover:text-white transition-colors text-xs font-bold p-1">
-              •••
-            </button>
-          </div>
-
-          <div className="p-2 space-y-1.5 overflow-y-auto flex-1 custom-scrollbar">
-            {migratingTokens.length === 0 ? (
-              <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No tokens migrating</div>
-            ) : (
-              migratingTokens.map(t => <TokenCard key={t.id || t.mintAddress || Math.random()} token={t} />)
-            )}
-          </div>
-        </div>
-
-       {/* COLUMN 3: MIGRATED */}
-        <div className="bg-[#121318] border border-zinc-800/60 rounded-xl p-3 flex flex-col h-full overflow-hidden">
-          {/* Column Header & Content */}
-          <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-white/5 bg-[#121216]">
-            <div className="flex items-center space-x-2">
-              <span className="font-bold text-sm text-white tracking-wide">Migrated</span>
-              <span className="text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-zinc-400 px-2 py-0.5 rounded-full">
-                {migratedTokens.length}
-              </span>
-            </div>
-            <button className="text-zinc-500 hover:text-white transition-colors text-xs font-bold p-1">
-              •••
-            </button>
-          </div>
-
-          <div className="p-2 space-y-1.5 overflow-y-auto flex-1 custom-scrollbar">
-            {migratedTokens.length === 0 ? (
-              <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No graduated tokens yet</div>
-            ) : (
-              migratedTokens.map(t => <TokenCard key={t.id || t.mintAddress || Math.random()} token={t} />)
-            )}
-          </div>
-        </div>
-
+      <div className="space-y-1.5 overflow-y-auto flex-1 custom-scrollbar">
+        {newTokens.length === 0 ? (
+          <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No new tokens yet</div>
+        ) : (
+          newTokens.map(t => <TokenCard key={t.id || t.mintAddress || Math.random()} token={t} />)
+        )}
       </div>
     </div>
+
+    {/* COLUMN 2: MIGRATING */}
+    <div className="bg-[#121318] border border-zinc-800/60 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
+      <div className="flex items-center justify-between px-1 pb-2">
+        <div className="flex items-center space-x-2">
+          <span className="font-bold text-sm text-white tracking-wide">Migrating</span>
+          <span className="text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-zinc-400 px-1.5 py-0.5 rounded-full">
+            {migratingTokens?.length || 0}
+          </span>
+        </div>
+        <button className="text-zinc-500 hover:text-white transition-colors text-xs font-bold p-1">
+          •••
+        </button>
+      </div>
+
+      <div className="space-y-1.5 overflow-y-auto flex-1 custom-scrollbar">
+        {(!migratingTokens || migratingTokens.length === 0) ? (
+          <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No tokens migrating</div>
+        ) : (
+          migratingTokens.map(t => <TokenCard key={t.id || t.mintAddress || Math.random()} token={t} />)
+        )}
+      </div>
+    </div>
+
+    {/* COLUMN 3: MIGRATED */}
+    <div className="bg-[#121318] border border-zinc-800/60 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
+      <div className="flex items-center justify-between px-1 pb-2">
+        <div className="flex items-center space-x-2">
+          <span className="font-bold text-sm text-white tracking-wide">Migrated</span>
+          <span className="text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-zinc-400 px-1.5 py-0.5 rounded-full">
+            {migratedTokens?.length || 0}
+          </span>
+        </div>
+        <button className="text-zinc-500 hover:text-white transition-colors text-xs font-bold p-1">
+          •••
+        </button>
+      </div>
+
+      <div className="space-y-1.5 overflow-y-auto flex-1 custom-scrollbar">
+        {(!migratedTokens || migratedTokens.length === 0) ? (
+          <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No migrated tokens</div>
+        ) : (
+          migratedTokens.map(t => <TokenCard key={t.id || t.mintAddress || Math.random()} token={t} />)
+        )}
+      </div>
+    </div>
+
+  </div>
+</div>
   );
 }
