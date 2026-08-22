@@ -22,19 +22,19 @@ const TokenCard = ({ token, columnType = 'new' }) => {
   const top10Percent = Math.round(token?.top10 ?? 0);
   const devPercent = Math.round(token?.devHold ?? 0);
 
-  // Active border stroke color mapping - Updated 'new' to TradingView Green (#089981)
-  const strokeColor = columnType === 'migrated' ? '#3b82f6' : columnType === 'migrating' ? '#f59e0b' : '#089981';
+  // Active border stroke color mapping - Uses Apex TradingView Green (#089981) for all columns
+  const strokeColor = '#089981';
 
   return (
-    <div className="bg-[#141418]/90 hover:bg-[#1a1a20] p-3 rounded-xl border border-white/5 hover:border-white/10 transition-all flex items-center justify-between cursor-pointer group shrink-0">
+    <div className="bg-[#141418]/90 hover:bg-[#1a1a20] p-2.5 rounded-xl border border-white/5 hover:border-white/10 transition-all flex items-center justify-between cursor-pointer group shrink-0">
       
       {/* Left Side: Prominent Avatar & Token Metadata */}
-      <div className="flex items-center space-x-3.5 overflow-hidden">
+      <div className="flex items-center space-x-3 overflow-hidden">
         
-        {/* Expanded Avatar Container (64x64px) */}
-        <div className="relative w-16 h-16 shrink-0 flex items-center justify-center p-1.5">
+        {/* Avatar Container */}
+        <div className="relative w-14 h-14 shrink-0 flex items-center justify-center p-1">
           
-          {/* SVG canvas with expanded viewBox to prevent stroke clipping */}
+          {/* SVG canvas with viewBox aligned to prevent clipping */}
           <svg className="absolute inset-0 w-full h-full -rotate-90 transform" viewBox="-3 -3 70 70">
             {/* Dark background track */}
             <rect
@@ -66,12 +66,12 @@ const TokenCard = ({ token, columnType = 'new' }) => {
             />
           </svg>
 
-          {/* Token Image neatly centered inside the ring */}
+          {/* Token Image centered inside ring */}
           <div className="w-full h-full rounded-[13px] bg-zinc-900 overflow-hidden flex items-center justify-center z-10">
             {token?.imagePreview || token?.image ? (
               <img src={token.imagePreview || token.image} className="w-full h-full object-cover" alt="icon" />
             ) : (
-              <span className="text-sm font-black text-white tracking-wider">
+              <span className="text-xs font-black text-white tracking-wider">
                 {token?.symbol ? token.symbol.slice(0, 2).toUpperCase() : 'AF'}
               </span>
             )}
@@ -100,9 +100,9 @@ const TokenCard = ({ token, columnType = 'new' }) => {
               target="_blank" 
               rel="noreferrer" 
               title="Inspect CA on Solscan"
-              className="hover:text-emerald-400 transition-colors"
+              className="hover:text-[#089981] transition-colors"
             >
-              <svg className="w-3 h-3 text-zinc-400 hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 text-zinc-400 hover:text-[#089981]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </a>
@@ -164,13 +164,13 @@ const TokenCard = ({ token, columnType = 'new' }) => {
 
 export default function LaunchesView({ newTokens = [], migratingTokens = [], migratedTokens = [] }) {
   return (
-    <div className="w-full h-full pt-3 px-3 pb-2 bg-[#0c0d10] flex flex-col overflow-hidden">
+    <div className="w-full h-full pt-0 px-1 pb-1 -mt-2.5 bg-[#0c0d10] flex flex-col overflow-hidden">
       {/* 3 Columns Grid with Minimal Gap */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 w-full h-full flex-1">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5 w-full h-full flex-1">
         
         {/* COLUMN 1: NEW */}
-        <div className="bg-[#121318] border border-zinc-800/40 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
-          <div className="flex items-center justify-between px-1 pb-1.5">
+        <div className="bg-[#121318] border border-zinc-800/40 rounded-xl p-2 flex flex-col h-full overflow-hidden">
+          <div className="flex items-center justify-between px-1 pb-1">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">New</span>
               <span className="text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-zinc-400 px-1.5 py-0.5 rounded-full">
@@ -182,7 +182,7 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
             </button>
           </div>
 
-          <div className="space-y-1.5 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
+          <div className="space-y-1 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
             {(!newTokens || newTokens.length === 0) ? (
               <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No new tokens</div>
             ) : (
@@ -192,8 +192,8 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
         </div>
 
         {/* COLUMN 2: MIGRATING */}
-        <div className="bg-[#121318] border border-zinc-800/40 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
-          <div className="flex items-center justify-between px-1 pb-1.5">
+        <div className="bg-[#121318] border border-zinc-800/40 rounded-xl p-2 flex flex-col h-full overflow-hidden">
+          <div className="flex items-center justify-between px-1 pb-1">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">Migrating</span>
               <span className="text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-zinc-400 px-1.5 py-0.5 rounded-full">
@@ -205,7 +205,7 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
             </button>
           </div>
 
-          <div className="space-y-1.5 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
+          <div className="space-y-1 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
             {(!migratingTokens || migratingTokens.length === 0) ? (
               <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No tokens migrating</div>
             ) : (
@@ -215,8 +215,8 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
         </div>
 
         {/* COLUMN 3: MIGRATED */}
-        <div className="bg-[#121318] border border-zinc-800/40 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
-          <div className="flex items-center justify-between px-1 pb-1.5">
+        <div className="bg-[#121318] border border-zinc-800/40 rounded-xl p-2 flex flex-col h-full overflow-hidden">
+          <div className="flex items-center justify-between px-1 pb-1">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">Migrated</span>
               <span className="text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-zinc-400 px-1.5 py-0.5 rounded-full">
@@ -228,7 +228,7 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
             </button>
           </div>
 
-          <div className="space-y-1.5 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
+          <div className="space-y-1 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
             {(!migratedTokens || migratedTokens.length === 0) ? (
               <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No migrated tokens</div>
             ) : (
