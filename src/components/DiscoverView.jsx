@@ -19,10 +19,10 @@ export default function DiscoverView({ newTokens = [], migratingTokens = [], mig
   }, []);
 
   return (
-    <div className="flex flex-col w-full h-full text-white bg-[#121214] px-4 pt-2 pb-4 overflow-hidden">
+    <div className="flex flex-col w-full h-full text-white bg-[#121214] px-2 pt-0 pb-2 overflow-hidden">
       
       {/* Header Dropdown & Navigation */}
-      <div className="relative flex items-center space-x-6 border-b border-zinc-800/80 pb-4 mb-5 shrink-0" ref={dropdownRef}>
+      <div className="relative flex items-center space-x-6 border-b border-zinc-800/80 py-2.5 mb-2 shrink-0" ref={dropdownRef}>
         <div className="relative">
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
