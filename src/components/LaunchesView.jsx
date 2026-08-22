@@ -164,13 +164,13 @@ const TokenCard = ({ token, columnType = 'new' }) => {
 
 export default function LaunchesView({ newTokens = [], migratingTokens = [], migratedTokens = [] }) {
   return (
-    <div className="w-full h-full pt-0 px-1 pb-1 -mt-2.5 bg-[#0c0d10] flex flex-col overflow-hidden">
-      {/* 3 Columns Grid with Minimal Gap */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5 w-full h-full flex-1">
+    <div className="w-full h-full p-0 m-0 bg-[#0c0d10] flex flex-col overflow-hidden">
+      {/* 3 Columns Grid stretched edge-to-edge */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 w-full h-full flex-1">
         
         {/* COLUMN 1: NEW */}
-        <div className="bg-[#121318] border border-zinc-800/40 rounded-xl p-2 flex flex-col h-full overflow-hidden">
-          <div className="flex items-center justify-between px-1 pb-1">
+        <div className="bg-[#121318] border border-zinc-800/40 rounded-none md:rounded-b-xl p-2 flex flex-col h-full overflow-hidden">
+          <div className="flex items-center justify-between px-1 pb-1 pt-1">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">New</span>
               <span className="text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-zinc-400 px-1.5 py-0.5 rounded-full">
@@ -192,8 +192,8 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
         </div>
 
         {/* COLUMN 2: MIGRATING */}
-        <div className="bg-[#121318] border border-zinc-800/40 rounded-xl p-2 flex flex-col h-full overflow-hidden">
-          <div className="flex items-center justify-between px-1 pb-1">
+        <div className="bg-[#121318] border border-zinc-800/40 rounded-none md:rounded-b-xl p-2 flex flex-col h-full overflow-hidden">
+          <div className="flex items-center justify-between px-1 pb-1 pt-1">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">Migrating</span>
               <span className="text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-zinc-400 px-1.5 py-0.5 rounded-full">
@@ -215,8 +215,8 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
         </div>
 
         {/* COLUMN 3: MIGRATED */}
-        <div className="bg-[#121318] border border-zinc-800/40 rounded-xl p-2 flex flex-col h-full overflow-hidden">
-          <div className="flex items-center justify-between px-1 pb-1">
+        <div className="bg-[#121318] border border-zinc-800/40 rounded-none md:rounded-b-xl p-2 flex flex-col h-full overflow-hidden">
+          <div className="flex items-center justify-between px-1 pb-1 pt-1">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">Migrated</span>
               <span className="text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-zinc-400 px-1.5 py-0.5 rounded-full">
