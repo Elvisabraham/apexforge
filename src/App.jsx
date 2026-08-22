@@ -498,22 +498,22 @@ function AppContent() {
       {/* --- MAIN CONTENT CONTAINER --- */}
       <div className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
         
-         {/* --- TOP HEADER BAR --- */}
-<header className="flex items-center justify-between px-6 py-2.5 border-b border-zinc-800/80 bg-[#121216] shrink-0 select-none">
+        {/* --- TOP HEADER BAR --- */}
+<header className="flex items-center justify-between px-4 py-1.5 border-b border-white/5 bg-[#0c0d10] shrink-0 select-none h-[52px]">
   
   {/* Left Nav: Discover Dropdown & Sub-tabs */}
-  <div className="flex items-center space-x-8">
+  <div className="flex items-center space-x-6">
     <div className="relative">
       <button
         onClick={() => setIsHeaderDropdownOpen(!isHeaderDropdownOpen)}
-        className="flex items-center space-x-1.5 text-base font-bold text-white hover:text-[#00E676] transition-colors"
+        className="flex items-center space-x-1.5 text-sm font-bold text-white hover:text-zinc-300 transition-colors"
       >
         <span>{topNavTab}</span>
-        <span className={`text-xs transition-transform duration-200 ${isHeaderDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
+        <span className={`text-[10px] text-zinc-400 transition-transform duration-200 ${isHeaderDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
       </button>
 
       {isHeaderDropdownOpen && (
-        <div className="absolute left-0 top-full mt-2 w-44 bg-[#1a1a1f] border border-zinc-700/80 rounded-xl shadow-2xl py-1 z-50">
+        <div className="absolute left-0 top-full mt-2 w-44 bg-[#121318] border border-zinc-800 rounded-xl shadow-2xl py-1 z-50">
           {[
             { label: 'Discover', action: () => { setTopNavTab('Discover'); setActivePage('home'); } },
             { label: 'Launches', action: () => { setTopNavTab('Discover'); setActivePage('launches'); } },
@@ -525,7 +525,7 @@ function AppContent() {
                 item.action();
                 setIsHeaderDropdownOpen(false);
               }}
-              className="w-full text-left px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-[#00E676] transition-colors"
+              className="w-full text-left px-4 py-2 text-xs font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
             >
               {item.label}
             </button>
@@ -534,7 +534,7 @@ function AppContent() {
       )}
     </div>
 
-    <nav className="hidden md:flex items-center space-x-6 text-sm text-zinc-400 font-medium">
+    <nav className="hidden md:flex items-center space-x-5 text-xs text-zinc-400 font-medium">
       <button
         onClick={() => {
           setTopNavTab('Tokens');
@@ -543,19 +543,19 @@ function AppContent() {
           }
           setActivePage('tokenhome');
         }}
-        className={`hover:text-white transition-colors ${topNavTab === 'Tokens' ? 'text-[#00E676] font-bold' : ''}`}
+        className={`hover:text-white transition-colors ${topNavTab === 'Tokens' ? 'text-white font-bold' : ''}`}
       >
         Tokens
       </button>
       <button 
         onClick={() => { setTopNavTab('Perps'); setActivePage('perps'); }} 
-        className={`hover:text-white transition-colors ${topNavTab === 'Perps' ? 'text-[#00E676] font-bold' : ''}`}
+        className={`hover:text-white transition-colors ${topNavTab === 'Perps' ? 'text-white font-bold' : ''}`}
       >
         Perps
       </button>
       <button 
         onClick={() => { setTopNavTab('Portfolio'); setActivePage('wallet'); }} 
-        className={`hover:text-white transition-colors ${topNavTab === 'Portfolio' ? 'text-[#00E676] font-bold' : ''}`}
+        className={`hover:text-white transition-colors ${topNavTab === 'Portfolio' ? 'text-white font-bold' : ''}`}
       >
         Portfolio
       </button>
@@ -563,61 +563,61 @@ function AppContent() {
   </div>
 
   {/* Center/Right: Search Bar, Quick Buy & Wallet Controls */}
-  <div className="flex items-center space-x-3">
+  <div className="flex items-center space-x-2.5">
     
     {/* Search Input */}
-<div className="relative w-64 lg:w-80">
- <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-zinc-400">
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-  </svg>
-</span>
-  <input
-    type="text"
-    value={searchQuery}
-    onChange={(e) => setSearchQuery(e.target.value)}
-    placeholder="Search tokens or CAs..."
-    className="w-full bg-[#1c1c24] border border-white/5 focus:border-[#08a68c]/50 text-xs text-white placeholder-zinc-500 rounded-lg pl-9 pr-3 py-2 transition-all outline-none"
-  />
-</div>
+    <div className="relative w-56 lg:w-72">
+      <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-zinc-500">
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </span>
+      <input
+        type="text"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Search tokens or CAs..."
+        className="w-full bg-[#16171d] border border-white/5 focus:border-zinc-700 text-xs text-white placeholder-zinc-500 rounded-lg pl-8 pr-3 py-1.5 transition-all outline-none"
+      />
+    </div>
 
     {/* Quick-Buy Preset Toggle */}
-    <div className="hidden lg:flex items-center bg-[#1c1c24] border border-white/5 rounded-lg px-2.5 py-1.5 space-x-1.5 text-xs font-mono">
-      <span className="text-[#00E676]">⚡</span>
-      <span className="text-white font-bold">0.1</span>
-      <span className="text-zinc-400 text-[10px]">SOL</span>
+    <div className="hidden lg:flex items-center bg-[#16171d] border border-white/5 rounded-lg px-2 py-1 space-x-1 text-xs font-mono">
+      <span className="text-[#00E676] text-xs">⚡</span>
+      <span className="text-white font-bold text-xs">0.1</span>
+      <span className="text-zinc-500 text-[10px]">SOL</span>
     </div>
 
     {/* Quick Slippage Mode */}
-          <div className="hidden xl:flex items-center bg-[#1c1c24] border border-white/5 rounded-lg p-0.5 space-x-0.5">
-            {['1', '2', '3'].map((val) => (
-              <button
-                key={val}
-                className={`px-2.5 py-1 text-xs font-mono font-semibold rounded-md transition-all ${
-                  val === '1' ? 'bg-[#2a2a36] text-[#08a68c]' : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                {val}
-              </button>
-            ))}
-          </div>
+    <div className="hidden xl:flex items-center bg-[#16171d] border border-white/5 rounded-lg p-0.5 space-x-0.5">
+      {['1', '2', '3'].map((val) => (
+        <button
+          key={val}
+          className={`px-2 py-0.5 text-xs font-mono font-semibold rounded-md transition-all ${
+            val === '1' ? 'bg-[#252733] text-white' : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          {val}
+        </button>
+      ))}
+    </div>
 
-          {/* Add Funds Button (Exact Apex Forge Teal) */}
-          <button
-            onClick={() => toggleModal('deposit', true)}
-            className="hidden sm:flex items-center bg-[#08a68c] hover:bg-[#07957e] text-black font-extrabold text-xs px-3.5 py-2 rounded-lg transition-all active:scale-95 cursor-pointer"
-          >
-            + Add Funds
-          </button>
+    {/* Add Funds Button (Phantom Purple) */}
+    <button
+      onClick={() => toggleModal('deposit', true)}
+      className="hidden sm:flex items-center bg-[#635BFF] hover:bg-[#5349e0] text-white font-bold text-xs px-3 py-1.5 rounded-lg transition-all active:scale-95 cursor-pointer"
+    >
+      Add Funds
+    </button>
 
-          {/* Wallet Balance Pill */}
-          <button 
-            onClick={() => toggleModal('wallet', true)}
-            className="bg-[#1c1c24] hover:bg-[#252530] text-white text-xs font-semibold px-3 py-2 rounded-lg border border-white/5 flex items-center space-x-2 transition-all cursor-pointer"
-          >
-            <span>0 SOL</span>
-            <span className="text-[#08a68c] text-xs">👤</span>
-          </button>
+    {/* Wallet Balance Pill */}
+    <button 
+      onClick={() => toggleModal('wallet', true)}
+      className="bg-[#16171d] hover:bg-[#20222b] text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-white/5 flex items-center space-x-1.5 transition-all cursor-pointer"
+    >
+      <span>0 SOL</span>
+      <span className="text-zinc-400 text-xs">👤</span>
+    </button>
 
   </div>
 </header>
