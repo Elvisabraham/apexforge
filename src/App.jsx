@@ -623,9 +623,9 @@ function AppContent() {
 </header>
 
         {/* --- DYNAMIC CONTENT AREA --- */}
-<div className="flex-1 w-full h-full relative overflow-y-auto flex flex-col p-0 m-0 bg-[#0d0e12]">
+<div className="flex-1 w-full h-[calc(100vh-53px)] overflow-hidden flex flex-col p-0 m-0 bg-[#0c0d10]">
   {renderContent()}
-</div>
+</main>
 
         {/* --- LOCKED BOTTOM NAVIGATION --- */}
         {activePage?.toLowerCase() !== 'tokenhome' && activePage?.toLowerCase() !== 'tokenchat' && activePage?.toLowerCase() !== 'settings' && activePage?.toLowerCase() !== 'profile' && (
