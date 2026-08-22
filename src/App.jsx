@@ -498,15 +498,15 @@ function AppContent() {
       {/* --- MAIN CONTENT CONTAINER --- */}
       <div className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
         
-        {/* --- TOP HEADER BAR --- */}
-<header className="flex items-center justify-between px-4 py-1.5 border-b border-white/5 bg-[#0c0d10] shrink-0 select-none h-[52px]">
+       {/* --- TOP HEADER BAR --- */}
+<header className="flex items-center justify-between px-4 py-1.5 bg-[#0c0d10] shrink-0 select-none h-[52px]">
   
   {/* Left Nav: Discover Dropdown & Sub-tabs */}
   <div className="flex items-center space-x-6">
     <div className="relative">
       <button
         onClick={() => setIsHeaderDropdownOpen(!isHeaderDropdownOpen)}
-        className="flex items-center space-x-1.5 text-sm font-bold text-white hover:text-zinc-300 transition-colors"
+        className="flex items-center space-x-1.5 text-sm font-bold text-white hover:text-[#08a68c] transition-colors"
       >
         <span>{topNavTab}</span>
         <span className={`text-[10px] text-zinc-400 transition-transform duration-200 ${isHeaderDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
@@ -525,7 +525,7 @@ function AppContent() {
                 item.action();
                 setIsHeaderDropdownOpen(false);
               }}
-              className="w-full text-left px-4 py-2 text-xs font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+              className="w-full text-left px-4 py-2 text-xs font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-[#08a68c] transition-colors"
             >
               {item.label}
             </button>
@@ -577,13 +577,13 @@ function AppContent() {
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         placeholder="Search tokens or CAs..."
-        className="w-full bg-[#16171d] border border-white/5 focus:border-zinc-700 text-xs text-white placeholder-zinc-500 rounded-lg pl-8 pr-3 py-1.5 transition-all outline-none"
+        className="w-full bg-[#16171d] border border-white/5 focus:border-[#08a68c]/50 text-xs text-white placeholder-zinc-500 rounded-lg pl-8 pr-3 py-1.5 transition-all outline-none"
       />
     </div>
 
     {/* Quick-Buy Preset Toggle */}
     <div className="hidden lg:flex items-center bg-[#16171d] border border-white/5 rounded-lg px-2 py-1 space-x-1 text-xs font-mono">
-      <span className="text-[#00E676] text-xs">⚡</span>
+      <span className="text-[#08a68c] text-xs">⚡</span>
       <span className="text-white font-bold text-xs">0.1</span>
       <span className="text-zinc-500 text-[10px]">SOL</span>
     </div>
@@ -594,7 +594,7 @@ function AppContent() {
         <button
           key={val}
           className={`px-2 py-0.5 text-xs font-mono font-semibold rounded-md transition-all ${
-            val === '1' ? 'bg-[#252733] text-white' : 'text-zinc-400 hover:text-white'
+            val === '1' ? 'bg-[#252733] text-[#08a68c]' : 'text-zinc-400 hover:text-white'
           }`}
         >
           {val}
@@ -602,12 +602,12 @@ function AppContent() {
       ))}
     </div>
 
-    {/* Add Funds Button (Phantom Purple) */}
+    {/* Add Funds Button (Apex TradingView Green) */}
     <button
       onClick={() => toggleModal('deposit', true)}
-      className="hidden sm:flex items-center bg-[#635BFF] hover:bg-[#5349e0] text-white font-bold text-xs px-3 py-1.5 rounded-lg transition-all active:scale-95 cursor-pointer"
+      className="hidden sm:flex items-center bg-[#08a68c] hover:bg-[#07957e] text-black font-extrabold text-xs px-3.5 py-1.5 rounded-lg transition-all active:scale-95 cursor-pointer"
     >
-      Add Funds
+      + Add Funds
     </button>
 
     {/* Wallet Balance Pill */}
@@ -616,7 +616,7 @@ function AppContent() {
       className="bg-[#16171d] hover:bg-[#20222b] text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-white/5 flex items-center space-x-1.5 transition-all cursor-pointer"
     >
       <span>0 SOL</span>
-      <span className="text-zinc-400 text-xs">👤</span>
+      <span className="text-[#08a68c] text-xs">👤</span>
     </button>
 
   </div>
