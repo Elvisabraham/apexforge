@@ -164,13 +164,13 @@ const TokenCard = ({ token, columnType = 'new' }) => {
 
     export default function LaunchesView({ newTokens = [], migratingTokens = [], migratedTokens = [] }) {
     return (
-      <div className="h-full w-full px-3 py-1 overflow-hidden flex flex-col bg-[#0a0a0c]">
-      {/* 3-Column Layout with strict inner scrolling and zero outer page overflow */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 h-full w-full flex-1 min-h-0">
+      <div className="w-full h-full pt-1 px-2 pb-2 bg-[#0c0d10] flex flex-col">
+      {/* 3-Column Grid stretched flush */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 w-full h-full flex-1">
         
-        {/* New Column */}
-        <div className="bg-[#121216] border border-white/5 rounded-2xl flex flex-col h-full shadow-lg overflow-hidden">
-          {/* Column Header */}
+       {/* COLUMN 1: NEW */}
+        <div className="bg-[#121318] border border-zinc-800/60 rounded-xl p-3 flex flex-col h-full overflow-hidden">
+          {/* Column Header & Content */}
           <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-white/5 bg-[#121216]">
             <div className="flex items-center space-x-2">
               <span className="font-bold text-sm text-white tracking-wide">New</span>
@@ -192,9 +192,9 @@ const TokenCard = ({ token, columnType = 'new' }) => {
           </div>
         </div>
 
-        {/* Migrating Column */}
-        <div className="bg-[#121216] border border-white/5 rounded-2xl flex flex-col h-full shadow-lg overflow-hidden">
-          {/* Column Header */}
+       {/* COLUMN 2: MIGRATING */}
+        <div className="bg-[#121318] border border-zinc-800/60 rounded-xl p-3 flex flex-col h-full overflow-hidden">
+          {/* Column Header & Content */}
           <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-white/5 bg-[#121216]">
             <div className="flex items-center space-x-2">
               <span className="font-bold text-sm text-white tracking-wide">Migrating</span>
@@ -216,9 +216,9 @@ const TokenCard = ({ token, columnType = 'new' }) => {
           </div>
         </div>
 
-        {/* Migrated Column */}
-        <div className="bg-[#121216] border border-white/5 rounded-2xl flex flex-col h-full shadow-lg overflow-hidden">
-          {/* Column Header */}
+       {/* COLUMN 3: MIGRATED */}
+        <div className="bg-[#121318] border border-zinc-800/60 rounded-xl p-3 flex flex-col h-full overflow-hidden">
+          {/* Column Header & Content */}
           <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-white/5 bg-[#121216]">
             <div className="flex items-center space-x-2">
               <span className="font-bold text-sm text-white tracking-wide">Migrated</span>
