@@ -22,21 +22,18 @@ const TokenCard = ({ token, columnType = 'new' }) => {
   const top10Percent = Math.round(token?.top10 ?? 0);
   const devPercent = Math.round(token?.devHold ?? 0);
 
-  // Active border stroke color mapping - Uses Apex TradingView Green (#089981) for all columns
+  // TradingView Green (#089981) active border stroke
   const strokeColor = '#089981';
 
   return (
     <div className="bg-[#141418]/90 hover:bg-[#1a1a20] p-2.5 rounded-xl border border-white/5 hover:border-white/10 transition-all flex items-center justify-between cursor-pointer group shrink-0">
       
-      {/* Left Side: Prominent Avatar & Token Metadata */}
+      {/* Left Side: Avatar & Token Metadata */}
       <div className="flex items-center space-x-3 overflow-hidden">
         
         {/* Avatar Container */}
         <div className="relative w-14 h-14 shrink-0 flex items-center justify-center p-1">
-          
-          {/* SVG canvas with viewBox aligned to prevent clipping */}
           <svg className="absolute inset-0 w-full h-full -rotate-90 transform" viewBox="-3 -3 70 70">
-            {/* Dark background track */}
             <rect
               x="2"
               y="2"
@@ -48,7 +45,6 @@ const TokenCard = ({ token, columnType = 'new' }) => {
               stroke="currentColor"
               fill="none"
             />
-            {/* Dynamic bonding progress stroke locked to pathLength=100 */}
             <rect
               x="2"
               y="2"
@@ -66,7 +62,6 @@ const TokenCard = ({ token, columnType = 'new' }) => {
             />
           </svg>
 
-          {/* Token Image centered inside ring */}
           <div className="w-full h-full rounded-[13px] bg-zinc-900 overflow-hidden flex items-center justify-center z-10">
             {token?.imagePreview || token?.image ? (
               <img src={token.imagePreview || token.image} className="w-full h-full object-cover" alt="icon" />
@@ -80,7 +75,6 @@ const TokenCard = ({ token, columnType = 'new' }) => {
 
         {/* Info Column */}
         <div className="flex flex-col justify-between truncate py-0.5">
-          {/* Ticker & Name */}
           <div className="flex items-center space-x-1.5 truncate">
             <span className="font-extrabold text-xs text-white truncate font-mono">
               {token?.symbol ? token.symbol.toUpperCase() : 'SOL'}
@@ -90,11 +84,9 @@ const TokenCard = ({ token, columnType = 'new' }) => {
             </span>
           </div>
           
-          {/* Line 2: Created Time, Solscan, Holders, Spaced TX */}
           <div className="flex items-center space-x-2 text-[10px] text-zinc-400 font-mono mt-0.5">
             <span>{token?.timeAgo || token?.createdAgo || '1s'}</span>
             
-            {/* Solscan Explorer Icon */}
             <a 
               href={token?.mintAddress ? `https://solscan.io/token/${token.mintAddress}` : '#'} 
               target="_blank" 
@@ -114,7 +106,6 @@ const TokenCard = ({ token, columnType = 'new' }) => {
             </span>
           </div>
 
-          {/* Line 3: Metric Badges */}
           <div className="flex items-center space-x-2 text-[10px] font-mono mt-0.5">
             <div className="flex items-center space-x-0.5 text-orange-400 font-semibold">
               <span className="text-[8px]">🎯</span>
@@ -134,7 +125,7 @@ const TokenCard = ({ token, columnType = 'new' }) => {
         </div>
       </div>
 
-      {/* Right Side: Quick Buy Trigger & Market Cap / Volume */}
+      {/* Right Side: Quick Buy & Stats */}
       <div className="flex flex-col items-end justify-between shrink-0 pl-2 self-stretch py-0.5">
         <button className="bg-[#1a2024]/90 hover:bg-[#222b31] active:scale-95 text-[#089981] font-mono font-bold text-[11px] px-2.5 py-1 rounded-md border border-white/5 hover:border-[#089981]/30 flex items-center space-x-1 transition-all shadow-sm">
           <span className="text-[#089981] text-[10px]">⚡</span>
@@ -164,13 +155,13 @@ const TokenCard = ({ token, columnType = 'new' }) => {
 
 export default function LaunchesView({ newTokens = [], migratingTokens = [], migratedTokens = [] }) {
   return (
-    <div className="w-full h-full p-0 m-0 bg-[#0c0d10] flex flex-col overflow-hidden">
-      {/* 3 Columns Grid stretched edge-to-edge */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 w-full h-full flex-1">
+    <div className="w-full h-full p-2 bg-[#0c0d10] flex flex-col overflow-hidden">
+      {/* 3 Columns Grid stretched flush */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 w-full h-full flex-1 min-h-0">
         
         {/* COLUMN 1: NEW */}
-        <div className="bg-[#121318] border border-zinc-800/40 rounded-none md:rounded-b-xl p-2 flex flex-col h-full overflow-hidden">
-          <div className="flex items-center justify-between px-1 pb-1 pt-1">
+        <div className="bg-[#121318] border border-zinc-800/40 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
+          <div className="flex items-center justify-between px-1 pb-2">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">New</span>
               <span className="text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-zinc-400 px-1.5 py-0.5 rounded-full">
@@ -182,7 +173,7 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
             </button>
           </div>
 
-          <div className="space-y-1 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
+          <div className="space-y-1.5 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
             {(!newTokens || newTokens.length === 0) ? (
               <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No new tokens</div>
             ) : (
@@ -192,8 +183,8 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
         </div>
 
         {/* COLUMN 2: MIGRATING */}
-        <div className="bg-[#121318] border border-zinc-800/40 rounded-none md:rounded-b-xl p-2 flex flex-col h-full overflow-hidden">
-          <div className="flex items-center justify-between px-1 pb-1 pt-1">
+        <div className="bg-[#121318] border border-zinc-800/40 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
+          <div className="flex items-center justify-between px-1 pb-2">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">Migrating</span>
               <span className="text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-zinc-400 px-1.5 py-0.5 rounded-full">
@@ -205,7 +196,7 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
             </button>
           </div>
 
-          <div className="space-y-1 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
+          <div className="space-y-1.5 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
             {(!migratingTokens || migratingTokens.length === 0) ? (
               <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No tokens migrating</div>
             ) : (
@@ -215,8 +206,8 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
         </div>
 
         {/* COLUMN 3: MIGRATED */}
-        <div className="bg-[#121318] border border-zinc-800/40 rounded-none md:rounded-b-xl p-2 flex flex-col h-full overflow-hidden">
-          <div className="flex items-center justify-between px-1 pb-1 pt-1">
+        <div className="bg-[#121318] border border-zinc-800/40 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
+          <div className="flex items-center justify-between px-1 pb-2">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">Migrated</span>
               <span className="text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-zinc-400 px-1.5 py-0.5 rounded-full">
@@ -228,7 +219,7 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
             </button>
           </div>
 
-          <div className="space-y-1 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
+          <div className="space-y-1.5 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
             {(!migratedTokens || migratedTokens.length === 0) ? (
               <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No migrated tokens</div>
             ) : (
