@@ -164,11 +164,12 @@ const TokenCard = ({ token, columnType = 'new' }) => {
 
   export default function LaunchesView({ newTokens = [], migratingTokens = [], migratedTokens = [] }) {
     return (
-     <div className="w-full h-full pt-0.5 px-2 pb-2 bg-[#0c0d10] flex flex-col overflow-hidden">
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 w-full h-full flex-1">
+     <div className="w-full h-full pt-1.5 px-2 pb-2 bg-[#0c0d10] flex flex-col overflow-hidden">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 w-full h-full flex-1">
     
     {/* COLUMN 1 */}
-    <div className="bg-[#121318] border border-zinc-800/60 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
+    <div className="bg-[#121318] border border-zinc-800/50 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
+      {/* Header & Token Cards */}
       <div className="flex items-center justify-between px-1 pb-1.5">
         <div className="flex items-center space-x-2">
           <span className="font-bold text-sm text-white tracking-wide">New</span>
@@ -191,7 +192,8 @@ const TokenCard = ({ token, columnType = 'new' }) => {
     </div>
 
     {/* COLUMN 2 */}
-    <div className="bg-[#121318] border border-zinc-800/60 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
+    <div className="bg-[#121318] border border-zinc-800/50 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
+      {/* Header & Token Cards */}
       <div className="flex items-center justify-between px-1 pb-1.5">
         <div className="flex items-center space-x-2">
           <span className="font-bold text-sm text-white tracking-wide">Migrating</span>
@@ -214,7 +216,8 @@ const TokenCard = ({ token, columnType = 'new' }) => {
     </div>
 
     {/* COLUMN 3 */}
-    <div className="bg-[#121318] border border-zinc-800/60 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
+    <div className="bg-[#121318] border border-zinc-800/50 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
+      {/* Header & Token Cards */}
       <div className="flex items-center justify-between px-1 pb-1.5">
         <div className="flex items-center space-x-2">
           <span className="font-bold text-sm text-white tracking-wide">Migrated</span>
