@@ -151,59 +151,68 @@ export default function Home({
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-2.5 min-h-0 scrollbar-hide">
-            {displayLaunches.length === 0 ? (
-              <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">
-                No tokens found
+  {displayLaunches.length === 0 ? (
+    <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">
+      No tokens found
+    </div>
+  ) : (
+    displayLaunches.map((token, idx) => {
+      // Calculate dynamic progress (0% to 100%) - Defaults to 0 instead of 100
+      const progress = Math.min(Math.max(token.bondingCurvePct ?? 0, 0), 100);
+
+      // SVG path properties for rounded rect (squircle) matching screenshot 2
+      const rectWidth = 48;
+      const rectHeight = 48;
+      const strokeWidth = 2;
+      const rx = 14; 
+      
+      const perimeter = 2 * (rectWidth + rectHeight) - 8 * rx + 2 * Math.PI * rx;
+      const strokeDashoffset = perimeter - (progress / 100) * perimeter;
+
+      return (
+        <div 
+          key={token.id || token.mintAddress || idx}
+          onClick={() => onTokenClick(token)}
+          className="bg-[#0d0d11] hover:bg-[#121217] border border-zinc-800/50 hover:border-zinc-700/80 p-3 rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-3 group shadow-sm"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Avatar with Squircle Bonding Curve SVG Ring */}
+            <div className="relative w-13 h-13 flex items-center justify-center shrink-0">
+              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 52 52">
+                <rect
+                  x="2"
+                  y="2"
+                  width={rectWidth}
+                  height={rectHeight}
+                  rx={rx}
+                  fill="transparent"
+                  stroke="#1f1f24"
+                  strokeWidth={strokeWidth}
+                />
+                <rect
+                  x="2"
+                  y="2"
+                  width={rectWidth}
+                  height={rectHeight}
+                  rx={rx}
+                  fill="transparent"
+                  stroke="#089981"
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={perimeter}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  className="transition-all duration-500"
+                />
+              </svg>
+
+              <div className="w-10 h-10 rounded-xl bg-[#050507] flex items-center justify-center overflow-hidden font-black text-white text-[11px] z-10">
+                {token.imagePreview || token.image ? (
+                  <img src={token.imagePreview || token.image} alt={token.symbol} className="w-full h-full object-cover" />
+                ) : (
+                  <span>{token.symbol?.slice(0, 2) || 'TK'}</span>
+                )}
               </div>
-            ) : (
-              displayLaunches.map((token, idx) => {
-                // Calculation for the circular bonding curve stroke
-                const progress = Math.min(Math.max(token.bondingCurvePct || 100, 0), 100);
-                const radius = 24;
-                const circumference = 2 * Math.PI * radius;
-                const strokeDashoffset = circumference - (progress / 100) * circumference;
-
-                return (
-                  <div 
-                    key={token.id || token.mintAddress || idx}
-                    onClick={() => onTokenClick(token)}
-                    className="bg-[#0d0d11] hover:bg-[#121217] border border-zinc-800/50 hover:border-zinc-700/80 p-3 rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-3 group shadow-sm"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      {/* Avatar with Circular Bonding Curve SVG Ring */}
-                      <div className="relative w-13 h-13 flex items-center justify-center shrink-0">
-                        <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 52 52">
-                          <circle
-                            cx="26"
-                            cy="26"
-                            r={radius}
-                            className="text-zinc-800/60"
-                            strokeWidth="2.5"
-                            stroke="currentColor"
-                            fill="transparent"
-                          />
-                          <circle
-                            cx="26"
-                            cy="26"
-                            r={radius}
-                            className="text-[#089981] transition-all duration-500"
-                            strokeWidth="2.5"
-                            strokeDasharray={circumference}
-                            strokeDashoffset={strokeDashoffset}
-                            strokeLinecap="round"
-                            stroke="currentColor"
-                            fill="transparent"
-                          />
-                        </svg>
-
-                        <div className="w-10 h-10 rounded-xl bg-[#050507] flex items-center justify-center overflow-hidden font-black text-white text-[11px] z-10">
-                          {token.imagePreview || token.image ? (
-                            <img src={token.imagePreview || token.image} alt={token.symbol} className="w-full h-full object-cover" />
-                          ) : (
-                            <span>{token.symbol?.slice(0, 2) || 'TK'}</span>
-                          )}
-                        </div>
-                      </div>
+            </div>
 
                       <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-1.5 truncate">
