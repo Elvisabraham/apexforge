@@ -1,38 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-
-// Reusable Token Card matching high-density layout
-const TokenCard = ({ token }) => (
-  <div className="bg-[#121216] hover:bg-[#1a1a20] p-3 rounded-xl border border-zinc-800/80 hover:border-zinc-700 transition-all flex items-center justify-between cursor-pointer group shadow-sm shrink-0">
-    <div className="flex items-center space-x-3 overflow-hidden">
-      <div className="relative w-12 h-12 rounded-xl bg-black border border-zinc-700/80 flex items-center justify-center overflow-hidden shrink-0">
-        {token.imagePreview || token.image ? (
-          <img src={token.imagePreview || token.image} className="w-full h-full object-cover" alt="icon" />
-        ) : (
-          <span className="text-sm font-black text-gray-300">{token.symbol ? token.symbol.slice(0, 2).toUpperCase() : 'AF'}</span>
-        )}
-      </div>
-
-      <div className="flex flex-col truncate">
-        <div className="flex items-center space-x-1 truncate">
-          <span className="font-bold text-xs text-gray-100 truncate">{token.name || 'dfhuifd'}</span>
-        </div>
-        
-        <div className="flex items-center space-x-2 text-[10px] text-zinc-400 mt-0.5">
-          <span className="text-zinc-400 font-medium">TX {token.txCount || 42}</span>
-        </div>
-      </div>
-    </div>
-
-    <div className="flex flex-col items-end shrink-0 pl-2">
-      <div className="text-[11px] text-[#089981] font-bold">
-        MC <span className="text-[#089981]">{token.mcap || '$10.0K'}</span>
-      </div>
-      <div className="text-[10px] text-emerald-400 font-semibold mt-0.5">
-        +{token.change || '0.0%'}
-      </div>
-    </div>
-  </div>
-);
+import { TokenCard } from './TokenCard';
 
 export default function DiscoverHomeView({ newTokens = [], migratingTokens = [], migratedTokens = [] }) {
   const [leftTab, setLeftTab] = useState('Total'); 
@@ -118,14 +85,20 @@ export default function DiscoverHomeView({ newTokens = [], migratingTokens = [],
           </div>
         </div>
 
-        <div className="space-y-2.5 overflow-y-auto custom-scrollbar flex-1 pr-0.5">
-          {displayedTokens.length === 0 ? (
-            <div className="flex items-center justify-center h-32 text-xs text-zinc-600">No active launches.</div>
-          ) : (
-            displayedTokens.map((t) => <TokenCard key={t.id || t.mintAddress || Math.random()} token={t} />)
-          )}
-        </div>
-      </div>
+<div className="space-y-2.5 overflow-y-auto custom-scrollbar flex-1 pr-0.5">
+  {displayedTokens.length === 0 ? (
+    <div className="flex items-center justify-center h-32 text-xs text-zinc-600">No active launches.</div>
+  ) : (
+    displayedTokens.map((t) => (
+      <TokenCard 
+        key={t.id || t.mintAddress || Math.random()} 
+        token={t} 
+        columnType={launchesFilter.toLowerCase()} 
+      />
+    ))
+  )}
+</div>
+</div>
 
       {/* Column 3: Top Tokens Leaderboard */}
       <div className="bg-[#121318] border border-zinc-800/80 rounded-xl p-4 flex flex-col h-full overflow-hidden">

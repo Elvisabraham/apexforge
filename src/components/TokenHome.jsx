@@ -9,6 +9,7 @@ import { useTrade } from '../hooks/useTrade';
 import TradeWidget from './TradeWidget';
 import { calculateMarketCap } from '../mathService';
 import { supabase } from '../supabaseClient';
+import { TokenCard } from './TokenCard';
 
 // HELPER: Format address...
 const formatCreator = (val, email) => {

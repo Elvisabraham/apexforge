@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import TokenCard from './TokenCard';
 
 export default function Home({ 
   tokens = [], 
@@ -129,7 +130,7 @@ export default function Home({
           </div>
         </div>
 
-        {/* COLUMN 2: Launches Feed (Screenshot 2 Styling & Bonding Curve) */}
+        {/* COLUMN 2: Launches Feed */}
         <div className="bg-[#141417] border border-zinc-800/80 rounded-2xl p-4 flex flex-col h-full overflow-hidden shadow-lg">
           <div className="flex items-center justify-between mb-4 shrink-0">
             <h2 className="text-sm font-black text-white uppercase tracking-wider">Launches</h2>
@@ -151,104 +152,18 @@ export default function Home({
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-2.5 min-h-0 scrollbar-hide">
-  {displayLaunches.length === 0 ? (
-    <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">
-      No tokens found
-    </div>
-  ) : (
-    displayLaunches.map((token, idx) => {
-      // Calculate dynamic progress (0% to 100%) - Defaults to 0 instead of 100
-      const progress = Math.min(Math.max(token.bondingCurvePct ?? 0, 0), 100);
-
-      // SVG path properties for rounded rect (squircle) matching screenshot 2
-      const rectWidth = 48;
-      const rectHeight = 48;
-      const strokeWidth = 2;
-      const rx = 14; 
-      
-      const perimeter = 2 * (rectWidth + rectHeight) - 8 * rx + 2 * Math.PI * rx;
-      const strokeDashoffset = perimeter - (progress / 100) * perimeter;
-
-      return (
-        <div 
-          key={token.id || token.mintAddress || idx}
-          onClick={() => onTokenClick(token)}
-          className="bg-[#0d0d11] hover:bg-[#121217] border border-zinc-800/50 hover:border-zinc-700/80 p-3 rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-3 group shadow-sm"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            {/* Avatar with Squircle Bonding Curve SVG Ring */}
-            <div className="relative w-13 h-13 flex items-center justify-center shrink-0">
-              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 52 52">
-                <rect
-                  x="2"
-                  y="2"
-                  width={rectWidth}
-                  height={rectHeight}
-                  rx={rx}
-                  fill="transparent"
-                  stroke="#1f1f24"
-                  strokeWidth={strokeWidth}
-                />
-                <rect
-                  x="2"
-                  y="2"
-                  width={rectWidth}
-                  height={rectHeight}
-                  rx={rx}
-                  fill="transparent"
-                  stroke="#089981"
-                  strokeWidth={strokeWidth}
-                  strokeDasharray={perimeter}
-                  strokeDashoffset={strokeDashoffset}
-                  strokeLinecap="round"
-                  className="transition-all duration-500"
-                />
-              </svg>
-
-              <div className="w-10 h-10 rounded-xl bg-[#050507] flex items-center justify-center overflow-hidden font-black text-white text-[11px] z-10">
-                {token.imagePreview || token.image ? (
-                  <img src={token.imagePreview || token.image} alt={token.symbol} className="w-full h-full object-cover" />
-                ) : (
-                  <span>{token.symbol?.slice(0, 2) || 'TK'}</span>
-                )}
+            {displayLaunches.length === 0 ? (
+              <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">
+                No tokens found
               </div>
-            </div>
-
-                      <div className="flex flex-col min-w-0">
-                        <div className="flex items-center gap-1.5 truncate">
-                          <span className="text-xs font-black text-white tracking-tight">{token.symbol}</span>
-                          <span className="text-[11px] text-zinc-400 truncate">{token.name}</span>
-                        </div>
-
-                        <div className="flex items-center gap-2 mt-1 text-[10px] text-zinc-500 font-mono">
-                          <span>{token.timeAgo || '1s'}</span>
-                          <span className="text-zinc-600">🔍</span>
-                          <span className="flex items-center gap-0.5"><span className="text-zinc-600">👥</span> {token.holders || 2}</span>
-                          <span className="font-bold text-zinc-400">TX {token.txCount || 1}</span>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 mt-1 text-[9px] font-mono font-bold">
-                          <span className="text-rose-500 flex items-center gap-0.5">🎯 {token.sniperPct || '0%'}</span>
-                          <span className="text-emerald-500 flex items-center gap-0.5">🎰 {token.devPct || '0%'}</span>
-                          <span className="text-sky-400 flex items-center gap-0.5">💎 {token.holderPct || '0%'}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-end shrink-0 gap-1.5">
-                      <button className="flex items-center gap-1 bg-[#141417] hover:bg-emerald-500/10 border border-zinc-800 hover:border-emerald-500/30 px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold text-zinc-300 hover:text-emerald-400 transition-colors">
-                        <span className="text-amber-400">⚡</span>
-                        <span>≡ {token.buySol || '0.1'}</span>
-                      </button>
-
-                      <div className="flex flex-col items-end text-right font-mono">
-                        <span className="text-[11px] font-black text-[#089981]">MC ${token.mcap || '2.4K'}</span>
-                        <span className="text-[9px] text-zinc-500 uppercase">VOL ${token.volume || '0.09'}</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
+            ) : (
+              displayLaunches.map((token) => (
+                <TokenCard 
+                  key={token.id || token.mintAddress || Math.random()} 
+                  token={token} 
+                  onClick={() => onTokenClick(token)} 
+                />
+              ))
             )}
           </div>
         </div>
