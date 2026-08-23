@@ -19,14 +19,14 @@ export default function DiscoverView({ newTokens = [], migratingTokens = [], mig
   }, []);
 
   return (
-    <div className="flex flex-col w-full h-full text-white bg-[#121214] px-2 pt-0 pb-2 overflow-hidden">
+    <div className="absolute inset-0 flex flex-col w-full h-full text-white bg-[#121214] px-3 pt-0 pb-2 overflow-hidden z-10">
       
-      {/* Header Dropdown & Navigation */}
-      <div className="relative flex items-center space-x-6 border-b border-zinc-800/80 py-2.5 mb-2 shrink-0" ref={dropdownRef}>
+      {/* Header Dropdown & Navigation - Flushed up top */}
+      <div className="relative flex items-center space-x-6 border-b border-zinc-800/80 pt-1 pb-2 mb-1 shrink-0" ref={dropdownRef}>
         <div className="relative">
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center space-x-2 text-lg font-bold text-white hover:text-purple-400 transition-colors focus:outline-none"
+            className="flex items-center space-x-2 text-base font-bold text-white hover:text-purple-400 transition-colors focus:outline-none"
           >
             <span className="capitalize">{activeTab}</span>
             <span className={`text-xs transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}>▼</span>
@@ -47,7 +47,7 @@ export default function DiscoverView({ newTokens = [], migratingTokens = [], mig
           )}
         </div>
 
-        <div className="hidden sm:flex items-center space-x-4 text-sm text-zinc-400">
+        <div className="hidden sm:flex items-center space-x-4 text-xs font-semibold text-zinc-400">
           <span className="cursor-pointer hover:text-white transition-colors">Tokens</span>
           <span className="cursor-pointer hover:text-white transition-colors">Perps</span>
           <span className="cursor-pointer hover:text-white transition-colors">Portfolio</span>
@@ -55,7 +55,7 @@ export default function DiscoverView({ newTokens = [], migratingTokens = [], mig
       </div>
 
       {/* Dynamic Main View Switcher */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 w-full h-full min-h-0 overflow-hidden">
         {activeTab === 'discover' ? (
           <DiscoverHomeView newTokens={newTokens} migratingTokens={migratingTokens} migratedTokens={migratedTokens} />
         ) : activeTab === 'launches' ? (
