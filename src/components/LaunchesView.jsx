@@ -15,15 +15,20 @@ const CardSkeleton = () => (
 );
 
 const TokenCard = ({ token, columnType = 'new' }) => {
-  // Bonding progress percentage
-  const rawProgress = token?.progress ?? (columnType === 'migrated' ? 100 : columnType === 'migrating' ? 76 : 0);
+  // Bonding progress percentage evaluation
+  const rawProgress = token?.progress ?? token?.bondingCurvePct ?? (columnType === 'migrated' ? 100 : 0);
   const curveProgress = Math.min(100, Math.max(0, Math.round(rawProgress)));
   
   const top10Percent = Math.round(token?.top10 ?? 0);
   const devPercent = Math.round(token?.devHold ?? 0);
 
-  // TradingView Green (#089981) active border stroke
-  const strokeColor = '#089981';
+  // Squircle Path Metrics for accurate SVG rendering
+  const rectSize = 48;
+  const rx = 14; 
+  const strokeWidth = 2.5;
+  // Exact perimeter formula for rounded rectangle
+  const perimeter = 2 * (rectSize + rectSize) - 8 * rx + 2 * Math.PI * rx;
+  const strokeDashoffset = perimeter - (curveProgress / 100) * perimeter;
 
   return (
     <div className="bg-[#141418]/90 hover:bg-[#1a1a20] p-2.5 rounded-xl border border-white/5 hover:border-white/10 transition-all flex items-center justify-between cursor-pointer group shrink-0">
@@ -31,38 +36,40 @@ const TokenCard = ({ token, columnType = 'new' }) => {
       {/* Left Side: Avatar & Token Metadata */}
       <div className="flex items-center space-x-3 overflow-hidden">
         
-        {/* Avatar Container */}
-        <div className="relative w-14 h-14 shrink-0 flex items-center justify-center p-1">
-          <svg className="absolute inset-0 w-full h-full -rotate-90 transform" viewBox="-3 -3 70 70">
+        {/* Avatar Container with Squircle Bonding Curve */}
+        <div className="relative w-13 h-13 shrink-0 flex items-center justify-center">
+          <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 52 52">
+            {/* Background Track Ring */}
             <rect
               x="2"
               y="2"
-              width="60"
-              height="60"
-              rx="16"
+              width={rectSize}
+              height={rectSize}
+              rx={rx}
               className="text-zinc-800/80"
-              strokeWidth="3"
+              strokeWidth={strokeWidth}
               stroke="currentColor"
               fill="none"
             />
+            {/* Active Bonding Curve Stroke */}
             <rect
               x="2"
               y="2"
-              width="60"
-              height="60"
-              rx="16"
-              stroke={strokeColor}
-              strokeWidth="3"
+              width={rectSize}
+              height={rectSize}
+              rx={rx}
+              stroke="#089981"
+              strokeWidth={strokeWidth}
               strokeLinecap="round"
               fill="none"
-              pathLength="100"
-              strokeDasharray="100"
-              strokeDashoffset={100 - curveProgress}
+              strokeDasharray={perimeter}
+              strokeDashoffset={strokeDashoffset}
               className="transition-all duration-300"
             />
           </svg>
 
-          <div className="w-full h-full rounded-[13px] bg-zinc-900 overflow-hidden flex items-center justify-center z-10">
+          {/* Token Inner Icon */}
+          <div className="w-10 h-10 rounded-xl bg-zinc-900 overflow-hidden flex items-center justify-center z-10">
             {token?.imagePreview || token?.image ? (
               <img src={token.imagePreview || token.image} className="w-full h-full object-cover" alt="icon" />
             ) : (
@@ -155,13 +162,12 @@ const TokenCard = ({ token, columnType = 'new' }) => {
 
 export default function LaunchesView({ newTokens = [], migratingTokens = [], migratedTokens = [] }) {
   return (
-    // p-0 removes the top gap, -mt-[1px] pulls it flush against the header line
     <div className="w-full h-full p-0 m-0 bg-[#0c0d10] flex flex-col overflow-hidden">
       
       {/* 3 Columns Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 w-full h-full flex-1 min-h-0 px-2 pb-2 pt-0">
         
-        {/* COLUMN 1: NEW (rounded-b-xl keeps bottom rounded, top is sharp/flush) */}
+        {/* COLUMN 1: NEW */}
         <div className="bg-[#121318] border-x border-b border-zinc-800/40 rounded-b-xl rounded-t-none border-t-0 p-2.5 flex flex-col h-full overflow-hidden">
           <div className="flex items-center justify-between px-1 pb-2">
             <div className="flex items-center space-x-1.5">
@@ -172,7 +178,6 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
             </div>
             <button className="text-zinc-500 hover:text-white transition-colors text-xs font-bold px-1">•••</button>
           </div>
-          {/* Token list maps here */}
           <div className="space-y-1.5 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
             {(!newTokens || newTokens.length === 0) ? (
               <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No new tokens</div>
@@ -183,7 +188,7 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
         </div>
 
         {/* COLUMN 2: MIGRATING */}
-       <div className="bg-[#121318] border-x border-b border-zinc-800/40 rounded-b-xl rounded-t-none border-t-0 p-2.5 flex flex-col h-full overflow-hidden">
+        <div className="bg-[#121318] border-x border-b border-zinc-800/40 rounded-b-xl rounded-t-none border-t-0 p-2.5 flex flex-col h-full overflow-hidden">
           <div className="flex items-center justify-between px-1 pb-2">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">Migrating</span>
