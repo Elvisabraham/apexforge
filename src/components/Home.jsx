@@ -49,7 +49,6 @@ export default function Home({
   ];
 
   return (
-    /* h-screen & overflow-hidden keeps the whole viewport fixed */
     <div className="flex-1 bg-[#050505] text-white flex flex-col w-full h-screen overflow-hidden p-2 pt-0 md:p-3 md:pt-0 font-sans">
       
       {/* Top Bar Navigation */}
@@ -82,7 +81,7 @@ export default function Home({
         </div>
       </div>
 
-      {/* Main Grid Container - h-full and overflow-hidden ensures no global scrollbar */}
+      {/* Main Grid Container */}
       <div className="flex-1 p-2 md:p-4 grid grid-cols-1 md:grid-cols-3 gap-4 h-full overflow-hidden max-w-[1700px] w-full mx-auto">
         
         {/* COLUMN 1: Portfolio / Account Summary */}
@@ -124,13 +123,13 @@ export default function Home({
               ))}
             </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center text-center py-10 overflow-y-auto">
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-10 overflow-y-auto no-scrollbar">
               <span className="text-xs text-zinc-500 font-medium">No {activePortfolioTab.toLowerCase()} yet</span>
             </div>
           </div>
         </div>
 
-        {/* COLUMN 2: Launches Feed (Independent Internal Scroll) */}
+        {/* COLUMN 2: Launches Feed (Hidden Scrollbar) */}
         <div className="bg-[#141417] border border-zinc-800/80 rounded-2xl p-4 flex flex-col h-full overflow-hidden shadow-lg">
           <div className="flex items-center justify-between mb-4 shrink-0">
             <h2 className="text-sm font-black text-white uppercase tracking-wider">Launches</h2>
@@ -151,8 +150,8 @@ export default function Home({
             </div>
           </div>
 
-          {/* Dedicated scroll container for Launches */}
-          <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 min-h-0">
+          {/* Added 'no-scrollbar' to hide the scrollbar track */}
+          <div className="flex-1 overflow-y-auto space-y-2.5 min-h-0 no-scrollbar">
             {displayLaunches.length === 0 ? (
               <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">
                 No tokens found
@@ -212,7 +211,7 @@ export default function Home({
           </div>
         </div>
 
-        {/* COLUMN 3: Leaderboard (Independent Internal Scroll) */}
+        {/* COLUMN 3: Leaderboard (Hidden Scrollbar) */}
         <div className="bg-[#141417] border border-zinc-800/80 rounded-2xl p-4 flex flex-col h-full overflow-hidden shadow-lg">
           <div className="flex items-center justify-between mb-4 shrink-0">
             <h2 className="text-sm font-black text-white uppercase tracking-wider">Tokens</h2>
@@ -250,8 +249,8 @@ export default function Home({
             </div>
           </div>
 
-          {/* Dedicated scroll container for Tokens */}
-          <div className="flex-1 overflow-y-auto space-y-1 pr-1 min-h-0">
+          {/* Added 'no-scrollbar' to hide the scrollbar track */}
+          <div className="flex-1 overflow-y-auto space-y-1 min-h-0 no-scrollbar">
             {leaderboardData.map((item) => (
               <div 
                 key={item.rank}
