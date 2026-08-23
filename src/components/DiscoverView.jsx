@@ -19,14 +19,14 @@ export default function DiscoverView({ newTokens = [], migratingTokens = [], mig
   }, []);
 
   return (
-    <div className="flex flex-col w-full h-full text-white bg-[#121214] px-2 pt-0 pb-0 overflow-hidden">
+    <div className="flex flex-col w-full h-full text-white bg-[#121214] p-0 m-0 overflow-hidden">
       
       {/* Header Navigation Bar with Bottom Border */}
-      <div className="relative flex items-center space-x-6 border-b border-zinc-800/80 py-2.5 mb-0 shrink-0 z-20" ref={dropdownRef}>
+      <div className="relative flex items-center space-x-6 border-b border-zinc-800/80 px-4 py-1.5 mb-0 shrink-0 z-20" ref={dropdownRef}>
         <div className="relative">
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center space-x-2 text-base font-bold text-white hover:text-purple-400 transition-colors focus:outline-none"
+            className="flex items-center space-x-2 text-sm font-bold text-white hover:text-purple-400 transition-colors focus:outline-none"
           >
             <span className="capitalize">{activeTab}</span>
             <span className={`text-xs transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}>▼</span>
@@ -54,8 +54,8 @@ export default function DiscoverView({ newTokens = [], migratingTokens = [], mig
         </div>
       </div>
 
-      {/* Main Content Container - '-mt-4' forcefully pulls the cards straight up to touch the border line */}
-      <div className="flex-1 w-full h-full min-h-0 overflow-hidden -mt-4">
+      {/* Main Content Container - Fits flush right beneath the border */}
+      <div className="flex-1 w-full h-full min-h-0 overflow-hidden p-0 m-0">
         {activeTab === 'discover' ? (
           <DiscoverHomeView newTokens={newTokens} migratingTokens={migratingTokens} migratedTokens={migratedTokens} />
         ) : activeTab === 'launches' ? (
