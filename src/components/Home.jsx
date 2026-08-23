@@ -123,13 +123,13 @@ export default function Home({
               ))}
             </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center text-center py-10 overflow-y-auto no-scrollbar">
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-10 overflow-y-auto scrollbar-hide">
               <span className="text-xs text-zinc-500 font-medium">No {activePortfolioTab.toLowerCase()} yet</span>
             </div>
           </div>
         </div>
 
-        {/* COLUMN 2: Launches Feed (Hidden Scrollbar) */}
+        {/* COLUMN 2: Launches Feed */}
         <div className="bg-[#141417] border border-zinc-800/80 rounded-2xl p-4 flex flex-col h-full overflow-hidden shadow-lg">
           <div className="flex items-center justify-between mb-4 shrink-0">
             <h2 className="text-sm font-black text-white uppercase tracking-wider">Launches</h2>
@@ -150,8 +150,7 @@ export default function Home({
             </div>
           </div>
 
-          {/* Added 'no-scrollbar' to hide the scrollbar track */}
-          <div className="flex-1 overflow-y-auto space-y-2.5 min-h-0 no-scrollbar">
+          <div className="flex-1 overflow-y-auto space-y-2.5 min-h-0 scrollbar-hide">
             {displayLaunches.length === 0 ? (
               <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">
                 No tokens found
@@ -211,7 +210,7 @@ export default function Home({
           </div>
         </div>
 
-        {/* COLUMN 3: Leaderboard (Hidden Scrollbar) */}
+        {/* COLUMN 3: Leaderboard */}
         <div className="bg-[#141417] border border-zinc-800/80 rounded-2xl p-4 flex flex-col h-full overflow-hidden shadow-lg">
           <div className="flex items-center justify-between mb-4 shrink-0">
             <h2 className="text-sm font-black text-white uppercase tracking-wider">Tokens</h2>
@@ -249,8 +248,7 @@ export default function Home({
             </div>
           </div>
 
-          {/* Added 'no-scrollbar' to hide the scrollbar track */}
-          <div className="flex-1 overflow-y-auto space-y-1 min-h-0 no-scrollbar">
+          <div className="flex-1 overflow-y-auto space-y-1 min-h-0 scrollbar-hide">
             {leaderboardData.map((item) => (
               <div 
                 key={item.rank}
