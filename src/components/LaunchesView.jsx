@@ -1,6 +1,6 @@
 import React from 'react';
 
-// Card Skeleton
+// Skeleton state for dynamic WebSocket feeds
 const CardSkeleton = () => (
   <div className="bg-[#18181d]/40 p-2 rounded-xl border border-white/5 animate-pulse flex items-center justify-between">
     <div className="flex items-center space-x-3">
@@ -14,23 +14,22 @@ const CardSkeleton = () => (
   </div>
 );
 
-// Token Card Component inside the same file
 const TokenCard = ({ token, columnType = 'new' }) => {
-  // Normalize Bonding Curve Percentage
+  // 1. Bonding progress percentage evaluation
   const rawProgress = token?.progress ?? token?.bondingCurvePct ?? (columnType === 'migrated' ? 100 : 0);
   const curveProgress = Math.min(100, Math.max(0, Math.round(rawProgress)));
   
   const top10Percent = Math.round(token?.top10 ?? 0);
   const devPercent = Math.round(token?.devHold ?? 0);
 
-  // Safe formatting for double $$ signs on Market Cap
+  // 2. Fix Double Dollar Sign ($$) formatting
   const formatMcap = (val) => {
     if (!val) return '$2.4K';
     const cleanVal = String(val).replace(/^\$+/, '');
     return `$${cleanVal}`;
   };
 
-  // Squircle Path Metrics for perfect SVG ring
+  // 3. Squircle Path Metrics for aligned SVG rendering
   const rectSize = 44;
   const rx = 12; 
   const strokeWidth = 2.5;
@@ -40,12 +39,13 @@ const TokenCard = ({ token, columnType = 'new' }) => {
   return (
     <div className="bg-[#121316] hover:bg-[#181a1f] p-2.5 rounded-xl border border-white/5 hover:border-white/10 transition-all flex items-center justify-between cursor-pointer group shrink-0 w-full">
       
-      {/* Left: Avatar & Info */}
+      {/* Left Side: Avatar & Token Metadata */}
       <div className="flex items-center space-x-3 overflow-hidden">
         
-        {/* Squircle Avatar with Progress Ring */}
+        {/* Avatar Container with Squircle Bonding Curve Ring */}
         <div className="relative w-12 h-12 shrink-0 flex items-center justify-center">
           <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 48 48">
+            {/* Background Track Ring */}
             <rect
               x="2"
               y="2"
@@ -57,6 +57,7 @@ const TokenCard = ({ token, columnType = 'new' }) => {
               stroke="currentColor"
               fill="none"
             />
+            {/* Active Bonding Curve Stroke */}
             <rect
               x="2"
               y="2"
@@ -73,7 +74,7 @@ const TokenCard = ({ token, columnType = 'new' }) => {
             />
           </svg>
 
-          {/* Inner Logo Box */}
+          {/* Token Inner Icon Box */}
           <div className="w-9 h-9 rounded-lg bg-zinc-900 overflow-hidden flex items-center justify-center z-10">
             {token?.imagePreview || token?.image ? (
               <img src={token.imagePreview || token.image} className="w-full h-full object-cover" alt="icon" />
@@ -85,14 +86,14 @@ const TokenCard = ({ token, columnType = 'new' }) => {
           </div>
         </div>
 
-        {/* Token Specs */}
-        <div className="flex flex-col justify-between truncate">
+        {/* Info Column */}
+        <div className="flex flex-col justify-between truncate py-0.5">
           <div className="flex items-center space-x-1.5 truncate">
             <span className="font-extrabold text-xs text-white truncate font-mono">
               {token?.symbol ? token.symbol.toUpperCase() : 'SOL'}
             </span>
             <span className="text-[11px] text-zinc-400 font-medium truncate">
-              {token?.name || token?.symbol || 'Unnamed'}
+              {token?.name || token?.symbol || 'Loading...'}
             </span>
           </div>
           
@@ -103,6 +104,7 @@ const TokenCard = ({ token, columnType = 'new' }) => {
               href={token?.mintAddress ? `https://solscan.io/token/${token.mintAddress}` : '#'} 
               target="_blank" 
               rel="noreferrer" 
+              title="Inspect CA on Solscan"
               className="hover:text-[#089981] transition-colors"
             >
               <svg className="w-3 h-3 text-zinc-400 hover:text-[#089981]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,9 +138,9 @@ const TokenCard = ({ token, columnType = 'new' }) => {
         </div>
       </div>
 
-      {/* Right: Quick Buy & Market Cap */}
-      <div className="flex flex-col items-end justify-between shrink-0 pl-2 self-stretch">
-        <button className="bg-[#1a2024]/90 hover:bg-[#222b31] active:scale-95 text-[#089981] font-mono font-bold text-[11px] px-2 py-0.5 rounded-md border border-white/5 hover:border-[#089981]/30 flex items-center space-x-1 transition-all">
+      {/* Right Side: Quick Buy & Stats */}
+      <div className="flex flex-col items-end justify-between shrink-0 pl-2 self-stretch py-0.5">
+        <button className="bg-[#1a2024]/90 hover:bg-[#222b31] active:scale-95 text-[#089981] font-mono font-bold text-[11px] px-2.5 py-1 rounded-md border border-white/5 hover:border-[#089981]/30 flex items-center space-x-1 transition-all shadow-sm">
           <span className="text-[#089981] text-[10px]">⚡</span>
           
           <svg viewBox="0 0 397 311" className="w-[9px] h-[9px] text-zinc-400" fill="currentColor">
@@ -167,10 +169,12 @@ const TokenCard = ({ token, columnType = 'new' }) => {
 export default function LaunchesView({ newTokens = [], migratingTokens = [], migratedTokens = [] }) {
   return (
     <div className="w-full h-full p-0 m-0 bg-[#0c0d10] flex flex-col overflow-hidden">
+      
+      {/* 3 Columns Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 w-full h-full flex-1 min-h-0 px-2 pb-2 pt-0">
         
         {/* COLUMN 1: NEW */}
-        <div className="bg-[#121318] border-x border-b border-zinc-800/40 rounded-b-xl border-t-0 p-2.5 flex flex-col h-full overflow-hidden">
+        <div className="bg-[#121318] border-x border-b border-zinc-800/40 rounded-b-xl rounded-t-none border-t-0 p-2.5 flex flex-col h-full overflow-hidden">
           <div className="flex items-center justify-between px-1 pb-2">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">New</span>
@@ -190,7 +194,7 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
         </div>
 
         {/* COLUMN 2: MIGRATING */}
-        <div className="bg-[#121318] border-x border-b border-zinc-800/40 rounded-b-xl border-t-0 p-2.5 flex flex-col h-full overflow-hidden">
+        <div className="bg-[#121318] border-x border-b border-zinc-800/40 rounded-b-xl rounded-t-none border-t-0 p-2.5 flex flex-col h-full overflow-hidden">
           <div className="flex items-center justify-between px-1 pb-2">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">Migrating</span>
@@ -210,7 +214,7 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
         </div>
 
         {/* COLUMN 3: MIGRATED */}
-        <div className="bg-[#121318] border-x border-b border-zinc-800/40 rounded-b-xl border-t-0 p-2.5 flex flex-col h-full overflow-hidden">
+        <div className="bg-[#121318] border-x border-b border-zinc-800/40 rounded-b-xl rounded-t-none border-t-0 p-2.5 flex flex-col h-full overflow-hidden">
           <div className="flex items-center justify-between px-1 pb-2">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">Migrated</span>
