@@ -99,7 +99,7 @@ export default function DiscoverHomeView({ newTokens = [], migratingTokens = [],
   if (launchesFilter === 'Migrated') displayedTokens = migratedTokens;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full h-full p-4 overflow-hidden text-white bg-[#050505]">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full h-full pt-1 px-2 pb-2 overflow-hidden text-white bg-[#050505]">
       
       {/* Column 1: Portfolio & Balance Card */}
       <div className="bg-[#141417] border border-zinc-800/90 rounded-2xl p-4 flex flex-col justify-between h-full shadow-lg overflow-hidden">

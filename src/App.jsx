@@ -499,7 +499,7 @@ function AppContent() {
       <div className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
         
        {/* --- TOP HEADER BAR --- */}
-<header className="flex items-center justify-between px-4 py-1.5 bg-[#0c0d10] shrink-0 select-none h-[52px]">
+<header className="flex items-center justify-between px-4 py-1 bg-[#0c0d10] shrink-0 select-none h-[44px] border-b border-zinc-800/60">
   
   {/* Left Nav: Discover Dropdown & Sub-tabs */}
   <div className="flex items-center space-x-6">
@@ -623,7 +623,7 @@ function AppContent() {
 </header>
 
        {/* --- DYNAMIC CONTENT AREA --- */}
-<div className="flex-1 w-full h-[calc(100vh-52px)] overflow-hidden flex flex-col p-0 m-0 bg-[#0c0d10]">
+<div className="flex-1 w-full h-full overflow-hidden flex flex-col p-0 m-0 bg-[#0c0d10]">
   {renderContent()}
 </div>
 

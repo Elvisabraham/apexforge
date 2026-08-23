@@ -155,12 +155,14 @@ const TokenCard = ({ token, columnType = 'new' }) => {
 
 export default function LaunchesView({ newTokens = [], migratingTokens = [], migratedTokens = [] }) {
   return (
-    <div className="w-full h-full p-2 bg-[#0c0d10] flex flex-col overflow-hidden">
-      {/* 3 Columns Grid stretched flush */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 w-full h-full flex-1 min-h-0">
+    // p-0 removes the top gap, -mt-[1px] pulls it flush against the header line
+    <div className="w-full h-full p-0 m-0 bg-[#0c0d10] flex flex-col overflow-hidden">
+      
+      {/* 3 Columns Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 w-full h-full flex-1 min-h-0 px-2 pb-2 pt-0">
         
-        {/* COLUMN 1: NEW */}
-        <div className="bg-[#121318] border border-zinc-800/40 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
+        {/* COLUMN 1: NEW (rounded-b-xl keeps bottom rounded, top is sharp/flush) */}
+        <div className="bg-[#121318] border-x border-b border-zinc-800/40 rounded-b-xl rounded-t-none border-t-0 p-2.5 flex flex-col h-full overflow-hidden">
           <div className="flex items-center justify-between px-1 pb-2">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">New</span>
@@ -168,11 +170,9 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
                 {newTokens?.length || 0}
               </span>
             </div>
-            <button className="text-zinc-500 hover:text-white transition-colors text-xs font-bold px-1">
-              •••
-            </button>
+            <button className="text-zinc-500 hover:text-white transition-colors text-xs font-bold px-1">•••</button>
           </div>
-
+          {/* Token list maps here */}
           <div className="space-y-1.5 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
             {(!newTokens || newTokens.length === 0) ? (
               <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No new tokens</div>
@@ -183,7 +183,7 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
         </div>
 
         {/* COLUMN 2: MIGRATING */}
-        <div className="bg-[#121318] border border-zinc-800/40 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
+       <div className="bg-[#121318] border-x border-b border-zinc-800/40 rounded-b-xl rounded-t-none border-t-0 p-2.5 flex flex-col h-full overflow-hidden">
           <div className="flex items-center justify-between px-1 pb-2">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">Migrating</span>
@@ -191,11 +191,8 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
                 {migratingTokens?.length || 0}
               </span>
             </div>
-            <button className="text-zinc-500 hover:text-white transition-colors text-xs font-bold px-1">
-              •••
-            </button>
+            <button className="text-zinc-500 hover:text-white transition-colors text-xs font-bold px-1">•••</button>
           </div>
-
           <div className="space-y-1.5 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
             {(!migratingTokens || migratingTokens.length === 0) ? (
               <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No tokens migrating</div>
@@ -206,7 +203,7 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
         </div>
 
         {/* COLUMN 3: MIGRATED */}
-        <div className="bg-[#121318] border border-zinc-800/40 rounded-xl p-2.5 flex flex-col h-full overflow-hidden">
+        <div className="bg-[#121318] border-x border-b border-zinc-800/40 rounded-b-xl rounded-t-none border-t-0 p-2.5 flex flex-col h-full overflow-hidden">
           <div className="flex items-center justify-between px-1 pb-2">
             <div className="flex items-center space-x-1.5">
               <span className="font-bold text-xs text-white tracking-wide">Migrated</span>
@@ -214,11 +211,8 @@ export default function LaunchesView({ newTokens = [], migratingTokens = [], mig
                 {migratedTokens?.length || 0}
               </span>
             </div>
-            <button className="text-zinc-500 hover:text-white transition-colors text-xs font-bold px-1">
-              •••
-            </button>
+            <button className="text-zinc-500 hover:text-white transition-colors text-xs font-bold px-1">•••</button>
           </div>
-
           <div className="space-y-1.5 overflow-y-auto flex-1 custom-scrollbar pr-0.5">
             {(!migratedTokens || migratedTokens.length === 0) ? (
               <div className="flex items-center justify-center h-40 text-xs text-zinc-500 font-medium">No migrated tokens</div>

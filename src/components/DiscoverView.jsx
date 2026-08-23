@@ -19,10 +19,10 @@ export default function DiscoverView({ newTokens = [], migratingTokens = [], mig
   }, []);
 
   return (
-    <div className="absolute inset-0 flex flex-col w-full h-full text-white bg-[#121214] px-3 pt-0 pb-2 overflow-hidden z-10">
+    <div className="flex flex-col w-full h-full text-white bg-[#121214] px-2 pt-0 pb-0 overflow-hidden">
       
-      {/* Header Dropdown & Navigation - Flushed up top */}
-      <div className="relative flex items-center space-x-6 border-b border-zinc-800/80 pt-1 pb-2 mb-1 shrink-0" ref={dropdownRef}>
+      {/* Header Navigation Bar with Bottom Border */}
+      <div className="relative flex items-center space-x-6 border-b border-zinc-800/80 py-2.5 mb-0 shrink-0 z-20" ref={dropdownRef}>
         <div className="relative">
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -54,8 +54,8 @@ export default function DiscoverView({ newTokens = [], migratingTokens = [], mig
         </div>
       </div>
 
-      {/* Dynamic Main View Switcher */}
-      <div className="flex-1 w-full h-full min-h-0 overflow-hidden">
+      {/* Main Content Container - '-mt-4' forcefully pulls the cards straight up to touch the border line */}
+      <div className="flex-1 w-full h-full min-h-0 overflow-hidden -mt-4">
         {activeTab === 'discover' ? (
           <DiscoverHomeView newTokens={newTokens} migratingTokens={migratingTokens} migratedTokens={migratedTokens} />
         ) : activeTab === 'launches' ? (
@@ -64,6 +64,7 @@ export default function DiscoverView({ newTokens = [], migratingTokens = [], mig
           <TrackView />
         )}
       </div>
+
     </div>
   );
 }
