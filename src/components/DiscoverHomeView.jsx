@@ -7,15 +7,15 @@ const TokenCard = ({ token }) => (
     {/* Left Side: Avatar & Details */}
     <div className="flex items-start space-x-3 overflow-hidden">
       <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-black border border-zinc-700/80 flex items-center justify-center overflow-hidden shrink-0">
-  {token.imagePreview || token.image ? (
-    <img src={token.imagePreview || token.image} className="w-full h-full object-cover" alt="icon" />
-  ) : (
-    <span className="text-sm font-black text-gray-300">{token.symbol ? token.symbol.slice(0, 2).toUpperCase() : 'AF'}</span>
-  )}
-  <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#089981] flex items-center justify-center border-2 border-[#121216]">
-    <span className="text-[9px] text-black font-bold">✓</span>
-  </div>
-</div>
+        {token.imagePreview || token.image ? (
+          <img src={token.imagePreview || token.image} className="w-full h-full object-cover" alt="icon" />
+        ) : (
+          <span className="text-sm font-black text-gray-300">{token.symbol ? token.symbol.slice(0, 2).toUpperCase() : 'AF'}</span>
+        )}
+        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#089981] flex items-center justify-center border-2 border-[#121216]">
+          <span className="text-[9px] text-black font-bold">✓</span>
+        </div>
+      </div>
 
       <div className="flex flex-col truncate">
         <div className="flex items-center space-x-1.5 truncate">
@@ -99,10 +99,10 @@ export default function DiscoverHomeView({ newTokens = [], migratingTokens = [],
   if (launchesFilter === 'Migrated') displayedTokens = migratedTokens;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full h-full pt-1 px-2 pb-2 overflow-hidden text-white bg-[#050505]">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 w-full h-full p-0 m-0 overflow-hidden text-white bg-[#050505]">
       
       {/* Column 1: Portfolio & Balance Card */}
-      <div className="bg-[#141417] border border-zinc-800/90 rounded-2xl p-4 flex flex-col justify-between h-full shadow-lg overflow-hidden">
+      <div className="bg-[#141417] border-x border-b border-zinc-800/90 rounded-b-2xl rounded-t-none border-t-0 p-4 flex flex-col justify-between h-full shadow-lg overflow-hidden">
         <div>
           <div className="flex items-center space-x-4 border-b border-zinc-800/70 pb-3 mb-4 text-xs font-medium text-zinc-400">
             {['Total', 'Tokens', 'Perps'].map((tab) => (
@@ -144,7 +144,7 @@ export default function DiscoverHomeView({ newTokens = [], migratingTokens = [],
       </div>
 
       {/* Column 2: Launches Feed with Phantom Dropdown & Full Token Cards */}
-      <div className="bg-[#141417] border border-zinc-800/90 rounded-2xl p-4 flex flex-col h-full shadow-lg overflow-hidden">
+      <div className="bg-[#141417] border-x border-b border-zinc-800/90 rounded-b-2xl rounded-t-none border-t-0 p-4 flex flex-col h-full shadow-lg overflow-hidden">
         <div className="flex items-center justify-between mb-3 border-b border-zinc-800/70 pb-3 shrink-0">
           <div className="relative" ref={launchesRef}>
             <button
@@ -183,7 +183,7 @@ export default function DiscoverHomeView({ newTokens = [], migratingTokens = [],
       </div>
 
       {/* Column 3: Tokens Table with Timeframe Dropdown */}
-      <div className="bg-[#141417] border border-zinc-800/90 rounded-2xl p-4 flex flex-col h-full shadow-lg overflow-hidden">
+      <div className="bg-[#141417] border-x border-b border-zinc-800/90 rounded-b-2xl rounded-t-none border-t-0 p-4 flex flex-col h-full shadow-lg overflow-hidden">
         <div className="flex items-center justify-between mb-3 border-b border-zinc-800/70 pb-3 shrink-0">
           <span className="font-bold text-sm text-gray-200">Tokens</span>
           
@@ -238,7 +238,7 @@ export default function DiscoverHomeView({ newTokens = [], migratingTokens = [],
       </div>
 
       {/* Column 4: Perps Table */}
-      <div className="bg-[#141417] border border-zinc-800/90 rounded-2xl p-4 flex flex-col h-full shadow-lg overflow-hidden">
+      <div className="bg-[#141417] border-x border-b border-zinc-800/90 rounded-b-2xl rounded-t-none border-t-0 p-4 flex flex-col h-full shadow-lg overflow-hidden">
         <div className="flex items-center justify-between mb-3 border-b border-zinc-800/70 pb-3 shrink-0">
           <span className="font-bold text-sm text-gray-200">Perps</span>
         </div>
