@@ -4,29 +4,23 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import logo from '../assets/logo.jpg';
 
-export default function Navbar({ activeRoute = 'launches', setActiveRoute = () => {}, onOpenForgeModal }) {
+export default function Navbar({ activeRoute = 'discover', setActiveRoute = () => {}, onOpenForgeModal }) {
   const { connected } = useWallet();
   const [viewDropdownOpen, setViewDropdownOpen] = useState(false);
   
-  // Format string for display (e.g. 'launches' -> 'Launches')
+  // Dynamic format string for display (e.g. 'launches' -> 'Launches', 'discover' -> 'Discover')
   const formatViewName = (route) => {
-    if (!route) return 'Launches';
+    if (!route) return 'Discover';
     return route.charAt(0).toUpperCase() + route.slice(1).toLowerCase();
   };
 
-  const [selectedView, setSelectedView] = useState(formatViewName(activeRoute));
-
-  // Sync internal dropdown label whenever parent activeRoute changes
-  useEffect(() => {
-    setSelectedView(formatViewName(activeRoute));
-  }, [activeRoute]);
+  const selectedView = formatViewName(activeRoute);
 
   // Quick-Buy & Slippage state
   const [quickBuyAmount, setQuickBuyAmount] = useState('0.1');
   const [selectedSlippage, setSelectedSlippage] = useState('1');
 
   const handleViewSelect = (viewName) => {
-    setSelectedView(viewName);
     setActiveRoute(viewName.toLowerCase());
     setViewDropdownOpen(false);
   };
