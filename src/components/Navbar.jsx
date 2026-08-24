@@ -8,12 +8,13 @@ export default function Navbar({ activeRoute = 'discover', setActiveRoute = () =
   const { connected } = useWallet();
   const [viewDropdownOpen, setViewDropdownOpen] = useState(false);
   
-  // Dynamic format string for display (e.g. 'launches' -> 'Launches', 'discover' -> 'Discover')
+  // Format string dynamically based on the current activeRoute
   const formatViewName = (route) => {
     if (!route) return 'Discover';
     return route.charAt(0).toUpperCase() + route.slice(1).toLowerCase();
   };
 
+  // Directly derive label from activeRoute so it updates instantly on click
   const selectedView = formatViewName(activeRoute);
 
   // Quick-Buy & Slippage state
