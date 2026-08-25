@@ -376,9 +376,13 @@ function AppContent() {
 
      case 'tokens':
       case 'tokenhome': 
+      case 'tokenchat': {
+        // Fallback to first available token if none selected (e.g., clicking sidebar icon directly)
+        const activeToken = selectedTokenData || (globalTokens && globalTokens.length > 0 ? globalTokens[0] : null);
+
         return (
           <TokenHome 
-            selectedTokenData={selectedTokenData || globalTokens[0]} 
+            selectedTokenData={activeToken}
             setSelectedTokenData={setSelectedTokenData}
             globalTokens={globalTokens}
             userSolBalance={userPortfolio?.find(t => t.symbol === 'SOL')?.balance || 0}
@@ -391,6 +395,7 @@ function AppContent() {
             }}
           />
         );
+      }
 
       case 'tokenchat':
         return (
