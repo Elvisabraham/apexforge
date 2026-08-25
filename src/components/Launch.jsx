@@ -339,21 +339,32 @@ export default function Launch({ onForgeSuccess }) {
                   </div>
 
                   <div className="flex items-center gap-3 mt-2">
-                    <button 
-                      onClick={resetForge} 
-                      className="px-4 py-2 bg-white/10 text-white font-bold uppercase text-xs rounded-lg hover:bg-white/20 transition-colors cursor-pointer"
-                    >
-                      Deploy Another
-                    </button>
-                    <button 
-                      onClick={() => {
-                        resetForge();
-                      }} 
-                      className="px-5 py-2 bg-[#089981] text-black font-black uppercase text-xs rounded-lg hover:bg-[#06806b] transition-colors cursor-pointer"
-                    >
-                      View Terminal 🚀
-                    </button>
-                  </div>
+  <button 
+    onClick={resetForge} 
+    className="px-4 py-2 bg-white/10 text-white font-bold uppercase text-xs rounded-lg hover:bg-white/20 transition-colors cursor-pointer"
+  >
+    Deploy Another
+  </button>
+  
+  <button 
+    onClick={() => {
+      if (onForgeSuccess) {
+        onForgeSuccess({
+          address: deployedTokenAddress,
+          name: tokenName,
+          symbol: tokenSymbol,
+          image: imagePreview,
+          description: description,
+          mediaType: mediaType
+        });
+      }
+      resetForge();
+    }} 
+    className="px-5 py-2 bg-[#089981] text-black font-black uppercase text-xs rounded-lg hover:bg-[#06806b] transition-colors cursor-pointer"
+  >
+    View Token 🚀
+  </button>
+</div>
                 </div>
               )}
             </div>
