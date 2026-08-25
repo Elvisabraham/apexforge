@@ -36,7 +36,7 @@ export default function DiscoverHomeView({ newTokens = [], migratingTokens = [],
               <button
                 key={tab}
                 onClick={() => setLeftTab(tab)}
-                className={`transition-colors ${leftTab === tab ? 'text-white border-b-2 border-purple-500 pb-1 font-bold' : 'hover:text-white'}`}
+                className={`transition-colors ${leftTab === tab ? 'text-white border-b-2 border-[#089981] pb-1 font-bold' : 'hover:text-white'}`}
               >
                 {tab}
               </button>
@@ -55,7 +55,7 @@ export default function DiscoverHomeView({ newTokens = [], migratingTokens = [],
               <button
                 key={st}
                 onClick={() => setSubTab(st)}
-                className={`transition-colors ${subTab === st ? 'text-white border-b-2 border-purple-500 pb-1 font-semibold' : 'hover:text-white'}`}
+                className={`transition-colors ${subTab === st ? 'text-white border-b-2 border-[#089981] pb-1 font-bold' : 'hover:text-white'}`}
               >
                 {st}
               </button>
@@ -119,7 +119,7 @@ export default function DiscoverHomeView({ newTokens = [], migratingTokens = [],
                   <button
                     key={tf}
                     onClick={() => { setTimeframe(tf); setTimeframeDropdownOpen(false); }}
-                    className={`w-full text-left px-3 py-1 text-[11px] ${timeframe === tf ? 'text-purple-400 bg-zinc-800' : 'text-zinc-300 hover:bg-zinc-800/50'}`}
+                    className={`w-full text-left px-3 py-1 text-[11px] ${timeframe === tf ? 'text-[#089981] bg-zinc-800' : 'text-zinc-300 hover:bg-zinc-800/50'}`}
                   >
                     {tf}
                   </button>
