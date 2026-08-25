@@ -79,7 +79,7 @@ export default function Home({
             onClick={onOpenAccountDrawer}
             className="flex items-center gap-2 bg-[#141417] border border-zinc-800 hover:border-zinc-700 px-3 py-1 rounded-xl cursor-pointer transition-colors"
           >
-            <div className="w-5 h-5 rounded-full bg-purple-600/30 text-purple-400 flex items-center justify-center font-bold text-[10px]">
+            <div className="w-5 h-5 rounded-full bg-[#089981]/20 text-[#089981] flex items-center justify-center font-bold text-[10px]">
               {userProfile?.name ? userProfile.name[0] : 'E'}
             </div>
             <span className="text-xs font-bold text-zinc-200">{userProfile?.name || 'Elvis AI'}</span>
@@ -126,7 +126,7 @@ export default function Home({
                     className={`text-xs font-bold transition-colors relative pb-1 ${activePortfolioTab === sub ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                   >
                     {sub}
-                    {activePortfolioTab === sub && <div className="absolute bottom-[-9px] left-0 right-0 h-0.5 bg-purple-500 rounded-full"></div>}
+                   {activePortfolioTab === sub && <div className="absolute bottom-[-9px] left-0 right-0 h-0.5 bg-[#089981] rounded-full" />}
                   </button>
                 ))}
               </div>
