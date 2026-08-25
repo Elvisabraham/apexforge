@@ -508,14 +508,14 @@ function AppContent() {
       onClick={() => setIsHeaderDropdownOpen(!isHeaderDropdownOpen)}
       className="flex items-center space-x-1.5 text-sm font-bold transition-colors cursor-pointer"
     >
-      <span className={['home', 'launches', 'track'].includes(activePage.toLowerCase()) ? 'text-[#00f2a1]' : 'text-white hover:text-[#00f2a1]'}>
+      <span className={['home', 'launches', 'track'].includes(activePage.toLowerCase()) ? 'text-[#089981]' : 'text-white hover:text-[#089981]'}>
         {topNavTab}
       </span>
-      <span className={`text-[10px] transition-transform duration-200 ${isHeaderDropdownOpen ? 'rotate-180 text-[#00f2a1]' : 'text-zinc-400'}`}>
+      <span className={`text-[10px] transition-transform duration-200 ${isHeaderDropdownOpen ? 'rotate-180 text-[#089981]' : 'text-zinc-400'}`}>
         ▼
       </span>
     </button>
-
+    
     {isHeaderDropdownOpen && (
       <div className="absolute left-0 top-full mt-2 w-44 bg-[#121318] border border-zinc-800 rounded-xl shadow-2xl p-1 z-50 flex flex-col gap-0.5">
         {[
