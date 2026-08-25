@@ -455,7 +455,7 @@ export default function Profile({
                           <span className="text-[10px] text-zinc-500 font-bold">{asset.symbol}</span>
                         </div>
                       </div>
-                      <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md border ${asset.isRaydium ? 'text-purple-400 bg-purple-400/10 border-purple-400/20' : 'text-[#00FF66] bg-[#00FF66]/10 border-[#00FF66]/20'}`}>
+                      <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md border ${asset.isRaydium ? 'text-[#089981] bg-[#089981]/10 border-[#089981]/20' : 'text-[#089981] bg-[#089981]/10 border-[#089981]/20'}`}>
                         {asset.status}
                       </span>
                     </div>
