@@ -372,12 +372,12 @@ function AppContent() {
             setUserProfile={setUserProfile} 
           />
         );
-        
+
      case 'tokens':
       case 'tokenhome': 
         return (
           <TokenHome 
-            selectedTokenData={selectedTokenData}
+            selectedTokenData={selectedTokenData || globalTokens[0]} 
             setSelectedTokenData={setSelectedTokenData}
             globalTokens={globalTokens}
             userSolBalance={userPortfolio?.find(t => t.symbol === 'SOL')?.balance || 0}
