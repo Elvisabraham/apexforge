@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function TokenCard({ token, onClick, columnType = 'new' }) {
+export function TokenCard({ token, onClick, columnType = 'new', onQuickBuy }) {
   const rawProgress = token?.progress ?? token?.bondingCurvePct ?? (columnType === 'migrated' ? 100 : 0);
   const curveProgress = Math.min(100, Math.max(0, Math.round(rawProgress)));
   
@@ -9,7 +9,7 @@ export function TokenCard({ token, onClick, columnType = 'new' }) {
   const holderPercent = Math.round(token?.holderPct ?? 0);
 
   // Dynamic Color Thresholds
- const top10Color = top10Percent > 20 ? 'text-rose-500' : 'text-emerald-500';
+  const top10Color = top10Percent > 20 ? 'text-rose-500' : 'text-emerald-500';
   const devColor = devPercent > 5 ? 'text-rose-500' : 'text-emerald-500';
   const holderColor = holderPercent > 10 ? 'text-rose-500' : 'text-emerald-500';
 
@@ -28,7 +28,7 @@ export function TokenCard({ token, onClick, columnType = 'new' }) {
 
   return (
     <div 
-      onClick={onClick}
+      onClick={() => onClick?.(token)}
       className="bg-[#121316] hover:bg-[#181a1f] p-2.5 rounded-xl border border-white/5 hover:border-white/10 transition-all flex items-center justify-between cursor-pointer group shrink-0 w-full"
     >
       
@@ -131,49 +131,54 @@ export function TokenCard({ token, onClick, columnType = 'new' }) {
       </div>
 
       {/* Right Side: Quick Buy & Market Cap with Price Change % */}
-<div className="flex flex-col items-end shrink-0 gap-1 font-mono">
-  <button className="flex items-center gap-1.5 bg-[#18191c] hover:bg-[#089981]/10 border border-zinc-800 hover:border-[#089981]/30 px-2 py-1 rounded-lg text-[10px] font-bold text-zinc-300 hover:text-[#089981] transition-colors">
-    <span className="text-amber-400 text-xs">⚡</span>
-    
-    <svg className="w-3 h-3" viewBox="0 0 397 311" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z" fill="url(#sol_a)"/>
-      <path d="M64.6 3.8C67 1.4 70.3 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" fill="url(#sol_b)"/>
-      <path d="M332.1 120.9c-2.4-2.4-5.7-3.8-9.2-3.8H5.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" fill="url(#sol_c)"/>
-      <defs>
-        <linearGradient id="sol_a" x1="360.9" y1="324" x2="145.4" y2="134.8" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#00FFA3"/>
-          <stop offset="1" stopColor="#DC1FFF"/>
-        </linearGradient>
-        <linearGradient id="sol_b" x1="360.9" y1="89.9" x2="145.4" y2="-99.3" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#00FFA3"/>
-          <stop offset="1" stopColor="#DC1FFF"/>
-        </linearGradient>
-        <linearGradient id="sol_c" x1="36.3" y1="102.7" x2="251.8" y2="291.9" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#00FFA3"/>
-          <stop offset="1" stopColor="#DC1FFF"/>
-        </linearGradient>
-      </defs>
-    </svg>
+      <div className="flex flex-col items-end shrink-0 gap-1 font-mono">
+        <button 
+          onClick={(e) => {
+            e.stopPropagation(); // Prevents triggering card navigation
+            onQuickBuy?.(token);
+          }}
+          className="flex items-center gap-1.5 bg-[#18191c] hover:bg-[#089981]/10 border border-zinc-800 hover:border-[#089981]/30 px-2 py-1 rounded-lg text-[10px] font-bold text-zinc-300 hover:text-[#089981] transition-colors"
+        >
+          <span className="text-amber-400 text-xs">⚡</span>
+          
+          <svg className="w-3 h-3" viewBox="0 0 397 311" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z" fill="url(#sol_a)"/>
+            <path d="M64.6 3.8C67 1.4 70.3 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" fill="url(#sol_b)"/>
+            <path d="M332.1 120.9c-2.4-2.4-5.7-3.8-9.2-3.8H5.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" fill="url(#sol_c)"/>
+            <defs>
+              <linearGradient id="sol_a" x1="360.9" y1="324" x2="145.4" y2="134.8" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#00FFA3"/>
+                <stop offset="1" stopColor="#DC1FFF"/>
+              </linearGradient>
+              <linearGradient id="sol_b" x1="360.9" y1="89.9" x2="145.4" y2="-99.3" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#00FFA3"/>
+                <stop offset="1" stopColor="#DC1FFF"/>
+              </linearGradient>
+              <linearGradient id="sol_c" x1="36.3" y1="102.7" x2="251.8" y2="291.9" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#00FFA3"/>
+                <stop offset="1" stopColor="#DC1FFF"/>
+              </linearGradient>
+            </defs>
+          </svg>
 
-    <span>{token?.buySol || '0.1'}</span>
-  </button>
+          <span>{token?.buySol || '0.1'}</span>
+        </button>
 
-  <div className="flex flex-col items-end text-right">
-    <div className="flex items-center gap-1">
-      <span className="text-[11px] font-black text-[#089981]">MC {formatMcap(token?.mcap)}</span>
-      
-      {/* 24h Price Change Detection */}
-      <span className={`text-[10px] font-bold ${
-        (token?.priceChange ?? token?.change24h ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'
-      }`}>
-        {(token?.priceChange ?? token?.change24h ?? 0) >= 0 ? '+' : ''}
-        {token?.priceChange ?? token?.change24h ?? '0'}%
-      </span>
-    </div>
+        <div className="flex flex-col items-end text-right">
+          <div className="flex items-center gap-1">
+            <span className="text-[11px] font-black text-[#089981]">MC {formatMcap(token?.mcap)}</span>
+            
+            <span className={`text-[10px] font-bold ${
+              (token?.priceChange ?? token?.change24h ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'
+            }`}>
+              {(token?.priceChange ?? token?.change24h ?? 0) >= 0 ? '+' : ''}
+              {token?.priceChange ?? token?.change24h ?? '0'}%
+            </span>
+          </div>
 
-    <span className="text-[9px] text-zinc-500 uppercase">VOL ${token?.volume || '0.09'}</span>
-  </div>
-</div>
+          <span className="text-[9px] text-zinc-500 uppercase">VOL ${token?.volume || '0.09'}</span>
+        </div>
+      </div>
     </div>
   );
 }
