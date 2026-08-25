@@ -177,10 +177,11 @@ function AppContent() {
   const userSolBalance = userPortfolio.find(t => t.symbol === 'SOL')?.balance || 0;
 
   const handleTokenClick = (token) => {
-    setPreviousPage(activePage); 
-    setSelectedTokenData(token);
-    setActivePage('tokenHome'); 
-  };
+  if (!token) return;
+  setPreviousPage(activePage);
+  setSelectedTokenData(token);
+  setActivePage('tokenhome');
+};
 
   const handleOpenTradePortal = (token) => {
     setSelectedTokenData(token);
