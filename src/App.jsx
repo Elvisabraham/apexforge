@@ -227,40 +227,45 @@ function AppContent() {
   };
 
  const handleForgeSuccess = (newToken) => {
-    const forgedToken = {
-      ...newToken,
-      isGraduated: false,
-      isMine: true,
-      progress: newToken.initialSnipe ? ((parseFloat(newToken.initialSnipe)/85)*100) : 0,
-      created_at: newToken?.created_at || newToken?.createdAt || new Date().toISOString()
-    };
-
-    setGlobalTokens(prev => [forgedToken, ...prev]);
-
-    setGlobalTransactions(prev => [{
-      id: Date.now().toString(),
-      type: 'Deploy',
-      details: `Forged Token: ${forgedToken.symbol}`,
-      time: 'Just now',
-      amount: `- 0.002 SOL`,
-      color: 'text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.3)]',
-      hash: Math.random().toString(36).substring(2, 10)
-    }, ...prev]);
-
-    if (forgedToken.initialSnipe > 0) {
-      setUserPortfolio(prev => [
-        ...prev,
-        { 
-          symbol: forgedToken.symbol, 
-          name: forgedToken.name, 
-          balance: forgedToken.initialSnipe * 1850420, 
-          valueUSD: forgedToken.initialSnipe * 145, 
-          icon: forgedToken.icon,
-          imagePreview: forgedToken.imagePreview 
-        }
-      ]);
-    }
+  const forgedToken = {
+    ...newToken,
+    isGraduated: false,
+    isMine: true,
+    progress: newToken.initialSnipe ? ((parseFloat(newToken.initialSnipe)/85)*100) : 0,
+    created_at: newToken?.created_at || newToken?.createdAt || new Date().toISOString()
   };
+
+  setGlobalTokens(prev => [forgedToken, ...prev]);
+
+  setGlobalTransactions(prev => [{
+    id: Date.now().toString(),
+    type: 'Deploy',
+    details: `Forged Token: ${forgedToken.symbol}`,
+    time: 'Just now',
+    amount: `- 0.002 SOL`,
+    color: 'text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.3)]',
+    hash: Math.random().toString(36).substring(2, 10)
+  }, ...prev]);
+
+  if (forgedToken.initialSnipe > 0) {
+    setUserPortfolio(prev => [
+      ...prev,
+      { 
+        symbol: forgedToken.symbol, 
+        name: forgedToken.name, 
+        balance: forgedToken.initialSnipe * 1850420, 
+        valueUSD: forgedToken.initialSnipe * 145, 
+        icon: forgedToken.icon,
+        imagePreview: forgedToken.imagePreview 
+      }
+    ]);
+  }
+
+  // 🚀 Route to TokenHome for the new token
+  setSelectedTokenData(forgedToken);
+  setPreviousPage(activePage);
+  setActivePage('tokenhome');
+};
 
   const formatWithCommas = (val) => {
     if (!val) return '';
@@ -435,10 +440,9 @@ function AppContent() {
     }
   };
 
- return (
-<div className="fixed inset-0 bg-[#050505] text-white flex overflow-hidden select-none">
-  
-  <style>{`
+return (
+    <div className="fixed inset-0 bg-[#050505] text-white flex w-full h-full overflow-hidden select-none">
+      <style>{`
         * {
           -webkit-touch-callout: none;
           -webkit-user-select: none;
@@ -463,22 +467,15 @@ function AppContent() {
 
       {/* --- FLOATING TV STREAM WIDGET --- */}
       <ActiveTvStream 
-        currentTokenSymbol={
-          (typeof selectedToken !== 'undefined' && selectedToken?.symbol) || 
-          (typeof activeToken !== 'undefined' && activeToken?.symbol) || 
-          ""
-        } 
+        currentTokenSymbol={selectedTokenData?.symbol || ""} 
         activePage={activePage}
         closeStream={stopStream} 
       />
 
-      return (
-    <div className="fixed inset-0 bg-[#050505] text-white flex w-full h-full overflow-hidden select-none">
-      
-     {/* --- DESKTOP SIDEBAR --- */}
-<div className="hidden md:block w-16 h-full bg-[#0A0A0A] border-r border-white/5 shrink-0 z-40">
-  <Sidebar currentView={activePage} setCurrentView={handleSidebarNavigation} userProfile={userProfile} />
-</div>
+      {/* --- DESKTOP SIDEBAR --- */}
+      <div className="hidden md:block w-16 h-full bg-[#0A0A0A] border-r border-white/5 shrink-0 z-40">
+        <Sidebar currentView={activePage} setCurrentView={handleSidebarNavigation} userProfile={userProfile} />
+      </div>
 
       {/* --- MOBILE NAVIGATION SIDEBAR OVERLAY --- */}
       {isMobileSidebarOpen && (
@@ -498,146 +495,138 @@ function AppContent() {
       {/* --- MAIN CONTENT CONTAINER --- */}
       <div className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
         
-       {/* --- TOP HEADER BAR --- */}
-<header className="flex items-center justify-between px-4 py-1 bg-[#0c0d10] shrink-0 select-none h-[44px] border-b border-zinc-800/60">
-  
-  {/* Left Nav: Discover Dropdown & Sub-tabs */}
-<div className="flex items-center space-x-6">
-  <div className="relative">
-    <button
-      onClick={() => setIsHeaderDropdownOpen(!isHeaderDropdownOpen)}
-      className="flex items-center space-x-1.5 text-sm font-bold transition-colors cursor-pointer"
-    >
-      <span className={['home', 'launches', 'track'].includes(activePage.toLowerCase()) ? 'text-[#089981]' : 'text-white hover:text-[#089981]'}>
-        {topNavTab}
-      </span>
-      <span className={`text-[10px] transition-transform duration-200 ${isHeaderDropdownOpen ? 'rotate-180 text-[#089981]' : 'text-zinc-400'}`}>
-        ▼
-      </span>
-    </button>
-    
-    {isHeaderDropdownOpen && (
-      <div className="absolute left-0 top-full mt-2 w-44 bg-[#121318] border border-zinc-800 rounded-xl shadow-2xl p-1 z-50 flex flex-col gap-0.5">
-        {[
-          { label: 'Discover', action: () => { setTopNavTab('Discover'); setActivePage('home'); } },
-          { label: 'Launches', action: () => { setTopNavTab('Launches'); setActivePage('launches'); } },
-          { label: 'Track', action: () => { setTopNavTab('Track'); setActivePage('track'); } }
-        ].map((item) => {
-          const isActive = topNavTab.toLowerCase() === item.label.toLowerCase();
-          return (
+        {/* --- TOP HEADER BAR --- */}
+        <header className="flex items-center justify-between px-4 py-1 bg-[#0c0d10] shrink-0 select-none h-[44px] border-b border-zinc-800/60">
+          {/* Left Nav: Discover Dropdown & Sub-tabs */}
+          <div className="flex items-center space-x-6">
+            <div className="relative">
+              <button
+                onClick={() => setIsHeaderDropdownOpen(!isHeaderDropdownOpen)}
+                className="flex items-center space-x-1.5 text-sm font-bold transition-colors cursor-pointer"
+              >
+                <span className={['home', 'launches', 'track'].includes(activePage.toLowerCase()) ? 'text-[#089981]' : 'text-white hover:text-[#089981]'}>
+                  {topNavTab}
+                </span>
+                <span className={`text-[10px] transition-transform duration-200 ${isHeaderDropdownOpen ? 'rotate-180 text-[#089981]' : 'text-zinc-400'}`}>
+                  ▼
+                </span>
+              </button>
+
+              {isHeaderDropdownOpen && (
+                <div className="absolute left-0 top-full mt-2 w-44 bg-[#121318] border border-zinc-800 rounded-xl shadow-2xl p-1 z-50 flex flex-col gap-0.5">
+                  {[
+                    { label: 'Discover', action: () => { setTopNavTab('Discover'); setActivePage('home'); } },
+                    { label: 'Launches', action: () => { setTopNavTab('Launches'); setActivePage('launches'); } },
+                    { label: 'Track', action: () => { setTopNavTab('Track'); setActivePage('track'); } }
+                  ].map((item) => {
+                    const isActive = topNavTab.toLowerCase() === item.label.toLowerCase();
+                    return (
+                      <button
+                        key={item.label}
+                        onClick={() => {
+                          item.action();
+                          setIsHeaderDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-between cursor-pointer ${
+                          isActive 
+                            ? 'bg-[#1c1d24] text-[#00f2a1]' 
+                            : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <span>{item.label}</span>
+                        {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#00f2a1]" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <nav className="hidden md:flex items-center space-x-5 text-xs text-zinc-400 font-medium">
+              <button
+                onClick={() => {
+                  setTopNavTab('Tokens');
+                  if (!selectedTokenData && globalTokens.length > 0) {
+                    setSelectedTokenData(globalTokens[0]);
+                  }
+                  setActivePage('tokenhome');
+                }}
+                className={`hover:text-white transition-colors ${topNavTab === 'Tokens' ? 'text-white font-bold' : ''}`}
+              >
+                Tokens
+              </button>
+              <button 
+                onClick={() => { setTopNavTab('Perps'); setActivePage('perps'); }} 
+                className={`hover:text-white transition-colors ${topNavTab === 'Perps' ? 'text-white font-bold' : ''}`}
+              >
+                Perps
+              </button>
+              <button 
+                onClick={() => { setTopNavTab('Portfolio'); setActivePage('wallet'); }} 
+                className={`hover:text-white transition-colors ${topNavTab === 'Portfolio' ? 'text-white font-bold' : ''}`}
+              >
+                Portfolio
+              </button>
+            </nav>
+          </div>
+
+          {/* Center/Right: Search Bar, Quick Buy & Wallet Controls */}
+          <div className="flex items-center space-x-2.5">
+            <div className="relative w-56 lg:w-72">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-zinc-500">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search tokens or CAs..."
+                className="w-full bg-[#16171d] border border-white/5 focus:border-[#08a68c]/50 text-xs text-white placeholder-zinc-500 rounded-lg pl-8 pr-3 py-1.5 transition-all outline-none"
+              />
+            </div>
+
+            <div className="hidden lg:flex items-center bg-[#16171d] border border-white/5 rounded-lg px-2 py-1 space-x-1 text-xs font-mono">
+              <span className="text-[#08a68c] text-xs">⚡</span>
+              <span className="text-white font-bold text-xs">0.1</span>
+              <span className="text-zinc-500 text-[10px]">SOL</span>
+            </div>
+
+            <div className="hidden xl:flex items-center bg-[#16171d] border border-white/5 rounded-lg p-0.5 space-x-0.5">
+              {['1', '2', '3'].map((val) => (
+                <button
+                  key={val}
+                  className={`px-2 py-0.5 text-xs font-mono font-semibold rounded-md transition-all ${
+                    val === '1' ? 'bg-[#252733] text-[#08a68c]' : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  {val}
+                </button>
+              ))}
+            </div>
+
             <button
-              key={item.label}
-              onClick={() => {
-                item.action();
-                setIsHeaderDropdownOpen(false);
-              }}
-              className={`w-full text-left px-3 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-between cursor-pointer ${
-                isActive 
-                  ? 'bg-[#1c1d24] text-[#00f2a1]' 
-                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
-              }`}
+              onClick={() => toggleModal('deposit', true)}
+              className="hidden sm:flex items-center bg-[#08a68c] hover:bg-[#07957e] text-black font-extrabold text-xs px-3.5 py-1.5 rounded-lg transition-all active:scale-95 cursor-pointer"
             >
-              <span>{item.label}</span>
-              {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#00f2a1]" />}
+              + Add Funds
             </button>
-          );
-        })}
-      </div>
-    )}
-  </div>
 
-    <nav className="hidden md:flex items-center space-x-5 text-xs text-zinc-400 font-medium">
-      <button
-        onClick={() => {
-          setTopNavTab('Tokens');
-          if (!selectedTokenData && globalTokens.length > 0) {
-            setSelectedTokenData(globalTokens[0]);
-          }
-          setActivePage('tokenhome');
-        }}
-        className={`hover:text-white transition-colors ${topNavTab === 'Tokens' ? 'text-white font-bold' : ''}`}
-      >
-        Tokens
-      </button>
-      <button 
-        onClick={() => { setTopNavTab('Perps'); setActivePage('perps'); }} 
-        className={`hover:text-white transition-colors ${topNavTab === 'Perps' ? 'text-white font-bold' : ''}`}
-      >
-        Perps
-      </button>
-      <button 
-        onClick={() => { setTopNavTab('Portfolio'); setActivePage('wallet'); }} 
-        className={`hover:text-white transition-colors ${topNavTab === 'Portfolio' ? 'text-white font-bold' : ''}`}
-      >
-        Portfolio
-      </button>
-    </nav>
-  </div>
+            <button 
+              onClick={() => toggleModal('wallet', true)}
+              className="bg-[#16171d] hover:bg-[#20222b] text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-white/5 flex items-center space-x-1.5 transition-all cursor-pointer"
+            >
+              <span>0 SOL</span>
+              <span className="text-[#08a68c] text-xs">👤</span>
+            </button>
+          </div>
+        </header>
 
-  {/* Center/Right: Search Bar, Quick Buy & Wallet Controls */}
-  <div className="flex items-center space-x-2.5">
-    
-    {/* Search Input */}
-    <div className="relative w-56 lg:w-72">
-      <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-zinc-500">
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </span>
-      <input
-        type="text"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Search tokens or CAs..."
-        className="w-full bg-[#16171d] border border-white/5 focus:border-[#08a68c]/50 text-xs text-white placeholder-zinc-500 rounded-lg pl-8 pr-3 py-1.5 transition-all outline-none"
-      />
-    </div>
-
-    {/* Quick-Buy Preset Toggle */}
-    <div className="hidden lg:flex items-center bg-[#16171d] border border-white/5 rounded-lg px-2 py-1 space-x-1 text-xs font-mono">
-      <span className="text-[#08a68c] text-xs">⚡</span>
-      <span className="text-white font-bold text-xs">0.1</span>
-      <span className="text-zinc-500 text-[10px]">SOL</span>
-    </div>
-
-    {/* Quick Slippage Mode */}
-    <div className="hidden xl:flex items-center bg-[#16171d] border border-white/5 rounded-lg p-0.5 space-x-0.5">
-      {['1', '2', '3'].map((val) => (
-        <button
-          key={val}
-          className={`px-2 py-0.5 text-xs font-mono font-semibold rounded-md transition-all ${
-            val === '1' ? 'bg-[#252733] text-[#08a68c]' : 'text-zinc-400 hover:text-white'
-          }`}
-        >
-          {val}
-        </button>
-      ))}
-    </div>
-
-    {/* Add Funds Button (Apex TradingView Green) */}
-    <button
-      onClick={() => toggleModal('deposit', true)}
-      className="hidden sm:flex items-center bg-[#08a68c] hover:bg-[#07957e] text-black font-extrabold text-xs px-3.5 py-1.5 rounded-lg transition-all active:scale-95 cursor-pointer"
-    >
-      + Add Funds
-    </button>
-
-    {/* Wallet Balance Pill */}
-    <button 
-      onClick={() => toggleModal('wallet', true)}
-      className="bg-[#16171d] hover:bg-[#20222b] text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-white/5 flex items-center space-x-1.5 transition-all cursor-pointer"
-    >
-      <span>0 SOL</span>
-      <span className="text-[#08a68c] text-xs">👤</span>
-    </button>
-
-  </div>
-</header>
-
-       {/* --- DYNAMIC CONTENT AREA --- */}
-<div className="flex-1 w-full h-full overflow-hidden flex flex-col p-0 m-0 bg-[#0c0d10]">
-  {renderContent()}
-</div>
+        {/* --- DYNAMIC CONTENT AREA --- */}
+        <div className="flex-1 w-full h-full overflow-hidden flex flex-col p-0 m-0 bg-[#0c0d10]">
+          {renderContent()}
+        </div>
 
         {/* --- LOCKED BOTTOM NAVIGATION --- */}
         {activePage?.toLowerCase() !== 'tokenhome' && activePage?.toLowerCase() !== 'tokenchat' && activePage?.toLowerCase() !== 'settings' && activePage?.toLowerCase() !== 'profile' && (
@@ -645,7 +634,6 @@ function AppContent() {
             <BottomNav activePage={activePage} setActivePage={setActivePage} userProfile={userProfile} />
           </div>
         )}
-
       </div>
 
       {/* --- DRAWERS & MODALS --- */}
@@ -673,26 +661,26 @@ function AppContent() {
 
             <div className="flex justify-between items-start mb-6">
               <div className="flex gap-3 items-center min-w-0">
-                 <div className="w-12 h-12 bg-[#0A0A0A] border border-white/5 rounded-full flex items-center justify-center text-xl shadow-inner shrink-0 overflow-hidden">
-                    {selectedTokenData?.imagePreview ? (
-                      <img src={selectedTokenData.imagePreview} alt="token" className="w-full h-full object-cover" />
-                    ) : (
-                      selectedTokenData?.icon || '🪙'
-                    )}
-                 </div>
-                 <div className="min-w-0 flex flex-col">
-                   <h2 className="text-base font-black text-white tracking-wide truncate">
-                     {selectedTokenData?.tokenName || selectedTokenData?.name || selectedTokenData?.token || 'Unknown Token'}
-                   </h2>
-                   <div className="flex items-center gap-2 mt-0.5">
-                     <span className="text-[11px] text-[#089981] font-black tracking-wider uppercase">
-                       {selectedTokenData?.symbol || 'TOKEN'}
-                     </span>
-                     <span className="text-[9px] font-mono text-zinc-500 bg-white/[0.03] border border-white/5 px-1.5 py-0.5 rounded tracking-tight truncate max-w-[140px]">
-                       {selectedTokenData?.mintAddress || 'CA: Forge...Solana'}
-                     </span>
-                   </div>
-                 </div>
+                <div className="w-12 h-12 bg-[#0A0A0A] border border-white/5 rounded-full flex items-center justify-center text-xl shadow-inner shrink-0 overflow-hidden">
+                  {selectedTokenData?.imagePreview ? (
+                    <img src={selectedTokenData.imagePreview} alt="token" className="w-full h-full object-cover" />
+                  ) : (
+                    selectedTokenData?.icon || '🪙'
+                  )}
+                </div>
+                <div className="min-w-0 flex flex-col">
+                  <h2 className="text-base font-black text-white tracking-wide truncate">
+                    {selectedTokenData?.tokenName || selectedTokenData?.name || selectedTokenData?.token || 'Unknown Token'}
+                  </h2>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[11px] text-[#089981] font-black tracking-wider uppercase">
+                      {selectedTokenData?.symbol || 'TOKEN'}
+                    </span>
+                    <span className="text-[9px] font-mono text-zinc-500 bg-white/[0.03] border border-white/5 px-1.5 py-0.5 rounded tracking-tight truncate max-w-[140px]">
+                      {selectedTokenData?.mintAddress || 'CA: Forge...Solana'}
+                    </span>
+                  </div>
+                </div>
               </div>
               <button onClick={() => setIsTradePortalOpen(false)} className="text-zinc-500 hover:text-white bg-white/5 p-2 rounded-full transition-colors hidden sm:block">✕</button>
             </div>
@@ -758,7 +746,8 @@ function AppContent() {
           </div>
         </div>
       )}
-<NotificationCenter 
+
+      <NotificationCenter 
         isOpen={isNotificationsOpen} 
         onClose={() => setIsNotificationsOpen(false)} 
         notifications={dummyNotifications} 
@@ -769,7 +758,6 @@ function AppContent() {
       {modals.swap && <SwapModal isOpen={modals.swap} onClose={() => toggleModal('swap', false)} />}
       {modals.live && <LiveModal isOpen={modals.live} onClose={() => toggleModal('live', false)} token={selectedTokenData} />}
 
-    </div>
     </div>
   );
 }
