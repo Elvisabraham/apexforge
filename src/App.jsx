@@ -502,37 +502,49 @@ function AppContent() {
 <header className="flex items-center justify-between px-4 py-1 bg-[#0c0d10] shrink-0 select-none h-[44px] border-b border-zinc-800/60">
   
   {/* Left Nav: Discover Dropdown & Sub-tabs */}
-  <div className="flex items-center space-x-6">
-    <div className="relative">
-      <button
-        onClick={() => setIsHeaderDropdownOpen(!isHeaderDropdownOpen)}
-        className="flex items-center space-x-1.5 text-sm font-bold text-white hover:text-[#08a68c] transition-colors"
-      >
-        <span>{topNavTab}</span>
-        <span className={`text-[10px] text-zinc-400 transition-transform duration-200 ${isHeaderDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
-      </button>
+<div className="flex items-center space-x-6">
+  <div className="relative">
+    <button
+      onClick={() => setIsHeaderDropdownOpen(!isHeaderDropdownOpen)}
+      className="flex items-center space-x-1.5 text-sm font-bold transition-colors cursor-pointer"
+    >
+      <span className={['home', 'launches', 'track'].includes(activePage.toLowerCase()) ? 'text-[#00f2a1]' : 'text-white hover:text-[#00f2a1]'}>
+        {topNavTab}
+      </span>
+      <span className={`text-[10px] transition-transform duration-200 ${isHeaderDropdownOpen ? 'rotate-180 text-[#00f2a1]' : 'text-zinc-400'}`}>
+        ▼
+      </span>
+    </button>
 
-      {isHeaderDropdownOpen && (
-        <div className="absolute left-0 top-full mt-2 w-44 bg-[#121318] border border-zinc-800 rounded-xl shadow-2xl py-1 z-50">
-          {[
-           { label: 'Discover', action: () => { setTopNavTab('Discover'); setActivePage('home'); } },
-           { label: 'Launches', action: () => { setTopNavTab('Launches'); setActivePage('launches'); } },
-           { label: 'Track', action: () => { setTopNavTab('Track'); setActivePage('track'); } }
-          ].map((item) => (
+    {isHeaderDropdownOpen && (
+      <div className="absolute left-0 top-full mt-2 w-44 bg-[#121318] border border-zinc-800 rounded-xl shadow-2xl p-1 z-50 flex flex-col gap-0.5">
+        {[
+          { label: 'Discover', action: () => { setTopNavTab('Discover'); setActivePage('home'); } },
+          { label: 'Launches', action: () => { setTopNavTab('Launches'); setActivePage('launches'); } },
+          { label: 'Track', action: () => { setTopNavTab('Track'); setActivePage('track'); } }
+        ].map((item) => {
+          const isActive = topNavTab.toLowerCase() === item.label.toLowerCase();
+          return (
             <button
               key={item.label}
               onClick={() => {
                 item.action();
                 setIsHeaderDropdownOpen(false);
               }}
-              className="w-full text-left px-4 py-2 text-xs font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-[#08a68c] transition-colors"
+              className={`w-full text-left px-3 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-between cursor-pointer ${
+                isActive 
+                  ? 'bg-[#1c1d24] text-[#00f2a1]' 
+                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
+              }`}
             >
-              {item.label}
+              <span>{item.label}</span>
+              {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#00f2a1]" />}
             </button>
-          ))}
-        </div>
-      )}
-    </div>
+          );
+        })}
+      </div>
+    )}
+  </div>
 
     <nav className="hidden md:flex items-center space-x-5 text-xs text-zinc-400 font-medium">
       <button
