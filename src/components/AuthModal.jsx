@@ -35,7 +35,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
         
         {/* Glow ambient effects */}
         <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#089981]/20 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-[#089981]/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Header */}
         <div className="flex justify-between items-center mb-6 relative z-10">
