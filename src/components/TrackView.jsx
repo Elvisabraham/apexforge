@@ -8,7 +8,7 @@ export default function TrackView({ onAddWallet }) {
         <p className="text-sm text-zinc-400 mb-4">No tracked wallets</p>
         <button 
           onClick={onAddWallet}
-          className="bg-[#00f2a1] hover:bg-[#00d890] text-black font-black text-xs py-2.5 px-5 rounded-xl transition-all active:scale-95 shadow-lg shadow-[#00f2a1]/10 cursor-pointer"
+          className="bg-[#089981] hover:bg-[#078873] text-white font-bold text-xs py-2.5 px-5 rounded-xl transition-all active:scale-95 shadow-lg shadow-[#089981]/20 cursor-pointer"
         >
           Click the + button to add a wallet
         </button>
