@@ -96,7 +96,7 @@ export default function TradeWidget({
           
           <div className="flex items-center gap-2 bg-zinc-900 px-3 py-1.5 rounded-full border border-white/5">
             {tradeMode === 'buy' ? (
-              <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-[8px] text-white">
+              <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 to-[#089981] flex items-center justify-center text-[8px] text-white">
                 ◎
               </div>
             ) : displayToken?.image ? (
