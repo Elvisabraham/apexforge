@@ -5,7 +5,6 @@ import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
-
 // --- SOLANA PROVIDER INTEGRATION ---
 import SolanaProvider from './components/SolanaProvider'; // 🚀 Added Solana Web3 Context Wrapper
 
@@ -373,57 +372,35 @@ function AppContent() {
             setUserProfile={setUserProfile} 
           />
         );
+        
+     case 'tokens':
       case 'tokenhome': 
-        if (!selectedTokenData) {
-          setTimeout(() => setActivePage('home'), 0);
-          return null;
-        }
         return (
           <TokenHome 
-            token={selectedTokenData} 
-            onBack={() => {
-              // 🚀 FIX: Bulletproof routing to break the infinite back-loop
-              const loopPages = ['tokenhome', 'tokenchat', 'tokenHome', 'tokenChat'];
-              const targetPage = loopPages.includes(previousPage) ? 'home' : (previousPage || 'home');
-              setActivePage(targetPage);
-            }} 
-            onTradeClick={handleOpenTradePortal}
-            onOpenProfile={() => handleOpenPublicProfile({ name: 'Apex Deployer', handle: '@ApexDeployer_0x1', avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=ApexDeployer_0x1` })}
-            onOpenChat={() => {
-              // Do not update previousPage here, so we preserve the original root origin (Home/Wallet)
-              setActivePage('tokenchat');
+            selectedTokenData={selectedTokenData}
+            setSelectedTokenData={setSelectedTokenData}
+            globalTokens={globalTokens}
+            userSolBalance={userPortfolio?.find(t => t.symbol === 'SOL')?.balance || 0}
+            formatWithCommas={(val) => val?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") || val}
+            calculateTokenYield={(amt) => amt ? (parseFloat(amt) * 1000).toFixed(2) : '0'}
+            handleExecuteTrade={(mode, amt, token) => {
+              if (handleOpenTradePortal) {
+                handleOpenTradePortal(token, mode, amt);
+              }
             }}
-            onOpenLiveModal={() => toggleModal('live', true)}
           />
         );
-      case 'tokenchat':
-        if (!selectedTokenData) {
-          setTimeout(() => setActivePage('home'), 0);
-          return null;
-        }
-        return (
-          <TokenChat
-          token={selectedTokenData}
-          onBack={() => {
-            setActivePage('tokenhome'); // Go straight back to the token hub
-          }}
-          userProfile={userProfile}
-          // 🚀 FIX: Correctly separate the SOL balance and the Token balance!
-          userBalance={userPortfolio.find(t => t.symbol === 'SOL')?.balance || 0}
-          userTokenBalance={
-            userPortfolio.find(t => t.symbol === selectedTokenData?.symbol)?.balance || 
-            selectedTokenData?.balance || 
-            0
-          }
 
-            liveUsdPrice={selectedTokenData?.price || selectedTokenData?.usd_price || 0}
-            priceChangePct={selectedTokenData?.priceChange24h || selectedTokenData?.price_change_24h || 0}
-            isPositiveChange={(selectedTokenData?.priceChange24h || selectedTokenData?.price_change_24h || 0) >= 0}
-      
-          onOpenProfile={handleOpenPublicProfile}
-          onOpenTrade={handleOpenTradePortal}
-        />
+      case 'tokenchat':
+        return (
+          <TokenHome 
+            selectedTokenData={selectedTokenData}
+            setSelectedTokenData={setSelectedTokenData}
+            globalTokens={globalTokens}
+            userSolBalance={userPortfolio?.find(t => t.symbol === 'SOL')?.balance || 0}
+          />
         );
+
       default: 
         return <Home 
                  tokens={globalTokens} 
