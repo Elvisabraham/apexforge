@@ -515,9 +515,9 @@ function AppContent() {
       {isHeaderDropdownOpen && (
         <div className="absolute left-0 top-full mt-2 w-44 bg-[#121318] border border-zinc-800 rounded-xl shadow-2xl py-1 z-50">
           {[
-            { label: 'Discover', action: () => { setTopNavTab('Discover'); setActivePage('home'); } },
-            { label: 'Launches', action: () => { setTopNavTab('Discover'); setActivePage('launches'); } },
-            { label: 'Track', action: () => { setTopNavTab('Discover'); setActivePage('track'); } }
+           { label: 'Discover', action: () => { setTopNavTab('Discover'); setActivePage('home'); } },
+           { label: 'Launches', action: () => { setTopNavTab('Launches'); setActivePage('launches'); } },
+           { label: 'Track', action: () => { setTopNavTab('Track'); setActivePage('track'); } }
           ].map((item) => (
             <button
               key={item.label}
