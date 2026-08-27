@@ -1,4 +1,17 @@
-export default function Navbar({ activeRoute = 'discover', setActiveRoute, onOpenForgeModal }) {
+import React, { useState } from 'react';
+import { Search, Zap } from 'lucide-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useWallet } from '@solana/wallet-adapter-react';
+import logo from '../assets/logo.png';
+
+export default function Navbar({ 
+  activeRoute = 'discover', 
+  setActiveRoute, 
+  onOpenForgeModal,
+  onOpenNotifications,
+  onOpenAccountDrawer,
+  userProfile 
+}) {
   const { connected } = useWallet();
   const [viewDropdownOpen, setViewDropdownOpen] = useState(false);
 
@@ -102,7 +115,7 @@ export default function Navbar({ activeRoute = 'discover', setActiveRoute, onOpe
             Portfolio
           </button>
         </nav>
-        </div>
+      </div>
 
       {/* SEARCH BAR */}
       <div className="flex-1 max-w-xs xl:max-w-sm hidden lg:block">
@@ -133,6 +146,27 @@ export default function Navbar({ activeRoute = 'discover', setActiveRoute, onOpe
 
         <div className="apex-wallet-btn-wrapper">
           <WalletMultiButton />
+        </div>
+
+        {/* Notification Bell */}
+        <button 
+          onClick={onOpenNotifications}
+          className="w-8 h-8 bg-[#1c1c24] hover:bg-[#252530] text-zinc-300 hover:text-white rounded-lg border border-white/5 flex items-center justify-center transition-all cursor-pointer"
+        >
+          🔔
+        </button>
+
+        {/* User Profile / Account Drawer */}
+        <div 
+          onClick={onOpenAccountDrawer}
+          className="flex items-center gap-2 bg-[#1c1c24] hover:bg-[#252530] border border-white/5 px-2.5 py-1.5 rounded-lg cursor-pointer transition-all"
+        >
+          <div className="w-5 h-5 rounded-full bg-[#ab9ff2]/20 text-[#ab9ff2] flex items-center justify-center font-bold text-[10px]">
+            {userProfile?.name ? userProfile.name[0] : 'E'}
+          </div>
+          <span className="text-xs font-bold text-zinc-200 hidden sm:inline">
+            {userProfile?.name || 'Elvis'}
+          </span>
         </div>
       </div>
 
