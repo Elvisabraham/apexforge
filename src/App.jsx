@@ -548,6 +548,27 @@ return (
       </nav>
     </div>
 
+{/* Notification Bell */}
+<button 
+  onClick={() => setIsNotificationsOpen(true)}
+  className="w-8 h-8 bg-[#16171d] hover:bg-[#20222b] text-zinc-300 hover:text-white rounded-lg border border-white/5 flex items-center justify-center transition-all cursor-pointer"
+>
+  🔔
+</button>
+
+{/* Profile Badge / Account Drawer Trigger */}
+<div 
+  onClick={openAccountDrawer}
+  className="flex items-center space-x-1.5 bg-[#16171d] hover:bg-[#20222b] border border-white/5 rounded-lg px-2.5 py-1.5 text-xs text-white font-medium cursor-pointer transition-all"
+>
+  <span className="w-5 h-5 rounded-full bg-[#08a68c]/20 text-[#08a68c] flex items-center justify-center font-bold text-[10px]">
+    {userProfile?.name ? userProfile.name[0] : 'E'}
+  </span>
+  <span className="text-xs font-bold text-zinc-200">
+    {userProfile?.name || 'Elvis'}
+  </span>
+</div>
+
     {/* Center/Right: Search Bar, Quick Buy & Wallet Controls */}
     <div className="flex items-center space-x-2.5 ml-auto">
       <div className="relative w-56 lg:w-72">
