@@ -1,1676 +1,583 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { createChart, CandlestickSeries, AreaSeries, HistogramSeries } from 'lightweight-charts';
-import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL, PublicKey, SystemProgram } from '@solana/web3.js'; // 👈 Added SystemProgram
-import { BN } from '@coral-xyz/anchor'; // 👈 Added BN
-import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync, getAccount } from '@solana/spl-token';
-import ActiveTvStream from './ActiveTvStream';
-import { useTrade } from '../hooks/useTrade';
-import TradeWidget from './TradeWidget';
-import { calculateMarketCap } from '../mathService';
-import { supabase } from '../supabaseClient';
-import { TokenCard } from './TokenCard';
+import React, { useState } from 'react';
+import SidebarTokenRow from './SidebarTokenRow';
+import { formatPhantomPrice } from '../utils/formatters';
+import TokenChat from './TokenChat';
 
-// HELPER: Format address...
-const formatCreator = (val, email) => {
-  if (email) return email.split('@')[0];
-  if (val && val.length > 10) return `${val.slice(0,4)}...${val.slice(-4)}`;
-  return val || 'Anonymous';
-};
-
-// 🕒 HELPER: Bulletproof Time Engine (Guarded Against NaN)
-const formatTimeAgo = (timestamp) => {
-  if (!timestamp) return 'Just now';
-
-  let tradeTime;
-
-  if (typeof timestamp === 'number') {
-    tradeTime = timestamp;
-  } else if (typeof timestamp === 'string') {
-    const cleaned = timestamp.trim();
-    tradeTime = new Date(cleaned.includes('Z') || cleaned.includes('+') ? cleaned : `${cleaned}Z`).getTime();
-  } else {
-    return 'Just now';
-  }
-
-  // 🛡️ Absolute safety net: if date parsing fails, never output NaN
-  if (!tradeTime || isNaN(tradeTime)) return 'Just now';
-
-  const seconds = Math.floor(Math.abs(Date.now() - tradeTime) / 1000);
-
-  if (seconds < 60) return 'Just now';
-  
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  
-  const weeks = Math.floor(days / 7);
-  if (days < 30) return `${weeks}w ago`;
-  
-  const months = Math.floor(days / 30);
-  if (days < 365) return `${months}mo ago`;
-  
-  const years = Math.floor(days / 365);
-  return `${years}y ago`;
-};
-
- export default function TokenHome({ token, onBack, onTradeClick, onOpenProfile, onOpenChat, onOpenLiveModal }) {
-  const { executeTradeOnChain, isProcessing } = useTrade();
-  const { connection } = useConnection();
-  const { publicKey } = useWallet();
-
-  const [recentTrades, setRecentTrades] = useState([]);
-
-  // ⏱️ LIVE TICKER STATE: Keeps the relative launch timer ticking live on screen
-  const [_, setTick] = useState(0);
-  useEffect(() => {
-    const interval = setInterval(() => setTick(t => t + 1), 30000);
-    return () => clearInterval(interval);
-  }, []);
-  
-// 2. THE ENGINE
-  const safeTrades = recentTrades || [];
-  
-  // 🟢 Updated to current live market rate
-  const currentSolPrice = 76.50; 
-  const liveVolumeSol = safeTrades.reduce((sum, trade) => sum + parseFloat(trade.amountSol || 0), 0);
-  const liveVolumeUsd = liveVolumeSol * currentSolPrice;
-
-  // 🟢 HOLDERS
-  const uniqueUsers = new Set(safeTrades.map(trade => trade.user));
-  const calculatedHolders = uniqueUsers.size > 0 ? uniqueUsers.size + 1 : 1;
-
-  // 3. OUTPUT VARIABLES
-  const virtualSolReserves = (30 * 1e9) + (liveVolumeSol * 1e9); 
-  const virtualTokenReserves = 1_000_000_000 * 1e6;
-
-  const globalMarketCap = calculateMarketCap(virtualSolReserves, virtualTokenReserves, currentSolPrice);
-  const globalVolume = liveVolumeUsd > 0 ? `$${liveVolumeUsd.toFixed(2)}` : "$0.00";
-  const globalHolders = calculatedHolders;
-  const globalSupply = token?.totalSupply || "1.0B";
-
-  // 🚀 Pro-level MAX calculation (0 dust for sells, 0.01 SOL buffer for buys)
-  const handleMaxClick = async () => {
-    if (tradeMode === 'sell') {
-      if (!publicKey) return;
-
-      try {
-        const targetMint = token?.mintAddress || token?.mint;
-        if (!targetMint) return;
-
-        // 1. Get the user's Associated Token Account
-        const userTokenAccount = getAssociatedTokenAddressSync(
-          new PublicKey(targetMint),
-          publicKey
-        );
-
-        // 2. Query Solana for the raw balance down to the atomic decimal
-        const accountInfo = await getAccount(connection, userTokenAccount);
-        
-        // 3. Convert atomic units to human-readable format (6 decimals)
-        const exactBalance = Number(accountInfo.amount) / 1_000_000;
-        setTradeAmount(exactBalance.toString());
-
-      } catch (err) {
-        console.error("Failed to fetch exact raw balance:", err);
-        // Fallback: use state balance if on-chain fetch fails
-        if (typeof userTokenBalance !== 'undefined') {
-          setTradeAmount(userTokenBalance.toString());
-        }
-      }
-    } else {
-      // BUY SIDE: Reserve 0.01 SOL for gas fees
-      const maxSol = userBalanceSol > 0.01 ? (userBalanceSol - 0.01).toFixed(4) : "0";
-      setTradeAmount(maxSol.toString());
-    }
-  };
-
-  const connectedAddress = publicKey ? publicKey.toBase58() : null;
-
-  const chartContainerRef = useRef(null);
-  const seriesRef = useRef(null);
-  const [chartTimeframe, setChartTimeframe] = useState('1d');
-  const [chartType, setChartType] = useState('candle'); // 🚀 FIX: Defaults to candlestick!
-  const [displayMode, setDisplayMode] = useState('price'); // 🚀 Toggle between 'price' and 'mcap'
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [isReported, setIsReported] = useState(false);
-  
-  // Modals & Filters
-  const [isShareOpen, setIsShareOpen] = useState(false);
-  const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
-  const [isDepositOpen, setIsDepositOpen] = useState(false);
-  const [isAlertsOpen, setIsAlertsOpen] = useState(false);
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [showAllTrades, setShowAllTrades] = useState(false);
-  const [tradeFilter, setTradeFilter] = useState('all'); 
-  
+export default function TokenHome({ 
+  selectedTokenData, 
+  setSelectedTokenData, 
+  globalTokens = [], 
+  userSolBalance = 0,
+  formatWithCommas = (val) => val,
+  calculateTokenYield = () => '0',
+  handleExecuteTrade = () => {} 
+}) {
+  const [leftTab, setLeftTab] = useState('Tokens');
+  const [rightPanelMode, setRightPanelMode] = useState('swap'); // 'swap' | 'hub'
+  const [activeHubTab, setActiveHubTab] = useState('trades');
   const [tradeMode, setTradeMode] = useState('buy');
   const [tradeAmount, setTradeAmount] = useState('');
-  const [alertPrice, setAlertPrice] = useState('');
-  const [reportReason, setReportReason] = useState('');
-  
+  const [isSynthesizingToken, setIsSynthesizingToken] = useState(false);
+  const [showFeeDetails, setShowFeeDetails] = useState(false);
+  const [isSellPercentageMode, setIsSellPercentageMode] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
 
-  // Copy States
-  const [headerCopied, setHeaderCopied] = useState(false);
-  const [bodyCopied, setBodyCopied] = useState(false);
+  const [copiedCA, setCopiedCA] = useState(false);
 
-  const formatInputWithCommas = (val) => {
-    if (!val && val !== 0) return '';
-    const parts = val.toString().replace(/,/g, '').split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    return parts.join('.');
+ const [tradesSubTab, setTradesSubTab] = useState('all');
+
+ const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+const handleCopyCA = (address) => {
+  navigator.clipboard.writeText(address || 'Cyknvgvyl97eW6tj...');
+  setCopiedCA(true);
+  setTimeout(() => setCopiedCA(false), 1500);
+};
+
+  const currentToken = selectedTokenData || globalTokens[0] || {
+    name: 'PSMOKE',
+    symbol: 'PSMOKE',
+    price: '$0.05439',
+    mcap: '$10.88K',
+    change24h: '+161.33%',
+    isPositive: true,
+    mintAddress: '15trade.phantom.com...',
+    liquidity: '$5.67K',
+    supply: '2B',
+    top10: '50.64%',
+    vol24h: '$729.55M',
+    icon: '💨'
   };
-
-  useEffect(() => {
-    const isInvalid = !token || !token.name || token.name === 'Unknown Token' || (!token.symbol && !token.id);
-    if (isInvalid) {
-      localStorage.removeItem('apex_mock_state_TKN');
-      localStorage.removeItem('apex_mock_state_TKN_trades');
-      localStorage.removeItem('apex_active_token');
-      localStorage.removeItem('apex_current_view');
-
-      if (typeof onBack === 'function') onBack();
-      const rescueTimer = setTimeout(() => { window.location.href = window.location.origin; }, 500);
-      return () => clearTimeout(rescueTimer); 
-    }
-  }, [token, onBack]);
-
-  if (!token || (!token.name && !token.symbol && !token.id) || token.name === 'Unknown Token') {
-    return (
-      <div className="flex flex-col items-center justify-center w-full min-h-screen bg-[#0A0A0B] text-white p-6 text-center z-[200] absolute inset-0">
-        <div className="w-8 h-8 border-2 border-[#089981] border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Returning to Home Feed...</p>
-      </div>
-    );
-  }
-
-  const rawProgress = token?.progress || 0;
-  const initialMcap = parseFloat((token?.mcap || token?.marketCap || '10.0').toString().replace(/[^0-9.]/g, '')) || 10;
-  const isActuallyGraduated = token?.isGraduated === true || rawProgress >= 100 || initialMcap >= 69;
-
-  const rawCreator = token?.creatorAddress || token?.creator || token?.deployer || connectedAddress || '47ZT1q3mR...';
-
-  const [displayToken, setDisplayToken] = useState(() => ({
-    name: token?.name || token?.token || 'Token',
-    symbol: token?.symbol || 'TKN',
-    change: token?.change || '+0.0%',
-    icon: token?.icon || '🪙',
-    imagePreview: token?.imagePreview || token?.image || null, 
-    mintAddress: token?.mintAddress || token?.mint_address || '8AVmX9aQwZoonSolanaNet11oHEZforge',
-    description: token?.description || `A community-driven asset deployed fairly on the Apex Forge platform. Smart contract initialized.`,
-    links: { twitter: token?.links?.twitter || '', telegram: token?.links?.telegram || '', website: token?.links?.website || '' },
-    rawCreatorAddress: rawCreator,
-    creator: formatCreator(rawCreator, token?.creatorEmail),
-    holders: globalHolders,
-    supply: globalSupply,
-    createdTime: 'Just now',
-    isGraduated: isActuallyGraduated,
-    progress: rawProgress,
-    created_at: token?.created_at || token?.createdAt || new Date().toISOString()
-  }));
-
-  // ⚡ SUPABASE REALTIME LISTENER (For cross-device synchronization)
-  useEffect(() => {
-    const channel = supabase
-      .channel('public:tokens')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tokens' }, (payload) => {
-        if (payload.new && (payload.new.mintAddress === displayToken.mintAddress || payload.new.symbol === displayToken.symbol)) {
-          setDisplayToken(prev => ({ ...prev, ...payload.new }));
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [displayToken.mintAddress, displayToken.symbol]);
-
-  const localCacheKey = `apex_mock_state_${displayToken.symbol}`;
-  const initialBasePrice = parseFloat(token?.price || '0.0000100');
-
-  const [curveState, setCurveState] = useState(() => {
-    const cached = localStorage.getItem(localCacheKey);
-    if (cached) {
-      try { 
-        const parsed = JSON.parse(cached).curveState;
-        // This is the magic line that rejects the broken 0 cache!
-        if (parsed && parsed.solInCurve > 0) return parsed;
-      } catch(e) {}
-    }
-    // Fallback if cache is 0 or empty:
-    const initialSol = ((displayToken.progress || 0) / 100) * 85;
-    return { 
-      price: initialBasePrice, 
-      progress: displayToken.progress || 0, 
-      solInCurve: initialSol 
-    };
-  });
-
-  // 🚀 LIVE OVERRIDE: Triggers graduation UI the moment the live on-chain pool hits 85 SOL
-  displayToken.isGraduated = displayToken.isGraduated || curveState.solInCurve >= 85;
-
-  const [userBalanceSol, setUserBalanceSol] = useState(0);
-  const [userTokenBalance, setUserTokenBalance] = useState(() => {
-    const cached = localStorage.getItem(localCacheKey);
-    if (cached) {
-      try { return JSON.parse(cached).userTokenBalance; } catch(e) {}
-    }
-    return 0;
-  });
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchLiveBalances = async () => {
-      if (publicKey && connection) {
-        try {
-          const balanceLamports = await connection.getBalance(publicKey, 'confirmed');
-          if (isMounted) setUserBalanceSol(balanceLamports / LAMPORTS_PER_SOL);
-        } catch (err) {}
-      }
-    };
-    fetchLiveBalances();
-    const id = setInterval(fetchLiveBalances, 15000); 
-    window.forceBalanceRefresh = fetchLiveBalances; 
-    return () => { isMounted = false; clearInterval(id); };
-  }, [publicKey, connection]);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchMyTokenBalance = async () => {
-      if (!publicKey || !connection || !displayToken.mintAddress) return;
-      if (displayToken.mintAddress === '8AVmX9aQwZoonSolanaNet11oHEZforge') return;
-
-      try {
-        const accounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
-          mint: new PublicKey(displayToken.mintAddress)
-        });
-
-        if (accounts.value.length > 0) {
-          const rawBalance = accounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
-          const scaledBalance = rawBalance < 1000 ? (rawBalance * 1000000) : rawBalance; 
-          if (isMounted) setUserTokenBalance(scaledBalance);
-        }
-      } catch (error) {}
-    };
-
-    fetchMyTokenBalance();
-    const intervalId = setInterval(fetchMyTokenBalance, 15000); 
-    return () => { isMounted = false; clearInterval(intervalId); };
-  }, [publicKey, connection, displayToken.mintAddress]);
-
- // 🌍 2. Fetch the global live trades feed & sync in real-time
-  useEffect(() => {
-    if (!displayToken?.mintAddress) return;
-
-    const fetchGlobalTrades = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('trades')
-          .select('*')
-          .eq('token_mint', displayToken.mintAddress)
-          .order('created_at', { ascending: false })
-          .limit(20);
-
-        if (error) throw error;
-        
-        if (data) {
-          const formattedTrades = data.map(dbTrade => {
-            const isMe = publicKey && dbTrade.wallet === publicKey.toBase58();
-            
-            return {
-              id: dbTrade.id,
-              type: dbTrade.type,
-              amountToken: dbTrade.type === 'buy' 
-                ? `${(dbTrade.amount / 1000000).toFixed(2)}M` 
-                : (dbTrade.amount >= 1000000 ? `${(dbTrade.amount/1000000).toFixed(2)}M` : Number(dbTrade.amount).toLocaleString()),
-              amountSol: Number(dbTrade.sol_amount).toFixed(4),
-              user: isMe ? 'You' : `${dbTrade.wallet.slice(0, 4)}...${dbTrade.wallet.slice(-4)}`,
-              time: formatTimeAgo(dbTrade.created_at),
-              txHash: 'Confirmed'
-            };
-          });
-          
-          setRecentTrades(formattedTrades);
-        }
-      } catch (err) {
-        console.error("Failed to fetch global trades:", err);
-      }
-    };
-
-    // 1️⃣ Run the initial fetch when the component loads
-    fetchGlobalTrades();
-
-    // 2️⃣ Listen for live trades coming from ANY other device or browser instantly
-    const channel = supabase
-      .channel(`public:trades:${displayToken.mintAddress}`)
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'trades', 
-        filter: `token_mint=eq.${displayToken.mintAddress}` 
-      }, payload => {
-        const dbTrade = payload.new;
-        const isMe = publicKey && dbTrade.wallet === publicKey.toBase58();
-        
-        const formattedNewTrade = {
-          id: dbTrade.id,
-          type: dbTrade.type,
-          amountToken: dbTrade.type === 'buy' 
-            ? `${(dbTrade.amount / 1000000).toFixed(2)}M` 
-            : (dbTrade.amount >= 1000000 ? `${(dbTrade.amount/1000000).toFixed(2)}M` : Number(dbTrade.amount).toLocaleString()),
-          amountSol: Number(dbTrade.sol_amount).toFixed(4),
-          user: isMe ? 'You' : `${dbTrade.wallet.slice(0, 4)}...${dbTrade.wallet.slice(-4)}`,
-          time: formatTimeAgo(dbTrade.created_at),
-          txHash: 'Confirmed'
-        };
-
-       // Smart update: Only add the trade if it isn't already on the screen!
-        setRecentTrades(prev => {
-          const alreadyExists = prev.some(t => t.id === formattedNewTrade.id || t.txHash === formattedNewTrade.txHash);
-          if (alreadyExists) return prev; // If it's already there, ignore the duplicate
-          
-          return [formattedNewTrade, ...prev]; // Otherwise, add it to the top!
-        });
-      })
-      .subscribe();
-
-    // 3️⃣ Cleanup channel on unmount
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [displayToken?.mintAddress, publicKey]);
-
-  useEffect(() => {
-    if (displayToken.symbol !== 'TKN') {
-      localStorage.setItem(localCacheKey, JSON.stringify({ curveState, userBalanceSol, userTokenBalance }));
-    }
-  }, [curveState, userBalanceSol, userTokenBalance, localCacheKey, displayToken.symbol]);
-
-  // 🚀 LIVE ON-CHAIN CURVE SYNC & GLOBAL AUTO-REFRESH
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchLiveCurveData = async () => {
-      if (!connection || displayToken.mintAddress === '8AVmX9aQwZoonSolanaNet11oHEZforge') return;
-      
-      try {
-        const programID = new PublicKey("cbVU2Yavor2XCxK8bnXoLjd1Lw11JngQAnkKjTu9PL3");
-        const mintPubkey = new PublicKey(displayToken.mintAddress);
-        
-        // Derive the curve address
-        const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
-          [Buffer.from("bonding_curve"), mintPubkey.toBuffer()],
-          programID
-        );
-        
-        // Read the absolute truth from the Solana blockchain
-        const balanceLamports = await connection.getBalance(bondingCurvePDA);
-        const rawSolBalance = balanceLamports / 1e9;
-        const realSolInCurve = Math.max(0, rawSolBalance - 0.002); 
-
-        if (isMounted && realSolInCurve >= 0) {
-          setCurveState(prev => {
-            if (Math.abs(prev.solInCurve - realSolInCurve) > 0.0001) {
-              return {
-                ...prev,
-                solInCurve: realSolInCurve,
-                progress: Math.min(100, (realSolInCurve / 85) * 100).toFixed(2)
-              };
-            }
-            return prev;
-          });
-        }
-
-        // Automatically refresh user balances on the same cycle to keep wallets in sync globally
-        if (typeof fetchUserBalances === 'function') {
-          fetchUserBalances();
-        }
-
-      } catch (err) {
-        // Gracefully absorb RPC 400 errors or network drops so the polling loop NEVER dies
-        console.warn("⚠️ Live sync RPC blip caught, auto-recovering...", err.message);
-      }
-    };
-    
-    fetchLiveCurveData();
-    
-    // Snappy 5-second polling interval for real-time terminal synchronization
-    const interval = setInterval(fetchLiveCurveData, 5000); 
-    
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, [connection, displayToken.mintAddress]);
-
-  // 🚀 2. DYNAMIC VIRTUAL RESERVES CALCULATION
-  const currentVirtualSol = (30 + curveState.solInCurve) * 1e9;
-  const invariantK = (30 * 1e9) * (1_000_000_000 * 1e6);
-  const currentVirtualTokens = invariantK / currentVirtualSol;
-
-  // 🚀 2.5 LIVE PRICE MATH
-  const calculatedSpotPriceSol = (currentVirtualSol / 1e9) / (currentVirtualTokens / 1e6);
-  const calculatedUsdPrice = calculatedSpotPriceSol * 76.50; // Converts SOL price to USD
-
-  // 🚀 NEW STATE: Store the live price so the UI re-renders instantly!
-  const [liveUsdPrice, setLiveUsdPrice] = useState(calculatedUsdPrice);
-
-  // 🚀 Effect to update the state whenever the curve math changes
-  useEffect(() => {
-    setLiveUsdPrice(calculatedUsdPrice);
-  }, [calculatedUsdPrice]);
-
-// 🚀 PERMANENT FLOOR LOCK: Disables live overrides and locks the baseline to the bottom floor (2240)
-  const [baselinePrice, setBaselinePrice] = useState(() => {
-    const key = `baseline_${displayToken?.symbol || 'token'}`;
-    // Force clean slate by ignoring old localStorage values that stored the live price
-    localStorage.removeItem(key);
-    
-    // Explicitly lock the baseline to the bottom chart floor where candles begin
-    return 2240; 
-  });
-
-  // Lock in the session baseline once live price hydrates
-  useEffect(() => {
-    const key = `baseline_${displayToken?.symbol || 'token'}`;
-    if (calculatedUsdPrice && calculatedUsdPrice > 0 && !localStorage.getItem(key)) {
-      localStorage.setItem(key, calculatedUsdPrice.toString());
-      setBaselinePrice(calculatedUsdPrice);
-    }
-  }, [calculatedUsdPrice, displayToken?.symbol]);
-
-  // 🚀 Calculate absolute percentage change from launch (No more 0% wipes!)
-  const basePriceUsd = ((30 * 1e9) / (1_000_000_000 * 1e9)) * 76.50;
-  const priceChangePct = (((liveUsdPrice - basePriceUsd) / basePriceUsd) * 100).toFixed(2);
-  const isPositiveChange = Number(priceChangePct) >= 0;
-
-  // Calculate total Volume by adding up all SOL in recent trades
-  const volume24hUsd = recentTrades.reduce((acc, trade) => {
-    const solAmount = parseFloat(trade.amountSol);
-    return acc + (isNaN(solAmount) ? 0 : solAmount * 76.50);
-  }, 0);
-
-// 🚀 DYNAMIC HOLDERS CALCULATOR
-  // This instantly counts unique wallets the second Supabase pushes a new trade!
-  const liveHoldersCount = new Set(recentTrades.map(trade => trade.user)).size;
-
-  // 🚀 3. DYNAMIC MARKET CAP (Using $76.50 SOL price)
-  const dynamicMarketCapString = calculateMarketCap(currentVirtualSol, currentVirtualTokens, 76.50);
-
-  const isPositive = displayToken.change.includes('+') || parseFloat(displayToken.change) >= 0;
-  const trendColorHex = isPositive ? '#089981' : '#F23645'; 
-  const trendBgColor = isPositive ? 'bg-[#089981]' : 'bg-[#F23645]'; 
-  const trendTextColor = isPositive ? 'text-[#089981]' : 'text-[#F23645]';
-
- // ⏱️ 1. BULLETPROOF PERSISTENT STOPWATCH (With LocalStorage Birth Cache)
-  const [tokenAgeSeconds, setTokenAgeSeconds] = useState(0);
-
-  useEffect(() => {
-    const currentToken = displayToken || token || {};
-
-    // 🕵️ THE X-RAY: Let's see exactly what the chart is receiving!
-    console.log("🔍 FULL TOKEN DATA:", currentToken);
-    
-    // Check token object first
-    let rawDate = currentToken.created_at || currentToken.createdAt || currentToken.timestamp;
-
-    // Check trades if token object is missing the date
-    const tradeList = recentTrades || currentToken.trades || [];
-    if (!rawDate && tradeList.length > 0) {
-      const firstTrade = tradeList[tradeList.length - 1];
-      rawDate = firstTrade?.created_at || firstTrade?.createdAt || firstTrade?.timestamp;
-    }
-
-   // 🛡️ PERSISTENT LOCALSTORAGE FALLBACK: Lock in the EXACT current time for new tokens
-    const tokenIdentifier = currentToken?.symbol || currentToken?.name || currentToken?.id || 'unknown_token';
-    const storageKey = `apex_token_birth_${tokenIdentifier}`;
-
-    if (!rawDate) {
-      rawDate = localStorage.getItem(storageKey);
-      
-      // If it doesn't exist, or it's the old corrupted number string, set it to RIGHT NOW!
-      if (!rawDate || !rawDate.includes('T')) {
-        rawDate = new Date().toISOString(); // 👈 EXACTLY NOW! (Removed the 1-hour hack)
-        localStorage.setItem(storageKey, rawDate);
-        console.log(`⏱️ Stamped exact birth time for token: ${tokenIdentifier}`);
-      }
-      
-      // Force inject this timestamp directly into the token so the Chart tabs see it!
-      if (currentToken) {
-        currentToken.created_at = rawDate;
-      }
-    }
-
-    let launchTime = typeof rawDate === 'number' ? rawDate : new Date(rawDate).getTime();
-    if (launchTime < 10000000000) launchTime *= 1000;
-
-    const updateAge = () => {
-      if (isNaN(launchTime)) {
-        setTokenAgeSeconds(0);
-        return;
-      }
-      const age = Math.floor((Date.now() - launchTime) / 1000);
-      setTokenAgeSeconds(age > 0 ? age : 0);
-    };
-
-    updateAge();
-    const interval = setInterval(updateAge, 1000);
-
-    return () => clearInterval(interval);
-  }, [displayToken, token, recentTrades]);
-
-  // 🎛️ 2. THE COMPLETE CONFIG (Includes 1w, 1mth, and 1y)
-  const chartTabsConfig = [
-    { key: '1s', label: '1s', threshold: 0 },                  // Always show
-    { key: '1m', label: '1m', threshold: 60 },                 // 1 minute
-    { key: '5m', label: '5m', threshold: 300 },                // 5 minutes
-    { key: '15m', label: '15m', threshold: 900 },              // 15 minutes
-    { key: '1h', label: '1h', threshold: 3600 },               // 1 hour
-    { key: '4h', label: '4h', threshold: 14400 },              // 4 hours
-    { key: '1d', label: '1d', threshold: 86400 },              // 24 hours
-    { key: '1W', label: '1w', threshold: 604800 },             // 7 days
-    { key: '1M', label: '1mth', threshold: 2592000 },          // 30 days
-    { key: '1Y', label: '1y', threshold: 31536000 },           // 365 days
-    { key: 'MAX', label: 'ALL', threshold: 0 }                 // Always show
-  ];
-
-  // 🏷️ 3. Full Timeframe Labels Map
-  const timeframeLabels = {
-    '1s': '1 second',
-    '1m': 'Past minute',
-    '5m': 'Past 5 mins',
-    '15m': 'Past 15 mins',
-    '1h': 'Past hour',
-    '4h': 'Past 4 hours',
-    '1d': 'Today',
-    '1W': 'Past week',
-    '1M': 'Past month',
-    '1Y': 'Past year',
-    'MAX': 'All time'
-  };
- 
-  const getShortCA = (address) => {
-    if (!address || typeof address !== 'string') return '8AVm...forge';
-    return `${address.slice(0, 4)}...${address.slice(-5)}`;
-  };
-  const shortCA = getShortCA(displayToken.mintAddress);
-
-  const formatProPrice = (val) => {
-    if (!val && val !== 0) return '';
-    const str = val.toString();
-    if (str.startsWith('$')) return <><span className="font-bold mr-[2px]">$</span>{str.slice(1)}</>;
-    return str;
-  };
-
-// 🚀 ON-CHAIN BALANCE REFRESHER
-  const fetchUserBalances = async () => {
-    if (!publicKey || !connection || !displayToken.mintAddress) return;
-
-    try {
-      // 1. Fetch live SOL balance
-      const solLamports = await connection.getBalance(publicKey);
-      setUserBalanceSol(solLamports / LAMPORTS_PER_SOL);
-
-      // 2. Fetch live Token balance from Associated Token Account
-      const mintPublicKey = new PublicKey(displayToken.mintAddress);
-      // NOTE: Ensure getAssociatedTokenAddressSync is imported from '@solana/spl-token' at the top of your file
-      const userTokenAccount = getAssociatedTokenAddressSync(mintPublicKey, publicKey);
-      
-      const tokenAccountInfo = await connection.getTokenAccountBalance(userTokenAccount);
-      if (tokenAccountInfo?.value?.uiAmount !== undefined) {
-        setUserTokenBalance(tokenAccountInfo.value.uiAmount);
-      }
-    } catch (err) {
-      console.log("No token account found or error fetching balance:", err);
-    }
-  };
-
-const handleExecuteTrade = async () => {
-    const amount = parseFloat(tradeAmount.toString().replace(/,/g, ''));
-    if (!amount || amount <= 0) return;
-
-    // 1. Calculate math locally to avoid ReferenceErrors!
-    const currentVSol = 30 + (curveState.solInCurve || 0);
-    const currentVTokens = (30 * 1000000000) / currentVSol;
-    
-    let solToTrade = 0;
-    let tokensToTrade = 0;
-
-    if (tradeMode === 'buy') {
-      solToTrade = amount;
-      const netSol = amount * 0.99;
-      const newVSol = currentVSol + netSol;
-      const newVTokens = (30 * 1000000000) / newVSol;
-      tokensToTrade = currentVTokens - newVTokens;
-    } else {
-      tokensToTrade = amount;
-      const newVTokens = currentVTokens + tokensToTrade;
-      const newVSol = (currentVSol * currentVTokens) / newVTokens;
-      solToTrade = (currentVSol - newVSol) * 0.99;
-    }
-
-    const success = await executeTradeOnChain(tradeMode, amount, displayToken.mintAddress, null, null, displayToken.isGraduated);
-    
-    if (success) {
-      // 2. Format exact numbers for the UI
-      const tradeSolDisplay = solToTrade.toFixed(4);
-      const tradeTokenDisplay = tradeMode === 'buy' 
-        ? `${(tokensToTrade / 1000000).toFixed(2)}M` 
-        : `${(amount >= 1000000 ? (amount/1000000).toFixed(2) + 'M' : amount.toLocaleString())}`;
-
-      // 3. Update Token Balance (Optimistic UI)
-      setUserTokenBalance(prev => tradeMode === 'buy' ? prev + tokensToTrade : Math.max(0, prev - amount));
-
-      // 4. Update Curve State & Price! (This instantly shakes the Chart & Header!)
-      const solAdded = tradeMode === 'buy' ? solToTrade : -solToTrade;
-      const newSolInCurve = Math.max(0, curveState.solInCurve + solAdded);
-      
-      const newProgress = Math.min(100, (newSolInCurve / 85) * 100).toFixed(2);
-      
-      // Calculate the new Spot Price natively
-      const nextVirtualSol = (30 + newSolInCurve) * 1e9;
-      const invariant = (30 * 1e9) * (1_000_000_000 * 1e6);
-      const nextVirtualTokens = invariant / nextVirtualSol;
-      const newSpotPrice = (nextVirtualSol / 1e9) / (nextVirtualTokens / 1e6);
-
-      setCurveState(prev => ({
-        ...prev,
-        solInCurve: newSolInCurve,
-        progress: parseFloat(newProgress),
-        price: newSpotPrice // 🚀 Updates the base price which forces the chart to jump!
-      }));
-
-      // 🌍 5. Instantly push to Recent Trades feed AND Global Database
-      try {
-        await supabase.from('trades').insert([{
-          token_mint: displayToken.mintAddress,
-          wallet: publicKey ? publicKey.toBase58() : 'Anonymous',
-          type: tradeMode,
-          amount: tokensToTrade,
-          sol_amount: solToTrade
-        }]);
-      } catch (err) {
-        console.error("Failed to broadcast trade globally:", err);
-      }
-
-      const newTrade = {
-        id: Date.now(),
-        type: tradeMode,
-        amountToken: tradeTokenDisplay,
-        amountSol: tradeSolDisplay,
-        price: `$${(newSpotPrice * 76.50).toFixed(7)}`,
-        timestamp: Date.now(),
-        time: 'Just now',
-        user: 'You',
-        txHash: 'Confirmed'
-      };
-      
-      setRecentTrades(prev => [newTrade, ...prev]);
-      setIsBuyModalOpen(false);
-      setTradeAmount('');
-
-      // 6. Force sync true on-chain balances after network settlement
-      setTimeout(() => {
-        fetchUserBalances();
-      }, 1500);
-
-      return true; // Let TradeWidget know it can clear its state
-    }
-    return false;
-  };
-    
-  const handleCopyCA = (source) => {
-    navigator.clipboard.writeText(displayToken.mintAddress);
-    if (source === 'header') {
-      setHeaderCopied(true);
-      setTimeout(() => setHeaderCopied(false), 2000);
-    } else {
-      setBodyCopied(true);
-      setTimeout(() => setBodyCopied(false), 2000);
-    }
-  };
-
-  const handleCopyShareLink = () => {
-    navigator.clipboard.writeText(`https://apexforge.app/token/${displayToken.mintAddress}`);
-    alert("Token link copied to clipboard!");
-    setIsShareOpen(false);
-  };
-
-  const executeNativeShare = async () => {
-    const shareData = { title: `${displayToken.name} on Apex Forge`, text: `Check out ${displayToken.name} (${displayToken.symbol}). Market Cap: ${dynamicMarketCapString} 🚀`, url: `https://apexforge.app/token/${displayToken.mintAddress}` };
-    if (navigator.share) { try { await navigator.share(shareData); } catch (err) {} } else { handleCopyShareLink(); }
-  };
-
-  const executeDownload = () => {
-    alert(`Screenshot saved to 'ApexForge' album in your gallery!`);
-    setIsShareOpen(false);
-  };
-
-  const submitReport = () => {
-    if(!reportReason) return alert("Please select a valid reason for the report.");
-    alert("Report securely submitted to ApexAI moderation team. Thank you.");
-    setIsReported(true);
-    setIsReportModalOpen(false);
-  };
-
-  const getFilteredTrades = () => {
-    return recentTrades.filter(trade => {
-      const isWhale = parseFloat(trade.amountSol) >= 1.0;
-      if (tradeFilter === 'mine') return trade.user === 'You';
-      if (tradeFilter === 'buys') return trade.type === 'buy';
-      if (tradeFilter === 'sells') return trade.type === 'sell';
-      if (tradeFilter === 'whales') return isWhale;
-      return true;
-    });
-  };
-
- useEffect(() => {
-    if (!chartContainerRef.current) return;
-    const showGrid = chartType === 'candle';
-
-    // 1. CHART INITIALIZATION
-    const chart = createChart(chartContainerRef.current, {
-      layout: { 
-        background: { type: 'solid', color: '#0A0A0B' }, 
-        textColor: '#9CA3AF', 
-        attributionLogo: false,
-        fontSize: 11
-      },
-      grid: { 
-        vertLines: { color: '#16161A', style: 1, visible: showGrid }, 
-        horzLines: { color: '#16161A', style: 1, visible: showGrid } 
-      },
-      width: chartContainerRef.current.clientWidth,
-      height: 260,
-      timeScale: { 
-        timeVisible: true, 
-        secondsVisible: false, 
-        borderColor: '#1F2937',
-        fixLeftEdge: true,
-        rightOffset: 5
-      },
-      rightPriceScale: { 
-        borderColor: '#1F2937', 
-        visible: true,
-        autoScale: true,
-        scaleMargins: { top: 0.2, bottom: 0.25 },
-      },
-      crosshair: {
-        mode: 1,
-        vertLine: { color: '#4B5563', width: 1, style: 2, labelBackgroundColor: '#1F2937' },
-        horzLine: { color: '#4B5563', width: 1, style: 2, labelBackgroundColor: '#1F2937' },
-      }
-    });
-
-    // 2. MAIN SERIES CREATION (Candle vs Area)
-    let series;
-    if (chartType === 'candle') {
-      series = chart.addSeries(CandlestickSeries, { 
-        upColor: '#089981', 
-        downColor: '#F23645', 
-        borderVisible: false, 
-        wickUpColor: '#089981', 
-        wickDownColor: '#F23645',
-        lastValueVisible: true,
-        priceLineVisible: true,
-        priceLineWidth: 1,
-        priceLineColor: isPositive ? '#089981' : '#F23645',
-        priceLineStyle: 2,
-      });
-    } else {
-      series = chart.addSeries(AreaSeries, { 
-        lineColor: trendColorHex, 
-        topColor: isPositive ? 'rgba(8, 153, 129, 0.15)' : 'rgba(242, 54, 69, 0.15)', 
-        bottomColor: isPositive ? 'rgba(8, 153, 129, 0.00)' : 'rgba(242, 54, 69, 0.00)', 
-        lineWidth: 2, 
-        crosshairMarkerRadius: 5,
-        lastValueVisible: true,
-        priceLineVisible: true,
-        priceLineWidth: 1,
-        priceLineColor: trendColorHex,
-        priceLineStyle: 2,
-      });
-    }
-    seriesRef.current = series;
-
-   // 3. VOLUME HISTOGRAM SERIES (v4 API Fix)
-    const volumeSeries = chart.addSeries(HistogramSeries, {
-      priceFormat: { type: 'volume' },
-      priceScaleId: '',
-    });
-    
-    volumeSeries.priceScale().applyOptions({
-      scaleMargins: { top: 0.8, bottom: 0 },
-    });
-
-    // 4. DATA ENGINE (Trade Buckets & Gapless Timeline)
-    const generateChartData = () => {
-      const launchMcap = 2300; // $2.30K starting floor
-      const rawLivePrice = Number(liveUsdPrice);
-      const currentMcap = (!isNaN(rawLivePrice) && rawLivePrice > 0) ? rawLivePrice * 1000000000 : launchMcap;
-      
-      const nowInSeconds = Math.floor(Date.now() / 1000);
-      const rawCreatedAt = displayToken?.created_at || token?.created_at;
-      const birthTime = rawCreatedAt 
-        ? Math.floor(new Date(rawCreatedAt).getTime() / 1000) 
-        : nowInSeconds - 300;
-
-      let interval = 15;
-      if (chartTimeframe === '1s') interval = 1;
-      else if (chartTimeframe === '1m') interval = 60;
-      else if (chartTimeframe === '5m') interval = 300;
-      else if (chartTimeframe === '15m') interval = 900;
-      else if (chartTimeframe === '1h') interval = 3600;
-      else if (chartTimeframe === 'ALL') interval = Math.max(15, Math.floor((nowInSeconds - birthTime) / 50));
-
-      const startTime = birthTime - (birthTime % interval);
-      const endTime = nowInSeconds - (nowInSeconds % interval) + interval;
-
-      const tradeBuckets = {};
-      if (recentTrades && recentTrades.length > 0) {
-        const sortedTrades = [...recentTrades].reverse();
-        sortedTrades.forEach((trade) => {
-          const tradeTimeStr = trade?.created_at || trade?.timestamp || new Date().toISOString();
-          const parsedTime = Math.floor(new Date(tradeTimeStr).getTime() / 1000);
-          const tradeTime = isNaN(parsedTime) ? nowInSeconds : parsedTime;
-          const roundedTime = tradeTime - (tradeTime % interval);
-
-          const rawPrice = Number(trade?.usd_price ?? trade?.price ?? trade?.token_price ?? 0.0000023);
-          const priceValue = (isNaN(rawPrice) || rawPrice <= 0) ? 0.0000023 : rawPrice;
-          const tradeMcap = priceValue * 1000000000;
-          const tradeVol = Number(trade?.volume || trade?.amount || 0);
-
-          if (!tradeBuckets[roundedTime]) {
-            tradeBuckets[roundedTime] = { open: tradeMcap, high: tradeMcap, low: tradeMcap, close: tradeMcap, volume: tradeVol };
-          } else {
-            tradeBuckets[roundedTime].high = Math.max(tradeBuckets[roundedTime].high, tradeMcap);
-            tradeBuckets[roundedTime].low = Math.min(tradeBuckets[roundedTime].low, tradeMcap);
-            tradeBuckets[roundedTime].close = tradeMcap;
-            tradeBuckets[roundedTime].volume += tradeVol;
-          }
-        });
-      }
-
-      let data = [];
-      let lastClose = launchMcap;
-
-      for (let t = startTime; t <= endTime; t += interval) {
-        if (tradeBuckets[t]) {
-          const candle = tradeBuckets[t];
-          candle.open = lastClose;
-          candle.high = Math.max(candle.high, candle.open, candle.close);
-          candle.low = Math.min(candle.low, candle.open, candle.close);
-
-          if (chartType === 'candle') {
-            data.push({ time: t, ...candle });
-          } else {
-            data.push({ time: t, value: candle.close, volume: candle.volume });
-          }
-          lastClose = candle.close;
-        } else {
-          if (chartType === 'candle') {
-            data.push({ time: t, open: lastClose, high: lastClose, low: lastClose, close: lastClose, volume: 0 });
-          } else {
-            data.push({ time: t, value: lastClose, volume: 0 });
-          }
-        }
-      }
-
-      if (data.length > 0) {
-        const last = data.length - 1;
-        if (chartType === 'candle') {
-          data[last].high = Math.max(data[last].high, currentMcap);
-          data[last].low = Math.min(data[last].low, currentMcap);
-          data[last].close = currentMcap;
-        } else {
-          data[last].value = currentMcap;
-        }
-      }
-
-      return data;
-    };
-
-    // 5. DATA TRANSFORM & SYNC
-    const rawData = generateChartData();
-    
-    const syncedData = rawData.map(point => {
-      if (displayMode === 'price') {
-        return point.value !== undefined 
-          ? { ...point, value: point.value / 1000000000 }
-          : { ...point, open: point.open / 1000000000, high: point.high / 1000000000, low: point.low / 1000000000, close: point.close / 1000000000 };
-      }
-      return point;
-    });
-
-    const syncedVolumeData = rawData.map(point => {
-      const closeVal = point.close !== undefined ? point.close : point.value;
-      const openVal = point.open !== undefined ? point.open : point.value;
-      const isUp = closeVal >= openVal;
-      return {
-        time: point.time,
-        value: point.volume || Math.floor(Math.random() * 2000) + 500,
-        color: isUp ? 'rgba(8, 153, 129, 0.4)' : 'rgba(242, 54, 69, 0.4)',
-      };
-    });
-
-    // 6. DYNAMIC FORMATTING & MOUNT
-    series.applyOptions({
-      priceFormat: {
-        type: 'custom',
-        minMove: displayMode === 'price' ? 0.00000001 : 0.01,
-        formatter: (rawPrice) => {
-          if (displayMode === 'price') {
-            const price = rawPrice + 0.0000000001; 
-            return ` $${parseFloat(price.toFixed(10))} `; 
-          } else {
-            const mcap = rawPrice + 0.0001; 
-            if (mcap <= 0) return ' $0.00 ';
-            if (mcap >= 1e12) return ` $${(mcap / 1e12).toFixed(2)}T `;
-            if (mcap >= 1e9) return ` $${(mcap / 1e9).toFixed(2)}B `;
-            if (mcap >= 1e6) return ` $${(mcap / 1e6).toFixed(2)}M `;
-            if (mcap >= 1e3) return ` $${(mcap / 1e3).toFixed(2)}K `;
-            return ` $${mcap.toFixed(2)} `;
-          }
-        }
-      }
-    });
-
-    series.setData(syncedData);
-    volumeSeries.setData(syncedVolumeData);
-    chart.timeScale().fitContent();
-
-    const handleResize = () => chart.applyOptions({ width: chartContainerRef.current.clientWidth });
-    window.addEventListener('resize', handleResize);
-    return () => { window.removeEventListener('resize', handleResize); chart.remove(); };
-    
-  }, [chartTimeframe, chartType, liveUsdPrice, trendColorHex, isPositive, displayToken, token, displayMode, recentTrades]);
-      
- // 🚀 DYNAMIC TREND COLORS: Forces the horizontal line and price label to turn Red or Green
-  useEffect(() => {
-    if (seriesRef.current && baselinePrice) {
-      // Check if the live price has dropped below the locked starting floor
-      const isDown = calculatedUsdPrice < (baselinePrice / 1000000000); 
-      
-      seriesRef.current.applyOptions({
-        priceLineColor: isDown ? '#ef4444' : '#10b981', // Red if dumping, Green if pumping
-        crosshairMarkerBorderColor: isDown ? '#ef4444' : '#10b981',
-      });
-    }
-  }, [calculatedUsdPrice, baselinePrice]);
-
-  const formatLink = (url) => url.startsWith('http') ? url : `https://${url}`;
 
   return (
-    <div className="w-full h-full flex flex-col bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative">
+    <div className="w-full h-full bg-[#0c0d10] text-white grid grid-cols-12 gap-2 p-2 overflow-hidden select-none">
       
-      <style>{`
-        * { -webkit-tap-highlight-color: transparent !important; }
-        @keyframes slideUpNative { 0% { transform: translateY(100%); } 100% { transform: translateY(0); } }
-        .animate-slideUpNative { animation: slideUpNative 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
-      `}</style>
-          
-          <header className="flex items-start justify-between px-4 sm:px-6 pt-2 pb-1.5 w-full">
-      {/* LEFT WRAPPER: Stacked Row 1 and Row 2 */}
-      <div className="flex flex-col gap-2">
-        {/* --- ROW 1: Navigation, Ticker, & Age --- */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button 
-            onClick={(e) => { 
-              e.preventDefault(); e.stopPropagation(); 
-              localStorage.removeItem('apex_mock_state_TKN');
-              localStorage.removeItem('apex_mock_state_TKN_trades');
-              localStorage.removeItem('apex_active_token');
-              if (typeof onBack === 'function') {
-                onBack();
-              } else {
-                if (window.history.length > 1) window.history.back();
-                else window.location.hash = '';
-              }
-            }} 
-            className="flex items-center justify-center transition-colors hover:text-zinc-300 active:scale-90 p-1 -ml-1 shrink-0 relative z-[100] cursor-pointer"
-          >
-            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          
-          <span className="font-black text-white text-base sm:text-lg tracking-tight">${displayToken.symbol}</span>
-          <span className="text-zinc-600">|</span>
-          <div className="text-[10px] text-emerald-400 font-mono flex items-center gap-1.5 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            {formatTimeAgo(displayToken?.created_at || token?.created_at)}
-          </div>
-        </div>
-
-        {/* --- ROW 2: Identity (Logo, Name, & Contract Address) --- */}
-        <div className="flex items-center gap-3 pl-1">
-          {/* Logo with Built-in Fallback for Broken Images */}
-          <div className="w-10 h-10 sm:w-11 sm:h-11 bg-[#1A1A24] border border-white/10 rounded-full flex items-center justify-center text-lg sm:text-xl shrink-0 overflow-hidden shadow-inner">
-            {displayToken.imagePreview ? (
-              <img 
-                src={displayToken.imagePreview} 
-                className="w-full h-full object-cover" 
-                alt="icon" 
-                onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<span class="text-xl">🪙</span>'; }}
-              />
-            ) : (
-              <span className="select-none">{displayToken.icon}</span>
-            )}
-          </div>
-          
-          {/* Name and Copy Address Block */}
-          <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-1.5">
-               <span className="text-base sm:text-lg font-black text-white leading-tight tracking-wide truncate">{displayToken.name}</span>
-               {displayToken.isGraduated && <span className="bg-amber-400/10 text-amber-400 border border-amber-400/20 text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-widest font-black shrink-0">Graduated</span>}
-            </div>
-            <div onClick={() => handleCopyCA('header')} className="flex items-center gap-1 text-[11px] sm:text-[12px] font-bold text-zinc-400 mt-0.5 cursor-pointer hover:text-white transition-colors">
-              <span className="font-mono tracking-tight truncate max-w-[100px] sm:max-w-none bg-white/5 px-1 rounded">{shortCA}</span>
-              <svg className="w-3 h-3 opacity-70 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-              {headerCopied && <span className="text-[#089981] text-[9px] font-black tracking-wider ml-1">COPIED</span>}
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* RIGHT ACTION BUTTONS (Aligned directly with the Ticker row) */}
-      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-        <button 
-          onClick={() => onOpenLiveModal && onOpenLiveModal()} 
-          className="px-2 py-1 sm:px-2.5 sm:py-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-500 text-[10px] font-black uppercase tracking-widest rounded-xl flex items-center gap-1 hover:bg-rose-500/20 transition-all active:scale-95 shadow-sm cursor-pointer shrink-0"
-        >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-          </span>
-          <span>LIVE</span>
-        </button>
-        <button onClick={() => setIsShareOpen(true)} className="text-white hover:text-zinc-300 transition-colors p-1"><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-4-6l-4-4-4 4m4-4v13" /></svg></button>
-        <button onClick={() => setIsFavorited(!isFavorited)} className="transition-colors p-1"><svg className={`w-5 h-5 sm:w-6 sm:h-6 ${isFavorited ? 'text-amber-400 fill-amber-400' : 'text-white'}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg></button>
-      </div>
-    </header>
-
-      {/* --- SCROLLABLE CONTENT --- */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide relative">
-        <div className="flex flex-col w-full pb-8">
-          
-   {/* 🚀 LEFT-ALIGNED ON PAGE, WITH PERCENTAGE PERFECTLY CENTERED UNDER THE PRICE/MC */}
-    <div className="px-6 pt-2 pb-2">
-      <div className="inline-flex flex-col items-center">
-        <div 
-          onClick={() => setDisplayMode(prev => prev === 'price' ? 'mcap' : 'price')}
-          className="cursor-pointer select-none group"
-          title="Click to switch between Price and Market Cap"
-        >
-         <div className="text-[34px] sm:text-[40px] font-extrabold tracking-tight leading-none text-white group-hover:text-emerald-400 transition-colors flex items-center">
-            {displayMode === 'price' ? (
-              // 🚀 THE MICRO-FRACTION FIX: Counters JavaScript's floating-point precision error!
-              formatProPrice(`$${(Math.round((liveUsdPrice > 0 ? liveUsdPrice + 0.0000000001 : 0.00000230) * 100000000) / 100000000).toFixed(8)}`)
-            ) : (
-              // 🚀 WRAPPED IN formatProPrice SO THE DOLLAR SIGN MATCHES EXACTLY!
-              formatProPrice(dynamicMarketCapString)
-            )}
-          </div>
-        </div>
-
-        {/* Centered 24H Percentage Sub-line */}
-        <span className={`${isPositiveChange ? 'text-[#00FF66]' : 'text-[#FF3B69]'} font-semibold text-xs flex items-center gap-1.5 mt-1`}>
-          {isPositiveChange ? '▲' : '▼'} {Math.abs(priceChangePct)}% <span className="text-[#787B86] font-normal">24H</span>
-        </span>
-      </div>
-    </div>
-
-    {/* CLEAN CHART CONTAINER */}
-    <div className="w-full relative bg-[#0A0A0B] border-y border-white/[0.05]">
-      <div ref={chartContainerRef} className="w-full h-full" />
-    </div>
-    </div>
-
-       {/* 📊 PRO-TRADER CHART TOOLBAR (AUTO-POPPING TABS & PINNED SWITCH) */}
-<div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.05] bg-[#0A0A0B] w-full">
-  
-  {/* 1. SCROLLING TIMEFRAMES (Auto-Unlocks as Token Ages) */}
-  <div className="flex items-center overflow-x-auto scrollbar-none mr-2 touch-pan-x">
-    <div className="flex items-center gap-1.5 shrink-0 min-w-max">
-      {chartTabsConfig
-        .filter(tab => tokenAgeSeconds >= tab.threshold)
-        .map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setChartTimeframe(tab.key)}
-            className={`shrink-0 text-[12px] font-bold px-3 py-1 rounded transition-colors ${
-              chartTimeframe === tab.key 
-                ? 'bg-white/10 text-white' 
-                : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))
-      }
-    </div>
-    </div>
-
-  {/* 2. PINNED CHART TOGGLE (Stays Fixed on the Right Edge) */}
-  <div className="flex items-center shrink-0 pl-3 border-l border-white/10">
-    <button 
-      onClick={() => setChartType(chartType === 'candle' ? 'area' : 'candle')} 
-      className="text-zinc-400 hover:text-white p-1.5 rounded-md hover:bg-white/10 transition-all"
-      title={chartType === 'candle' ? 'Switch to Area Chart' : 'Switch to Candle Chart'}
-    >
-      {chartType === 'candle' ? (
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 5v4"></path>
-          <rect width="4" height="6" x="7" y="9" rx="1"></rect>
-          <path d="M9 15v2"></path>
-          <path d="M17 3v2"></path>
-          <rect width="4" height="8" x="15" y="5" rx="1"></rect>
-          <path d="M17 13v3"></path>
-        </svg>
-      ) : (
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 3v18h18"></path>
-          <path d="m19 9-5 5-4-4-3 3"></path>
-        </svg>
-      )}
-    </button>
-  </div>
-</div>
-
-          <div className="flex items-center justify-between px-4 py-4 bg-[#121212]/50 border-b border-white/[0.05] mb-2">
-            <div className="flex items-center gap-3">
-              <div onClick={() => onOpenProfile && onOpenProfile(displayToken.creator)} className="relative cursor-pointer group">
-                <div className="w-11 h-11 bg-black rounded-full border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-[#089981]/50 transition-all shadow-inner">
-                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${displayToken.creator}`} className="w-full h-full object-cover" alt="Creator" />
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none mb-1">Creator</span>
-                <div className="flex items-center gap-2">
-                  <span onClick={() => onOpenProfile && onOpenProfile(displayToken.creator)} className="text-sm font-bold text-white hover:text-[#089981] transition-colors cursor-pointer">{displayToken.creator}</span>
-                  <button onClick={() => setIsFollowing(!isFollowing)} className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${isFollowing ? 'bg-white/10 text-white border border-transparent' : 'bg-transparent text-[#089981] border border-[#089981]/30 hover:bg-[#089981]/10'}`}>{isFollowing ? 'Following' : 'Follow'}</button>
-                </div>
-              </div>
-            </div>
-            
-            <button 
-              onClick={userTokenBalance > 0 ? onOpenChat : () => alert('You must hold this token to enter the trench chat!')}
-              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${userTokenBalance > 0 ? 'bg-[#089981] text-black hover:bg-[#06806b] hover:shadow-[0_4px_12px_rgba(8,153,129,0.15)] active:scale-95' : 'bg-white/5 text-zinc-500 cursor-not-allowed border border-white/5'}`}
+     {/* ==================== LEFT SIDEBAR ==================== */}
+     <div className={`${isSidebarOpen ? 'col-span-12 lg:col-span-4 xl:col-span-3' : 'hidden'} bg-[#121318] border border-white/5 rounded-xl flex flex-col h-full overflow-hidden`}>
+      <div className="flex items-center border-b border-white/5 bg-[#0a0b0e] p-1.5 gap-1 shrink-0">
+          {['Tokens', 'Follows', 'Track'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setLeftTab(tab)}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                leftTab === tab
+                  ? 'bg-[#1c1d24] text-white shadow'
+                  : 'text-zinc-500 hover:text-zinc-300'
+              }`}
             >
-              {userTokenBalance > 0 ? <>💬 Enter Chat</> : <>🔒 Buy to Chat</>}
+              {tab}
             </button>
-          </div>
+          ))}
+        </div>
 
-          <div className="flex flex-col px-4 pt-4 gap-6">
+        <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] divide-y divide-white/[0.03] p-1">
+          {(globalTokens && globalTokens.length > 0 ? globalTokens : [
+            { symbol: 'PSTACIA', mcap: '$8.54M', change24h: '+51.14%', isPositive: true },
+            { symbol: 'JUP', mcap: '$729.55M', change24h: '+2.3%', isPositive: true },
+            { symbol: 'ALCH', mcap: '$30.45M', change24h: '+13.84%', isPositive: true },
+            { symbol: 'PYTH', mcap: '$433.23M', change24h: '+1.34%', isPositive: true },
+            { symbol: 'META', mcap: '$151.76M', change24h: '-7.19%', isPositive: false },
+            { symbol: 'XOSIS', mcap: '$2.63M', change24h: '+191.49%', isPositive: true },
+            { symbol: 'XST', mcap: '$11.78M', change24h: '-6.93%', isPositive: false },
+            { symbol: 'Martians', mcap: '$2.72M', change24h: '+3.83%', isPositive: true },
+            { symbol: 'JIMTHY', mcap: '$13.71M', change24h: '-19.12%', isPositive: false }
+          ]).map((item, idx) => (
+            <SidebarTokenRow
+              key={item.id || item.address || item.symbol || idx}
+              token={item}
+              isActive={(selectedTokenData?.symbol || currentToken?.symbol) === item.symbol}
+              onSelect={(token) => setSelectedTokenData && setSelectedTokenData(token)}
+            />
+          ))}
+        </div>
 
-            {!displayToken.isGraduated && (
-              <div className="flex flex-col w-full animate-fadeIn bg-[#121212] border border-white/5 p-4 rounded-2xl shadow-inner">
-                <div className="flex justify-between items-end mb-3">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Bonding Curve Progress</span>
-                    <span className="text-sm font-bold text-zinc-300 mt-1">Race to Raydium</span>
-                  </div>
-                  <span className="text-lg font-black text-[#089981]">{curveState.progress}%</span>
-                </div>
-                <div className="w-full h-2.5 bg-black rounded-full overflow-hidden border border-white/5 relative">
-                   <div className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-[#089981]/50 to-[#00FF66] transition-all duration-500 shadow-[0_0_10px_rgba(0,255,102,0.5)]" style={{ width: `${curveState.progress}%` }} />
-                </div>
-                <p className="text-[10px] text-zinc-500 font-medium mt-3 text-right font-mono">
-                  {Math.min(curveState.solInCurve, 85).toFixed(2)} / 85.00 SOL Filled
-                </p>
-              </div>
-            )}
+        <div className="p-2.5 border-t border-white/5 bg-[#0a0b0e] flex items-center justify-between shrink-0">
+          <span className="text-[11px] text-zinc-500 font-bold">Portfolio Balance</span>
+          <span className="text-xs font-mono font-black text-[#00f2a1]">$99.60</span>
+        </div>
+      </div>
 
-            {/* BALANCE */}
-            <div className="flex flex-col w-full">
-              <h2 className="text-xl font-black mb-4">Your Position</h2>
-              <div className="flex justify-between items-start mb-5 bg-[#121212] border border-white/5 p-4 rounded-2xl shadow-inner">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Total Value</span>
-                  {/* 🚀 FIX: Removed the / 1000000 division so it multiplies your full token balance! */}
-                  <span className="text-2xl font-black text-white font-mono">{formatProPrice(`$${(userTokenBalance * liveUsdPrice).toFixed(2)}`)}</span>
-                </div>
-                <div className="flex flex-col items-end">
-                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Balance ({displayToken.symbol})</span>
-                  <span className="text-2xl font-black text-[#089981] font-mono">{userTokenBalance > 0 ? `${(userTokenBalance / 1000000).toFixed(2)}M` : '0.00M'}</span>
-                </div>
-              </div>
-              <div className="flex gap-3 w-full">
-                <button onClick={() => setIsDepositOpen(true)} className="flex-1 py-3.5 rounded-xl border border-white/10 bg-[#1A1A24] hover:bg-white/10 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-colors shadow-sm">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> Deposit
-                </button>
-                <button onClick={() => setIsAlertsOpen(true)} className="flex-1 py-3.5 rounded-xl border border-white/10 bg-[#1A1A24] hover:bg-white/10 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-colors shadow-sm">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg> Alerts
-                </button>
-              </div>
-            </div>
+     {/* ==================== CENTER COLUMN: CHART & HEADER STATS ==================== */}
+      <div className={`col-span-12 ${
+        isSidebarOpen 
+          ? 'lg:col-span-5 xl:col-span-6' 
+          : 'lg:col-span-8 xl:col-span-9'
+      } flex flex-col h-full gap-2 overflow-hidden transition-all duration-200`}>
+        
+        {/* Token Meta Header */}
+<div className="bg-[#121318] border border-white/5 rounded-xl p-2.5 flex items-center justify-between shrink-0 gap-4 overflow-hidden">
+  
+  {/* Left: Flush Wall Toggle + Token Info + Copyable CA */}
+<div className="flex items-center gap-2.5 shrink-0 pr-3 border-r border-white/5">
+  
+  {/* Tiny Wall-Attached Toggle Button */}
+  <button
+    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+    className="-ml-2.5 -my-2.5 self-stretch w-5 bg-[#1c1d24] hover:bg-white/10 border-r border-white/5 rounded-l-xl flex items-center justify-center text-zinc-500 hover:text-white transition-colors shrink-0"
+    title={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+  >
+    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        strokeWidth="2.5" 
+        d={isSidebarOpen ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"} 
+      />
+    </svg>
+  </button>
 
-            <div className="w-full h-px bg-white/5 my-2"></div>
-
-            <div className="flex flex-col w-full">
-              <h2 className="text-xl font-black mb-3">About {displayToken.symbol}</h2>
-              {/* 🚀 FIX: Fallback to ensure description always renders */}
-              <p className="text-[13px] font-medium text-zinc-400 leading-relaxed mb-5 whitespace-pre-wrap">
-                {displayToken.description || "A community-driven asset deployed fairly on the Apex Forge platform. Smart contract initialized."}
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-                {displayToken.links.twitter && <a href={formatLink(displayToken.links.twitter)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner"><span className="font-black text-sm text-zinc-500">𝕏</span> Twitter</a>}
-                {displayToken.links.telegram && <a href={formatLink(displayToken.links.telegram)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner"><span className="text-zinc-500">✈</span> Telegram</a>}
-                {displayToken.links.website && <a href={formatLink(displayToken.links.website)} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg bg-[#121212] border border-white/5 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 hover:bg-white/10 transition-colors shadow-inner"><span className="text-zinc-500">🌐</span> Website</a>}
-              </div>
-            </div>
-
-           <div className="grid grid-cols-2 gap-3 mt-2 border-t border-white/[0.05] pt-6">
-  <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
-    <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Market Cap</span>
-    <span className="text-sm font-mono font-bold text-white mt-1.5">{dynamicMarketCapString}</span>
+  {/* Token Avatar */}
+  <div className="w-9 h-9 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-sm font-bold overflow-hidden shrink-0 ml-0.5">
+    {currentToken.imagePreview ? (
+      <img src={currentToken.imagePreview} alt={currentToken.symbol} className="w-full h-full object-cover" />
+    ) : (
+      currentToken.icon || '🪙'
+    )}
   </div>
-  <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
-    <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Volume (24H)</span>
-    <span className="text-sm font-mono font-bold text-white mt-1.5">${volume24hUsd.toFixed(2)}</span>
+    <div>
+      <div className="flex items-center gap-2">
+        <h1 className="text-sm font-black text-white tracking-wide">{currentToken.name || currentToken.symbol}</h1>
+        <button 
+          onClick={() => setIsFollowing(!isFollowing)}
+          className={`text-[9px] font-bold px-2 py-0.5 rounded transition-all ${
+            isFollowing ? 'bg-white/10 text-white' : 'bg-[#1c1d24] hover:bg-white/20 text-zinc-300'
+          }`}
+        >
+          {isFollowing ? 'Following' : 'Follow'}
+        </button>
+      </div>
+
+      {/* Sub-row: Timeframe, Copyable CA & Real SVG Socials */}
+      <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-mono mt-0.5">
+        <span>1d</span>
+        <span>•</span>
+        
+        {/* Clickable Contract Address with Copy Icon */}
+        <button 
+          onClick={() => handleCopyCA(currentToken.mintAddress)}
+          className="flex items-center gap-1 hover:text-white transition-colors group relative"
+          title="Copy Contract Address"
+        >
+          <span className="truncate max-w-[85px]">{currentToken.mintAddress || 'Cyknvgvyl97eW6tj...'}</span>
+          <svg className="w-3 h-3 text-zinc-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          {copiedCA && (
+            <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#00f2a1] text-black text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
+              Copied!
+            </span>
+          )}
+        </button>
+
+        <span className="text-zinc-700">|</span>
+
+        {/* Real SVG Social Links Icons */}
+        <div className="flex items-center gap-2 text-zinc-400">
+          <a href={currentToken.website || "#"} target="_blank" rel="noreferrer" className="hover:text-white transition-colors" title="Website">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round5" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+            </svg>
+          </a>
+          <a href={currentToken.twitter || "#"} target="_blank" rel="noreferrer" className="hover:text-white transition-colors" title="Twitter / X">
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+          </a>
+          <a href={currentToken.telegram || "#"} target="_blank" rel="noreferrer" className="hover:text-white transition-colors" title="Telegram">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
   </div>
-  <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
-    <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Holders</span>
-   <span className="text-sm font-mono font-bold text-white mt-1.5">{liveHoldersCount}</span>
+
+  {/* Scrollable Right Ticker: Large & Clean Numbers */}
+  <div className="flex items-center gap-6 overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] font-mono shrink whitespace-nowrap">
+    <div className="text-right shrink-0">
+      <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Price</span>
+      <span className="text-sm font-black text-white">{formatPhantomPrice(currentToken?.price || 0.05439)}</span>
+    </div>
+    <div className="text-right shrink-0">
+      <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Market Cap</span>
+      <span className="text-sm font-black text-white">{currentToken.mcap || '$10.88K'}</span>
+    </div>
+    <div className="text-right shrink-0">
+      <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">24h Change</span>
+      <span className={`text-sm font-black ${currentToken.isPositive !== false ? 'text-[#089981]' : 'text-[#F23645]'}`}>
+        {currentToken.change24h || '+161.33%'}
+      </span>
+    </div>
+    <div className="text-right shrink-0">
+      <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Liquidity</span>
+      <span className="text-sm font-black text-white">{currentToken.liquidity || '$5.67K'}</span>
+    </div>
+    <div className="text-right shrink-0">
+      <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Supply</span>
+      <span className="text-sm font-black text-white">{currentToken.supply || '2B'}</span>
+    </div>
+    <div className="text-right shrink-0">
+      <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Top 10</span>
+      <span className="text-sm font-black text-amber-500">{currentToken.top10 || '50.64%'}</span>
+    </div>
   </div>
-  <div className="bg-[#121212] border border-white/5 p-4 rounded-2xl flex flex-col shadow-inner">
-    <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Circulating Supply</span>
-    <span className="text-sm font-mono font-bold text-white mt-1.5">{globalSupply}</span>
-  </div>
+
 </div>
 
-            {/* RECENT TRADES */}
-            <div className="flex flex-col w-full mt-4">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-black">Recent Trades</h2>
-                <div className="flex items-center gap-1.5 bg-[#e81cff]/10 px-2 py-1 rounded border border-[#e81cff]/20">
-                  <span className="w-1.5 h-1.5 bg-[#e81cff] rounded-full animate-pulse"></span>
-                  <span className="text-[9px] font-black uppercase text-[#e81cff] tracking-widest">Live</span>
-                </div>
-              </div>
-              
-              <div className="flex flex-col gap-2">
-                {recentTrades.slice(0, 5).map((trade) => {
-                  const isWhale = parseFloat(trade.amountSol) >= 1.0;
-                  return (
-                    <div key={trade.id} className={`flex justify-between items-center p-3 rounded-xl transition-all ${isWhale ? 'bg-gradient-to-r from-[#089981]/10 to-[#121212] border border-[#089981]/30 shadow-[0_4px_12px_rgba(8,153,129,0.1)]' : 'bg-[#121212]/60 border border-white/[0.03]'}`}>
-                      <div className="flex items-center gap-3">
-                        <div className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${trade.type === 'buy' ? 'bg-[#089981]/20 text-[#089981]' : 'bg-[#F23645]/20 text-[#F23645]'}`}>
-                          {trade.type}
-                        </div>
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-[13px] text-white">
-                              {trade.user}
-                            </span>
-                            {trade.user === 'You' && <span className="bg-white/10 text-zinc-400 text-[8px] px-1 py-0.5 rounded font-black uppercase">Me</span>}
-                            {isWhale && <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[8px] px-1.5 py-0.5 rounded uppercase font-black tracking-wider">🐋 WHALE</span>}
-                          </div>
-                          <span className="text-[11px] font-mono text-[#787B86] mt-0.5">{trade.amountToken}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        <div className="flex flex-col items-end">
-                  <span className="text-[12px] font-mono font-bold text-white">◎ {trade.amountSol}</span>
-                  {/* 🚀 FIX: Dynamic time calculation */}
-                  <span className="text-[10px] font-mono text-zinc-500 mt-0.5">
-                    {trade.time}
-                  </span>
-                </div>
-                        <a 
-                          href={`https://solscan.io/tx/${trade.txHash || '5K2a'}`} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="p-1.5 text-zinc-500 hover:text-white bg-white/5 rounded-lg transition-colors shrink-0"
-                          title="Verify on Solscan"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                        </a>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              
-              {recentTrades.length > 5 && (
-                <button onClick={() => setShowAllTrades(true)} className="w-full mt-3 py-3.5 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-colors shadow-sm">
-                  View All {recentTrades.length} Trades & Filters
-                </button>
-              )}
-            </div>
-
-            <div className="flex flex-col items-center gap-4 pt-8 border-t border-white/[0.05]">
-              <button onClick={() => setIsReportModalOpen(true)} className={`text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-1.5 py-2 px-4 rounded-full border ${isReported ? 'border-rose-500/50 text-rose-400 bg-rose-500/10' : 'border-white/10 text-zinc-500 hover:text-rose-400 hover:border-rose-500/30'}`}>
-                🚩 {isReported ? 'Flagged for Auditing' : 'Report Token'}
-              </button>
-              <p className="text-center text-[10px] text-zinc-600 font-medium leading-relaxed max-w-sm">
-                Apex Forge acts strictly as a decentralized non-custodial software launcher suite. Cryptographic assets are inherently exposed to extreme market volatility.
-              </p>
-            </div>
-
-          </div>
-        </div>
-      
-
-      {/* --- ALL TRADES MODAL --- */}
-      {showAllTrades && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="absolute inset-0" onClick={() => setShowAllTrades(false)}></div>
-          <div className="bg-[#050505] border-t border-white/10 rounded-t-3xl w-full max-w-xl h-[85vh] p-6 relative z-10 animate-slideUpNative flex flex-col">
-            <div className="flex justify-between items-center mb-4 border-b border-white/5 pb-4">
-              <div>
-                <h3 className="text-lg font-black text-white uppercase tracking-widest">Transaction Ledger</h3>
-                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mt-0.5">Live On-Chain Telemetry</p>
-              </div>
-              <button onClick={() => setShowAllTrades(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg></button>
-            </div>
-
-            <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
-              {[
-                { id: 'all', label: 'All Trades' },
-                { id: 'mine', label: '👤 My Trades' },
-                { id: 'buys', label: '🟢 Buys Only' },
-                { id: 'sells', label: '🔴 Sells Only' },
-                { id: 'whales', label: '🐋 Whales (≥1 SOL)' },
-              ].map(f => (
-                <button
-                  key={f.id}
-                  onClick={() => setTradeFilter(f.id)}
-                  className={`px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0 border ${tradeFilter === f.id ? 'bg-[#089981] text-white border-[#089981]' : 'bg-[#121212] text-zinc-400 border-white/5 hover:text-white'}`}
-                >
-                  {f.label}
+        {/* TradingView Container */}
+        <div className="flex-1 min-h-0 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-hidden relative">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 text-xs text-zinc-400 font-medium shrink-0 bg-[#0a0b0e]">
+            <div className="flex items-center gap-2">
+              {['15m', '1h', '4h', '1d'].map((tf, i) => (
+                <button key={tf} className={`px-2 py-0.5 rounded text-[11px] hover:text-white ${i === 0 ? 'bg-white/10 text-white font-bold' : ''}`}>
+                  {tf}
                 </button>
               ))}
+              <span className="h-3 w-[1px] bg-white/10 mx-1" />
+              <button className="text-white font-bold text-[11px]">Price / MCap</button>
             </div>
-
-            <div className="flex-1 overflow-y-auto scrollbar-hide pb-6 space-y-2">
-              {getFilteredTrades().length === 0 ? (
-                <div className="text-center py-12 text-zinc-600 text-xs font-bold uppercase tracking-widest">No matching transactions found</div>
-              ) : (
-                getFilteredTrades().map((trade) => {
-                  const isWhale = parseFloat(trade.amountSol) >= 1.0;
-                  return (
-                    <div key={trade.id} className={`bg-[#121212] border p-3 rounded-xl flex justify-between items-center ${isWhale ? 'border-amber-500/30 bg-amber-500/5' : 'border-white/5'}`}>
-                      <div className="flex items-center gap-3">
-                        <div className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${trade.type === 'buy' ? 'bg-[#089981]/20 text-[#089981]' : 'bg-[#F23645]/20 text-[#F23645]'}`}>
-                          {trade.type}
-                        </div>
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-[13px] text-white">{trade.user}</span>
-                            {trade.user === 'You' && <span className="bg-white/10 text-zinc-400 text-[8px] px-1 py-0.5 rounded font-black uppercase">Me</span>}
-                            {isWhale && <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[8px] px-1.5 py-0.5 rounded uppercase font-black tracking-wider">🐋 WHALE</span>}
-                          </div>
-                          <span className="text-[11px] font-mono text-[#787B86] mt-0.5">{trade.amountToken}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="flex flex-col items-end">
-                          <span className="text-[12px] font-mono font-bold text-white">◎ {trade.amountSol}</span>
-                          <span className={`text-[10px] font-mono mt-0.5 ${trade.type === 'buy' ? 'text-[#089981]' : 'text-zinc-500'}`}>{trade.time}</span>
-                        </div>
-                        <a 
-                          href={`https://solscan.io/tx/${trade.txHash || '5K2a'}`} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="p-1.5 text-zinc-500 hover:text-white bg-white/5 rounded-lg transition-colors shrink-0"
-                          title="Verify on Solscan"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                        </a>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+            <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-500">
+              <span>Show Outliers</span>
+              <span>•</span>
+              <span>Phantom</span>
             </div>
-
           </div>
-        </div>
-      )}
 
-      {/* --- DEPOSIT MODAL --- */}
-      {isDepositOpen && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="absolute inset-0" onClick={() => setIsDepositOpen(false)}></div>
-          <div className="bg-[#1C1C1E] border-t border-white/10 rounded-t-3xl w-full max-w-lg p-6 relative z-10 animate-slideUpNative flex flex-col items-center">
-             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6"></div>
-             <h3 className="text-lg font-black text-white uppercase tracking-widest mb-2">Deposit SOL</h3>
-             <p className="text-[11px] font-medium text-zinc-400 mb-6 text-center">Scan QR or copy your address to fund your wallet.</p>
-             <div className="bg-white p-2 rounded-xl mb-6">
-                <svg className="w-40 h-40 text-black" viewBox="0 0 100 100" shapeRendering="crispEdges">
-                   <path d="M0 0h30v30H0zm10 10h10v10H10zM70 0h30v30H70zm10 10h10v10H80zM0 70h30v30H0zm10 10h10v10H10z" fill="currentColor" />
-                   <path d="M35 5h5v5h-5zm10 0h15v5H45zm0 10h5v10h-5zm10-5h5v5h-5zm0 10h10v5H55zm-20 5h10v5H35zm0 10h5v5h-5zm10 5h5v5h-5zm20-20h5v5h-5zm5 5h5v10h-5zm5 10h5v5h-5zm-15 5h10v5H70zm10 5h15v5H80zm5 5h5v5h-5zm-50 5h5v5h-5zm10 0h5v5h-5zm10 0h15v5H50z" fill="currentColor" />
-                </svg>
-             </div>
-             <div className="bg-[#0A0A0B] border border-white/10 w-full p-4 rounded-xl flex justify-between items-center mb-6">
-                {/* 🚀 FIX: Shows your REAL connected wallet address! */}
-                <span className="font-mono text-xs text-white truncate w-3/4">{connectedAddress || 'Connect Wallet'}</span>
-                <button onClick={() => { if(connectedAddress){ navigator.clipboard.writeText(connectedAddress); alert('Address Copied!'); } }} className="text-[#089981] font-black text-[10px] uppercase tracking-widest bg-[#089981]/10 px-3 py-1.5 rounded">Copy</button>
-             </div>
-             <button onClick={() => setIsDepositOpen(false)} className="w-full py-4 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-zinc-400">Done</button>
-          </div>
-        </div>
-      )}
-
-      {/* --- ALERTS MODAL --- */}
-      {isAlertsOpen && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="absolute inset-0" onClick={() => setIsAlertsOpen(false)}></div>
-          <div className="bg-[#1C1C1E] border-t border-white/10 rounded-t-3xl w-full max-w-lg p-6 relative z-10 animate-slideUpNative flex flex-col">
-             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6"></div>
-             <h3 className="text-lg font-black text-white uppercase tracking-widest mb-2 text-center">Set Price Alert</h3>
-             <p className="text-[11px] font-medium text-zinc-400 mb-6 text-center">Get notified instantly when {displayToken.symbol} hits your target.</p>
-             <div className="bg-[#0A0A0B] border border-white/10 rounded-xl p-4 flex items-center justify-between gap-4 mb-6">
-                <span className="text-xl font-bold text-white">$</span>
-                <input 
-                  type="text" 
-                  inputMode="decimal"
-                  value={alertPrice ? formatInputWithCommas(alertPrice) : ''} 
-                  onChange={(e) => {
-                    const rawVal = e.target.value.replace(/,/g, '');
-                    if (rawVal === '' || /^\d*\.?\d*$/.test(rawVal)) {
-                      setAlertPrice(rawVal);
-                    }
-                  }} 
-                  placeholder={liveUsdPrice.toFixed(7)}
-                  className="bg-transparent text-right text-3xl font-black text-white w-full focus:outline-none placeholder-zinc-700 font-mono" 
-                />
-             </div>
-             <button 
-               onClick={() => { 
-                 const formattedDisplay = alertPrice ? formatInputWithCommas(alertPrice) : alertPrice;
-                 alert(`Alert set for $${formattedDisplay}!`); 
-                 setIsAlertsOpen(false); 
-               }} 
-               disabled={!alertPrice} 
-               className="w-full py-4 bg-[#089981] hover:bg-[#06806b] disabled:opacity-50 rounded-xl text-xs font-black uppercase tracking-widest text-white shadow-sm transition-colors active:scale-95"
-             >
-               Confirm Target
-             </button>
-          </div>
-        </div>
-      )}
-
-      {/* --- REPORT MODAL --- */}
-      {isReportModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="absolute inset-0" onClick={() => setIsReportModalOpen(false)}></div>
-          <div className="bg-[#1C1C1E] border-t border-rose-500/30 rounded-t-3xl w-full max-w-lg p-6 relative z-10 animate-slideUpNative flex flex-col">
-             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6"></div>
-             <h3 className="text-lg font-black text-white uppercase tracking-widest mb-2 flex items-center gap-2">🚩 Report {displayToken.symbol}</h3>
-             <p className="text-[11px] font-medium text-zinc-400 mb-6">Select a violation reason. False reporting will result in a global wallet ban.</p>
-             <div className="flex flex-col gap-3 mb-6">
-                {['Suspected Scam / Rug Pull', 'Impersonating Official Brand', 'Explicit / Offensive Content', 'Other Violation'].map(reason => (
-                  <button key={reason} onClick={() => setReportReason(reason)} className={`w-full py-4 px-5 rounded-xl border text-left text-xs font-black tracking-widest uppercase transition-all ${reportReason === reason ? 'border-rose-500 bg-rose-500/10 text-rose-400' : 'border-white/10 bg-[#0A0A0B] text-zinc-400 hover:border-white/30'}`}>{reason}</button>
-                ))}
-             </div>
-             <button onClick={submitReport} className="w-full py-4 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black uppercase tracking-widest text-white shadow-[0_4px_12px_rgba(242,54,69,0.2)]">Submit to Moderation</button>
-          </div>
-        </div>
-      )}
-
-      {/* --- NATIVE SHARE MODAL --- */}
-      {isShareOpen && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="absolute inset-0" onClick={() => setIsShareOpen(false)}></div>
-          
-          <div className="bg-[#1C1C1E] border-t border-white/10 rounded-t-3xl w-full max-w-lg p-6 relative z-10 animate-slideUpNative flex flex-col">
-             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6"></div>
-             
-             <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-5 flex flex-col mb-8 shadow-2xl relative overflow-hidden">
-                <div className={`absolute -top-12 -right-12 w-40 h-40 ${trendBgColor} opacity-20 rounded-full blur-3xl pointer-events-none`}></div>
-                <div className={`absolute -bottom-12 -left-12 w-40 h-40 ${trendBgColor} opacity-10 rounded-full blur-3xl pointer-events-none`}></div>
-                
-                <div className="flex justify-between items-start w-full z-10">
-                   <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-[#1A1A24] border border-white/5 rounded-full flex items-center justify-center text-2xl overflow-hidden shadow-inner">
-                        {displayToken.imagePreview ? <img src={displayToken.imagePreview} className="w-full h-full object-cover" alt="icon"/> : <span>{displayToken.icon}</span>}
-                      </div>
-                      <div className="flex flex-col">
-                         <span className="font-black text-white text-lg leading-tight">{displayToken.name}</span>
-                         <span className="text-xs text-zinc-400 font-mono mt-0.5">{displayToken.symbol}</span>
-                      </div>
-                   </div>
-                   <div className="flex flex-col items-end">
-                      <span className={`text-[9px] font-black ${trendTextColor} uppercase tracking-widest mb-0.5`}>Market Cap</span>
-                      <span className="text-2xl font-black text-white tracking-wide">{dynamicMarketCapString}</span>
-                   </div>
-                </div>
-
-                <div className="flex flex-col mt-6 z-10">
-              <span className="text-4xl font-black text-white tracking-tighter">{formatProPrice(`$${liveUsdPrice.toFixed(7)}`)}</span>
-              <span className={`${isPositiveChange ? 'text-[#00FF66]' : 'text-[#FF3B69]'} text-sm font-bold mt-1 tracking-wide flex items-center gap-1`}>
-                 {isPositiveChange ? '▲' : '▼'} {Math.abs(priceChangePct)}%
-              </span>
+          <div className="flex-1 min-h-0 w-full relative bg-[#0e0f14] flex items-center justify-center">
+            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#089981_1px,transparent_1px)] [background-size:16px_16px]" />
+            <div className="z-10 text-center">
+              <div className="text-4xl mb-2">📈</div>
+              <span className="text-xs text-zinc-400 font-mono tracking-wider uppercase">TRADINGVIEW REAL-TIME CHART WIDGET EMBED</span>
             </div>
+          </div>
 
-                <div className="flex justify-between items-end mt-6 pt-4 border-t border-white/10 z-10">
-                   <div className="flex items-center gap-2">
-                      <div className="relative w-6 h-6 flex items-center justify-center">
-                         <svg viewBox="0 0 100 100" className="w-full h-full">
-                            <path d="M 50 10 L 10 90 L 30 90 L 50 45 L 70 90 L 90 90 Z" fill="#FFFFFF" />
-                            <path d="M 50 45 C 35 70, 35 85, 50 85 C 65 85, 70, 50 45 Z" fill="#089981" />
-                         </svg>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-black tracking-widest text-white uppercase mt-0.5 leading-none">Apex Forge</span>
-                        <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Scan to Trade</span>
-                      </div>
-                   </div>
-                   
-                   <div className="bg-white p-1.5 rounded-lg shadow-lg shrink-0 flex items-center justify-center border border-white/20 w-14 h-14">
-                     <svg className="w-full h-full text-black" viewBox="0 0 100 100" shapeRendering="crispEdges">
-                       <path d="M0 0h30v30H0zm10 10h10v10H10zM70 0h30v30H70zm10 10h10v10H80zM0 70h30v30H0zm10 10h10v10H10z" fill="currentColor" />
-                       <path d="M35 5h5v5h-5zm10 0h15v5H45zm0 10h5v10h-5zm10-5h5v5h-5zm0 10h10v5H55zm-20 5h10v5H35zm0 10h5v5h-5zm10 5h5v5h-5zm20-20h5v5h-5zm5 5h5v10h-5zm5 10h5v5h-5zm-15 5h10v5H70zm10 5h15v5H80zm5 5h5v5h-5zm-50 5h5v5h-5zm10 0h5v5h-5zm10 0h15v5H50z" fill="currentColor" />
-                       <rect x="42" y="42" width="16" height="16" rx="4" fill="#089981" />
-                     </svg>
-                   </div>
-                </div>
-             </div>
-
-             <div className="flex gap-4 px-2">
-                <div className="flex flex-col items-center gap-2">
-                  <button onClick={handleCopyShareLink} className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                  </button>
-                  <span className="text-[10px] font-bold text-zinc-400">Copy link</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <button onClick={executeNativeShare} className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-4-6l-4-4-4 4m4-4v13" /></svg>
-                  </button>
-                  <span className="text-[10px] font-bold text-zinc-400">Share</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <button onClick={executeDownload} className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                  </button>
-                  <span className="text-[10px] font-bold text-zinc-400">Download</span>
-                </div>
-             </div>
+          <div className="flex items-center justify-between px-3 py-1.5 border-t border-white/5 bg-[#0a0b0e] text-[10px] font-mono text-zinc-500 shrink-0">
+            <div className="flex items-center gap-3">
+              {['5y', '1y', '6m', '3m', '1m', '5d', '1d'].map((range, i) => (
+                <span key={range} className={`cursor-pointer hover:text-white ${i === 6 ? 'text-zinc-300' : ''}`}>{range}</span>
+              ))}
+            </div>
+            <span>13:16:04 (UTC+1)</span>
           </div>
         </div>
-      )}
 
-      {/* --- SWAP/BUY/SELL MODAL --- */}
-      {isBuyModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="absolute inset-0" onClick={() => setIsBuyModalOpen(false)}></div>
-          
-          <div className={`bg-[#1C1C1E] border-t ${displayToken.isGraduated ? 'border-amber-500/30' : (tradeMode === 'buy' ? 'border-[#089981]/30' : 'border-[#F23645]/30')} rounded-t-3xl w-full max-w-lg p-6 relative z-10 animate-slideUpNative flex flex-col transition-colors duration-300`}>
-             
-             <div className="flex justify-between items-center mb-6">
-                <div className="flex flex-col">
-                  <h3 className="text-lg font-black text-white uppercase tracking-widest flex items-center gap-2">
-                    Trade {displayToken.symbol}
-                    {displayToken.isGraduated && <span className="bg-amber-500/10 text-amber-500 text-[8px] px-1.5 py-0.5 rounded uppercase border border-amber-500/20">DEX Swap</span>}
-                  </h3>
-                  {displayToken.isGraduated && <span className="text-[9px] text-zinc-500 font-bold uppercase mt-1">Jupiter Aggregator Routing</span>}
-                </div>
-                <button onClick={() => setIsBuyModalOpen(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg></button>
-             </div>
+      </div>
 
-            <TradeWidget 
-              displayToken={displayToken}
-              tradeMode={tradeMode}
-              setTradeMode={setTradeMode}
-              tradeAmount={tradeAmount}
-              setTradeAmount={setTradeAmount}
-              userBalanceSol={userBalanceSol}
-              userTokenBalance={userTokenBalance}
-              handleExecuteTrade={handleExecuteTrade}
-              isProcessing={isProcessing}
-              curveState={curveState}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* 🚀 MOUNT LIVE STREAM PLAYER SPECIFICALLY INSIDE THIS TOKEN PAGE VIEW */}
-      <ActiveTvStream 
-        currentTokenSymbol={displayToken.symbol} 
-        creatorAddress={displayToken.creator}
-      />
-
-      {/* --- UNMOVABLE BOTTOM BUY MAT (FLUSH MOBILE & PWA FIT) --- */}
-      <div className="flex-none bg-[#0E0E14] z-30 pt-2.5 pb-[max(12px,env(safe-area-inset-bottom))] px-4 border-t border-white/[0.05] shadow-[0_-10px_30px_rgba(0,0,0,0.8)] relative">
-        <div className="max-w-4xl mx-auto flex flex-col items-center">
-          
-          <button 
-            onClick={() => { setTradeMode('buy'); setIsBuyModalOpen(true); }} 
-            className={`w-full ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 text-black shadow-[0_4px_12px_rgba(245,158,11,0.15)]' : 'bg-[#089981] hover:opacity-90 text-white shadow-[0_4px_12px_rgba(8,153,129,0.15)]'} font-black text-base py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-transform active:scale-95 uppercase tracking-widest`}
+      {/* ==================== RIGHT SIDEBAR ==================== */}
+      {/* RIGHT SIDEBAR */}
+<div className="col-span-12 lg:col-span-3 xl:col-span-3 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        
+        {/* Switcher Tabs */}
+        <div className="flex items-center border-b border-white/5 bg-[#0a0b0e] p-1.5 gap-1 shrink-0">
+          <button
+            onClick={() => setRightPanelMode('swap')}
+            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              rightPanelMode === 'swap' 
+                ? 'bg-[#1c1d24] text-white shadow border border-white/10' 
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
           >
-            {displayToken.isGraduated ? 'Trade on DEX ⚡' : 'Trade Token'}
+            ⚡ Quick Swap
           </button>
-          
-          {displayToken.isGraduated ? (
-            <div className="flex items-center justify-center gap-1.5 mt-1.5">
-              <span className="text-amber-500 text-[10px]">🔒</span>
-              <span className="text-[10px] font-bold text-zinc-400 tracking-wide">Liquidity pool burned & locked on Raydium.</span>
+          <button
+            onClick={() => setRightPanelMode('hub')}
+            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              rightPanelMode === 'hub' 
+                ? 'bg-[#1c1d24] text-white shadow border border-white/10' 
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            📊 Market Hub
+          </button>
+        </div>
+
+        {rightPanelMode === 'swap' ? (
+          <div className="flex-1 flex flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            
+            {/* 5m Volume Header Bar */}
+            <div className="p-3 border-b border-white/5 bg-[#0a0b0e] shrink-0">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[10px] text-zinc-500 font-bold">5m Vol</span>
+                <span className="text-xs font-mono font-black text-white">$349.5K</span>
+              </div>
+              <div className="flex justify-between items-center text-[10px] font-mono mb-1">
+                <span className="text-[#089981]">1.12K • $157.4K</span>
+                <span className="text-[#F23645]">979 • $192.1K</span>
+              </div>
+              <div className="h-1 bg-white/5 rounded-full flex overflow-hidden">
+                <div className="bg-[#089981] h-full" style={{ width: '45%' }} />
+                <div className="bg-[#F23645] h-full" style={{ width: '55%' }} />
+              </div>
+            </div>
+
+            {/* Trading Controls Area */}
+            <div className="p-3 space-y-4">
+              
+              {/* Buy / Sell Tabs */}
+              <div className="flex justify-between items-center">
+                <div className="flex gap-1 bg-[#1a1b22] p-1 rounded-lg flex-1">
+                  <button
+                    onClick={() => { setTradeMode('buy'); setIsSellPercentageMode(false); }}
+                    className={`flex-1 py-1.5 text-xs font-black rounded-md transition-colors ${
+                      tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow' : 'text-zinc-500 hover:text-white'
+                    }`}
+                  >
+                    Buy
+                  </button>
+                  <button
+                    onClick={() => setTradeMode('sell')}
+                    className={`flex-1 py-1.5 text-xs font-black rounded-md transition-colors ${
+                      tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow' : 'text-zinc-500 hover:text-white'
+                    }`}
+                  >
+                    Sell
+                  </button>
+                </div>
+
+                {tradeMode === 'sell' && (
+                  <button 
+                    onClick={() => setIsSellPercentageMode(!isSellPercentageMode)}
+                    className="ml-2 p-2 bg-[#1a1b22] rounded-lg text-zinc-400 hover:text-white text-xs"
+                    title="Toggle Percentage Mode"
+                  >
+                    ≡
+                  </button>
+                )}
+              </div>
+
+              {/* Amount Input Block */}
+              <div>
+                <div className="flex justify-between text-[10px] text-zinc-500 font-bold mb-1 px-1 uppercase tracking-wider">
+                  <span>Amount to {tradeMode}</span>
+                  <span>{tradeMode === 'buy' ? 'SOL' : currentToken.symbol}</span>
+                </div>
+                <div className="bg-[#0c0d10] border border-white/5 rounded-lg flex items-center px-3 py-2.5 focus-within:border-[#8145e6]/50">
+                  <input
+                    type="text"
+                    placeholder="0"
+                    value={tradeAmount}
+                    onChange={(e) => setTradeAmount(e.target.value)}
+                    className="w-full bg-transparent outline-none text-xl font-mono font-black text-white placeholder-zinc-700"
+                  />
+                </div>
+              </div>
+
+              {/* Quick Amount Selector Buttons */}
+              {!isSellPercentageMode ? (
+                <div className="grid grid-cols-3 gap-1.5">
+                  {['0.1', '0.25', '0.5', '1', '5', 'Max'].map((val) => (
+                    <button
+                      key={val}
+                      onClick={() => setTradeAmount(val === 'Max' ? '10' : val)}
+                      className="py-1.5 bg-[#1a1b22] hover:bg-white/10 rounded-md text-[11px] font-bold text-zinc-400 hover:text-white transition-colors"
+                    >
+                      {val === 'Max' ? val : <span className="font-mono">{val} =</span>}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 gap-1.5">
+                  {['10%', '25%', '50%', '100%'].map((val) => (
+                    <button
+                      key={val}
+                      onClick={() => setTradeAmount(val)}
+                      className="py-1.5 bg-[#1a1b22] hover:bg-white/10 rounded-md text-[11px] font-bold text-zinc-400 hover:text-white transition-colors font-mono"
+                    >
+                      {val}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Summary Stats */}
+              <div className="space-y-1 text-[10px] font-mono text-zinc-500 pt-1">
+                <div className="flex justify-between">
+                  <span>Amount</span>
+                  <span className="text-white font-bold">≈ 324.59M {currentToken.symbol}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Holdings</span>
+                  <span className="text-white font-bold">0 {currentToken.symbol}</span>
+                </div>
+              </div>
+
+              {/* Action Trigger Button */}
+              <button 
+                onClick={() => handleExecuteTrade(tradeMode, tradeAmount, currentToken)}
+                className={`w-full py-3 rounded-xl font-black text-xs transition-transform active:scale-[0.98] ${
+                  tradeMode === 'buy' ? 'bg-[#00f2a1] text-black hover:bg-[#00d990]' : 'bg-[#F23645] text-white hover:bg-[#d92b39]'
+                }`}
+              >
+                {tradeMode === 'buy' ? `Add SOL for fees` : `SELL ${currentToken.symbol}`}
+              </button>
+
+              {/* Fee Details Dropdown */}
+              <div className="border-t border-white/5 pt-2">
+                <div 
+                  onClick={() => setShowFeeDetails(!showFeeDetails)}
+                  className="flex justify-between items-center text-[10px] text-zinc-500 font-bold cursor-pointer hover:text-zinc-300"
+                >
+                  <span>$0.12 + 0.85% fee</span>
+                  <span className="text-[9px]">Details {showFeeDetails ? '▴' : '▾'}</span>
+                </div>
+
+                {showFeeDetails && (
+                  <div className="mt-2 p-2 bg-[#0c0d10] border border-white/5 rounded-lg space-y-1.5 text-[10px] font-mono text-zinc-400">
+                    <div className="flex justify-between">
+                      <span>Rate</span>
+                      <span className="text-white">1 SOL = 13.59M {currentToken.symbol}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Slippage</span>
+                      <span className="text-amber-400 font-bold">Auto - 7.6%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Price Impact</span>
+                      <span className="text-[#F23645] font-bold">79.83% (Very high)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Solana Network Fee</span>
+                      <span className="text-white">$0.12</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Your Position Module */}
+              <div className="border-t border-white/5 pt-3">
+                <div className="text-[11px] font-bold text-white mb-2">Your Position</div>
+                <div className="grid grid-cols-4 gap-1 text-center bg-[#0c0d10] p-2 border border-white/5 rounded-lg font-mono text-[10px]">
+                  <div>
+                    <span className="block text-zinc-500 text-[8px] uppercase">Bought</span>
+                    <span className="text-white font-bold">0</span>
+                  </div>
+                  <div>
+                    <span className="block text-zinc-500 text-[8px] uppercase">Holding</span>
+                    <span className="text-white font-bold">0</span>
+                  </div>
+                  <div>
+                    <span className="block text-zinc-500 text-[8px] uppercase">Sold</span>
+                    <span className="text-white font-bold">0</span>
+                  </div>
+                  <div>
+                    <span className="block text-zinc-500 text-[8px] uppercase">P&L</span>
+                    <span className="text-zinc-500 font-bold">0 (0%)</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Token Info Security Grid */}
+              <div className="border-t border-white/5 pt-3 pb-2">
+                <div className="text-[11px] font-bold text-white mb-2">Token Info</div>
+                <div className="grid grid-cols-3 gap-2 text-[10px] font-mono">
+                  <div className="bg-[#0c0d10] p-1.5 border border-white/5 rounded">
+                    <span className="block text-zinc-500 text-[9px]">Top 10 H</span>
+                    <span className="text-amber-500 font-bold">{currentToken.top10 || '50.64%'}</span>
+                  </div>
+                  <div className="bg-[#0c0d10] p-1.5 border border-white/5 rounded">
+                    <span className="block text-zinc-500 text-[9px]">Dev H</span>
+                    <span className="text-white font-bold">0%</span>
+                  </div>
+                  <div className="bg-[#0c0d10] p-1.5 border border-white/5 rounded">
+                    <span className="block text-zinc-500 text-[9px]">Snipers H</span>
+                    <span className="text-[#F23645] font-bold">202.57%</span>
+                  </div>
+                  <div className="bg-[#0c0d10] p-1.5 border border-white/5 rounded">
+                    <span className="block text-zinc-500 text-[9px]">Bundled H</span>
+                    <span className="text-white font-bold">0%</span>
+                  </div>
+                  <div className="bg-[#0c0d10] p-1.5 border border-white/5 rounded">
+                    <span className="block text-zinc-500 text-[9px]">LP Burned</span>
+                    <span className="text-[#089981] font-bold">100%</span>
+                  </div>
+                  <div className="bg-[#0c0d10] p-1.5 border border-white/5 rounded">
+                    <span className="block text-zinc-500 text-[9px]">Mutable</span>
+                    <span className="text-zinc-500 font-bold">Disabled</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        ) : (
+          /* MARKET HUB VIEW */
+         /* MARKET HUB VIEW */
+<div className="flex-1 flex flex-col overflow-hidden">
+  <div className="flex overflow-x-auto border-b border-white/5 bg-[#0a0b0e] shrink-0 [&::-webkit-scrollbar]:hidden">
+    {[
+      { id: 'trades', label: 'Trades' },
+      { id: 'chat', label: 'Chat' },
+      { id: 'positions', label: 'Positions' },
+      { id: 'top_traders', label: 'Traders' },
+      { id: 'holders', label: 'Holders' }
+    ].map((tab) => (
+      <button
+        key={tab.id}
+        onClick={() => setActiveHubTab(tab.id)}
+        className={`px-3 py-2 text-[11px] font-bold border-b-2 transition-colors whitespace-nowrap ${
+          activeHubTab === tab.id
+            ? 'border-[#089981] text-white bg-white/5' 
+            : 'border-transparent text-zinc-500 hover:text-zinc-300'
+        }`}
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
+
+  <div className="flex-1 overflow-y-auto p-3 bg-[#0c0d10] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-white/10">
+    {activeHubTab === 'trades' ? (
+      <div className="flex flex-col h-full">
+        {/* Trades Sub-Header (All Trades vs My Trades) */}
+        <div className="flex items-center gap-1.5 pb-2 mb-2 border-b border-white/5 shrink-0">
+          <button
+            onClick={() => setTradesSubTab('all')}
+            className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition-all ${
+              tradesSubTab === 'all'
+                ? 'bg-white/10 text-white shadow-sm'
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            All Trades
+          </button>
+          <button
+            onClick={() => setTradesSubTab('my')}
+            className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition-all ${
+              tradesSubTab === 'my'
+                ? 'bg-white/10 text-white shadow-sm'
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            My Trades
+          </button>
+        </div>
+
+        {/* Dynamic Trade Content */}
+        <div className="flex-1 overflow-y-auto">
+          {tradesSubTab === 'all' ? (
+            <div className="h-full min-h-[180px] flex items-center justify-center text-xs text-zinc-500 font-mono border border-white/5 border-dashed rounded-lg">
+              ALL TRADES CONTENT COMPONENT
             </div>
           ) : (
-            <div className="flex items-center justify-center gap-1.5 mt-1.5">
-              <span className="text-amber-500 text-[10px]">⚠️</span>
-              <span className="text-[10px] font-medium text-amber-500/90 tracking-wide">This coin is new and may be volatile.</span>
+            <div className="h-full min-h-[180px] flex items-center justify-center text-xs text-zinc-500 font-mono border border-white/5 border-dashed rounded-lg">
+              MY TRADES CONTENT COMPONENT
             </div>
           )}
-
         </div>
+      </div>
+    ) : activeHubTab === 'chat' ? (
+      <TokenChat tokenSymbol={currentToken.symbol} />
+    ) : (
+      <div className="h-full min-h-[200px] flex items-center justify-center text-xs text-zinc-500 font-mono border border-white/5 border-dashed rounded-lg">
+        {activeHubTab.toUpperCase()} CONTENT COMPONENT
+      </div>
+    )}
+  </div>
+</div>
+        )}
+
       </div>
 
     </div>

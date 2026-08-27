@@ -80,22 +80,29 @@ export default function Navbar({ activeRoute = 'discover', setActiveRoute, onOpe
 
         {/* Tabs */}
         <nav className="hidden md:flex items-center gap-4 font-sans text-xs font-bold">
-          {['Tokens', 'Perps', 'Portfolio'].map((tab) => {
-            const isActive = activeRoute.toLowerCase() === tab.toLowerCase();
-            return (
-              <button
-                key={tab}
-                onClick={() => handleViewSelect(tab)}
-                className={`transition-colors cursor-pointer ${
-                  isActive ? 'text-white font-black' : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                {tab}
-              </button>
-            );
-          })}
+          <button
+            onClick={() => handleViewSelect('tokens')}
+            className={`transition-colors cursor-pointer ${
+              activeRoute.toLowerCase() === 'tokens' || activeRoute.toLowerCase() === 'discover'
+                ? 'text-white font-black' 
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            Tokens
+          </button>
+
+          <button
+            onClick={() => handleViewSelect('portfolio')}
+            className={`transition-colors cursor-pointer ${
+              activeRoute.toLowerCase() === 'portfolio' 
+                ? 'text-white font-black' 
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            Portfolio
+          </button>
         </nav>
-      </div>
+        </div>
 
       {/* SEARCH BAR */}
       <div className="flex-1 max-w-xs xl:max-w-sm hidden lg:block">

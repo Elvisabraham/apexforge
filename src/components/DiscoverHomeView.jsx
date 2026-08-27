@@ -5,17 +5,16 @@ export default function DiscoverHomeView({ newTokens = [], migratingTokens = [],
   const [leftTab, setLeftTab] = useState('Total'); 
   const [subTab, setSubTab] = useState('Positions'); 
   const [launchesFilter, setLaunchesFilter] = useState('New'); 
-  const [launchesDropdownOpen, setLaunchesDropdownOpen] = useState(false);
   const [timeframe, setTimeframe] = useState('24h'); 
   const [timeframeDropdownOpen, setTimeframeDropdownOpen] = useState(false);
 
-  const launchesRef = useRef(null);
   const timeframeRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (launchesRef.current && !launchesRef.current.contains(event.target)) setLaunchesDropdownOpen(false);
-      if (timeframeRef.current && !timeframeRef.current.contains(event.target)) setTimeframeDropdownOpen(false);
+      if (timeframeRef.current && !timeframeRef.current.contains(event.target)) {
+        setTimeframeDropdownOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -85,20 +84,20 @@ export default function DiscoverHomeView({ newTokens = [], migratingTokens = [],
           </div>
         </div>
 
-<div className="space-y-2.5 overflow-y-auto custom-scrollbar flex-1 pr-0.5">
-  {displayedTokens.length === 0 ? (
-    <div className="flex items-center justify-center h-32 text-xs text-zinc-600">No active launches.</div>
-  ) : (
-    displayedTokens.map((t) => (
-      <TokenCard 
-        key={t.id || t.mintAddress || Math.random()} 
-        token={t} 
-        columnType={launchesFilter.toLowerCase()} 
-      />
-    ))
-  )}
-</div>
-</div>
+        <div className="space-y-2.5 overflow-y-auto flex-1 pr-0.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {displayedTokens.length === 0 ? (
+            <div className="flex items-center justify-center h-32 text-xs text-zinc-600">No active launches.</div>
+          ) : (
+            displayedTokens.map((t, idx) => (
+              <TokenCard 
+                key={t.id || t.mintAddress || `${t.name}-${idx}`} 
+                token={t} 
+                columnType={launchesFilter.toLowerCase()} 
+              />
+            ))
+          )}
+        </div>
+      </div>
 
       {/* Column 3: Top Tokens Leaderboard */}
       <div className="bg-[#121318] border border-zinc-800/80 rounded-xl p-4 flex flex-col h-full overflow-hidden">
@@ -129,7 +128,7 @@ export default function DiscoverHomeView({ newTokens = [], migratingTokens = [],
           </div>
         </div>
 
-        <div className="space-y-1 overflow-y-auto custom-scrollbar flex-1 text-xs pr-0.5">
+        <div className="space-y-1 overflow-y-auto flex-1 text-xs pr-0.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <div className="flex justify-between text-[10px] text-zinc-500 px-2 py-1.5 font-medium border-b border-zinc-800/40 uppercase tracking-wider">
             <span># TOKEN</span>
             <span>MARKET CAP</span>
@@ -148,7 +147,7 @@ export default function DiscoverHomeView({ newTokens = [], migratingTokens = [],
                 <span className="text-zinc-500 text-[11px] w-3 font-mono">{item.rank}</span>
                 <span className="font-semibold text-white text-xs">{item.name}</span>
               </div>
-              <span className="text-emerald-400 font-medium text-xs">{item.mc}</span>
+              <span className="text-[#089981] font-medium text-xs">{item.mc}</span>
             </div>
           ))}
         </div>

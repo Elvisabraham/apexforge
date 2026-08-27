@@ -391,8 +391,8 @@ const [tradeAmount, setTradeAmount] = useState('');
       
       <style>{`
         * { -webkit-tap-highlight-color: transparent !important; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+        .scrollbar-hide { -ms-overflow-style: none !important; scrollbar-width: none !important; }
 
         /* 🚀 HIDE DESKTOP BROWSER SPINNER ARROWS */
         input[type=number]::-webkit-inner-spin-button, 
@@ -496,7 +496,7 @@ const [tradeAmount, setTradeAmount] = useState('');
       </div>
 
       {/* --- CHAT FEED --- */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide bg-[#050505]" onClick={() => setActiveReactionId(null)}>
+     <div className="flex-1 overflow-y-auto p-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-[#050505]" onClick={() => setActiveReactionId(null)}>
         {messages.map((dbMsg) => {
             // 🚀 ADAPTER: Translate Supabase database fields into your custom UI fields
             const msg = {
