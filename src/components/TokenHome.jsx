@@ -3,14 +3,15 @@ import SidebarTokenRow from './SidebarTokenRow';
 import { formatPhantomPrice } from '../utils/formatters';
 import TokenChat from './TokenChat';
 
-export default function TokenHome({ 
-  selectedTokenData, 
-  setSelectedTokenData, 
-  globalTokens = [], 
+export default function TokenHome({
+  setActiveRoute,
+  selectedTokenData,
+  setSelectedTokenData,
+  globalTokens = [],
   userSolBalance = 0,
   formatWithCommas = (val) => val,
   calculateTokenYield = () => '0',
-  handleExecuteTrade = () => {} 
+  handleExecuteTrade = () => {}
 }) {
   const [leftTab, setLeftTab] = useState('Tokens');
   const [rightPanelMode, setRightPanelMode] = useState('swap'); // 'swap' | 'hub'
@@ -55,20 +56,27 @@ const handleCopyCA = (address) => {
      {/* ==================== LEFT SIDEBAR ==================== */}
      <div className={`${isSidebarOpen ? 'col-span-12 lg:col-span-4 xl:col-span-3' : 'hidden'} bg-[#121318] border border-white/5 rounded-xl flex flex-col h-full overflow-hidden`}>
       <div className="flex items-center border-b border-white/5 bg-[#0a0b0e] p-1.5 gap-1 shrink-0">
-          {['Tokens', 'Follows', 'Track'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setLeftTab(tab)}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                leftTab === tab
-                  ? 'bg-[#1c1d24] text-white shadow'
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+      {['Tokens', 'Follows', 'Track'].map((tab) => (
+  <button
+    key={tab}
+    type="button"
+    onClick={() => {
+      setLeftTab(tab);
+      if (tab === 'Track') {
+        // Trigger route switcher if passed from parent
+        if (typeof setActiveRoute === 'function') setActiveRoute('track');
+      }
+    }}
+    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+      leftTab === tab
+        ? 'bg-[#1c1d24] text-white shadow'
+        : 'text-zinc-500 hover:text-zinc-300'
+    }`}
+  >
+    {tab}
+  </button>
+))}
+    </div>
 
         <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] divide-y divide-white/[0.03] p-1">
           {(globalTokens && globalTokens.length > 0 ? globalTokens : [

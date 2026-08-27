@@ -1,173 +1,176 @@
 import React, { useState } from 'react';
-import { Search, Zap } from 'lucide-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { useWallet } from '@solana/wallet-adapter-react';
-import logo from '../assets/logo.png';
 
-export default function Navbar({ 
-  activeRoute = 'discover', 
-  setActiveRoute, 
-  onOpenForgeModal,
-  onOpenNotifications,
-  onOpenAccountDrawer,
-  userProfile 
+export default function Navbar({
+  activeRoute = 'tokens',
+  setActiveRoute,
+  currentView = 'tokens',
+  setCurrentView,
+  userProfile,
+  setForgeModalOpen,
+  searchQuery: externalSearch,
+  setSearchQuery: externalSetSearch,
 }) {
-  const { connected } = useWallet();
-  const [viewDropdownOpen, setViewDropdownOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [internalSearch, setInternalSearch] = useState('');
 
-  // Capitalize active route for display label
-  const currentLabel = activeRoute ? activeRoute.charAt(0).toUpperCase() + activeRoute.slice(1).toLowerCase() : 'Discover';
+  const activeView = activeRoute || currentView || 'tokens';
+  const currentLabel = activeView.toUpperCase();
 
-  // Quick-Buy & Slippage state
-  const [quickBuyAmount, setQuickBuyAmount] = useState('0.1');
-  const [selectedSlippage, setSelectedSlippage] = useState('1');
-
-  const handleViewSelect = (viewName) => {
-    if (setActiveRoute) {
-      setActiveRoute(viewName.toLowerCase());
-    }
-    setViewDropdownOpen(false);
+  const handleRouteSelect = (route) => {
+    if (typeof setActiveRoute === 'function') setActiveRoute(route);
+    if (typeof setCurrentView === 'function') setCurrentView(route);
+    setDropdownOpen(false);
   };
 
-  const isMainView = ['launches', 'discover', 'track'].includes(activeRoute.toLowerCase());
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setInternalSearch(value);
+    if (typeof externalSetSearch === 'function') {
+      externalSetSearch(value);
+    }
+  };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#121216] border-b border-white/5 px-4 py-2.5 flex items-center justify-between gap-3 select-none">
+    <header className="relative z-[100] pointer-events-auto w-full h-[52px] bg-[#0A0A0A] border-b border-white/5 px-4 flex items-center justify-between shrink-0 select-none">
       
-      {/* LEFT: BRAND LOGO & VIEW SWITCHER DROPDOWN */}
+      {/* LEFT: VIEW SWITCHER DROPDOWN & NAV LINKS */}
       <div className="flex items-center gap-4 shrink-0">
-        
-        {/* Brand Logo */}
-        <div className="flex items-center gap-2 cursor-pointer group" onClick={() => handleViewSelect('discover')}>
-          <img src={logo} alt="Apex Forge" className="w-7 h-7 rounded-lg object-cover transition-transform group-hover:scale-105" />
-          <span className="font-black text-white text-base tracking-wider hidden sm:inline">APEXFORGE</span>
-        </div>
-
-        {/* View Switcher Dropdown */}
         <div className="relative">
-          <button 
-            onClick={() => setViewDropdownOpen(!viewDropdownOpen)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
-              viewDropdownOpen || isMainView
-                ? 'bg-[#252530] border-[#ab9ff2]/30 text-white shadow-md'
-                : 'bg-[#1c1c24] hover:bg-[#252530] border-white/5 text-zinc-300'
-            }`}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDropdownOpen((prev) => !prev);
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#089981]/40 bg-[#16171d] text-white text-xs font-black uppercase tracking-wider transition-all cursor-pointer hover:bg-[#20222b] active:scale-95"
           >
-            <span className={isMainView ? 'text-[#ab9ff2]' : 'text-zinc-300'}>{currentLabel}</span>
-            <svg 
-              className={`w-3 h-3 text-zinc-400 transition-transform duration-200 ${viewDropdownOpen ? 'rotate-180 text-white' : ''}`} 
-              fill="none" 
-              stroke="currentColor" 
+            <span className="text-[#089981]">{currentLabel}</span>
+            <svg
+              className={`w-3 h-3 text-[#089981] transition-transform duration-200 ${
+                dropdownOpen ? 'rotate-180' : ''
+              }`}
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
-          {viewDropdownOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setViewDropdownOpen(false)} />
-
-              <div className="absolute top-full left-0 mt-1.5 w-36 bg-[#1c1c24] border border-white/10 rounded-xl shadow-2xl p-1 z-50 flex flex-col gap-0.5">
-                {['Discover', 'Launches', 'Track'].map((view) => {
-                  const isActive = activeRoute.toLowerCase() === view.toLowerCase();
-                  return (
-                    <button
-                      key={view}
-                      onClick={() => handleViewSelect(view)}
-                      className={`px-3 py-2 text-left text-xs font-bold rounded-lg transition-all flex items-center justify-between cursor-pointer ${
-                        isActive 
-                          ? 'bg-[#252530] text-[#ab9ff2]' 
-                          : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                      }`}
-                    >
-                      <span>{view}</span>
-                      {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#ab9ff2]" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </>
+          {/* Dropdown Menu */}
+          {dropdownOpen && (
+            <div className="absolute top-full left-0 mt-2 w-44 bg-[#16171d] border border-white/10 rounded-xl shadow-2xl py-2 z-[110] backdrop-blur-md">
+              {['discover', 'launches', 'tokens', 'portfolio', 'track'].map((view) => (
+                <button
+                  key={view}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRouteSelect(view);
+                  }}
+                  className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors cursor-pointer ${
+                    activeView === view
+                      ? 'text-[#089981] bg-white/5'
+                      : 'text-zinc-300 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {view.toUpperCase()}
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
-        {/* Tabs */}
-        <nav className="hidden md:flex items-center gap-4 font-sans text-xs font-bold">
-          <button
-            onClick={() => handleViewSelect('tokens')}
+        {/* Quick Nav Links */}
+        <div className="hidden md:flex items-center gap-4 text-xs font-bold">
+          <button 
+            type="button"
+            onClick={() => handleRouteSelect('tokens')}
             className={`transition-colors cursor-pointer ${
-              activeRoute.toLowerCase() === 'tokens' || activeRoute.toLowerCase() === 'discover'
-                ? 'text-white font-black' 
-                : 'text-zinc-400 hover:text-zinc-200'
+              activeView === 'tokens' ? 'text-[#089981]' : 'text-zinc-400 hover:text-white'
             }`}
           >
             Tokens
           </button>
-
-          <button
-            onClick={() => handleViewSelect('portfolio')}
+          <button 
+            type="button"
+            onClick={() => handleRouteSelect('portfolio')}
             className={`transition-colors cursor-pointer ${
-              activeRoute.toLowerCase() === 'portfolio' 
-                ? 'text-white font-black' 
-                : 'text-zinc-400 hover:text-zinc-200'
+              activeView === 'portfolio' ? 'text-[#089981]' : 'text-zinc-400 hover:text-white'
             }`}
           >
             Portfolio
           </button>
-        </nav>
+        </div>
       </div>
 
-      {/* SEARCH BAR */}
-      <div className="flex-1 max-w-xs xl:max-w-sm hidden lg:block">
+      {/* CENTER: SEARCH BAR */}
+      <div className="flex-1 max-w-md mx-4 hidden sm:block">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
-          <input
-            type="text"
-            placeholder="Search tokens or CAs..."
-            className="w-full bg-[#1c1c24] border border-white/5 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#ab9ff2]/50 font-medium transition-all"
+          <svg 
+            className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input 
+            type="text" 
+            value={externalSearch !== undefined ? externalSearch : internalSearch}
+            onChange={handleSearchChange}
+            placeholder="Search tokens or CAs..." 
+            className="w-full bg-[#16171d] border border-white/5 rounded-lg pl-9 pr-4 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#089981]/60 transition-all cursor-text pointer-events-auto"
           />
         </div>
       </div>
 
-      {/* RIGHT CONTROLS */}
-      <div className="flex items-center gap-2 shrink-0">
-        <div className="hidden lg:flex items-center bg-[#1c1c24] border border-white/5 rounded-lg px-2.5 py-1.5 gap-1 text-xs font-mono">
-          <Zap className="w-3 h-3 text-[#00f2a1]" />
-          <span className="text-white font-bold">{quickBuyAmount}</span>
-          <span className="text-zinc-400 text-[10px]">SOL</span>
+      {/* RIGHT: ACTION CONTROLS */}
+      <div className="flex items-center gap-2.5 shrink-0">
+        {/* Balance Badge */}
+        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 bg-[#16171d] border border-white/5 rounded-lg text-xs font-bold text-zinc-300">
+          <span className="text-[#089981]">⚡ 0.1</span>
+          <span className="text-zinc-500">SOL</span>
         </div>
 
-        <button
-          onClick={onOpenForgeModal}
-          className="flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-[#ab9ff2] hover:bg-[#9b8df0] text-black font-black text-xs transition-all active:scale-95 shadow-sm cursor-pointer"
+        {/* + Forge Button */}
+        <button 
+          type="button"
+          onClick={() => setForgeModalOpen && setForgeModalOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#089981] hover:bg-[#067a67] text-white font-black text-xs rounded-lg transition-all shadow-sm cursor-pointer active:scale-95 shrink-0"
         >
           <span>+ Forge</span>
         </button>
 
-        <div className="apex-wallet-btn-wrapper">
-          <WalletMultiButton />
-        </div>
-
-        {/* Notification Bell */}
+        {/* Wallet Address Button */}
         <button 
-          onClick={onOpenNotifications}
-          className="w-8 h-8 bg-[#1c1c24] hover:bg-[#252530] text-zinc-300 hover:text-white rounded-lg border border-white/5 flex items-center justify-center transition-all cursor-pointer"
+          type="button"
+          className="flex items-center gap-2 px-3 py-1.5 bg-[#16171d] hover:bg-[#20222b] border border-[#089981]/40 text-white font-extrabold text-xs rounded-lg transition-all cursor-pointer active:scale-95"
         >
-          🔔
+          <span className="w-2 h-2 rounded-full bg-[#089981] animate-pulse"></span>
+          <span>43pU..q2HR</span>
         </button>
 
-        {/* User Profile / Account Drawer */}
-        <div 
-          onClick={onOpenAccountDrawer}
-          className="flex items-center gap-2 bg-[#1c1c24] hover:bg-[#252530] border border-white/5 px-2.5 py-1.5 rounded-lg cursor-pointer transition-all"
+        {/* Notifications Button */}
+        <button 
+          type="button"
+          className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#16171d] border border-white/5 text-zinc-400 hover:text-white hover:bg-[#20222b] transition-all cursor-pointer active:scale-95"
         >
-          <div className="w-5 h-5 rounded-full bg-[#ab9ff2]/20 text-[#ab9ff2] flex items-center justify-center font-bold text-[10px]">
-            {userProfile?.name ? userProfile.name[0] : 'E'}
-          </div>
-          <span className="text-xs font-bold text-zinc-200 hidden sm:inline">
-            {userProfile?.name || 'Elvis'}
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+        </button>
+
+        {/* User Profile */}
+        <button 
+          type="button"
+          className="flex items-center gap-2 px-2 py-1 bg-[#16171d] border border-white/5 rounded-lg text-xs font-bold text-zinc-300 hover:bg-[#20222b] transition-all cursor-pointer"
+        >
+          <span className="w-5 h-5 rounded-full bg-zinc-800 text-[#089981] flex items-center justify-center text-[10px] font-bold">
+            E
           </span>
-        </div>
+          <span className="hidden sm:inline text-zinc-200">{userProfile?.name || 'Elvis AI'}</span>
+        </button>
       </div>
 
     </header>

@@ -4,59 +4,49 @@
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
+
 .animate-fadeIn {
   animation: fadeIn 0.2s ease-out forwards;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-/* Hide scrollbar for IE, Edge and Firefox */
-.scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-}
-
-/* Completely hide scrollbars while allowing smooth scrolling */
-.custom-scrollbar {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-}
-.custom-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-/* Hide scrollbar for Chrome, Safari and Opera */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-/* Hide scrollbar for IE, Edge and Firefox */
-.no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-}
-
-@layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-}
-
-/* Hide scrollbar for Chrome, Safari and Opera */
+/* Hide scrollbars completely while allowing smooth scrolling */
+.scrollbar-hide::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar,
 .no-scrollbar::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide,
+.custom-scrollbar,
 .no-scrollbar {
   -ms-overflow-style: none !important;  /* IE and Edge */
   scrollbar-width: none !important;  /* Firefox */
+}
+
+/* Solana Wallet Adapter Button Override */
+.wallet-adapter-button {
+  height: 32px !important;
+  line-height: 32px !important;
+  padding: 0 12px !important;
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+  border-radius: 0.5rem !important;
+  background-color: #16171d !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(0, 240, 146, 0.4) !important;
+  transition: all 0.2s ease !important;
+}
+
+.wallet-adapter-button .wallet-adapter-button-start-icon {
+  width: 16px !important;
+  height: 16px !important;
+  margin-right: 6px !important;
+}
+
+.wallet-adapter-button:hover {
+  background-color: #20222b !important;
+  border-color: rgba(0, 240, 146, 0.8) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 146, 0.15);
 }
