@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import SidebarTokenRow from './SidebarTokenRow';
 import { formatPhantomPrice } from '../utils/formatters';
 import TokenChat from './TokenChat';
+import TrackView from './TrackView';
 
 export default function TokenHome({
   setActiveRoute,
@@ -61,12 +62,13 @@ const handleCopyCA = (address) => {
     key={tab}
     type="button"
     onClick={() => {
-      setLeftTab(tab);
-      if (tab === 'Track') {
-        // Trigger route switcher if passed from parent
-        if (typeof setActiveRoute === 'function') setActiveRoute('track');
-      }
-    }}
+  setLeftTab(tab);
+  if (tab === 'Track') {
+    if (typeof setActiveRoute === 'function') setActiveRoute('track');
+    if (typeof setActivePage === 'function') setActivePage('track');
+    if (typeof setTopNavTab === 'function') setTopNavTab('TRACK');
+  }
+}}
     className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
       leftTab === tab
         ? 'bg-[#1c1d24] text-white shadow'
