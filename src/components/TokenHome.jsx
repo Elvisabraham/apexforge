@@ -497,14 +497,16 @@ const handleCopyCA = (address) => {
               </div>
 
               {/* Action Trigger Button */}
-              <button 
-                onClick={() => handleExecuteTrade(tradeMode, tradeAmount, currentToken)}
-                className={`w-full py-3 rounded-xl font-black text-xs transition-transform active:scale-[0.98] ${
-                  tradeMode === 'buy' ? 'bg-[#00f2a1] text-black hover:bg-[#00d990]' : 'bg-[#F23645] text-white hover:bg-[#d92b39]'
-                }`}
-              >
-                {tradeMode === 'buy' ? `Add SOL for fees` : `SELL ${currentToken.symbol}`}
-              </button>
+        <button
+      onClick={() => setIsSwapModalOpen(true)}
+      className={`w-full py-3 rounded-xl font-black text-xs transition-transform active:scale-[0.98] ${
+      tradeMode === 'buy' 
+      ? 'bg-[#00f2a1] text-black hover:bg-[#00d990]' 
+      : 'bg-[#F23645] text-white hover:bg-[#e02a39]'
+      }`}
+      >
+      {tradeMode === 'buy' ? 'Add SOL for fees' : `SELL ${currentToken?.symbol}`}
+       </button>
 
               {/* Fee Details Dropdown */}
               <div className="border-t border-white/5 pt-2">
@@ -561,7 +563,7 @@ const handleCopyCA = (address) => {
                 </div>
               </div>
 
-              {/* Token Info Security Grid */}
+             {/* Token Info Security Grid */}
               <div className="border-t border-white/5 pt-3 pb-2">
                 <div className="text-[11px] font-bold text-white mb-2">Token Info</div>
                 <div className="grid grid-cols-3 gap-2 text-[10px] font-mono">
@@ -591,89 +593,91 @@ const handleCopyCA = (address) => {
                   </div>
                 </div>
               </div>
-
             </div>
-
           </div>
         ) : (
           /* MARKET HUB VIEW */
-         /* MARKET HUB VIEW */
-<div className="flex-1 flex flex-col overflow-hidden">
-  <div className="flex overflow-x-auto border-b border-white/5 bg-[#0a0b0e] shrink-0 [&::-webkit-scrollbar]:hidden">
-    {[
-      { id: 'trades', label: 'Trades' },
-      { id: 'chat', label: 'Chat' },
-      { id: 'positions', label: 'Positions' },
-      { id: 'top_traders', label: 'Traders' },
-      { id: 'holders', label: 'Holders' }
-    ].map((tab) => (
-      <button
-        key={tab.id}
-        onClick={() => setActiveHubTab(tab.id)}
-        className={`px-3 py-2 text-[11px] font-bold border-b-2 transition-colors whitespace-nowrap ${
-          activeHubTab === tab.id
-            ? 'border-[#089981] text-white bg-white/5' 
-            : 'border-transparent text-zinc-500 hover:text-zinc-300'
-        }`}
-      >
-        {tab.label}
-      </button>
-    ))}
-  </div>
-
-  <div className="flex-1 overflow-y-auto p-3 bg-[#0c0d10] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-white/10">
-    {activeHubTab === 'trades' ? (
-      <div className="flex flex-col h-full">
-        {/* Trades Sub-Header (All Trades vs My Trades) */}
-        <div className="flex items-center gap-1.5 pb-2 mb-2 border-b border-white/5 shrink-0">
-          <button
-            onClick={() => setTradesSubTab('all')}
-            className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition-all ${
-              tradesSubTab === 'all'
-                ? 'bg-white/10 text-white shadow-sm'
-                : 'text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            All Trades
-          </button>
-          <button
-            onClick={() => setTradesSubTab('my')}
-            className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition-all ${
-              tradesSubTab === 'my'
-                ? 'bg-white/10 text-white shadow-sm'
-                : 'text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            My Trades
-          </button>
-        </div>
-
-        {/* Dynamic Trade Content */}
-        <div className="flex-1 overflow-y-auto">
-          {tradesSubTab === 'all' ? (
-            <div className="h-full min-h-[180px] flex items-center justify-center text-xs text-zinc-500 font-mono border border-white/5 border-dashed rounded-lg">
-              ALL TRADES CONTENT COMPONENT
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex overflow-x-auto border-b border-white/5 bg-[#0a0b0e] shrink-0 [&::-webkit-scrollbar]:hidden">
+              {[
+                { id: 'trades', label: 'Trades' },
+                { id: 'chat', label: 'Chat' },
+                { id: 'positions', label: 'Positions' },
+                { id: 'top_traders', label: 'Traders' },
+                { id: 'holders', label: 'Holders' }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveHubTab(tab.id)}
+                  className={`px-3 py-2 text-[11px] font-bold border-b-2 transition-colors whitespace-nowrap ${
+                    activeHubTab === tab.id
+                      ? 'border-[#089981] text-white bg-white/5' 
+                      : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
-          ) : (
-            <div className="h-full min-h-[180px] flex items-center justify-center text-xs text-zinc-500 font-mono border border-white/5 border-dashed rounded-lg">
-              MY TRADES CONTENT COMPONENT
-            </div>
-          )}
+
+            <div className="flex-1 overflow-y-auto p-3 bg-[#0c0d10] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-white/10">
+              {activeHubTab === 'trades' ? (
+                <div className="flex flex-col h-full">
+                  {/* Trades Sub-Header (All Trades vs My Trades) */}
+                  <div className="flex items-center gap-1.5 pb-2 mb-2 border-b border-white/5 shrink-0">
+                    <button
+                      onClick={() => setTradesSubTab('all')}
+                      className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition-all ${
+                        tradesSubTab === 'all'
+                          ? 'bg-white/10 text-white shadow-sm'
+                          : 'text-zinc-500 hover:text-zinc-300'
+                      }`}
+                    >
+                      All Trades
+                    </button>
+                    <button
+                      onClick={() => setTradesSubTab('my')}
+                      className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition-all ${
+                        tradesSubTab === 'my'
+                          ? 'bg-white/10 text-white shadow-sm'
+                          : 'text-zinc-500 hover:text-zinc-300'
+                      }`}
+                    >
+                      My Trades
+                    </button>
+                  </div>
+
+                  {/* Dynamic Trade Content */}
+                  <div className="flex-1 overflow-y-auto">
+                    {tradesSubTab === 'all' ? (
+                      <div className="h-full min-h-[180px] flex items-center justify-center text-xs text-zinc-500 font-mono border border-white/5 border-dashed rounded-lg">
+                        ALL TRADES CONTENT COMPONENT
+                      </div>
+                    ) : (
+                      <div className="h-full min-h-[180px] flex items-center justify-center text-xs text-zinc-500 font-mono border-t border-white/5">
+                        MY TRADES CONTENT COMPONENT
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : activeHubTab === 'chat' ? (
+                <TokenChat tokenSymbol={currentToken.symbol} />
+              ) : (
+              <div className="h-full min-h-[200px] flex items-center justify-center text-xs text-zinc-500 font-mono border-t border-white/5">
+                {activeHubTab.toUpperCase()} CONTENT COMPONENT
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    ) : activeHubTab === 'chat' ? (
-      <TokenChat tokenSymbol={currentToken.symbol} />
-    ) : (
-      <div className="h-full min-h-[200px] flex items-center justify-center text-xs text-zinc-500 font-mono border border-white/5 border-dashed rounded-lg">
-        {activeHubTab.toUpperCase()} CONTENT COMPONENT
-      </div>
-    )}
-  </div>
-</div>
-        )}
-
-      </div>
-
+      )}
     </div>
-  );
+
+    {/* Desktop Trade Execution Modal Overlay */}
+    <SwapModal 
+      isOpen={isSwapModalOpen} 
+      onClose={() => setIsSwapModalOpen(false)} 
+      currentToken={currentToken} 
+    />
+  </div>
+);
 }
