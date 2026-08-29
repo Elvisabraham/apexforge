@@ -62,6 +62,10 @@ export default function TradeWidget({
   };
 
   const onSubmitClick = async () => {
+    if (!handleExecuteTrade) {
+      console.log('Backend not connected yet for trade submission.');
+      return;
+    }
     const success = await handleExecuteTrade();
     if (success) {
       setTradeAmount('');
@@ -178,18 +182,29 @@ export default function TradeWidget({
         </div>
       </div>
 
-      {/* SUBMIT BUTTON */}
-      <button
-        onClick={onSubmitClick}
-        disabled={!cleanNumericAmount || cleanNumericAmount <= 0 || isProcessing}
-        className={`w-full py-4 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${
-          displayToken?.isGraduated 
-            ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black' 
-            : (tradeMode === 'buy' ? 'bg-[#089981] hover:bg-[#067a67] text-white' : 'bg-[#F23645] hover:bg-[#c92a38] text-white')
-        } disabled:opacity-50 disabled:cursor-not-allowed`}
-      >
-        {isProcessing ? 'Confirming in Wallet... ⏳' : `Confirm ${tradeMode} ⚡`}
-      </button>
+     {/* SUBMIT BUTTON */}
+      {(userBalanceSol || 0) < 0.005 && tradeMode === 'buy' ? (
+        <button
+          type="button"
+          onClick={() => console.log('Add SOL clicked')}
+          className="w-full py-4 rounded-xl text-sm font-black uppercase tracking-widest bg-[#089981] hover:bg-[#067a67] text-white transition-all shadow-md"
+        >
+          Add SOL for fees
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={onSubmitClick}
+          disabled={!cleanNumericAmount || cleanNumericAmount <= 0 || isProcessing}
+          className={`w-full py-4 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${
+            displayToken?.isGraduated 
+              ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black' 
+              : (tradeMode === 'buy' ? 'bg-[#089981] hover:bg-[#067a67] text-white' : 'bg-[#F23645] hover:bg-[#c92a38] text-white')
+          } disabled:opacity-50 disabled:cursor-not-allowed`}
+        >
+          {isProcessing ? 'Confirming in Wallet... ⏳' : `Confirm ${tradeMode} ⚡`}
+        </button>
+      )}
     </div>
   );
 } 
