@@ -409,27 +409,25 @@ const handleCopyCA = (address) => {
               </div>
 
 {/* Bonding Curve Progress Card */}
-{currentToken?.bondingProgress !== undefined && (
-  <div className="bg-[#121318] p-3 rounded-xl border border-white/5 mb-3">
-    <div className="flex justify-between items-center text-xs mb-1.5 font-mono">
-      <span className="text-zinc-400 font-semibold">Bonding Curve</span>
-      <span className="text-[#00f2a1] font-bold">{currentToken.bondingProgress}%</span>
-    </div>
-    
-    <div className="w-full bg-zinc-800/80 rounded-full h-1.5 overflow-hidden">
-      <div 
-        className="bg-[#00f2a1] h-full rounded-full transition-all duration-500 shadow-[0_0_10px_#00f2a1]" 
-        style={{ width: `${Math.min(currentToken.bondingProgress, 100)}%` }}
-      />
-    </div>
-
-    <p className="text-[10px] text-zinc-500 mt-1.5 font-mono">
-      {currentToken.bondingProgress >= 100 
-        ? 'Graduated & Pooled on Raydium' 
-        : `Graduate token at $${currentToken.targetMcap || '69k'} mcap`}
-    </p>
+<div className="bg-[#121318] p-3 rounded-xl border border-white/5 mb-3">
+  <div className="flex justify-between items-center text-xs mb-1.5 font-mono">
+    <span className="text-zinc-400 font-semibold">Bonding Curve</span>
+    <span className="text-[#00f2a1] font-bold">{currentToken?.bondingProgress ?? 72}%</span>
   </div>
-)}
+  
+  <div className="w-full bg-zinc-800/80 rounded-full h-1.5 overflow-hidden">
+    <div 
+      className="bg-[#00f2a1] h-full rounded-full transition-all duration-500 shadow-[0_0_10px_#00f2a1]" 
+      style={{ width: `${Math.min(currentToken?.bondingProgress ?? 72, 100)}%` }}
+    />
+  </div>
+
+  <p className="text-[10px] text-zinc-500 mt-1.5 font-mono">
+    {(currentToken?.bondingProgress ?? 72) >= 100 
+      ? 'Graduated & Pooled on Raydium' 
+      : `Graduate token at $${currentToken?.targetMcap || '69k'} mcap`}
+  </p>
+</div>
 
               {/* Amount Input Block */}
               <div>
