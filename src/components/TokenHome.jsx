@@ -5,6 +5,8 @@ import TokenChat from './TokenChat';
 import TrackView from './TrackView';
 
 export default function TokenHome({
+  setActivePage,
+  handleSidebarNavigation,
   setActiveRoute,
   selectedTokenData,
   setSelectedTokenData,
@@ -29,6 +31,19 @@ export default function TokenHome({
  const [tradesSubTab, setTradesSubTab] = useState('all');
 
  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+ const handleTabClick = (tab) => {
+    setLeftTab(tab);
+    if (tab === 'Track') {
+      if (typeof handleSidebarNavigation === 'function') {
+        handleSidebarNavigation('track');
+      } else if (typeof setActivePage === 'function') {
+        setActivePage('track');
+      } else if (typeof setActiveRoute === 'function') {
+        setActiveRoute('track');
+      }
+    }
+  };
 
 const handleCopyCA = (address) => {
   navigator.clipboard.writeText(address || 'Cyknvgvyl97eW6tj...');
@@ -64,9 +79,9 @@ const handleCopyCA = (address) => {
     onClick={() => {
   setLeftTab(tab);
   if (tab === 'Track') {
-    if (typeof setActiveRoute === 'function') setActiveRoute('track');
-    if (typeof setActivePage === 'function') setActivePage('track');
-    if (typeof setTopNavTab === 'function') setTopNavTab('TRACK');
+    if (typeof handleSidebarNavigation === 'function') handleSidebarNavigation('track');
+    else if (typeof setActivePage === 'function') setActivePage('track');
+    else if (typeof setActiveRoute === 'function') setActiveRoute('track');
   }
 }}
     className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
