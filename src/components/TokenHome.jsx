@@ -3,6 +3,7 @@ import SidebarTokenRow from './SidebarTokenRow';
 import { formatPhantomPrice } from '../utils/formatters';
 import TokenChat from './TokenChat';
 import TrackView from './TrackView';
+import SwapModal from './SwapModal';
 
 export default function TokenHome({
   setActivePage,
@@ -25,6 +26,7 @@ export default function TokenHome({
   const [showFeeDetails, setShowFeeDetails] = useState(false);
   const [isSellPercentageMode, setIsSellPercentageMode] = useState(false);
   const [followedSymbols, setFollowedSymbols] = useState([]);
+  const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
 
   const [copiedCA, setCopiedCA] = useState(false);
 
