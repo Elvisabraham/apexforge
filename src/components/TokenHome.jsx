@@ -24,7 +24,7 @@ export default function TokenHome({
   const [isSynthesizingToken, setIsSynthesizingToken] = useState(false);
   const [showFeeDetails, setShowFeeDetails] = useState(false);
   const [isSellPercentageMode, setIsSellPercentageMode] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [followedSymbols, setFollowedSymbols] = useState([]);
 
   const [copiedCA, setCopiedCA] = useState(false);
 
@@ -64,6 +64,19 @@ const handleCopyCA = (address) => {
     top10: '50.64%',
     vol24h: '$729.55M',
     icon: '💨'
+  };
+
+// Check if current token is in followed list
+const isFollowing = currentToken?.symbol ? followedSymbols.includes(currentToken.symbol) : false;
+
+// Toggle function for follow button
+const handleToggleFollow = (symbol) => {
+  if (!symbol) return;
+  setFollowedSymbols(prev => 
+    prev.includes(symbol) 
+      ? prev.filter(s => s !== symbol) 
+      : [...prev, symbol]
+  );
   };
 
 const baseTokens = globalTokens && globalTokens.length > 0 ? globalTokens : [
@@ -174,14 +187,17 @@ const baseTokens = globalTokens && globalTokens.length > 0 ? globalTokens : [
     <div>
       <div className="flex items-center gap-2">
         <h1 className="text-sm font-black text-white tracking-wide">{currentToken.name || currentToken.symbol}</h1>
-        <button 
-          onClick={() => setIsFollowing(!isFollowing)}
-          className={`text-[9px] font-bold px-2 py-0.5 rounded transition-all ${
-            isFollowing ? 'bg-white/10 text-white' : 'bg-[#1c1d24] hover:bg-white/20 text-zinc-300'
-          }`}
-        >
-          {isFollowing ? 'Following' : 'Follow'}
-        </button>
+        <button
+  type="button"
+  onClick={() => handleToggleFollow(currentToken?.symbol)}
+  className={`text-[9px] font-bold px-2 py-0.5 rounded transition-all cursor-pointer ${
+    isFollowing 
+      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+      : 'bg-[#1c1d24] hover:bg-white/20 text-zinc-300'
+     }`}
+    >
+    {isFollowing ? '✓ Following' : '+ Follow'}
+    </button>
       </div>
 
       {/* Sub-row: Timeframe, Copyable CA & Real SVG Socials */}
