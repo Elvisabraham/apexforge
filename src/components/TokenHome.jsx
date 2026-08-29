@@ -198,7 +198,7 @@ const handleCopyCA = (address) => {
         <h1 className="text-sm font-black text-white tracking-wide">{currentToken.name || currentToken.symbol}</h1>
         <button
   type="button"
-  onClick={() => handleToggleFollow(currentToken?.symbol)}
+  onClick={() => handleToggleFollow(currentToken)}
   className={`text-[9px] font-bold px-2 py-0.5 rounded transition-all cursor-pointer ${
     isFollowing 
       ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
