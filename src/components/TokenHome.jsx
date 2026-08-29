@@ -446,32 +446,35 @@ const handleCopyCA = (address) => {
                 </div>
               </div>
 
-              {/* Quick Amount Selector Buttons */}
-              {!isSellPercentageMode ? (
-                <div className="grid grid-cols-3 gap-1.5">
-                  {['0.1', '0.25', '0.5', '1', '5', 'Max'].map((val) => (
-                    <button
-                      key={val}
-                      onClick={() => setTradeAmount(val === 'Max' ? '10' : val)}
-                      className="py-1.5 bg-[#1a1b22] hover:bg-white/10 rounded-md text-[11px] font-bold text-zinc-400 hover:text-white transition-colors"
-                    >
-                      {val === 'Max' ? val : <span className="font-mono">{val} =</span>}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-4 gap-1.5">
-                  {['10%', '25%', '50%', '100%'].map((val) => (
-                    <button
-                      key={val}
-                      onClick={() => setTradeAmount(val)}
-                      className="py-1.5 bg-[#1a1b22] hover:bg-white/10 rounded-md text-[11px] font-bold text-zinc-400 hover:text-white transition-colors font-mono"
-                    >
-                      {val}
-                    </button>
-                  ))}
-                </div>
-              )}
+             {/* Quick Amount Selector Buttons */}
+{!isSellPercentageMode ? (
+  <div className="grid grid-cols-3 gap-1.5">
+    {['0.1', '0.25', '0.5', '1', '5', 'Max'].map((val) => (
+      <button
+        key={val}
+        type="button"
+        onClick={() => setTradeAmount(val === 'Max' ? '10' : val)}
+        className="py-1.5 bg-[#1a1b22] hover:bg-white/10 rounded-md text-[11px] font-bold text-zinc-400 hover:text-white transition-colors flex items-center justify-center gap-1 cursor-pointer"
+      >
+        <span>{val}</span>
+        {val !== 'Max' && <SolIcon className="w-2.5 h-2.5 text-zinc-400" />}
+      </button>
+    ))}
+  </div>
+) : (
+  <div className="grid grid-cols-4 gap-1.5">
+    {['10%', '25%', '50%', '100%'].map((val) => (
+      <button
+        key={val}
+        type="button"
+        onClick={() => setTradeAmount(val)}
+        className="py-1.5 bg-[#1a1b22] hover:bg-white/10 rounded-md text-[11px] font-bold text-zinc-400 hover:text-white transition-colors font-mono cursor-pointer"
+      >
+        {val}
+      </button>
+    ))}
+  </div>
+)}
 
               {/* Summary Stats */}
               <div className="space-y-1 text-[10px] font-mono text-zinc-500 pt-1">
