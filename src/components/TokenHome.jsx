@@ -111,20 +111,22 @@ const baseTokens = globalTokens && globalTokens.length > 0 ? globalTokens : [
 ))}
     </div>
 
-        {displayedTokens.length === 0 && leftTab === 'Follows' ? (
-  <div className="p-8 text-center text-xs font-semibold text-zinc-500">
-    No followed tokens yet
-  </div>
-) : (
-  displayedTokens.map((item, idx) => (
-    <SidebarTokenRow
-      key={item.id || item.address || item.symbol || idx}
-      token={item}
-      isActive={(selectedTokenData?.symbol || currentToken?.symbol) === item.symbol}
-      onSelect={(token) => setSelectedTokenData && setSelectedTokenData(token)}
-    />
-  ))
-)}
+        <div className="flex-1 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+  {displayedTokens.length === 0 && leftTab === 'Follows' ? (
+    <div className="p-8 text-center text-xs font-semibold text-zinc-500">
+      No followed tokens yet
+    </div>
+  ) : (
+    displayedTokens.map((item, idx) => (
+      <SidebarTokenRow
+        key={item.id || item.address || item.symbol || idx}
+        token={item}
+        isActive={(selectedTokenData?.symbol || currentToken?.symbol) === item.symbol}
+        onSelect={(token) => setSelectedTokenData && setSelectedTokenData(token)}
+      />
+    ))
+  )}
+</div>
 
         <div className="p-2.5 border-t border-white/5 bg-[#0a0b0e] flex items-center justify-between shrink-0">
           <span className="text-[11px] text-zinc-500 font-bold">Portfolio Balance</span>
