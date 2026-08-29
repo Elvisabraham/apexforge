@@ -79,7 +79,25 @@ const handleToggleFollow = (symbol) => {
   );
   };
 
-const baseTokens = globalTokens && globalTokens.length > 0 ? globalTokens : [
+// Helper to safely extract a normalized token key
+  const getTokenKey = (t) => (t?.symbol || t?.mintAddress || t?.address || t?.id || '').toLowerCase();
+
+  // Check if active token is inside followedSymbols
+  const currentKey = getTokenKey(currentToken);
+  const isFollowing = currentKey ? followedSymbols.some(s => s.toLowerCase() === currentKey) : false;
+
+  // Toggle follow status
+  const handleToggleFollow = (token) => {
+    const key = getTokenKey(token);
+    if (!key) return;
+    setFollowedSymbols(prev => 
+      prev.some(s => s.toLowerCase() === key)
+        ? prev.filter(s => s.toLowerCase() !== key)
+        : [...prev, key]
+    );
+  };
+
+  const baseTokens = globalTokens && globalTokens.length > 0 ? globalTokens : [
     { symbol: 'PSTACIA', mcap: '$8.54M', change24h: '+51.14%', isPositive: true },
     { symbol: 'JUP', mcap: '$729.55M', change24h: '+2.3%', isPositive: true },
     { symbol: 'ALCH', mcap: '$30.45M', change24h: '+13.84%', isPositive: true },
@@ -91,8 +109,12 @@ const baseTokens = globalTokens && globalTokens.length > 0 ? globalTokens : [
     { symbol: 'JIMTHY', mcap: '$13.71M', change24h: '-19.12%', isPositive: false }
   ];
 
+  // Filter tokens (case-insensitive check)
   const displayedTokens = leftTab === 'Follows'
-    ? baseTokens.filter(t => t.isFollowing || t.followed)
+    ? baseTokens.filter(t => {
+        const tKey = getTokenKey(t);
+        return (tKey && followedSymbols.some(s => s.toLowerCase() === tKey)) || t.isFollowing || t.followed;
+      })
     : baseTokens;
 
   return (
