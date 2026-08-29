@@ -79,24 +79,6 @@ const handleToggleFollow = (symbol) => {
   );
   };
 
-// Helper to safely extract a normalized token key
-  const getTokenKey = (t) => (t?.symbol || t?.mintAddress || t?.address || t?.id || '').toLowerCase();
-
-  // Check if active token is inside followedSymbols
-  const currentKey = getTokenKey(currentToken);
-  const isFollowing = currentKey ? followedSymbols.some(s => s.toLowerCase() === currentKey) : false;
-
-  // Toggle follow status
-  const handleToggleFollow = (token) => {
-    const key = getTokenKey(token);
-    if (!key) return;
-    setFollowedSymbols(prev => 
-      prev.some(s => s.toLowerCase() === key)
-        ? prev.filter(s => s.toLowerCase() !== key)
-        : [...prev, key]
-    );
-  };
-
   const baseTokens = globalTokens && globalTokens.length > 0 ? globalTokens : [
     { symbol: 'PSTACIA', mcap: '$8.54M', change24h: '+51.14%', isPositive: true },
     { symbol: 'JUP', mcap: '$729.55M', change24h: '+2.3%', isPositive: true },
