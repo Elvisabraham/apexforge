@@ -393,6 +393,8 @@ function AppContent() {
                 handleOpenTradePortal(token, mode, amt);
               }
             }}
+            setActivePage={setActivePage}
+           handleSidebarNavigation={handleSidebarNavigation}
           />
         );
       }
