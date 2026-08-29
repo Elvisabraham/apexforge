@@ -182,7 +182,7 @@ export default function TradeWidget({
         </div>
       </div>
 
-     {/* SUBMIT BUTTON */}
+    {/* SUBMIT BUTTON */}
       {(userBalanceSol || 0) < 0.005 && tradeMode === 'buy' ? (
         <button
           type="button"
