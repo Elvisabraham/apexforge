@@ -66,6 +66,22 @@ const handleCopyCA = (address) => {
     icon: '💨'
   };
 
+const baseTokens = globalTokens && globalTokens.length > 0 ? globalTokens : [
+    { symbol: 'PSTACIA', mcap: '$8.54M', change24h: '+51.14%', isPositive: true },
+    { symbol: 'JUP', mcap: '$729.55M', change24h: '+2.3%', isPositive: true },
+    { symbol: 'ALCH', mcap: '$30.45M', change24h: '+13.84%', isPositive: true },
+    { symbol: 'PYTH', mcap: '$433.23M', change24h: '+1.34%', isPositive: true },
+    { symbol: 'META', mcap: '$151.76M', change24h: '-7.19%', isPositive: false },
+    { symbol: 'XOSIS', mcap: '$2.63M', change24h: '+191.49%', isPositive: true },
+    { symbol: 'XST', mcap: '$11.78M', change24h: '-6.93%', isPositive: false },
+    { symbol: 'Martians', mcap: '$2.72M', change24h: '+3.83%', isPositive: true },
+    { symbol: 'JIMTHY', mcap: '$13.71M', change24h: '-19.12%', isPositive: false }
+  ];
+
+  const displayedTokens = leftTab === 'Follows'
+    ? baseTokens.filter(t => t.isFollowing || t.followed)
+    : baseTokens;
+
   return (
     <div className="w-full h-full bg-[#0c0d10] text-white grid grid-cols-12 gap-2 p-2 overflow-hidden select-none">
       
@@ -95,26 +111,20 @@ const handleCopyCA = (address) => {
 ))}
     </div>
 
-        <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] divide-y divide-white/[0.03] p-1">
-          {(globalTokens && globalTokens.length > 0 ? globalTokens : [
-            { symbol: 'PSTACIA', mcap: '$8.54M', change24h: '+51.14%', isPositive: true },
-            { symbol: 'JUP', mcap: '$729.55M', change24h: '+2.3%', isPositive: true },
-            { symbol: 'ALCH', mcap: '$30.45M', change24h: '+13.84%', isPositive: true },
-            { symbol: 'PYTH', mcap: '$433.23M', change24h: '+1.34%', isPositive: true },
-            { symbol: 'META', mcap: '$151.76M', change24h: '-7.19%', isPositive: false },
-            { symbol: 'XOSIS', mcap: '$2.63M', change24h: '+191.49%', isPositive: true },
-            { symbol: 'XST', mcap: '$11.78M', change24h: '-6.93%', isPositive: false },
-            { symbol: 'Martians', mcap: '$2.72M', change24h: '+3.83%', isPositive: true },
-            { symbol: 'JIMTHY', mcap: '$13.71M', change24h: '-19.12%', isPositive: false }
-          ]).map((item, idx) => (
-            <SidebarTokenRow
-              key={item.id || item.address || item.symbol || idx}
-              token={item}
-              isActive={(selectedTokenData?.symbol || currentToken?.symbol) === item.symbol}
-              onSelect={(token) => setSelectedTokenData && setSelectedTokenData(token)}
-            />
-          ))}
-        </div>
+        {displayedTokens.length === 0 && leftTab === 'Follows' ? (
+  <div className="p-8 text-center text-xs font-semibold text-zinc-500">
+    No followed tokens yet
+  </div>
+) : (
+  displayedTokens.map((item, idx) => (
+    <SidebarTokenRow
+      key={item.id || item.address || item.symbol || idx}
+      token={item}
+      isActive={(selectedTokenData?.symbol || currentToken?.symbol) === item.symbol}
+      onSelect={(token) => setSelectedTokenData && setSelectedTokenData(token)}
+    />
+  ))
+)}
 
         <div className="p-2.5 border-t border-white/5 bg-[#0a0b0e] flex items-center justify-between shrink-0">
           <span className="text-[11px] text-zinc-500 font-bold">Portfolio Balance</span>
