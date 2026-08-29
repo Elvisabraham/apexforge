@@ -376,6 +376,27 @@ const handleCopyCA = (address) => {
             {/* Trading Controls Area */}
             <div className="p-3 space-y-4">
               
+{/* Bonding Curve Card */}
+        <div className="bg-[#121318] p-3 rounded-xl border border-white/5 font-mono">
+          <div className="flex justify-between items-center text-xs mb-1.5">
+            <span className="text-zinc-400 font-semibold">Bonding Curve</span>
+            <span className="text-[#00f2a1] font-bold">{currentToken?.bondingProgress ?? 72}%</span>
+          </div>
+          
+          {/* Progress Bar */}
+          <div className="w-full bg-zinc-800/80 rounded-full h-1.5 overflow-hidden">
+            <div 
+              className="bg-[#00f2a1] h-full rounded-full transition-all duration-500 shadow-[0_0_8px_#00f2a1]" 
+              style={{ width: `${Math.min(currentToken?.bondingProgress ?? 72, 100)}%` }}
+            />
+          </div>
+
+          <div className="flex justify-between items-center text-[9px] text-zinc-500 mt-1.5">
+            <span>Graduate at ${currentToken?.targetMcap || '69k'} mcap</span>
+            <span>{(currentToken?.bondingProgress ?? 72) >= 100 ? 'Graduated' : 'In Progress'}</span>
+          </div>
+        </div>
+
               {/* Buy / Sell Tabs */}
               <div className="flex justify-between items-center">
                 <div className="flex gap-1 bg-[#1a1b22] p-1 rounded-lg flex-1">
@@ -407,27 +428,6 @@ const handleCopyCA = (address) => {
                   </button>
                 )}
               </div>
-
-{/* Bonding Curve Progress Card */}
-<div className="bg-[#121318] p-3 rounded-xl border border-white/5 mb-3">
-  <div className="flex justify-between items-center text-xs mb-1.5 font-mono">
-    <span className="text-zinc-400 font-semibold">Bonding Curve</span>
-    <span className="text-[#00f2a1] font-bold">{currentToken?.bondingProgress ?? 72}%</span>
-  </div>
-  
-  <div className="w-full bg-zinc-800/80 rounded-full h-1.5 overflow-hidden">
-    <div 
-      className="bg-[#00f2a1] h-full rounded-full transition-all duration-500 shadow-[0_0_10px_#00f2a1]" 
-      style={{ width: `${Math.min(currentToken?.bondingProgress ?? 72, 100)}%` }}
-    />
-  </div>
-
-  <p className="text-[10px] text-zinc-500 mt-1.5 font-mono">
-    {(currentToken?.bondingProgress ?? 72) >= 100 
-      ? 'Graduated & Pooled on Raydium' 
-      : `Graduate token at $${currentToken?.targetMcap || '69k'} mcap`}
-  </p>
-</div>
 
               {/* Amount Input Block */}
               <div>
