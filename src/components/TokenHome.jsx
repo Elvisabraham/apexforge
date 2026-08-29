@@ -66,17 +66,22 @@ const handleCopyCA = (address) => {
     icon: '💨'
   };
 
-// Check if current token is in followed list
-const isFollowing = currentToken?.symbol ? followedSymbols.includes(currentToken.symbol) : false;
+// Helper to safely extract a normalized token key
+  const getTokenKey = (t) => (t?.symbol || t?.mintAddress || t?.address || t?.id || '').toLowerCase();
 
-// Toggle function for follow button
-const handleToggleFollow = (symbol) => {
-  if (!symbol) return;
-  setFollowedSymbols(prev => 
-    prev.includes(symbol) 
-      ? prev.filter(s => s !== symbol) 
-      : [...prev, symbol]
-  );
+// Check if active token is inside followedSymbols
+  const currentKey = getTokenKey(currentToken);
+  const isFollowing = currentKey ? followedSymbols.some(s => s.toLowerCase() === currentKey) : false;
+
+  // Toggle follow status
+  const handleToggleFollow = (token) => {
+    const key = getTokenKey(token);
+    if (!key) return;
+    setFollowedSymbols(prev => 
+      prev.some(s => s.toLowerCase() === key)
+        ? prev.filter(s => s.toLowerCase() !== key)
+        : [...prev, key]
+    );
   };
 
   const baseTokens = globalTokens && globalTokens.length > 0 ? globalTokens : [
