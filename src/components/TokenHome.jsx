@@ -4,6 +4,7 @@ import { formatPhantomPrice } from '../utils/formatters';
 import TokenChat from './TokenChat';
 import TrackView from './TrackView';
 import SwapModal from './SwapModal';
+import TradeWidget from './TradeWidget';
 
 export default function TokenHome({
   setActivePage,
