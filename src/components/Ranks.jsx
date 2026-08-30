@@ -1,293 +1,269 @@
-// 🚀 VERSION 4: HIGH-PERFORMANCE LEADERBOARD WITH TIMEFRAMES & SHARE ACTIONS
 import React, { useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
 
-export default function Ranks({ onOpenProfile }) {
-  const { publicKey, connected } = useWallet();
-  const [activeTab, setActiveTab] = useState('TRADERS');
+const MOCK_TRADERS = [
+  { rank: 1, handle: 'Ansem...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Ansem', winRate: '82%', volume: '$1.4M', trades: 1420, pnl: '+4,250 SOL', pnlPercent: '+342.5%', pnlUsd: '+$637.5K', isFollowing: false },
+  { rank: 2, handle: 'Mitch...pump', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Mitch', winRate: '75%', volume: '$980K', trades: 890, pnl: '+2,100 SOL', pnlPercent: '+215.8%', pnlUsd: '+$315.0K', isFollowing: true },
+  { rank: 3, handle: 'Cobie...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Cobie', winRate: '71%', volume: '$750K', trades: 620, pnl: '+1,850 SOL', pnlPercent: '+184.2%', pnlUsd: '+$277.5K', isFollowing: false },
+  { rank: 4, handle: 'Toly...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Toly', winRate: '68%', volume: '$620K', trades: 510, pnl: '+1,420 SOL', pnlPercent: '+142.0%', pnlUsd: '+$213.0K', isFollowing: false },
+  { rank: 5, handle: 'Hsaka...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Hsaka', winRate: '65%', volume: '$510K', trades: 430, pnl: '+1,150 SOL', pnlPercent: '+118.4%', pnlUsd: '+$172.5K', isFollowing: false },
+  { rank: 6, handle: 'GCR...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=GCR', winRate: '63%', volume: '$490K', trades: 390, pnl: '+980 SOL', pnlPercent: '+105.2%', pnlUsd: '+$147.0K', isFollowing: false },
+  { rank: 7, handle: 'Murad...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Murad', winRate: '61%', volume: '$420K', trades: 340, pnl: '+840 SOL', pnlPercent: '+94.1%', pnlUsd: '+$126.0K', isFollowing: true },
+  { rank: 8, handle: 'Rookie...pump', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Rookie', winRate: '59%', volume: '$380K', trades: 310, pnl: '+720 SOL', pnlPercent: '+81.5%', pnlUsd: '+$108.0K', isFollowing: false },
+  { rank: 9, handle: 'Wizard...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Wizard', winRate: '57%', volume: '$310K', trades: 270, pnl: '+610 SOL', pnlPercent: '+69.3%', pnlUsd: '+$91.5K', isFollowing: false },
+  { rank: 10, handle: 'WhaleWatch', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Whale', winRate: '55%', volume: '$290K', trades: 250, pnl: '+540 SOL', pnlPercent: '+58.0%', pnlUsd: '+$81.0K', isFollowing: false },
+  { rank: 11, handle: 'DegenKing', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Degen', winRate: '53%', volume: '$240K', trades: 210, pnl: '+450 SOL', pnlPercent: '+49.2%', pnlUsd: '+$67.5K', isFollowing: false },
+  { rank: 12, handle: 'SolChad...pump', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=SolChad', winRate: '51%', volume: '$210K', trades: 190, pnl: '+390 SOL', pnlPercent: '+41.0%', pnlUsd: '+$58.5K', isFollowing: false },
+];
+
+const MOCK_CREATORS = [
+  { rank: 1, handle: 'MemeGod...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=MemeGod', tokensLaunched: 14, totalMcap: '$12.4M', totalVolume: '$4.2M', pnl: '+5,800 SOL', isFollowing: true },
+  { rank: 2, handle: 'PumpKing...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=PumpKing', tokensLaunched: 9, totalMcap: '$8.1M', totalVolume: '$2.9M', pnl: '+3,400 SOL', isFollowing: false },
+  { rank: 3, handle: 'AlphaDev...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AlphaDev', tokensLaunched: 6, totalMcap: '$5.6M', totalVolume: '$1.8M', pnl: '+2,150 SOL', isFollowing: false },
+  { rank: 4, handle: 'SolForge...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=SolForge', tokensLaunched: 5, totalMcap: '$3.9M', totalVolume: '$1.2M', pnl: '+1,600 SOL', isFollowing: false },
+  { rank: 5, handle: 'CoinCraft...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=CoinCraft', tokensLaunched: 4, totalMcap: '$2.4M', totalVolume: '$850K', pnl: '+980 SOL', isFollowing: false },
+  { rank: 6, handle: 'Trenches...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Trenches', tokensLaunched: 8, totalMcap: '$2.1M', totalVolume: '$720K', pnl: '+850 SOL', isFollowing: false },
+  { rank: 7, handle: 'MoonShot...pump', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=MoonShot', tokensLaunched: 11, totalMcap: '$1.9M', totalVolume: '$650K', pnl: '+790 SOL', isFollowing: true },
+  { rank: 8, handle: 'RocketMan...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=RocketMan', tokensLaunched: 3, totalMcap: '$1.5M', totalVolume: '$510K', pnl: '+620 SOL', isFollowing: false },
+  { rank: 9, handle: 'TokenFactory', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=TokenFactory', tokensLaunched: 15, totalMcap: '$1.2M', totalVolume: '$430K', pnl: '+510 SOL', isFollowing: false },
+  { rank: 10, handle: 'GemsHunter...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=GemsHunter', tokensLaunched: 7, totalMcap: '$980K', totalVolume: '$380K', pnl: '+440 SOL', isFollowing: false },
+  { rank: 11, handle: 'DevGuru...pump', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=DevGuru', tokensLaunched: 4, totalMcap: '$850K', totalVolume: '$310K', pnl: '+370 SOL', isFollowing: false },
+  { rank: 12, handle: 'ApexCreator...sol', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=ApexCreator', tokensLaunched: 2, totalMcap: '$720K', totalVolume: '$260K', pnl: '+290 SOL', isFollowing: false },
+];
+
+export default function Ranks() {
+  const [timeframe, setTimeframe] = useState('24h');
   const [searchQuery, setSearchQuery] = useState('');
-  const [timeframe, setTimeframe] = useState('24H'); // 🚀 NEW: 24H, 7D, ALL
-  const [followedWallets, setFollowedWallets] = useState({});
-
-  // Helper to format short address
-  const shortAddress = connected && publicKey 
-    ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}`
-    : '8xV9...yYyW';
-
-  // DATA ENGINE: Top Traders
-  const topTraders = [
-    { rank: 1, wallet: 'Ansem...sol', pnl: '+4,250 SOL', winRate: '82%', badge: '🐋', color: 'text-amber-400', bg: 'bg-amber-400/10 border border-amber-400/30' },
-    { rank: 2, wallet: 'Mitch...pump', pnl: '+2,100 SOL', winRate: '75%', badge: '🎯', color: 'text-zinc-300', bg: 'bg-white/10 border border-white/20' },
-    { rank: 3, wallet: 'Degen...eth', pnl: '+1,840 SOL', winRate: '68%', badge: '⚡', color: 'text-orange-500', bg: 'bg-orange-500/10 border border-orange-500/30' },
-    { rank: 4, wallet: '7xV9...q9n2', pnl: '+950 SOL', winRate: '55%', badge: '', color: 'text-zinc-500', bg: 'bg-white/[0.02] border border-transparent' },
-    { rank: 5, wallet: 'Sniper...bot', pnl: '+820 SOL', winRate: '91%', badge: '🤖', color: 'text-zinc-500', bg: 'bg-white/[0.02] border border-transparent' },
-    { rank: 6, wallet: 'Apex...chad', pnl: '+610 SOL', winRate: '61%', badge: '', color: 'text-zinc-500', bg: 'bg-white/[0.02] border border-transparent' },
-    { rank: 7, wallet: '33vL...11po', pnl: '+450 SOL', winRate: '48%', badge: '', color: 'text-zinc-500', bg: 'bg-white/[0.02] border border-transparent' },
-    { rank: 8, wallet: 'Ghost...dev', pnl: '+390 SOL', winRate: '52%', badge: '', color: 'text-zinc-500', bg: 'bg-white/[0.02] border border-transparent' },
-  ];
-
-  // DATA ENGINE: Top Creators
-  const topCreators = [
-    { rank: 1, wallet: 'Studio...web3', volume: '$12.5M', tokens: 4, badge: '👑', color: 'text-amber-400', bg: 'bg-amber-400/10 border border-amber-400/30' },
-    { rank: 2, wallet: 'Forge...Labs', volume: '$8.2M', tokens: 2, badge: '🛠️', color: 'text-zinc-300', bg: 'bg-white/10 border border-white/20' },
-    { rank: 3, wallet: 'Meme...King', volume: '$5.1M', tokens: 12, badge: '🎭', color: 'text-orange-500', bg: 'bg-orange-500/10 border border-orange-500/30' },
-    { rank: 4, wallet: '9vXq...bb12', volume: '$2.3M', tokens: 1, badge: '', color: 'text-zinc-500', bg: 'bg-white/[0.02] border border-transparent' },
-    { rank: 5, wallet: 'Alpha...Dev', volume: '$1.8M', tokens: 3, badge: '', color: 'text-zinc-500', bg: 'bg-white/[0.02] border border-transparent' },
-    { rank: 6, wallet: '44zP...xx99', volume: '$950K', tokens: 5, badge: '', color: 'text-zinc-500', bg: 'bg-white/[0.02] border border-transparent' },
-  ];
-
-  const rawData = activeTab === 'TRADERS' ? topTraders : topCreators;
-
-  // Filter based on search input
-  const displayData = rawData.filter(user => 
-    user.wallet.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const toggleFollow = (walletId, e) => {
-    e.stopPropagation();
-    setFollowedWallets(prev => ({
-      ...prev,
-      [walletId]: !prev[walletId]
-    }));
-  };
-
-  // 🚀 VIRALITY / GAMIFICATION: Native Share Trigger
-  const handleShareRank = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'Apex Forge Leaderboard',
-        text: `I'm currently ranked #24,801 on the Apex Forge Leaderboard in the Apex Tier! 🏆`,
-        url: window.location.href,
-      }).catch(() => {});
-    } else {
-      alert('Rank copied to clipboard! Share it to flex on the timeline. 🚀');
-    }
-  };
 
   return (
-    <div className="flex flex-col w-full h-screen bg-[#0A0A0B] text-white font-sans overflow-hidden select-none">
+    // Minimized outer padding (p-2 lg:p-3) and gaps to maximize space for tables
+    <div className="w-full h-full bg-[#0c0d10] text-white p-2 lg:p-3 flex flex-col gap-2 overflow-hidden font-sans [font-feature-settings:'zero'_0]">
       
-      <style>{`
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes slideDown { 0% { opacity: 0; transform: translateY(-10px); } 100% { opacity: 1; transform: translateY(0); } }
-        .animate-slideDown { animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-      `}</style>
-
-      {/* --- UNMOVABLE HEADER --- */}
-      <header className="flex-none z-50 bg-[#0A0A0B]/95 backdrop-blur-xl pt-4 pb-2 px-4 border-b border-white/[0.04]">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl drop-shadow-md">🏆</span>
-            <h1 className="text-xl font-black tracking-widest text-white uppercase mt-1">Leaderboard</h1>
-          </div>
+      {/* TOP LOCKED SECTION - EXTREMELY COMPACT */}
+      <div className="shrink-0 flex flex-col gap-2">
+        {/* HEADER TITLE */}
+        <div className="flex items-center gap-1.5 px-1">
+          <span className="text-lg">🏆</span>
+          <h1 className="text-base lg:text-lg font-black uppercase tracking-wider">Leaderboard</h1>
         </div>
-      </header>
 
-      {/* --- SCROLLABLE CONTENT --- */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide relative pb-32">
-        
-        {/* 🚀 UPGRADED HERO CARD */}
-        <div className="p-4">
-          <div className="bg-gradient-to-br from-[#1A1A24] to-[#0A0A0A] border border-[#089981]/30 rounded-3xl p-5 shadow-[0_0_40px_rgba(8,153,129,0.15)] relative overflow-hidden flex flex-col">
-            <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-[#089981]/20 rounded-full blur-3xl pointer-events-none"></div>
-            <div className="absolute -left-10 -top-10 w-24 h-24 bg-[#089981]/10 rounded-full blur-2xl pointer-events-none"></div>
-            
-            <div className="flex items-start justify-between z-10 w-full mb-6">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-black border-2 border-[#089981]/80 rounded-full flex items-center justify-center overflow-hidden shrink-0 shadow-[0_0_15px_rgba(8,153,129,0.4)]">
-                   <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${shortAddress}`} alt="You" className="w-full h-full object-cover" />
+        {/* COMPACT TOP HERO GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
+          {/* User Rank Card */}
+          <div className="md:col-span-8 bg-[#121318] border border-white/5 rounded-xl p-2.5 relative overflow-hidden flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-[#089981]/10 border border-[#089981]/30 flex items-center justify-center text-sm">
+                  🤠
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase text-[#089981] tracking-widest mb-0.5">Your Rank</span>
-                  <span className="text-2xl font-black text-white leading-none drop-shadow-md">#24,801</span>
+                <div>
+                  <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest block">Your Rank</span>
+                  <span className="text-lg font-black text-white leading-tight">#24,801</span>
                 </div>
               </div>
-              
-              <div className="flex flex-col items-end gap-2 z-10">
-                <span className="text-[10px] font-black tracking-widest text-amber-400 border border-amber-400/30 bg-amber-400/10 rounded px-2.5 py-1 uppercase shadow-sm">
+
+              <div className="flex items-center gap-1.5">
+                <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[9px] font-black rounded-md uppercase tracking-wider">
                   Apex Tier
                 </span>
-                {/* 🚀 VIRALITY: Share Button */}
-                <button 
-                  onClick={handleShareRank}
-                  className="flex items-center gap-1.5 text-[9px] font-black text-white bg-white/10 hover:bg-white/20 border border-white/20 px-2.5 py-1 rounded-md uppercase tracking-widest transition-colors active:scale-95"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                <button type="button" className="px-2 py-0.5 bg-white/5 hover:bg-white/10 text-zinc-300 text-[9px] font-bold rounded-md border border-white/10 transition-colors">
                   Flex Rank
                 </button>
               </div>
             </div>
 
             {/* XP Progress Bar */}
-            <div className="w-full flex flex-col z-10">
-              <div className="flex justify-between items-end mb-1.5">
-                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Next Tier: Whale</span>
-                <span className="text-[10px] font-black text-white font-mono">4,850 / 5,000 XP</span>
+            <div className="space-y-1">
+              <div className="flex justify-between text-[9px]">
+                <span className="text-zinc-400">NEXT TIER: <strong className="text-white">WHALE</strong></span>
+                <span className="text-[#00f2a1] font-bold">4,850 / 5,000 XP</span>
               </div>
-              <div className="w-full h-2 bg-black rounded-full overflow-hidden border border-white/10">
-                <div className="h-full bg-gradient-to-r from-[#089981]/50 to-[#089981] w-[97%] rounded-full shadow-[0_0_10px_#089981]"></div>
+              <div className="w-full h-1 bg-zinc-800 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-[#089981] to-[#00f2a1] rounded-full" style={{ width: '92%' }} />
               </div>
             </div>
+          </div>
 
+          {/* Quick User Stats */}
+          <div className="md:col-span-4 grid grid-cols-2 md:grid-cols-1 gap-1.5">
+            <div className="bg-[#121318] border border-white/5 rounded-xl px-2.5 py-1.5 flex justify-between items-center">
+              <span className="text-[10px] text-zinc-400 font-bold">24h PnL</span>
+              <span className="text-[11px] font-bold text-[#00f2a1]">+14.2 SOL</span>
+            </div>
+            <div className="bg-[#121318] border border-white/5 rounded-xl px-2.5 py-1.5 flex justify-between items-center">
+              <span className="text-[10px] text-zinc-400 font-bold">Win Rate</span>
+              <span className="text-[11px] font-bold text-white">64.5%</span>
+            </div>
           </div>
         </div>
 
-        {/* Sticky Controls Panel */}
-        <div className="sticky top-0 z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 pb-3 pt-1 border-b border-white/[0.04] flex flex-col gap-3">
-          {/* Tabs */}
-          <div className="flex gap-2 w-full bg-[#131722] p-1.5 rounded-xl border border-white/5 shadow-inner">
-            {['TRADERS', 'CREATORS'].map(tab => (
-              <button 
-                key={tab}
-                onClick={() => {
-                  setActiveTab(tab);
-                  setSearchQuery('');
-                }}
-                className={`flex-1 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                  activeTab === tab 
-                    ? 'bg-[#089981] text-white shadow-md' 
-                    : 'bg-transparent text-zinc-500 hover:text-white'
+        {/* COMBINED SEARCH BAR & TIMEFRAME PILLS ROW */}
+        <div className="w-full bg-[#121318] border border-white/5 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-3">
+          {/* Search Input */}
+          <div className="flex items-center gap-2 flex-1">
+            <span className="text-zinc-500 text-[11px]">🔍</span>
+            <input
+              type="text"
+              placeholder="Search handles or wallet addresses..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-transparent outline-none text-[11px] text-white placeholder-zinc-500 font-sans"
+            />
+          </div>
+
+          {/* Timeframe Selector */}
+          <div className="flex bg-[#0a0b0e] border border-white/5 p-0.5 rounded-lg gap-0.5 shrink-0">
+            {['24h', '7d', 'all'].map((tf) => (
+              <button
+                key={tf}
+                type="button"
+                onClick={() => setTimeframe(tf)}
+                className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded-md transition-all ${
+                  timeframe === tf 
+                    ? 'bg-[#089981] text-white shadow-sm shadow-[#089981]/20' 
+                    : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
-                Top {tab}
+                {tf}
               </button>
             ))}
           </div>
-
-          {/* 🚀 UPGRADED: LIVE SEARCH BAR + TIMEFRAME TOGGLE */}
-          <div className="flex gap-2 w-full">
-            <div className="relative flex-1">
-              <input 
-                type="text"
-                placeholder={`Search ${activeTab.toLowerCase()} by handle...`}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-full bg-[#131722] border border-white/5 rounded-xl pl-9 pr-4 py-2 text-xs font-medium text-white placeholder-zinc-600 outline-none focus:border-[#089981]/30 transition-colors"
-              />
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-
-            {/* Timeframe Filter */}
-            <div className="flex bg-[#131722] border border-white/5 rounded-xl p-1 shrink-0">
-              {['24H', '7D', 'ALL'].map(tf => (
-                <button
-                  key={tf}
-                  onClick={() => setTimeframe(tf)}
-                  className={`px-2.5 py-1 text-[9px] font-black rounded-lg transition-colors ${
-                    timeframe === tf 
-                      ? 'bg-white/10 text-white' 
-                      : 'text-zinc-600 hover:text-zinc-300'
-                  }`}
-                >
-                  {tf}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
+      </div>
 
-        {/* --- LEADERBOARD LIST --- */}
-        <div className="flex flex-col px-2 pt-2">
-          
-          <div className="flex items-center justify-between px-4 py-2 text-[9px] font-black text-zinc-600 uppercase tracking-widest">
-             <div className="flex items-center gap-5">
-                <span className="w-6 text-center">#</span>
-                <span>Wallet / User</span>
-             </div>
-             <span>{activeTab === 'TRADERS' ? 'Total PNL' : 'Total Volume'}</span>
+      {/* MAIN SPLIT DUAL CARD GRID (EXPANDS TO FILL REMAINING SPACE) */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 flex-1 min-h-0 overflow-hidden">
+        
+        {/* CARD 1: TOP TRADERS */}
+        <div className="bg-[#121318] border border-white/5 rounded-xl overflow-hidden flex flex-col shadow-xl h-full min-h-0">
+          <div className="px-3 py-2 bg-[#0a0b0e] border-b border-white/5 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#00f2a1] shadow-[0_0_6px_#00f2a1]" />
+              <h2 className="text-[11px] font-black tracking-wider uppercase text-white">Top Traders</h2>
+            </div>
+            <span className="text-[8px] text-zinc-500 uppercase">Ranked by Total PnL</span>
           </div>
 
-          <div className="flex flex-col gap-1">
-            {displayData.length > 0 ? (
-              displayData.map((user, index) => {
-                const isFollowed = followedWallets[user.wallet];
-                
-                return (
-                  <div 
-                    key={user.rank} 
-                    onClick={() => {
-                      if (onOpenProfile) onOpenProfile(user.wallet);
-                    }}
-                    className="flex items-center justify-between p-4 rounded-2xl cursor-pointer bg-white/[0.01] hover:bg-[#131722] transition-colors border border-transparent hover:border-white/[0.02] group animate-slideDown"
-                    style={{ animationDelay: `${index * 40}ms` }}
-                  >
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${user.bg} ${user.color} shadow-inner`}>
-                        {user.rank}
-                      </div>
-
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 bg-black border border-white/10 rounded-full flex items-center justify-center text-lg shrink-0 shadow-sm overflow-hidden">
-                          <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.wallet}`} alt="Avatar" className="w-full h-full object-cover" />
-                        </div>
-                        
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-sm font-black text-white flex items-center gap-1.5 truncate group-hover:text-[#089981] transition-colors">
-                            {user.wallet}
-                            {user.badge && <span className="text-xs drop-shadow-md">{user.badge}</span>}
-                          </span>
-                          
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                              {activeTab === 'TRADERS' ? `WR: ${user.winRate}` : `Tokens: ${user.tokens}`}
-                            </span>
-
-                            {/* Mobile Interactive Follow */}
-                            <button 
-                              onClick={(e) => toggleFollow(user.wallet, e)}
-                              className={`lg:hidden px-2 py-0.5 border text-[8px] font-black uppercase tracking-widest rounded transition-all shadow-sm ${
-                                isFollowed 
-                                  ? 'bg-[#089981] border-[#089981] text-white' 
-                                  : 'bg-[#089981]/10 hover:bg-[#089981]/20 border border-[#089981]/30 text-[#089981]'
-                              }`}
-                            >
-                              {isFollowed ? '✓ Following' : '+ Follow'}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 shrink-0 relative">
-                      <span className={`text-[15px] font-black font-mono tracking-tight transition-all duration-200 ${
-                        activeTab === 'TRADERS' ? 'text-[#089981]' : 'text-white'
-                      } lg:group-hover:opacity-0 drop-shadow-md`}>
-                        {activeTab === 'TRADERS' ? user.pnl : user.volume}
+          <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <table className="w-full text-left border-collapse">
+              <thead className="sticky top-0 bg-[#0a0b0e] z-10 border-b border-white/5">
+                <tr className="text-[8px] text-zinc-500 uppercase tracking-wider">
+                  <th className="py-1.5 px-2 w-8 text-center">#</th>
+                  <th className="py-1.5 px-2">Trader</th>
+                  <th className="py-1.5 px-2 text-right">Win Rate</th>
+                  <th className="py-1.5 px-2 text-right">Total PnL</th>
+                  <th className="py-1.5 px-2 text-center w-16">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 text-[11px]">
+                {MOCK_TRADERS.map((item) => (
+                  <tr key={item.rank} className="hover:bg-white/[0.02] transition-colors group">
+                    <td className="py-1.5 px-2 text-center font-black">
+                      <span className={`inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] ${
+                        item.rank === 1 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' :
+                        item.rank === 2 ? 'bg-zinc-300/20 text-zinc-200 border border-zinc-300/40' :
+                        item.rank === 3 ? 'bg-amber-700/20 text-amber-600 border border-amber-700/40' :
+                        'text-zinc-500'
+                      }`}>
+                        {item.rank}
                       </span>
-                      
-                      {/* Desktop Interactive Follow */}
-                      <button 
-                        onClick={(e) => toggleFollow(user.wallet, e)}
-                        className={`hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all duration-200 shadow-md ${
-                          isFollowed 
-                            ? 'bg-[#089981] text-white' 
-                            : 'bg-white/10 hover:bg-white/20 text-white'
+                    </td>
+                    <td className="py-1.5 px-2">
+                      <div className="flex items-center gap-1.5">
+                        <img src={item.avatar} alt="" className="w-5 h-5 rounded-full bg-zinc-800" />
+                        <span className="font-bold text-white group-hover:text-[#00f2a1] transition-colors truncate max-w-[90px] sm:max-w-none">{item.handle}</span>
+                      </div>
+                    </td>
+                    <td className="py-1.5 px-2 text-right font-bold text-zinc-300">{item.winRate}</td>
+                    <td className="py-1.5 px-2 text-right">
+                      <div className="font-bold text-[#00f2a1]">{item.pnl}</div>
+                      <div className="flex items-center justify-end gap-1 text-[8px]">
+                        <span className="text-[#00f2a1] font-bold">{item.pnlPercent}</span>
+                        <span className="text-zinc-600">•</span>
+                        <span className="text-zinc-500">{item.pnlUsd}</span>
+                      </div>
+                    </td>
+                    <td className="py-1.5 px-2 text-center">
+                      <button
+                        type="button"
+                        className={`px-1.5 py-0.5 rounded flex items-center justify-center w-full text-[9px] font-bold transition-all ${
+                          item.isFollowing
+                            ? 'bg-white/5 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 border border-white/5'
+                            : 'bg-[#089981]/10 hover:bg-[#089981] text-[#00f2a1] hover:text-white border border-[#089981]/30'
                         }`}
                       >
-                        {isFollowed ? '✓ Following' : '+ Follow'}
+                        {item.isFollowing ? 'Following' : '+ Follow'}
                       </button>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-8 text-xs font-bold text-zinc-600 uppercase tracking-widest">
-                No profiles found matching search
-              </div>
-            )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <div className="flex justify-center mt-6 px-4">
-           <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest text-center max-w-[200px] leading-relaxed">
-             Rankings update every 5 minutes based on live on-chain protocol data.
-           </span>
+        {/* CARD 2: TOP CREATORS */}
+        <div className="bg-[#121318] border border-white/5 rounded-xl overflow-hidden flex flex-col shadow-xl h-full min-h-0">
+          <div className="px-3 py-2 bg-[#0a0b0e] border-b border-white/5 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#089981] shadow-[0_0_6px_#089981]" />
+              <h2 className="text-[11px] font-black tracking-wider uppercase text-white">Top Creators</h2>
+            </div>
+            <span className="text-[8px] text-zinc-500 uppercase">Ranked by Market Cap</span>
+          </div>
+
+          <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <table className="w-full text-left border-collapse">
+              <thead className="sticky top-0 bg-[#0a0b0e] z-10 border-b border-white/5">
+                <tr className="text-[8px] text-zinc-500 uppercase tracking-wider">
+                  <th className="py-1.5 px-2 w-8 text-center">#</th>
+                  <th className="py-1.5 px-2">Creator</th>
+                  <th className="py-1.5 px-2 text-right">Tokens</th>
+                  <th className="py-1.5 px-2 text-right">Total MCap</th>
+                  <th className="py-1.5 px-2 text-center w-16">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 text-[11px]">
+                {MOCK_CREATORS.map((item) => (
+                  <tr key={item.rank} className="hover:bg-white/[0.02] transition-colors group">
+                    <td className="py-1.5 px-2 text-center font-black">
+                      <span className={`inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] ${
+                        item.rank === 1 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' :
+                        item.rank === 2 ? 'bg-zinc-300/20 text-zinc-200 border border-zinc-300/40' :
+                        item.rank === 3 ? 'bg-amber-700/20 text-amber-600 border border-amber-700/40' :
+                        'text-zinc-500'
+                      }`}>
+                        {item.rank}
+                      </span>
+                    </td>
+                    <td className="py-1.5 px-2">
+                      <div className="flex items-center gap-1.5">
+                        <img src={item.avatar} alt="" className="w-5 h-5 rounded-full bg-zinc-800" />
+                        <span className="font-bold text-white group-hover:text-[#00f2a1] transition-colors truncate max-w-[90px] sm:max-w-none">{item.handle}</span>
+                      </div>
+                    </td>
+                    <td className="py-1.5 px-2 text-right font-bold text-zinc-300">{item.tokensLaunched}</td>
+                    <td className="py-1.5 px-2 text-right font-bold text-[#00f2a1]">{item.totalMcap}</td>
+                    <td className="py-1.5 px-2 text-center">
+                      <button
+                        type="button"
+                        className={`px-1.5 py-0.5 rounded flex items-center justify-center w-full text-[9px] font-bold transition-all ${
+                          item.isFollowing
+                            ? 'bg-white/5 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 border border-white/5'
+                            : 'bg-[#089981]/10 hover:bg-[#089981] text-[#00f2a1] hover:text-white border border-[#089981]/30'
+                        }`}
+                      >
+                        {item.isFollowing ? 'Following' : '+ Follow'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
       </div>
+
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AccountDrawer from './AccountDrawer';
 
 export default function Navbar({
   activeRoute = 'tokens',
@@ -9,9 +10,12 @@ export default function Navbar({
   setForgeModalOpen,
   searchQuery: externalSearch,
   setSearchQuery: externalSetSearch,
+  onOpenProfile,
+  onOpenSettings
 }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [internalSearch, setInternalSearch] = useState('');
+  const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
 
   const activeView = activeRoute || currentView || 'tokens';
   const currentLabel = activeView.toUpperCase();
@@ -31,148 +35,161 @@ export default function Navbar({
   };
 
   return (
-    <header className="relative z-[100] pointer-events-auto w-full h-[52px] bg-[#0A0A0A] border-b border-white/5 px-4 flex items-center justify-between shrink-0 select-none">
-      
-      {/* LEFT: VIEW SWITCHER DROPDOWN & NAV LINKS */}
-      <div className="flex items-center gap-4 shrink-0">
-        <div className="relative">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDropdownOpen((prev) => !prev);
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#089981]/40 bg-[#16171d] text-white text-xs font-black uppercase tracking-wider transition-all cursor-pointer hover:bg-[#20222b] active:scale-95"
-          >
-            <span className="text-[#089981]">{currentLabel}</span>
-            <svg
-              className={`w-3 h-3 text-[#089981] transition-transform duration-200 ${
-                dropdownOpen ? 'rotate-180' : ''
+    <>
+      <header className="relative z-[100] pointer-events-auto w-full h-[52px] bg-[#0A0A0A] border-b border-white/5 px-4 flex items-center justify-between shrink-0 select-none">
+        
+        {/* LEFT: VIEW SWITCHER DROPDOWN & NAV LINKS */}
+        <div className="flex items-center gap-4 shrink-0">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDropdownOpen((prev) => !prev);
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#089981]/40 bg-[#16171d] text-white text-xs font-black uppercase tracking-wider transition-all cursor-pointer hover:bg-[#20222b] active:scale-95"
+            >
+              <span className="text-[#089981]">{currentLabel}</span>
+              <svg
+                className={`w-3 h-3 text-[#089981] transition-transform duration-200 ${
+                  dropdownOpen ? 'rotate-180' : ''
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Dropdown Menu */}
+            {dropdownOpen && (
+              <div className="absolute top-full left-0 mt-2 w-44 bg-[#16171d] border border-white/10 rounded-xl shadow-2xl py-2 z-[110] backdrop-blur-md">
+                {['discover', 'launches', 'tokens', 'portfolio', 'track'].map((view) => (
+                  <button
+                    key={view}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRouteSelect(view);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors cursor-pointer ${
+                      activeView === view
+                        ? 'text-[#089981] bg-white/5'
+                        : 'text-zinc-300 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {view.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Quick Nav Links */}
+          <div className="hidden md:flex items-center gap-4 text-xs font-bold">
+            <button 
+              type="button"
+              onClick={() => handleRouteSelect('tokens')}
+              className={`transition-colors cursor-pointer ${
+                activeView === 'tokens' ? 'text-[#089981]' : 'text-zinc-400 hover:text-white'
               }`}
-              fill="none"
-              stroke="currentColor"
+            >
+              Tokens
+            </button>
+            <button 
+              type="button"
+              onClick={() => handleRouteSelect('portfolio')}
+              className={`transition-colors cursor-pointer ${
+                activeView === 'portfolio' ? 'text-[#089981]' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              Portfolio
+            </button>
+          </div>
+        </div>
+
+        {/* CENTER: SEARCH BAR */}
+        <div className="flex-1 max-w-md mx-4 hidden sm:block">
+          <div className="relative">
+            <svg 
+              className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" 
+              fill="none" 
+              stroke="currentColor" 
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input 
+              type="text" 
+              value={externalSearch !== undefined ? externalSearch : internalSearch}
+              onChange={handleSearchChange}
+              placeholder="Search tokens or CAs..." 
+              className="w-full bg-[#16171d] border border-white/5 rounded-lg pl-9 pr-4 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#089981]/60 transition-all cursor-text pointer-events-auto"
+            />
+          </div>
+        </div>
+
+        {/* RIGHT: ACTION CONTROLS */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          {/* Balance Badge */}
+          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 bg-[#16171d] border border-white/5 rounded-lg text-xs font-bold text-zinc-300">
+            <span className="text-[#089981]">⚡ 0.1</span>
+            <span className="text-zinc-500">SOL</span>
+          </div>
+
+          {/* + Forge Button */}
+          <button 
+            type="button"
+            onClick={() => setForgeModalOpen && setForgeModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#089981] hover:bg-[#067a67] text-white font-black text-xs rounded-lg transition-all shadow-sm cursor-pointer active:scale-95 shrink-0"
+          >
+            <span>+ Forge</span>
+          </button>
+
+          {/* Wallet Address Button */}
+          <button 
+            type="button"
+            className="flex items-center gap-2 px-3 py-1.5 bg-[#16171d] hover:bg-[#20222b] border border-[#089981]/40 text-white font-extrabold text-xs rounded-lg transition-all cursor-pointer active:scale-95"
+          >
+            <span className="w-2 h-2 rounded-full bg-[#089981] animate-pulse"></span>
+            <span>43pU..q2HR</span>
+          </button>
+
+          {/* Notifications Button */}
+          <button 
+            type="button"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#16171d] border border-white/5 text-zinc-400 hover:text-white hover:bg-[#20222b] transition-all cursor-pointer active:scale-95"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
           </button>
 
-          {/* Dropdown Menu */}
-          {dropdownOpen && (
-            <div className="absolute top-full left-0 mt-2 w-44 bg-[#16171d] border border-white/10 rounded-xl shadow-2xl py-2 z-[110] backdrop-blur-md">
-              {['discover', 'launches', 'tokens', 'portfolio', 'track'].map((view) => (
-                <button
-                  key={view}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRouteSelect(view);
-                  }}
-                  className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors cursor-pointer ${
-                    activeView === view
-                      ? 'text-[#089981] bg-white/5'
-                      : 'text-zinc-300 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {view.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Quick Nav Links */}
-        <div className="hidden md:flex items-center gap-4 text-xs font-bold">
+          {/* User Profile - Clickable to Open Account Drawer */}
           <button 
             type="button"
-            onClick={() => handleRouteSelect('tokens')}
-            className={`transition-colors cursor-pointer ${
-              activeView === 'tokens' ? 'text-[#089981]' : 'text-zinc-400 hover:text-white'
-            }`}
+            onClick={() => setIsAccountDrawerOpen(true)}
+            className="flex items-center gap-2 px-2 py-1 bg-[#16171d] border border-white/5 rounded-lg text-xs font-bold text-zinc-300 hover:bg-[#20222b] transition-all cursor-pointer active:scale-95"
           >
-            Tokens
-          </button>
-          <button 
-            type="button"
-            onClick={() => handleRouteSelect('portfolio')}
-            className={`transition-colors cursor-pointer ${
-              activeView === 'portfolio' ? 'text-[#089981]' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            Portfolio
+            <span className="w-5 h-5 rounded-full bg-zinc-800 text-[#089981] flex items-center justify-center text-[10px] font-bold">
+              E
+            </span>
+            <span className="hidden sm:inline text-zinc-200">{userProfile?.name || 'Elvis AI'}</span>
           </button>
         </div>
-      </div>
 
-      {/* CENTER: SEARCH BAR */}
-      <div className="flex-1 max-w-md mx-4 hidden sm:block">
-        <div className="relative">
-          <svg 
-            className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input 
-            type="text" 
-            value={externalSearch !== undefined ? externalSearch : internalSearch}
-            onChange={handleSearchChange}
-            placeholder="Search tokens or CAs..." 
-            className="w-full bg-[#16171d] border border-white/5 rounded-lg pl-9 pr-4 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#089981]/60 transition-all cursor-text pointer-events-auto"
-          />
-        </div>
-      </div>
+      </header>
 
-      {/* RIGHT: ACTION CONTROLS */}
-      <div className="flex items-center gap-2.5 shrink-0">
-        {/* Balance Badge */}
-        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 bg-[#16171d] border border-white/5 rounded-lg text-xs font-bold text-zinc-300">
-          <span className="text-[#089981]">⚡ 0.1</span>
-          <span className="text-zinc-500">SOL</span>
-        </div>
-
-        {/* + Forge Button */}
-        <button 
-          type="button"
-          onClick={() => setForgeModalOpen && setForgeModalOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#089981] hover:bg-[#067a67] text-white font-black text-xs rounded-lg transition-all shadow-sm cursor-pointer active:scale-95 shrink-0"
-        >
-          <span>+ Forge</span>
-        </button>
-
-        {/* Wallet Address Button */}
-        <button 
-          type="button"
-          className="flex items-center gap-2 px-3 py-1.5 bg-[#16171d] hover:bg-[#20222b] border border-[#089981]/40 text-white font-extrabold text-xs rounded-lg transition-all cursor-pointer active:scale-95"
-        >
-          <span className="w-2 h-2 rounded-full bg-[#089981] animate-pulse"></span>
-          <span>43pU..q2HR</span>
-        </button>
-
-        {/* Notifications Button */}
-        <button 
-          type="button"
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#16171d] border border-white/5 text-zinc-400 hover:text-white hover:bg-[#20222b] transition-all cursor-pointer active:scale-95"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-        </button>
-
-        {/* User Profile */}
-        <button 
-          type="button"
-          className="flex items-center gap-2 px-2 py-1 bg-[#16171d] border border-white/5 rounded-lg text-xs font-bold text-zinc-300 hover:bg-[#20222b] transition-all cursor-pointer"
-        >
-          <span className="w-5 h-5 rounded-full bg-zinc-800 text-[#089981] flex items-center justify-center text-[10px] font-bold">
-            E
-          </span>
-          <span className="hidden sm:inline text-zinc-200">{userProfile?.name || 'Elvis AI'}</span>
-        </button>
-      </div>
-
-    </header>
+      {/* Account Drawer Integration */}
+      <AccountDrawer 
+        isOpen={isAccountDrawerOpen}
+        onClose={() => setIsAccountDrawerOpen(false)}
+        userProfile={userProfile}
+        netWorth="$45,702.07"
+        onOpenProfile={onOpenProfile}
+        onOpenSettings={onOpenSettings}
+      />
+    </>
   );
 }
