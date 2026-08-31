@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
+import Profile from './Profile'; // Import your Profile component
 
 export default function SocialHub({ onBack, userProfile }) {
-  const [activeTab, setActiveTab] = useState('CHAT'); // 'CHAT' | 'FEED'
+  const [activeTab, setActiveTab] = useState('CHAT'); // 'CHAT' | 'FEED' | 'PROFILE'
   const [messageInput, setMessageInput] = useState('');
   
+  // Selected profile state for viewing any user's profile inline
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  // Default current user details
+  const currentUserHandle = userProfile?.name || '@ElvisVision';
+
   // Mock Trollbox Messages
   const [messages, setMessages] = useState([
     { id: 1, user: 'Ansem.sol', avatar: '🐋', text: 'Just loaded another 50 SOL into $APEX. This chart is breaking out.', time: '2m ago', badge: '🐋' },
-    { id: 2, user: 'DegenChad', avatar: '⚡', text: '@Elvis check out the bonding curve progress on the new vault!', time: '5m ago', badge: '⚡' },
+    { id: 2, user: 'DegenChad', avatar: '⚡', text: `@Elvis check out the bonding curve progress on the new vault!`, time: '5m ago', badge: '⚡' },
     { id: 3, user: 'ForgeDev', avatar: '🛠️', text: 'V2 liquidity locks have been successfully verified on-chain.', time: '12m ago', badge: '🛠️' },
   ]);
 
@@ -37,13 +44,19 @@ export default function SocialHub({ onBack, userProfile }) {
     }
   ]);
 
+  const handleOpenProfile = (username) => {
+    const formattedName = username.startsWith('@') ? username : `@${username}`;
+    setSelectedUser(formattedName);
+    setActiveTab('PROFILE');
+  };
+
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!messageInput.trim()) return;
 
     const newMessage = {
       id: Date.now(),
-      user: userProfile?.name || 'ElvisVision',
+      user: currentUserHandle,
       avatar: userProfile?.avatar ? userProfile.avatar : '👤',
       text: messageInput,
       time: 'Just now',
@@ -75,29 +88,46 @@ export default function SocialHub({ onBack, userProfile }) {
             </div>
           </div>
           
-          {onBack && (
+          <div className="flex items-center gap-2">
+            {/* Quick Button to view own profile */}
             <button 
-              onClick={onBack} 
-              className="w-10 h-10 bg-white/5 border border-white/10 hover:bg-white/10 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-colors active:scale-95 shadow-inner cursor-pointer"
+              onClick={() => handleOpenProfile(currentUserHandle)}
+              className="px-3 py-1.5 bg-white/5 border border-white/10 hover:border-[#089981]/50 rounded-xl flex items-center gap-2 text-xs font-bold text-zinc-300 hover:text-white transition-all cursor-pointer"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+              <span>👤</span>
+              <span className="hidden sm:inline">{currentUserHandle}</span>
             </button>
-          )}
+
+            {onBack && (
+              <button 
+                onClick={onBack} 
+                className="w-10 h-10 bg-white/5 border border-white/10 hover:bg-white/10 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-colors active:scale-95 shadow-inner cursor-pointer"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* --- TABS --- */}
         <div className="flex bg-[#121212] border border-white/5 p-1 rounded-2xl w-full shadow-inner">
-          {['CHAT', 'FEED'].map((tab) => (
+          {[
+            { id: 'CHAT', label: '💬 Trollbox Chat' },
+            { id: 'FEED', label: '📢 Alpha Feed' },
+            ...(activeTab === 'PROFILE' ? [{ id: 'PROFILE', label: `👤 ${selectedUser || 'Profile'}` }] : [])
+          ].map((tab) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
               className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] rounded-xl transition-all duration-300 cursor-pointer ${
-                activeTab === tab
+                activeTab === tab.id
                   ? 'bg-[#089981] text-white shadow-[0_4px_15px_rgba(8,153,129,0.3)]'
                   : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
               }`}
             >
-              {tab === 'CHAT' ? '💬 Trollbox Chat' : '📢 Alpha Feed'}
+              {tab.label}
             </button>
           ))}
         </div>
@@ -106,13 +136,16 @@ export default function SocialHub({ onBack, userProfile }) {
       {/* --- CONTENT AREA --- */}
       <div className="flex-1 overflow-y-auto scrollbar-hide pb-32 px-4 pt-4 flex flex-col">
         
-        {activeTab === 'CHAT' ? (
-          /* --- TROLLBOX CHAT STREAM --- */
+        {/* --- TROLLBOX CHAT STREAM --- */}
+        {activeTab === 'CHAT' && (
           <div className="flex flex-col gap-3 flex-1">
             <div className="bg-black/30 border border-white/5 rounded-2xl p-4 flex flex-col gap-4">
               {messages.map((msg) => (
                 <div key={msg.id} className="flex items-start gap-3 p-3 rounded-xl bg-[#121212]/60 border border-white/5 hover:border-white/10 transition-colors">
-                  <div className="w-9 h-9 rounded-full bg-black border border-white/10 flex items-center justify-center text-base shrink-0 shadow-inner overflow-hidden">
+                  <div 
+                    onClick={() => handleOpenProfile(msg.user)}
+                    className="w-9 h-9 rounded-full bg-black border border-white/10 flex items-center justify-center text-base shrink-0 shadow-inner overflow-hidden cursor-pointer hover:border-[#089981] transition-colors"
+                  >
                     {msg.avatar.startsWith('http') || msg.avatar.length > 2 ? (
                       <img src={msg.avatar} className="w-full h-full object-cover" alt="avatar" />
                     ) : (
@@ -122,7 +155,12 @@ export default function SocialHub({ onBack, userProfile }) {
                   <div className="flex flex-col flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-black text-white">{msg.user}</span>
+                        <button 
+                          onClick={() => handleOpenProfile(msg.user)}
+                          className="text-xs font-black text-white hover:text-[#089981] transition-colors cursor-pointer"
+                        >
+                          {msg.user}
+                        </button>
                         <span className="text-xs">{msg.badge}</span>
                       </div>
                       <span className="text-[9px] font-mono text-zinc-500">{msg.time}</span>
@@ -133,18 +171,28 @@ export default function SocialHub({ onBack, userProfile }) {
               ))}
             </div>
           </div>
-        ) : (
-          /* --- ALPHA FEED STREAM --- */
+        )}
+
+        {/* --- ALPHA FEED STREAM --- */}
+        {activeTab === 'FEED' && (
           <div className="flex flex-col gap-4">
             {feedPosts.map((post) => (
               <div key={post.id} className="bg-[#121212] border border-white/5 hover:border-[#089981]/30 rounded-2xl p-5 flex flex-col gap-3 transition-colors shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-black border border-white/10 flex items-center justify-center text-lg shadow-inner">
+                    <div 
+                      onClick={() => handleOpenProfile(post.author)}
+                      className="w-10 h-10 rounded-full bg-black border border-white/10 flex items-center justify-center text-lg shadow-inner cursor-pointer hover:border-[#089981] transition-colors"
+                    >
                       {post.avatar}
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xs font-black text-white">{post.author}</span>
+                      <button 
+                        onClick={() => handleOpenProfile(post.author)}
+                        className="text-xs font-black text-white hover:text-[#089981] text-left transition-colors cursor-pointer"
+                      >
+                        {post.author}
+                      </button>
                       <span className="text-[9px] font-bold text-zinc-500 uppercase">{post.time}</span>
                     </div>
                   </div>
@@ -164,6 +212,17 @@ export default function SocialHub({ onBack, userProfile }) {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* --- PROFILE HUB VIEW --- */}
+        {activeTab === 'PROFILE' && (
+          <div className="flex-1">
+            <Profile 
+              onBack={() => setActiveTab('CHAT')}
+              isOwnProfile={selectedUser === currentUserHandle || selectedUser === `@${currentUserHandle.replace('@', '')}`}
+              profileUsername={selectedUser || currentUserHandle}
+            />
           </div>
         )}
 
