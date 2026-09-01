@@ -68,6 +68,12 @@ export default function Navbar({
     }
   };
 
+const rawName = userProfile?.name || userProfile?.username || 'Elvis';
+const cleanName = rawName.replace(/^@/, ''); // Remove any leading '@'
+const truncatedName = cleanName.length > 7 
+  ? `@${cleanName.slice(0, 7)}...` 
+  : `@${cleanName}`;
+
   const displayAddress = connected && publicKey 
     ? `${publicKey.toBase58().slice(0, 4)}..${publicKey.toBase58().slice(-4)}`
     : (userProfile?.address ? `${userProfile.address.slice(0, 4)}..${userProfile.address.slice(-4)}` : '43pU..q2HR');
