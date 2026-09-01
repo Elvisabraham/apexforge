@@ -30,55 +30,62 @@ export default function Sidebar({ currentView, setCurrentView, userProfile }) {
     },
   ];
 
+  const isProfileActive = currentView?.toLowerCase() === 'profile';
+
   return (
-    // Shrink width to w-[80px] (20 rem scale) for the mini-sidebar look
-<aside className="w-[80px] h-screen sticky top-0 flex flex-col pb-6 border-r border-zinc-800/40 bg-[#0A0A0A] text-white z-40">
-  
-  {/* Sidebar Top Brand Header - Matched to Navbar height */}
-  <div className="h-[52px] flex items-center justify-center border-b border-white/5 shrink-0">
-    <img 
-      src={logo} 
-      alt="ApexForge Logo" 
-      className="w-7 h-7 rounded-lg object-contain cursor-pointer hover:scale-105 transition-transform" 
-    />
-  </div>
-
-  {/* Main Navigation - Icons Only with Top Padding */}
-  <nav className="flex flex-col gap-4 flex-1 items-center pt-6">
-    {navItems.map((item) => (
-      <button
-        key={item.id}
-        title={item.label} // Native hover tooltip
-        onClick={() => setCurrentView(item.id.toLowerCase())}
-        className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all outline-none ${
-          currentView.toLowerCase() === item.id.toLowerCase()
-            ? 'bg-[#089981]/10 text-[#089981] shadow-sm'
-            : 'text-zinc-500 hover:text-white hover:bg-zinc-900/80'
-        }`}
-      >
-        {item.icon}
-      </button>
-    ))}
-  </nav>
-
-  {/* Profile Bottom - Avatar Button with Online Dot */}
-  <div className="mt-auto pb-4 flex justify-center">
-    <button 
-      title="Settings"
-      onClick={() => setCurrentView('settings')} 
-      className="relative group transition-transform hover:scale-105 outline-none"
-    >
-      <div className="w-10 h-10 rounded-full bg-[#121212] flex items-center justify-center text-sm border border-zinc-700 overflow-hidden group-hover:border-[#089981] transition-colors">
-        {userProfile?.avatar ? (
-          <img src={userProfile.avatar} alt="Profile" className="w-full h-full object-cover" />
-        ) : (
-          '👨‍💻'
-        )}
+    <aside className="w-[80px] h-screen sticky top-0 flex flex-col pb-6 border-r border-zinc-800/40 bg-[#0A0A0A] text-white z-40">
+      
+      {/* Sidebar Top Brand Header */}
+      <div className="h-[52px] flex items-center justify-center border-b border-white/5 shrink-0">
+        <img 
+          src={logo} 
+          alt="ApexForge Logo" 
+          className="w-7 h-7 rounded-lg object-contain cursor-pointer hover:scale-105 transition-transform" 
+        />
       </div>
-      {/* Green Connected Indicator Dot */}
-      <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#089981] border-2 border-[#0A0A0A] rounded-full animate-pulse"></span>
-    </button>
-  </div>
-</aside>
+
+      {/* Main Navigation */}
+      <nav className="flex flex-col gap-4 flex-1 items-center pt-6">
+        {navItems.map((item) => (
+          <button
+            key={item.id}
+            title={item.label}
+            onClick={() => setCurrentView(item.id.toLowerCase())}
+            className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all outline-none ${
+              currentView?.toLowerCase() === item.id.toLowerCase()
+                ? 'bg-[#089981]/10 text-[#089981] shadow-sm'
+                : 'text-zinc-500 hover:text-white hover:bg-zinc-900/80'
+            }`}
+          >
+            {item.icon}
+          </button>
+        ))}
+      </nav>
+
+      {/* Profile Bottom - Dedicated Profile Route Button */}
+      <div className="mt-auto pb-4 flex justify-center">
+        <button 
+          title="View Profile"
+          onClick={() => setCurrentView('profile')} 
+          className={`relative group transition-all outline-none p-0.5 rounded-full ${
+            isProfileActive ? 'ring-2 ring-[#089981] scale-105' : 'hover:scale-105'
+          }`}
+        >
+          <div className={`w-10 h-10 rounded-full bg-[#121212] flex items-center justify-center text-sm border overflow-hidden transition-colors ${
+            isProfileActive ? 'border-[#089981]' : 'border-zinc-700 group-hover:border-[#089981]'
+          }`}>
+            {userProfile?.avatar ? (
+              <img src={userProfile.avatar} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <span className="font-bold text-[#089981]">
+                {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : 'E'}
+              </span>
+            )}
+          </div>
+          {/* Green Connected Indicator Dot */}
+          <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#089981] border-2 border-[#0A0A0A] rounded-full animate-pulse"></span>
+        </button>
+      </div>
+    </aside>
   );
 }
