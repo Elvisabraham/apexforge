@@ -58,7 +58,7 @@ function AppContent() {
   const [isFollowingCurrentView, setIsFollowingCurrentView] = useState(false);
   
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
+const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   
   // 🔍 NEW: Global search query state for header search integration
@@ -363,16 +363,6 @@ function AppContent() {
             onOpenSettings={() => { setPreviousPage('profile'); setActivePage('settings'); }} 
           />
         );
-      case 'settings': 
-        return (
-          <AccountSettingsSystem 
-            initialView="main" 
-            onBack={() => setActivePage(previousPage || 'home')} 
-            onCloseSettings={() => setActivePage(previousPage || 'home')} 
-            userProfile={userProfile} 
-            setUserProfile={setUserProfile} 
-          />
-        );
 
      case 'tokens':
       case 'tokenhome': 
@@ -417,8 +407,7 @@ function AppContent() {
                  onTokenClick={handleTokenClick} 
                  setActivePage={(page) => { setPreviousPage('home'); setActivePage(page); }} 
                  userProfile={userProfile} 
-                 onOpenSidebar={() => setIsMobileSidebarOpen(true)} 
-                 onOpenAccountDrawer={openAccountDrawer} 
+                 onOpenSidebar={() => setIsMobileSidebarOpen(true)}
                  onOpenNotifications={() => setIsNotificationsOpen(true)}
                  searchQuery={searchQuery}
                />;
@@ -487,7 +476,6 @@ return (
   setForgeModalOpen={() => setModals(prev => ({ ...prev, forge: true }))}
   onOpenForgeModal={() => setModals(prev => ({ ...prev, forge: true }))}
   onOpenNotifications={() => setIsNotificationsOpen(true)}
-  onOpenAccountDrawer={() => setIsAccountDrawerOpen(true)}
   onOpenProfile={() => setActivePage('profile')}
   onOpenSettings={() => setActivePage('settings')}
   userProfile={userProfile}
@@ -505,23 +493,6 @@ return (
           </div>
         )}
       </div>
-
-      {/* --- DRAWERS & MODALS --- */}
-      <AccountDrawer 
-        isOpen={isAccountDrawerOpen} 
-        onClose={() => setIsAccountDrawerOpen(false)} 
-        userProfile={userProfile} 
-        netWorth="$16,530.00" 
-        onOpenProfile={() => {
-          setPublicProfileView(null);
-          setPreviousPage(activePage);
-          setActivePage('profile');
-        }}
-        onOpenSettings={() => {
-          setPreviousPage(activePage);
-          setActivePage('settings');
-        }}
-      />
 
       {isTradePortalOpen && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
