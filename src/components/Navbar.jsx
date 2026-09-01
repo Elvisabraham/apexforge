@@ -207,19 +207,19 @@ export default function Navbar({
             </svg>
           </button>
 
-          {/* User Profile - Truncated to prevent navbar overflow */}
-         <button 
-         type="button"
-        onClick={() => setIsAccountDrawerOpen(true)}
-         className="flex items-center gap-2 px-2.5 py-1.5 bg-[#16171d] hover:bg-[#20222b] border border-white/5 rounded-lg text-xs font-bold text-zinc-300 transition-all cursor-pointer active:scale-95 shrink-0"
-         >
-        <span className="w-5 h-5 rounded-full bg-[#089981]/20 border border-[#089981]/40 text-[#089981] flex items-center justify-center text-[10px] font-black shrink-0">
-        {displayAvatarLetter}
-        </span>
-        <span className="hidden sm:inline-block text-zinc-200 max-w-[80px] md:max-w-[110px] truncate text-left">
-        {displayName.startsWith('@') ? displayName : `@${displayName}`}
-        </span>
-         </button>
+          {/* User Profile Button */}
+<button 
+  type="button"
+  onClick={() => setIsAccountDrawerOpen(true)}
+  className="flex items-center gap-2 px-2.5 py-1.5 bg-[#16171d] hover:bg-[#20222b] border border-white/5 rounded-lg text-xs font-bold text-zinc-300 transition-all cursor-pointer active:scale-95 shrink-0"
+>
+  <span className="w-5 h-5 rounded-full bg-[#089981]/20 border border-[#089981]/40 text-[#089981] flex items-center justify-center text-[10px] font-black shrink-0">
+    {displayAvatarLetter}
+  </span>
+  <span className="hidden sm:inline text-zinc-200">
+    {truncatedName}
+  </span>
+</button>
          </div>
 
       </header>
