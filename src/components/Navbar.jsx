@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import AccountDrawer from './AccountDrawer';
 
 export default function Navbar({
@@ -13,12 +15,44 @@ export default function Navbar({
   onOpenProfile,
   onOpenSettings
 }) {
+  const { connection } = useConnection();
+  const { publicKey, connected } = useWallet();
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [internalSearch, setInternalSearch] = useState('');
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
+  const [solBalance, setSolBalance] = useState(null);
+
+  const dropdownRef = useRef(null);
 
   const activeView = activeRoute || currentView || 'tokens';
   const currentLabel = activeView.toUpperCase();
+
+  // Fetch real SOL balance if wallet is connected
+  useEffect(() => {
+    let isMounted = true;
+    if (connected && publicKey && connection) {
+      connection.getBalance(publicKey).then((balance) => {
+        if (isMounted) setSolBalance((balance / LAMPORTS_PER_SOL).toFixed(2));
+      }).catch(() => {
+        if (isMounted) setSolBalance(null);
+      });
+    } else {
+      setSolBalance(null);
+    }
+    return () => { isMounted = false; };
+  }, [connected, publicKey, connection]);
+
+  // Close view switcher dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleRouteSelect = (route) => {
     if (typeof setActiveRoute === 'function') setActiveRoute(route);
@@ -34,13 +68,20 @@ export default function Navbar({
     }
   };
 
+  const displayAddress = connected && publicKey 
+    ? `${publicKey.toBase58().slice(0, 4)}..${publicKey.toBase58().slice(-4)}`
+    : (userProfile?.address ? `${userProfile.address.slice(0, 4)}..${userProfile.address.slice(-4)}` : '43pU..q2HR');
+
+  const displayName = userProfile?.name || userProfile?.username || 'Elvis';
+  const displayAvatarLetter = displayName.charAt(0).toUpperCase();
+
   return (
     <>
       <header className="relative z-[100] pointer-events-auto w-full h-[52px] bg-[#0A0A0A] border-b border-white/5 px-4 flex items-center justify-between shrink-0 select-none">
         
         {/* LEFT: VIEW SWITCHER DROPDOWN & NAV LINKS */}
         <div className="flex items-center gap-4 shrink-0">
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <button
               type="button"
               onClick={(e) => {
@@ -134,7 +175,7 @@ export default function Navbar({
         <div className="flex items-center gap-2.5 shrink-0">
           {/* Balance Badge */}
           <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 bg-[#16171d] border border-white/5 rounded-lg text-xs font-bold text-zinc-300">
-            <span className="text-[#089981]">⚡ 0.1</span>
+            <span className="text-[#089981]">⚡ {solBalance !== null ? solBalance : '0.1'}</span>
             <span className="text-zinc-500">SOL</span>
           </div>
 
@@ -152,8 +193,8 @@ export default function Navbar({
             type="button"
             className="flex items-center gap-2 px-3 py-1.5 bg-[#16171d] hover:bg-[#20222b] border border-[#089981]/40 text-white font-extrabold text-xs rounded-lg transition-all cursor-pointer active:scale-95"
           >
-            <span className="w-2 h-2 rounded-full bg-[#089981] animate-pulse"></span>
-            <span>43pU..q2HR</span>
+            <span className={`w-2 h-2 rounded-full ${connected ? 'bg-[#089981] animate-pulse' : 'bg-amber-500'}`}></span>
+            <span>{displayAddress}</span>
           </button>
 
           {/* Notifications Button */}
@@ -166,18 +207,20 @@ export default function Navbar({
             </svg>
           </button>
 
-          {/* User Profile - Clickable to Open Account Drawer */}
-          <button 
-            type="button"
-            onClick={() => setIsAccountDrawerOpen(true)}
-            className="flex items-center gap-2 px-2 py-1 bg-[#16171d] border border-white/5 rounded-lg text-xs font-bold text-zinc-300 hover:bg-[#20222b] transition-all cursor-pointer active:scale-95"
-          >
-            <span className="w-5 h-5 rounded-full bg-zinc-800 text-[#089981] flex items-center justify-center text-[10px] font-bold">
-              E
-            </span>
-            <span className="hidden sm:inline text-zinc-200">{userProfile?.name || 'Elvis AI'}</span>
-          </button>
-        </div>
+          {/* User Profile - Truncated to prevent navbar overflow */}
+         <button 
+         type="button"
+        onClick={() => setIsAccountDrawerOpen(true)}
+         className="flex items-center gap-2 px-2.5 py-1.5 bg-[#16171d] hover:bg-[#20222b] border border-white/5 rounded-lg text-xs font-bold text-zinc-300 transition-all cursor-pointer active:scale-95 shrink-0"
+         >
+        <span className="w-5 h-5 rounded-full bg-[#089981]/20 border border-[#089981]/40 text-[#089981] flex items-center justify-center text-[10px] font-black shrink-0">
+        {displayAvatarLetter}
+        </span>
+        <span className="hidden sm:inline-block text-zinc-200 max-w-[80px] md:max-w-[110px] truncate text-left">
+        {displayName.startsWith('@') ? displayName : `@${displayName}`}
+        </span>
+         </button>
+         </div>
 
       </header>
 
