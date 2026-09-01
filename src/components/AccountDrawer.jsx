@@ -54,9 +54,9 @@ export default function AccountDrawer({
               <button 
                 type="button"
                 onClick={() => {
-                  onClose();
-                  if (onOpenProfile) onOpenProfile();
-                }}
+                if (onOpenProfile) onOpenProfile(); // 1. Tell App.jsx to change the view first
+                onClose();                          // 2. Close the drawer second
+               }}
                 className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[#089981] text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer border border-[#089981]/30"
               >
                 View Profile
