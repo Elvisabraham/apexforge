@@ -31,7 +31,7 @@ import AccountSettingsSystem from './components/AccountSettingsSystem';
 // --- NAVIGATION & DRAWERS ---
 import BottomNav from './components/BottomNav';
 import Sidebar from './components/Sidebar'; 
-import AccountDrawer from './components/AccountDrawer';
+import SettingsDrawer from './components/SettingsDrawer';
 import NotificationCenter from './components/NotificationCenter';
 
 // --- GLOBAL MODALS ---
@@ -58,7 +58,7 @@ function AppContent() {
   const [isFollowingCurrentView, setIsFollowingCurrentView] = useState(false);
   
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   
   // 🔍 NEW: Global search query state for header search integration
@@ -469,7 +469,7 @@ return (
       {/* --- MAIN CONTENT CONTAINER --- */}
 <div className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
   
- {/* --- TOP HEADER BAR --- */}
+ {/* TOP HEADER BAR */}
 <Navbar
   activeRoute={activePage || 'discover'}
   setActiveRoute={setActivePage}
@@ -477,7 +477,7 @@ return (
   onOpenForgeModal={() => setModals(prev => ({ ...prev, forge: true }))}
   onOpenNotifications={() => setIsNotificationsOpen(true)}
   onOpenProfile={() => setActivePage('profile')}
-  onOpenSettings={() => setActivePage('settings')}
+  onOpenSettings={() => setIsSettingsOpen(true)}
   userProfile={userProfile}
 />
 
@@ -593,6 +593,13 @@ return (
         onClose={() => setIsNotificationsOpen(false)} 
         notifications={dummyNotifications} 
       />
+
+      {/* Add Settings Drawer here */}
+     <SettingsDrawer
+       isOpen={isSettingsOpen}
+       onClose={() => setIsSettingsOpen(false)}
+      />
+
       {modals.deposit && <DepositModal isOpen={modals.deposit} onClose={() => toggleModal('deposit', false)} />}
       {modals.withdraw && <WithdrawModal isOpen={modals.withdraw} onClose={() => toggleModal('withdraw', false)} />}
       {modals.send && <SendModal isOpen={modals.send} onClose={() => toggleModal('send', false)} />}
