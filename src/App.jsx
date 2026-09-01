@@ -352,17 +352,17 @@ function AppContent() {
             onOpenSwap={() => toggleModal('swap', true)}
           />
         );
-      case 'profile': 
-        return (
-          <Profile 
-            isOwnProfile={!publicProfileView} 
-            userProfile={publicProfileView || userProfile} 
-            isFollowingUser={isFollowingCurrentView}
-            onFollowToggle={() => setIsFollowingCurrentView(!isFollowingCurrentView)}
-            onBack={() => { setPublicProfileView(null); setActivePage(previousPage === 'profile' ? 'home' : previousPage); }} 
-            onOpenSettings={() => { setPreviousPage('profile'); setActivePage('settings'); }} 
-          />
-        );
+     case 'profile':
+  return (
+    <Profile
+      isOwnProfile={!publicProfileView}
+      userProfile={publicProfileView || userProfile}
+      isFollowingUser={isFollowingCurrentView}
+      onFollowToggle={() => setIsFollowingCurrentView(!isFollowingCurrentView)}
+      onBack={() => { setPublicProfileView(null); setActivePage(previousPage === 'profile' ? 'home' : previousPage); }}
+      onOpenSettings={() => setIsSettingsOpen(true)}
+    />
+  );
 
      case 'tokens':
       case 'tokenhome': 
