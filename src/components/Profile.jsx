@@ -5,6 +5,7 @@ import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana
 export default function Profile({ 
   onBack, 
   isOwnProfile = false, 
+  userProfile,
   profileUsername = "@ElvisVision", 
   profileAddress = "8xV9pRqwK1z829104n289410492810" 
 }) {
@@ -18,7 +19,12 @@ export default function Profile({
   const [isFollowing, setIsFollowing] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
-  const displayAddress = connected && publicKey ? publicKey.toBase58() : profileAddress;
+  // Dynamic user details from userProfile prop or fallbacks
+  const displayUsername = userProfile?.username || userProfile?.handle || profileUsername;
+  const displayAddress = connected && publicKey 
+    ? publicKey.toBase58() 
+    : (userProfile?.address || profileAddress);
+  const displayBio = userProfile?.bio || "Building decentralized Web3 tools on Solana. Trench trader & Apex Forge core builder. 🚀";
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -52,12 +58,12 @@ export default function Profile({
   };
 
   const handleReportSubmit = () => {
-    showToast(`Reported ${profileUsername} for: ${reportReason}`);
+    showToast(`Reported ${displayUsername} for: ${reportReason}`);
     setActiveModal(null);
   };
 
   const handleBlockUser = () => {
-    showToast(`Blocked ${profileUsername}`);
+    showToast(`Blocked ${displayUsername}`);
     setActiveModal(null);
   };
 
@@ -83,7 +89,7 @@ export default function Profile({
             ←
           </button>
           <div>
-            <h1 className="text-sm font-black tracking-wide uppercase">{profileUsername}</h1>
+            <h1 className="text-sm font-black tracking-wide uppercase">{displayUsername}</h1>
             <p className="text-[10px] text-zinc-500 font-mono">1.2k Callouts • 4 Tokens Launched</p>
           </div>
         </div>
@@ -101,7 +107,7 @@ export default function Profile({
       <div className="relative h-44 bg-gradient-to-r from-emerald-900/40 via-zinc-900 to-black border-b border-white/5">
         <div className="absolute -bottom-10 left-6">
           <img 
-            src={`https://api.dicebear.com/7.x/bottts/svg?seed=${profileUsername}`} 
+            src={`https://api.dicebear.com/7.x/bottts/svg?seed=${displayUsername}`} 
             alt="Avatar" 
             className="w-24 h-24 rounded-2xl bg-black border-4 border-[#0A0A0B] shadow-xl"
           />
@@ -112,7 +118,7 @@ export default function Profile({
       <div className="px-6 pt-14 pb-6 border-b border-white/5">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h2 className="text-xl font-black">{profileUsername}</h2>
+            <h2 className="text-xl font-black">{displayUsername}</h2>
             <p className="text-xs font-mono text-[#089981] mt-0.5">{displayAddress.slice(0, 6)}...{displayAddress.slice(-4)}</p>
           </div>
           
@@ -141,7 +147,7 @@ export default function Profile({
         </div>
 
         <p className="text-xs text-zinc-300 leading-relaxed mb-4 max-w-xl">
-          Building decentralized Web3 tools on Solana. Trench trader & Apex Forge core builder. 🚀
+          {displayBio}
         </p>
 
         {/* Stats Row */}
@@ -226,7 +232,7 @@ export default function Profile({
             {activeModal === 'block' && (
               <>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-sm font-black text-rose-500 uppercase tracking-widest">Block {profileUsername}?</h3>
+                  <h3 className="text-sm font-black text-rose-500 uppercase tracking-widest">Block {displayUsername}?</h3>
                   <button onClick={() => setActiveModal(null)} className="p-1 text-zinc-400 hover:text-white">✕</button>
                 </div>
                 <p className="text-xs text-zinc-400 mb-6 leading-relaxed">They will no longer be able to message you in chat rooms, view your portfolio activity, or tag you in token callouts.</p>
@@ -241,7 +247,7 @@ export default function Profile({
             {activeModal === 'tip' && (
               <>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-sm font-black text-white uppercase tracking-widest">Tip {profileUsername}</h3>
+                  <h3 className="text-sm font-black text-white uppercase tracking-widest">Tip {displayUsername}</h3>
                   <button onClick={() => setActiveModal(null)} className="p-1 text-zinc-400 hover:text-white">✕</button>
                 </div>
                 <p className="text-xs text-zinc-400 mb-4">Support this builder by sending SOL directly to their wallet via micro-tip:</p>
