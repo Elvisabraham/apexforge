@@ -481,12 +481,15 @@ return (
 <div className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
   
  {/* --- TOP HEADER BAR --- */}
-<Navbar 
-  activeRoute={activePage || 'discover'} 
-  setActiveRoute={setActivePage} 
+<Navbar
+  activeRoute={activePage || 'discover'}
+  setActiveRoute={setActivePage}
+  setForgeModalOpen={() => setModals(prev => ({ ...prev, forge: true }))}
   onOpenForgeModal={() => setModals(prev => ({ ...prev, forge: true }))}
   onOpenNotifications={() => setIsNotificationsOpen(true)}
   onOpenAccountDrawer={() => setIsAccountDrawerOpen(true)}
+  onOpenProfile={() => setActivePage('profile')}
+  onOpenSettings={() => setActivePage('settings')}
   userProfile={userProfile}
 />
 
