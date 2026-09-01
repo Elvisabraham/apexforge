@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
@@ -13,472 +13,395 @@ export default function Profile({
   const { connection } = useConnection();
   const { publicKey, sendTransaction, connected } = useWallet();
 
-  const [activeTab, setActiveTab] = useState('callouts'); // 'callouts' | 'activity' | 'positions' | 'launches'
-  const [activeModal, setActiveModal] = useState(null); 
-  const [reportReason, setReportReason] = useState('Scam / Phishing');
-  const [tipAmount, setTipAmount] = useState('0.1');
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [activeTab, setActiveTab] = useState('callouts');
+  const [activeModal, setActiveModal] = useState(null);
+  const [quickSolAmount, setQuickSolAmount] = useState('0.5');
   const [toastMessage, setToastMessage] = useState(null);
 
-  const displayUsername = userProfile?.username || userProfile?.handle || profileUsername;
-  const displayAddress = connected && publicKey 
-    ? publicKey.toBase58() 
-    : (userProfile?.address || profileAddress);
-  const displayBio = userProfile?.bio || "Algorithmic Trench Trader & Apex Forge Core Developer. High-conviction Solana meme & utility play callouts.";
+  // Simulated real-time streaming transactions (making the screen feel live & busy)
+  const [liveStream, setLiveStream] = useState([
+    { id: 1, type: 'BUY', symbol: '$WEN', sol: '12.4', price: '$0.000142', wallet: '7xK...9q', time: 'Just now' },
+    { id: 2, type: 'BUY', symbol: '$APEX', sol: '5.0', price: '$0.089000', wallet: '3mR...4k', time: '2s ago' },
+    { id: 3, type: 'SELL', symbol: '$BONK', sol: '42.1', price: '$0.000028', wallet: '9vL...1p', time: '5s ago' },
+    { id: 4, type: 'BUY', symbol: '$WIF', sol: '8.2', price: '$2.410000', wallet: '43p...HR', time: '8s ago' },
+  ]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleSendTip = async () => {
-    if (!connected || !publicKey) {
-      showToast('Connect wallet to tip!');
-      return;
-    }
+  const displayUsername = userProfile?.username || userProfile?.handle || profileUsername;
+  const displayAddress = connected && publicKey ? publicKey.toBase58() : (userProfile?.address || profileAddress);
 
-    try {
-      const recipientPubKey = new PublicKey(displayAddress);
-      const lamports = parseFloat(tipAmount) * LAMPORTS_PER_SOL;
-
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: recipientPubKey,
-          lamports,
-        })
-      );
-
-      const signature = await sendTransaction(transaction, connection);
-      showToast(`Tip sent! Tx: ${signature.slice(0, 8)}...`);
-      setActiveModal(null);
-    } catch (err) {
-      showToast(`Tip failed: ${err.message || 'Transaction rejected'}`);
-    }
-  };
-
-  // Pro Trader Mock Data
-  const proCallouts = [
+  // Dense Callout Cards with Direct Quick-Buy Triggers
+  const denseCallouts = [
     {
       id: 1,
       symbol: '$WEN',
       name: 'Wen Coin',
-      calledAt: '2h ago',
+      ca: 'WENw...pump',
       entryMC: '$120K',
-      peakMC: '$1.4M',
+      currentMC: '$1.4M',
       multiplier: '11.6x',
-      type: 'BULLISH SNIPE',
-      status: 'PROFIT TAKEN',
-      notes: 'Clean double-bottom accumulation on 15m chart. Volume spiking on Raydium.',
-      ca: 'WENw...pump'
+      type: 'SNIPE',
+      liquidity: '$240K',
+      devHolding: '0.8%',
+      top10: '14.2%',
+      rugScore: '99/100 (SAFE)',
+      notes: 'Double-bottom breakout on 1m chart. Top 10 wallet concentration under 15%.',
+      time: '2m ago'
     },
     {
       id: 2,
       symbol: '$APEX',
       name: 'Apex Token',
-      calledAt: '5h ago',
+      ca: 'APEX...sol',
       entryMC: '$450K',
-      peakMC: '$2.1M',
+      currentMC: '$2.1M',
       multiplier: '4.6x',
       type: 'BREAKOUT',
-      status: 'ACTIVE RUN',
-      notes: 'Token launch platform utility. Smart money wallet inflow detected.',
-      ca: 'APEX...sol'
+      liquidity: '$510K',
+      devHolding: '0.0%',
+      top10: '18.5%',
+      rugScore: '95/100 (SAFE)',
+      notes: 'Raydium CPMM pool initialized. Smart money inflow spiking.',
+      time: '14m ago'
+    },
+    {
+      id: 3,
+      symbol: '$SOLAR',
+      name: 'Solar AI',
+      ca: 'SOL...pump',
+      entryMC: '$35K',
+      currentMC: '$180K',
+      multiplier: '5.1x',
+      type: 'EARLY PUMP',
+      liquidity: '$65K',
+      devHolding: '1.2%',
+      top10: '22.0%',
+      rugScore: '88/100 (MED)',
+      notes: 'High volume momentum. Auto-snipe triggered.',
+      time: '42m ago'
     }
   ];
 
-  const proTrades = [
-    { id: 1, type: 'BUY', symbol: '$WEN', amount: '15.0 SOL', price: '$0.00014', time: '12 mins ago', hash: '5K9...xPq' },
-    { id: 2, type: 'SELL', symbol: '$BONK', amount: '42.5 SOL', price: '$0.000028', time: '1 hour ago', hash: '8mL...2wR' },
-    { id: 3, type: 'SWAP', symbol: '$SOL ➔ $USDC', amount: '20.0 SOL', price: '$180.20', time: '3 hours ago', hash: '2vN...9qK' }
-  ];
-
-  const openPositions = [
-    { symbol: '$APEX', entry: '$0.042', current: '$0.098', pnl: '+133.3%', size: '35 SOL', value: '$6,300' },
-    { symbol: '$WIF', entry: '$2.10', current: '$2.45', pnl: '+16.6%', size: '50 SOL', value: '$9,000' }
-  ];
-
   return (
-    // FIX: Removed static overflow lock, enabled smooth document-level scrolling
-    <div className="min-h-screen bg-[#0A0A0B] text-white flex flex-col font-sans relative overflow-y-auto">
+    <div className="min-h-screen bg-[#070708] text-zinc-100 flex flex-col font-mono text-xs selection:bg-[#089981] selection:text-white">
       
-      {/* Toast Notification */}
+      {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 bg-[#089981] text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl border border-white/20 animate-pulse">
+        <div className="fixed top-4 right-4 z-50 bg-[#089981] text-white text-[11px] font-bold px-4 py-2.5 rounded-lg shadow-2xl border border-white/20 animate-pulse">
           ⚡ {toastMessage}
         </div>
       )}
 
-      {/* Profile Top Navigation Bar */}
-      <div className="sticky top-0 z-40 bg-[#0A0A0B]/90 backdrop-blur-xl border-b border-white/10 px-4 lg:px-8 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button onClick={onBack} className="p-2 hover:bg-white/10 rounded-xl text-zinc-400 hover:text-white transition-all cursor-pointer">
-            ← Back
-          </button>
-          <div className="flex items-center gap-2">
-            <h1 className="text-sm font-black tracking-wide uppercase">{displayUsername}</h1>
-            <span className="bg-[#089981]/20 text-[#089981] text-[10px] font-mono px-2 py-0.5 rounded border border-[#089981]/30 font-bold">
-              PRO TRADER
-            </span>
-          </div>
+      {/* 1. TOP LIVE TICKER MARQUEE (Busy Terminal Bar) */}
+      <div className="bg-[#0C0C0E] border-b border-white/10 px-4 py-1.5 flex items-center justify-between overflow-x-auto whitespace-nowrap text-[10px] gap-6 text-zinc-400">
+        <div className="flex items-center gap-6 font-bold">
+          <span className="flex items-center gap-1 text-emerald-400"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"/> SOL/USD $184.20 (+6.4%)</span>
+          <span>SOLANA TPS: <strong className="text-white">2,840</strong></span>
+          <span>GAS: <strong className="text-emerald-400">0.000005 SOL</strong></span>
+          <span>$WEN: <strong className="text-emerald-400">+142% 🔥</strong></span>
+          <span>$APEX: <strong className="text-emerald-400">+48% 🚀</strong></span>
+          <span>$BONK: <strong className="text-rose-400">-2.1%</strong></span>
         </div>
-        <div className="flex items-center gap-2">
-          {isOwnProfile ? (
-            <button 
-              onClick={onOpenSettings}
-              className="px-3.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-xs font-bold text-zinc-200 transition-all cursor-pointer"
-            >
-              ⚙️ Terminal Settings
-            </button>
-          ) : (
-            <>
-              <button onClick={() => setActiveModal('report')} className="p-2 hover:bg-white/10 rounded-lg text-zinc-500 hover:text-rose-400 transition-colors cursor-pointer" title="Report">🚩</button>
-              <button onClick={() => setActiveModal('block')} className="p-2 hover:bg-white/10 rounded-lg text-zinc-500 hover:text-rose-400 transition-colors cursor-pointer" title="Block">🚫</button>
-            </>
-          )}
+        <div className="flex items-center gap-3 text-zinc-500">
+          <span>RPC: mainnet-beta (14ms)</span>
+          <span className="text-emerald-400">● Live Connection</span>
         </div>
       </div>
 
-      {/* Main Grid Layout */}
-      <div className="max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      {/* 2. NAVIGATION BAR */}
+      <div className="sticky top-0 z-40 bg-[#0A0A0C]/95 backdrop-blur-md border-b border-white/10 px-4 lg:px-6 py-2.5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-zinc-300 hover:text-white transition-all cursor-pointer">
+            ← BACK
+          </button>
+          <div className="h-4 w-[1px] bg-white/10" />
+          <span className="font-black text-sm text-white">{displayUsername}</span>
+          <span className="bg-[#089981]/20 text-[#089981] text-[9px] font-bold px-2 py-0.5 rounded border border-[#089981]/40">
+            PRO TRENCH RADAR
+          </span>
+        </div>
+
+        {/* Global Quick Buy SOL Bar */}
+        <div className="flex items-center gap-2">
+          <span className="text-zinc-500 text-[10px]">PRESET SNIPE:</span>
+          {['0.1', '0.5', '1.0', '2.5'].map((amt) => (
+            <button
+              key={amt}
+              onClick={() => setQuickSolAmount(amt)}
+              className={`px-2 py-0.5 rounded text-[10px] font-bold border cursor-pointer transition-all ${
+                quickSolAmount === amt 
+                  ? 'bg-[#089981] text-white border-[#089981]' 
+                  : 'bg-black/40 text-zinc-400 border-white/10 hover:border-white/30'
+              }`}
+            >
+              {amt} SOL
+            </button>
+          ))}
+          <button onClick={onOpenSettings} className="ml-2 px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-zinc-300">
+            ⚙️
+          </button>
+        </div>
+      </div>
+
+      {/* 3. DENSE WORKSPACE GRID */}
+      <div className="max-w-[1600px] w-full mx-auto p-3 lg:p-4 grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1">
         
-        {/* LEFT / MAIN COLUMN (8 Cols) */}
-        <div className="lg:col-span-8 space-y-6">
+        {/* LEFT & CENTER TERMINAL (8 COLS) */}
+        <div className="lg:col-span-8 space-y-3">
           
-          {/* Main Card Wrapper */}
-          <div className="bg-[#121214] border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-            
-            {/* Header Banner */}
-            <div className="relative h-44 bg-gradient-to-r from-emerald-950/80 via-zinc-900 to-black border-b border-white/10">
-              <div className="absolute top-4 right-4 flex gap-2">
-                <span className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[10px] font-mono font-bold text-emerald-400">
-                  🟢 LIVE ON-CHAIN
-                </span>
-              </div>
-              <div className="absolute -bottom-10 left-6">
+          {/* USER MINI PROFILE & METRIC HUD */}
+          <div className="p-3.5 bg-[#101012] border border-white/10 rounded-xl space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
                 <img 
                   src={`https://api.dicebear.com/7.x/bottts/svg?seed=${displayUsername}`} 
                   alt="Avatar" 
-                  className="w-24 h-24 rounded-2xl bg-black border-4 border-[#0A0A0B] shadow-2xl"
+                  className="w-12 h-12 rounded-lg bg-black border border-white/20"
                 />
-              </div>
-            </div>
-
-            {/* Profile Info & Actions */}
-            <div className="px-6 pt-14 pb-6 border-b border-white/10">
-              <div className="flex flex-wrap justify-between items-start gap-4 mb-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-black">{displayUsername}</h2>
-                    <span className="text-emerald-400 text-xs">✓ Verified Alpha</span>
+                    <h2 className="text-base font-black text-white">{displayUsername}</h2>
+                    <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30">VERIFIED ALPHA</span>
                   </div>
-                  <p className="text-xs font-mono text-zinc-400 mt-0.5 flex items-center gap-2">
-                    <span>{displayAddress.slice(0, 6)}...{displayAddress.slice(-4)}</span>
-                    <button 
-                      onClick={() => { navigator.clipboard.writeText(displayAddress); showToast('Address Copied!'); }}
-                      className="text-[10px] hover:text-white bg-white/5 px-2 py-0.5 rounded border border-white/10 cursor-pointer"
-                    >
-                      Copy CA
-                    </button>
+                  <p className="text-[10px] text-zinc-500 font-mono flex items-center gap-2">
+                    <span>CA: {displayAddress}</span>
+                    <button onClick={() => { navigator.clipboard.writeText(displayAddress); showToast('CA Copied'); }} className="text-zinc-400 hover:text-white underline">Copy</button>
                   </p>
                 </div>
-                
-                <div className="flex items-center gap-2">
-                  {isOwnProfile ? (
-                    <button 
-                      onClick={onOpenSettings}
-                      className="bg-[#089981] hover:bg-emerald-500 text-white text-xs font-black px-5 py-2.5 rounded-xl uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(8,153,129,0.3)] cursor-pointer"
-                    >
-                      Edit Profile
-                    </button>
-                  ) : (
-                    <>
-                      <button 
-                        onClick={() => setActiveModal('tip')} 
-                        className="bg-[#089981]/15 hover:bg-[#089981]/30 text-[#089981] border border-[#089981]/40 text-xs font-black px-4 py-2.5 rounded-xl uppercase tracking-wider transition-all cursor-pointer"
-                      >
-                        ⚡ Tip SOL
-                      </button>
-                      <button 
-                        onClick={() => setIsFollowing(!isFollowing)} 
-                        className={`text-xs font-black px-5 py-2.5 rounded-xl uppercase tracking-wider transition-all cursor-pointer ${
-                          isFollowing 
-                            ? 'bg-white/10 hover:bg-rose-500/20 hover:text-rose-400 text-white border border-white/10' 
-                            : 'bg-white text-black hover:bg-zinc-200'
-                        }`}
-                      >
-                        {isFollowing ? 'Following' : '+ Follow Trader'}
-                      </button>
-                    </>
-                  )}
-                </div>
               </div>
 
-              <p className="text-xs text-zinc-300 leading-relaxed mb-6 max-w-2xl font-medium">
-                {displayBio}
-              </p>
-
-              {/* Pro Trader Metric Dashboard Bar */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-black/50 border border-white/5 rounded-2xl">
-                <div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase">Win Rate</p>
-                  <p className="text-base font-black text-emerald-400">78.4%</p>
+              {/* QUICK STAT METRICS */}
+              <div className="grid grid-cols-4 gap-2 text-center bg-black/60 p-2 rounded-lg border border-white/5">
+                <div className="px-2">
+                  <div className="text-[9px] text-zinc-500">WIN RATE</div>
+                  <div className="text-sm font-black text-emerald-400">78.4%</div>
                 </div>
-                <div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase">Avg Return</p>
-                  <p className="text-base font-black text-emerald-400">4.8x</p>
+                <div className="px-2 border-l border-white/10">
+                  <div className="text-[9px] text-zinc-500">AVG MULTI</div>
+                  <div className="text-sm font-black text-emerald-400">4.8x</div>
                 </div>
-                <div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase">Realized PnL</p>
-                  <p className="text-base font-black text-white">+142.8 SOL</p>
+                <div className="px-2 border-l border-white/10">
+                  <div className="text-[9px] text-zinc-500">REALIZED PNL</div>
+                  <div className="text-sm font-black text-white">+142.8 SOL</div>
                 </div>
-                <div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase">Trench Score</p>
-                  <p className="text-base font-black text-amber-400">98 / 100</p>
+                <div className="px-2 border-l border-white/10">
+                  <div className="text-[9px] text-zinc-500">TRENCH SCORE</div>
+                  <div className="text-sm font-black text-amber-400">98/100</div>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Navigation Tabs */}
-            <div className="flex border-b border-white/10 bg-black/40">
-              {[
-                { id: 'callouts', label: '🔥 Callouts' },
-                { id: 'positions', label: '📊 Open Positions' },
-                { id: 'activity', label: '⚡ DEX Activity' },
-                { id: 'launches', label: '🚀 Launched Tokens' },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 py-3.5 text-xs font-black uppercase tracking-wider transition-all border-b-2 cursor-pointer ${
-                    activeTab === tab.id 
-                      ? 'border-[#089981] text-[#089981] bg-[#089981]/5' 
-                      : 'border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'
-                  }`}
-                >
-                  {tab.label}
-                </button>
+          {/* DENSE TAB CONTROLS */}
+          <div className="flex bg-[#101012] border border-white/10 rounded-lg p-1 gap-1">
+            {[
+              { id: 'callouts', label: '🔥 LIVE CALLOUTS (3)' },
+              { id: 'stream', label: '⚡ DEX SWAP STREAM' },
+              { id: 'positions', label: '📊 OPEN POSITIONS (2)' },
+              { id: 'watchlist', label: '👀 RADAR WATCHLIST' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 py-1.5 text-[11px] font-bold rounded transition-all cursor-pointer ${
+                  activeTab === tab.id 
+                    ? 'bg-[#089981] text-white shadow' 
+                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* TAB 1: DENSE CALLOUTS FEED */}
+          {activeTab === 'callouts' && (
+            <div className="space-y-2">
+              {denseCallouts.map((item) => (
+                <div key={item.id} className="p-3 bg-[#101012] border border-white/10 rounded-xl hover:border-[#089981] transition-all space-y-2">
+                  {/* Card Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-sm text-white">{item.symbol}</span>
+                      <span className="text-zinc-500 text-[10px]">{item.name}</span>
+                      <span className="bg-emerald-500/10 text-emerald-400 text-[9px] font-bold px-1.5 py-0.5 rounded border border-emerald-500/20">
+                        {item.type}
+                      </span>
+                      <span className="bg-zinc-800 text-zinc-400 text-[9px] px-1.5 py-0.5 rounded">
+                        RUGCHECK: {item.rugScore}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-400 font-black bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                        PEAK: {item.multiplier}
+                      </span>
+                      <span className="text-zinc-500 text-[10px]">{item.time}</span>
+                    </div>
+                  </div>
+
+                  {/* Micro Stats Grid */}
+                  <div className="grid grid-cols-5 gap-2 bg-black/50 p-2 rounded-lg text-[10px] border border-white/5 font-mono">
+                    <div><span className="text-zinc-500">Entry MC:</span> <strong className="text-zinc-200">{item.entryMC}</strong></div>
+                    <div><span className="text-zinc-500">Current MC:</span> <strong className="text-emerald-400">{item.currentMC}</strong></div>
+                    <div><span className="text-zinc-500">Liquidity:</span> <strong className="text-zinc-200">{item.liquidity}</strong></div>
+                    <div><span className="text-zinc-500">Dev Hold:</span> <strong className="text-zinc-200">{item.devHolding}</strong></div>
+                    <div><span className="text-zinc-500">Top 10:</span> <strong className="text-zinc-200">{item.top10}</strong></div>
+                  </div>
+
+                  <p className="text-[11px] text-zinc-300 leading-tight">{item.notes}</p>
+
+                  {/* Bottom Action Strip with 1-Click Quick Buy */}
+                  <div className="flex items-center justify-between pt-1 text-[10px]">
+                    <span className="text-zinc-500">CA: {item.ca}</span>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => showToast(`Executing ${quickSolAmount} SOL Snipe on ${item.symbol}...`)}
+                        className="bg-[#089981] hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded transition-all cursor-pointer shadow-[0_0_10px_rgba(8,153,129,0.3)]"
+                      >
+                        ⚡ SNIPE {quickSolAmount} SOL
+                      </button>
+                      <button onClick={() => showToast(`Chart opened for ${item.symbol}`)} className="bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 rounded">
+                        DEX 📈
+                      </button>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
+          )}
 
-            {/* Dynamic Content Panel */}
-            <div className="p-6 bg-black/20">
-              
-              {/* TAB 1: CALLOUTS */}
-              {activeTab === 'callouts' && (
-                <div className="space-y-4">
-                  {proCallouts.map((c) => (
-                    <div key={c.id} className="p-5 bg-[#161619] border border-white/10 rounded-2xl space-y-3 hover:border-[#089981]/50 transition-all">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="text-lg font-black text-white">{c.symbol}</span>
-                          <span className="text-xs text-zinc-400 font-mono">{c.name}</span>
-                          <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-bold">
-                            {c.type}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-black text-[#089981] bg-[#089981]/10 px-2.5 py-1 rounded-lg border border-[#089981]/30">
-                            PEAK: {c.multiplier}
-                          </span>
-                          <span className="text-[10px] text-zinc-500 font-mono">{c.calledAt}</span>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-zinc-300">{c.notes}</p>
-
-                      <div className="pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
-                        <div className="flex gap-4">
-                          <div><span className="text-zinc-500">Entry MC:</span> <span className="text-zinc-200 font-bold">{c.entryMC}</span></div>
-                          <div><span className="text-zinc-500">Peak MC:</span> <span className="text-emerald-400 font-bold">{c.peakMC}</span></div>
-                        </div>
-                        <button 
-                          onClick={() => showToast(`Opening DexScreener for ${c.symbol}...`)}
-                          className="text-[11px] font-bold text-[#089981] hover:underline cursor-pointer"
-                        >
-                          View Chart 📈
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* TAB 2: OPEN POSITIONS */}
-              {activeTab === 'positions' && (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-white/10 text-zinc-500 uppercase text-[10px] font-mono">
-                        <th className="pb-3">Token</th>
-                        <th className="pb-3">Entry</th>
-                        <th className="pb-3">Current</th>
-                        <th className="pb-3">PnL</th>
-                        <th className="pb-3 text-right">Size</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5 font-mono">
-                      {openPositions.map((pos, idx) => (
-                        <tr key={idx} className="hover:bg-white/[0.02]">
-                          <td className="py-3.5 font-bold text-white">{pos.symbol}</td>
-                          <td className="py-3.5 text-zinc-400">{pos.entry}</td>
-                          <td className="py-3.5 text-zinc-200">{pos.current}</td>
-                          <td className="py-3.5 font-bold text-emerald-400">{pos.pnl}</td>
-                          <td className="py-3.5 text-right font-bold text-white">{pos.size} <span className="text-zinc-500 text-[10px]">({pos.value})</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* TAB 3: DEX ACTIVITY */}
-              {activeTab === 'activity' && (
-                <div className="space-y-3 font-mono">
-                  {proTrades.map((t) => (
-                    <div key={t.id} className="p-3.5 bg-black/40 border border-white/5 rounded-xl flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-3">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          t.type === 'BUY' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
-                        }`}>
-                          {t.type}
-                        </span>
-                        <span className="font-bold text-white">{t.symbol}</span>
-                        <span className="text-zinc-500 text-[11px]">{t.amount}</span>
-                      </div>
-                      <div className="flex items-center gap-4 text-zinc-400">
-                        <span>@{t.price}</span>
-                        <span className="text-zinc-600 text-[10px]">{t.time}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* TAB 4: LAUNCHES */}
-              {activeTab === 'launches' && (
-                <div className="text-xs text-zinc-400 text-center py-10 bg-black/40 rounded-2xl border border-white/5 space-y-2">
-                  <p className="font-bold text-white">4 Pump.fun / Apex Tokens Deployed</p>
-                  <p className="text-zinc-500 font-mono text-[11px]">Total Volume Generated: 2,490 SOL</p>
-                </div>
-              )}
-
+          {/* TAB 2: LIVE DEX SWAP STREAM */}
+          {activeTab === 'stream' && (
+            <div className="bg-[#101012] border border-white/10 rounded-xl p-3 space-y-2">
+              <div className="flex justify-between items-center text-[10px] text-zinc-500 font-bold border-b border-white/10 pb-2">
+                <span>ACTION</span>
+                <span>TOKEN</span>
+                <span>AMOUNT (SOL)</span>
+                <span>EXECUTION PRICE</span>
+                <span>WALLET</span>
+                <span>TIME</span>
+              </div>
+              <div className="space-y-1.5 font-mono text-[11px]">
+                {liveStream.map((tx) => (
+                  <div key={tx.id} className="flex justify-between items-center p-2 bg-black/40 border border-white/5 rounded hover:bg-white/5 transition-colors">
+                    <span className={`font-bold px-1.5 py-0.5 rounded text-[9px] ${tx.type === 'BUY' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                      {tx.type}
+                    </span>
+                    <span className="font-bold text-white">{tx.symbol}</span>
+                    <span className="text-zinc-200">{tx.sol} SOL</span>
+                    <span className="text-zinc-400">{tx.price}</span>
+                    <span className="text-zinc-500">{tx.wallet}</span>
+                    <span className="text-zinc-600 text-[10px]">{tx.time}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* TAB 3: OPEN POSITIONS */}
+          {activeTab === 'positions' && (
+            <div className="bg-[#101012] border border-white/10 rounded-xl p-3">
+              <table className="w-full text-left text-[11px]">
+                <thead>
+                  <tr className="border-b border-white/10 text-zinc-500 text-[9px] uppercase">
+                    <th className="pb-2">Token</th>
+                    <th className="pb-2">Entry Price</th>
+                    <th className="pb-2">Current</th>
+                    <th className="pb-2">PnL (%)</th>
+                    <th className="pb-2 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  <tr className="hover:bg-white/[0.02]">
+                    <td className="py-2.5 font-bold text-white">$APEX</td>
+                    <td className="py-2.5 text-zinc-400">$0.042</td>
+                    <td className="py-2.5 text-zinc-200">$0.098</td>
+                    <td className="py-2.5 font-bold text-emerald-400">+133.3%</td>
+                    <td className="py-2.5 text-right">
+                      <button onClick={() => showToast('Position Closed (+133%)')} className="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white px-2 py-1 rounded text-[10px] font-bold">
+                        SELL ALL
+                      </button>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-white/[0.02]">
+                    <td className="py-2.5 font-bold text-white">$WIF</td>
+                    <td className="py-2.5 text-zinc-400">$2.10</td>
+                    <td className="py-2.5 text-zinc-200">$2.45</td>
+                    <td className="py-2.5 font-bold text-emerald-400">+16.6%</td>
+                    <td className="py-2.5 text-right">
+                      <button onClick={() => showToast('Position Closed (+16%)')} className="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white px-2 py-1 rounded text-[10px] font-bold">
+                        SELL ALL
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+
         </div>
 
-        {/* RIGHT SIDEBAR COLUMN (4 Cols - Sticky Pro Dashboard) */}
-        {/* FIX: Set `sticky top-20` so sidebar stays visible during scrolling */}
-        <div className="hidden lg:flex lg:col-span-4 flex-col gap-6 sticky top-20">
+        {/* RIGHT SIDEBAR - DENSE TERMINAL WIDGETS (4 COLS) */}
+        <div className="hidden lg:flex lg:col-span-4 flex-col gap-3 sticky top-14 self-start">
           
-          {/* Widget 1: Wallet Net Worth */}
-          <div className="p-5 rounded-3xl bg-[#121214] border border-white/10 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Portfolio Value</span>
-              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">+14.2% 24h</span>
+          {/* WIDGET 1: PORTFOLIO REAL-TIME SUMMARY */}
+          <div className="p-3.5 bg-[#101012] border border-white/10 rounded-xl space-y-3">
+            <div className="flex justify-between items-center text-[10px] text-zinc-400">
+              <span className="font-bold uppercase tracking-wider">Trench Balance</span>
+              <span className="text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">+14.2% 24h</span>
             </div>
             <div>
-              <p className="text-3xl font-black text-white">90.19 SOL</p>
-              <p className="text-xs text-zinc-500 font-mono mt-0.5">~$16,234.20 USD</p>
-            </div>
-            <div className="pt-3 border-t border-white/5 flex justify-between text-xs font-mono">
-              <span className="text-zinc-500">Active Positions</span>
-              <span className="text-zinc-300 font-bold">2 Open</span>
+              <div className="text-2xl font-black text-white">90.19 SOL</div>
+              <div className="text-[10px] text-zinc-500 font-mono">~$16,613.00 USD</div>
             </div>
           </div>
 
-          {/* Widget 2: Pro Trader Execution Quick Stats */}
-          <div className="p-5 rounded-3xl bg-[#121214] border border-white/10 space-y-4 shadow-xl">
-            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Execution Stats</span>
-            
-            <div className="space-y-3 font-mono text-xs">
-              <div className="flex justify-between items-center">
-                <span className="text-zinc-400">Total Volume</span>
-                <span className="font-bold text-white">$482,910</span>
+          {/* WIDGET 2: SMART MONEY / WHALE FEED */}
+          <div className="p-3.5 bg-[#101012] border border-white/10 rounded-xl space-y-2.5">
+            <div className="flex justify-between items-center text-[10px]">
+              <span className="font-bold text-zinc-400 uppercase tracking-wider">🐋 Whale Radar</span>
+              <span className="text-zinc-500 text-[9px]">Live Alerts</span>
+            </div>
+            <div className="space-y-2 text-[10px]">
+              <div className="p-2 bg-black/50 border border-white/5 rounded">
+                <div className="flex justify-between font-bold">
+                  <span className="text-emerald-400">Whale Buy 45 SOL</span>
+                  <span className="text-zinc-500">1m ago</span>
+                </div>
+                <div className="text-zinc-400">$WEN • Wallet: 8xV...10</div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-zinc-400">Creator Fees</span>
-                <span className="font-bold text-[#089981]">3.45 SOL</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-zinc-400">Avg Hold Time</span>
-                <span className="font-bold text-zinc-200">42 Mins</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-zinc-400">Apex Tier</span>
-                <span className="font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded text-[10px]">DIAMOND HANDS</span>
+              <div className="p-2 bg-black/50 border border-white/5 rounded">
+                <div className="flex justify-between font-bold">
+                  <span className="text-emerald-400">Whale Buy 120 SOL</span>
+                  <span className="text-zinc-500">4m ago</span>
+                </div>
+                <div className="text-zinc-400">$APEX • Wallet: 3mR...4k</div>
               </div>
             </div>
           </div>
 
-          {/* Widget 3: Referral & Copy Trading */}
-          <div className="p-5 rounded-3xl bg-gradient-to-br from-[#121214] to-emerald-950/40 border border-white/10 space-y-3 shadow-xl">
-            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Copy Trade Bot</span>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Automatically replicate {displayUsername}'s on-chain snipes via Apex Telegram Bot.
+          {/* WIDGET 3: TELEGRAM AUTO COPY-TRADER */}
+          <div className="p-3.5 bg-gradient-to-br from-[#101012] to-[#089981]/10 border border-white/10 rounded-xl space-y-2">
+            <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-wider">🤖 Auto Copy-Bot</span>
+            <p className="text-[10px] text-zinc-400 leading-normal">
+              Replicate all callouts instantly with zero-latency MEV protection.
             </p>
             <button 
-              onClick={() => showToast('Telegram Copy-Bot Link Copied!')}
-              className="w-full py-2.5 rounded-xl bg-[#089981] hover:bg-emerald-500 text-white font-black text-xs transition-all shadow-lg cursor-pointer"
+              onClick={() => showToast('Copy-bot initialized!')}
+              className="w-full py-2 bg-[#089981] hover:bg-emerald-500 text-white font-bold rounded text-[11px] transition-all cursor-pointer shadow-lg"
             >
-              Enable Copy-Trading 🤖
+              START AUTO-COPY TRADING
             </button>
           </div>
 
         </div>
 
       </div>
-
-      {/* --- MODALS --- */}
-      {activeModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#121214] border border-white/10 rounded-3xl p-6 w-full max-w-md shadow-2xl relative">
-
-            {/* TIP MODAL */}
-            {activeModal === 'tip' && (
-              <>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-sm font-black text-white uppercase tracking-widest">Tip {displayUsername}</h3>
-                  <button onClick={() => setActiveModal(null)} className="p-1 text-zinc-400 hover:text-white">✕</button>
-                </div>
-                <p className="text-xs text-zinc-400 mb-4">Send SOL directly to support high-conviction callouts:</p>
-                <div className="bg-black/50 border border-white/10 rounded-2xl p-4 flex items-center justify-between gap-3 mb-4">
-                  <span className="text-xs font-bold text-zinc-400">Amount (SOL)</span>
-                  <input 
-                    type="number" 
-                    value={tipAmount} 
-                    onChange={(e) => setTipAmount(e.target.value)} 
-                    className="bg-transparent text-right text-2xl font-black text-white w-32 focus:outline-none"
-                  />
-                </div>
-                <div className="flex gap-2 mb-6">
-                  {['0.1', '0.5', '1.0', '2.5'].map(amt => (
-                    <button key={amt} onClick={() => setTipAmount(amt)} className="flex-1 bg-white/5 hover:bg-white/10 py-2 rounded-lg text-xs font-mono font-bold text-zinc-300 cursor-pointer">{amt} SOL</button>
-                  ))}
-                </div>
-                <button onClick={handleSendTip} className="w-full bg-[#089981] hover:bg-emerald-500 text-white font-black text-xs py-3.5 rounded-xl uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(8,153,129,0.3)] cursor-pointer">
-                  Send {tipAmount} SOL Tip ⚡
-                </button>
-              </>
-            )}
-
-            {/* REPORT / BLOCK MODALS */}
-            {(activeModal === 'report' || activeModal === 'block') && (
-              <>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-sm font-black text-rose-500 uppercase tracking-widest">{activeModal.toUpperCase()} USER</h3>
-                  <button onClick={() => setActiveModal(null)} className="p-1 text-zinc-400 hover:text-white">✕</button>
-                </div>
-                <p className="text-xs text-zinc-400 mb-6">Are you sure you want to perform this action against {displayUsername}?</p>
-                <button onClick={() => { showToast('Action processed.'); setActiveModal(null); }} className="w-full bg-rose-500 hover:bg-rose-600 text-white font-black text-xs py-3.5 rounded-xl uppercase tracking-widest cursor-pointer">
-                  Confirm
-                </button>
-              </>
-            )}
-
-          </div>
-        </div>
-      )}
 
     </div>
   );
