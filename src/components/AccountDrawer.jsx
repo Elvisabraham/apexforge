@@ -51,16 +51,16 @@ export default function AccountDrawer({
               <div className="w-12 h-12 rounded-full bg-zinc-800 border border-[#089981]/40 text-[#089981] flex items-center justify-center text-lg font-black shadow-inner">
                 {displayName ? displayName.charAt(0).toUpperCase() : 'U'}
               </div>
-             <button 
-             type="button"
-             onClick={() => {
-               if (onOpenProfile) onOpenProfile(); // 1. Change active page to 'profile' first
-                onClose();                          // 2. Close drawer second
-                 }}
-               className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[#089981] text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer border border-[#089981]/30"
-             >
-            View Profile
-           </button>
+            <button
+  type="button"
+  onClick={() => {
+    if (typeof onOpenProfile === 'function') onOpenProfile();
+    onClose();
+  }}
+  className="px-3 py-1.5 bg-[#089981]/20 hover:bg-[#089981]/30 border border-[#089981]/40 text-[#089981] text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
+>
+  View Profile
+</button>
             </div>
 
             <div>
