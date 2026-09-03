@@ -8,7 +8,10 @@ export default function Profile() {
   const [isAntiMev, setIsAntiMev] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(1420);
+  const [isCopyTrading, setIsCopyTrading] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+  const [replyInputOpen, setReplyInputOpen] = useState({});
+  const [replyText, setReplyText] = useState({});
 
   const displayUsername = "@ElvisAI";
 
@@ -33,13 +36,43 @@ export default function Profile() {
       reposts: 28,
       replies: 19,
       views: '14.8K',
+      bookmarks: 34,
       isLiked: false,
       isReposted: false,
-      isBookmarked: false
+      isBookmarked: false,
+      commentList: [
+        { id: 101, user: '@SolTrenchRunner', text: 'Apocalypse entry point! Loaded up 2 SOL.' }
+      ]
+    },
+    {
+      id: 2,
+      author: '@ElvisAI',
+      time: '1h ago',
+      symbol: '$SOLX',
+      name: 'SolanaX AI',
+      ca: 'SOLX99a...88k',
+      entryMC: '$80K',
+      currentMC: '$520K',
+      multiplier: '6.5x',
+      pnlPercent: '+550%',
+      liquidity: '$110K',
+      devHolding: '0.0%',
+      top10Holding: '18.5%',
+      rugScore: '94/100',
+      text: 'Volume spiked 300% on Raydium. Liquidity locked permanently.',
+      likes: 89,
+      reposts: 14,
+      replies: 8,
+      views: '8.2K',
+      bookmarks: 12,
+      isLiked: false,
+      isReposted: false,
+      isBookmarked: false,
+      commentList: []
     }
   ]);
 
-  const [positions] = useState([
+  const [positions, setPositions] = useState([
     {
       id: 101,
       symbol: '$SOLX',
@@ -51,7 +84,6 @@ export default function Profile() {
       size: '12.5 SOL',
       pnlSol: '+20.8 SOL',
       pnlPercent: '+166.6%',
-      isProfit: true,
       tp: '$1.50',
       sl: '$0.38'
     }
@@ -65,9 +97,8 @@ export default function Profile() {
       platform: 'Apex Bonding Curve',
       ca: 'WENw7K92...pump',
       marketCap: '$1.4M',
-      bondingCurve: '88%',
+      bondingCurve: 88,
       liquidity: '$240K',
-      devHolding: '0.8%',
       creatorFeesEarned: '48.2 SOL',
       lpStatus: '100% BURNED',
       age: '4 days ago'
@@ -83,7 +114,7 @@ export default function Profile() {
     setCallouts(prev => prev.map(item => {
       if (item.id === id) {
         const nextLiked = !item.isLiked;
-        showToast(nextLiked ? 'Added to Liked Calls' : 'Removed Like');
+        showToast(nextLiked ? 'Liked callout' : 'Removed like');
         return { ...item, isLiked: nextLiked, likes: nextLiked ? item.likes + 1 : item.likes - 1 };
       }
       return item;
@@ -94,7 +125,7 @@ export default function Profile() {
     setCallouts(prev => prev.map(item => {
       if (item.id === id) {
         const nextReposted = !item.isReposted;
-        showToast(nextReposted ? 'Reposted to your feed!' : 'Undo repost');
+        showToast(nextReposted ? 'Reposted to your profile' : 'Undo repost');
         return { ...item, isReposted: nextReposted, reposts: nextReposted ? item.reposts + 1 : item.reposts - 1 };
       }
       return item;
@@ -104,34 +135,65 @@ export default function Profile() {
   const handleToggleBookmark = (id) => {
     setCallouts(prev => prev.map(item => {
       if (item.id === id) {
-        const nextBM = !item.isBookmarked;
-        showToast(nextBM ? 'Saved to Bookmarks' : 'Removed from Bookmarks');
-        return { ...item, isBookmarked: nextBM };
+        const nextBookmark = !item.isBookmarked;
+        showToast(nextBookmark ? 'Added to Bookmarks' : 'Removed from Bookmarks');
+        return { ...item, isBookmarked: nextBookmark, bookmarks: nextBookmark ? item.bookmarks + 1 : item.bookmarks - 1 };
       }
       return item;
     }));
   };
 
+  const toggleReplyBox = (id) => {
+    setReplyInputOpen(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleAddReply = (postId) => {
+    const text = replyText[postId];
+    if (!text || !text.trim()) return;
+
+    setCallouts(prev => prev.map(post => {
+      if (post.id === postId) {
+        return {
+          ...post,
+          replies: post.replies + 1,
+          commentList: [
+            ...post.commentList,
+            { id: Date.now(), user: displayUsername, text: text.trim() }
+          ]
+        };
+      }
+      return post;
+    }));
+
+    setReplyText(prev => ({ ...prev, [postId]: '' }));
+    showToast('Reply published!');
+  };
+
+  const handleClosePosition = (id, symbol) => {
+    setPositions(prev => prev.filter(p => p.id !== id));
+    showToast(`Closed position for ${symbol}`);
+  };
+
   return (
-    <div className="h-screen bg-[#070708] text-zinc-100 flex flex-col font-mono text-xs selection:bg-[#089981] selection:text-white overflow-hidden">
+    <div className="h-screen bg-[#070708] text-zinc-100 flex flex-col font-sans text-xs selection:bg-[#089981] selection:text-white overflow-hidden">
       
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed top-4 right-4 z-50 bg-[#089981] text-white text-[11px] font-bold px-4 py-2.5 rounded-lg shadow-[0_0_20px_rgba(8,153,129,0.5)] border border-emerald-400/40 animate-pulse flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+        <div className="fixed top-4 right-4 z-50 bg-[#089981] text-white text-[11px] font-bold px-4 py-2.5 rounded-lg border border-emerald-400/40 flex items-center gap-2 shadow-xl">
+          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
           ⚡ {toastMessage}
         </div>
       )}
 
-      {/* Top Marquee */}
+      {/* Top Ticker Bar */}
       <div className="bg-[#0A0A0C] border-b border-white/10 px-4 py-1.5 flex items-center justify-between text-[10px] text-zinc-400 shrink-0">
         <div className="flex items-center gap-6 font-bold">
           <span className="flex items-center gap-1.5 text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"/> 
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"/> 
             SOL/USD $184.20 (+6.4%)
           </span>
-          <span>SOLANA TPS: <strong className="text-white">2,840</strong></span>
-          <span>GAS: <strong className="text-emerald-400">0.000005 SOL</strong></span>
+          <span>SOLANA TPS: <strong className="text-white font-semibold">2,840</strong></span>
+          <span>GAS: <strong className="text-emerald-400 font-semibold">0.000005 SOL</strong></span>
         </div>
         
         <div className="flex items-center gap-2 bg-white/5 px-2 py-0.5 rounded border border-white/10">
@@ -151,14 +213,14 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Main Header */}
-      <div className="sticky top-0 z-40 bg-[#0A0A0C]/95 backdrop-blur-md border-b border-white/10 px-4 lg:px-6 py-2.5 flex items-center justify-between shrink-0">
+      {/* Navigation Sub Header */}
+      <div className="bg-[#0A0A0C] border-b border-white/10 px-4 lg:px-6 py-2.5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <button className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-zinc-300 hover:text-white transition-all cursor-pointer">
+          <button className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-zinc-300 hover:text-white transition-all cursor-pointer font-medium">
             ← BACK
           </button>
           <div className="h-4 w-[1px] bg-white/10" />
-          <span className="font-black text-sm text-white">{displayUsername}</span>
+          <span className="font-bold text-sm text-white">{displayUsername}</span>
           <span className="bg-[#089981]/20 text-[#089981] text-[9px] font-bold px-2 py-0.5 rounded border border-[#089981]/40 tracking-wider">
             TERMINAL PRO
           </span>
@@ -195,17 +257,106 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Main Container */}
-      <div className="max-w-[1600px] w-full mx-auto p-3 lg:p-4 grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 overflow-y-auto">
+      {/* INDEPENDENT 3-COLUMN GRID (HIDDEN SCROLLBARS, CLEAN UN-SLASHED ZEROS) */}
+      <div className="max-w-[1800px] w-full mx-auto p-3 lg:p-4 grid grid-cols-1 xl:grid-cols-12 gap-3 flex-1 min-h-0 overflow-hidden">
         
-        {/* Main Feed */}
-        <div className="lg:col-span-8 space-y-3 pb-16">
+        {/* LEFT COLUMN */}
+        <div className="hidden xl:flex xl:col-span-3 flex-col gap-3 h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pr-1 pb-6">
+          
+          {/* Leaderboard Card */}
+          <div className="bg-[#101012] border border-white/10 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between border-b border-white/5 pb-2">
+              <span className="text-[10px] text-zinc-400 font-bold tracking-wider uppercase">TRADER RANKING</span>
+              <span className="text-amber-400 font-bold text-[10px] bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/30">#4 APEX LEADERBOARD</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-[10px]">
+              <div className="bg-black/50 p-2 rounded border border-white/5">
+                <span className="text-zinc-500 block">30D P&L</span>
+                <strong className="text-emerald-400 text-sm font-bold">+482.4 SOL</strong>
+              </div>
+              <div className="bg-black/50 p-2 rounded border border-white/5">
+                <span className="text-zinc-500 block">WIN RATE</span>
+                <strong className="text-emerald-400 text-sm font-bold">89.4%</strong>
+              </div>
+              <div className="bg-black/50 p-2 rounded border border-white/5">
+                <span className="text-zinc-500 block">AVG MULTIPLIER</span>
+                <strong className="text-white text-xs font-bold">4.2x</strong>
+              </div>
+              <div className="bg-black/50 p-2 rounded border border-white/5">
+                <span className="text-zinc-500 block">TOTAL CALLS</span>
+                <strong className="text-white text-xs font-bold">148 Calls</strong>
+              </div>
+            </div>
+          </div>
+
+          {/* Copy Trade Widget */}
+          <div className="bg-[#101012] border border-white/10 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-200 font-bold text-xs flex items-center gap-1.5">
+                ⚡ AUTO COPY TRADER
+              </span>
+              <button 
+                onClick={() => {
+                  setIsCopyTrading(!isCopyTrading);
+                  showToast(isCopyTrading ? 'Copy Trading Paused' : 'Copy Trading Activated!');
+                }}
+                className={`px-2.5 py-1 rounded text-[10px] font-bold cursor-pointer transition-all ${
+                  isCopyTrading 
+                    ? 'bg-emerald-500 text-black border border-emerald-400' 
+                    : 'bg-white/10 text-zinc-300 hover:bg-white/20'
+                }`}
+              >
+                {isCopyTrading ? '✓ ACTIVE' : 'ENABLE'}
+              </button>
+            </div>
+            
+            <p className="text-[10px] text-zinc-400 leading-relaxed font-sans">
+              Automatically mirror all Apex bonding curve buys and Raydium breakouts made by {displayUsername}.
+            </p>
+
+            <div className="space-y-2 pt-1">
+              <div className="flex justify-between items-center text-[10px]">
+                <span className="text-zinc-500">MAX ALLOCATION / BUY:</span>
+                <span className="text-emerald-400 font-bold">0.5 SOL</span>
+              </div>
+              <div className="flex justify-between items-center text-[10px]">
+                <span className="text-zinc-500">AUTO STOP LOSS:</span>
+                <span className="text-rose-400 font-bold">-15%</span>
+              </div>
+              <div className="flex justify-between items-center text-[10px]">
+                <span className="text-zinc-500">AUTO TAKE PROFIT:</span>
+                <span className="text-emerald-400 font-bold">+100%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Badges */}
+          <div className="bg-[#101012] border border-white/10 rounded-xl p-3.5 space-y-2">
+            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block">VERIFIED BADGES</span>
+            <div className="flex flex-wrap gap-1.5">
+              <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold px-2 py-0.5 rounded">
+                ✓ 0x WHALE DEPLOYER
+              </span>
+              <span className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-[9px] font-bold px-2 py-0.5 rounded">
+                💎 TOP HOLDER
+              </span>
+              <span className="bg-purple-500/10 text-purple-400 border border-purple-500/30 text-[9px] font-bold px-2 py-0.5 rounded">
+                ⚡ FAST EXECUTION
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        {/* CENTER COLUMN */}
+        <div className="xl:col-span-6 flex flex-col gap-3 h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-1 pb-6">
           
           {/* Profile Card */}
-          <div className="bg-[#101012] border border-white/10 rounded-xl overflow-hidden shadow-2xl p-4 space-y-4">
+          <div className="bg-[#101012] border border-white/10 rounded-xl p-4 sm:p-5 space-y-4 shrink-0">
             <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-xl bg-black border-2 border-emerald-500/60 shadow-xl overflow-hidden">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl bg-black border border-emerald-500/40 overflow-hidden shrink-0">
                   <img 
                     src={`https://api.dicebear.com/7.x/bottts/svg?seed=${displayUsername}`} 
                     alt="Avatar" 
@@ -213,8 +364,10 @@ export default function Profile() {
                   />
                 </div>
                 <div>
-                  <h2 className="text-base font-black text-white">{displayUsername}</h2>
-                  <span className="text-[10px] text-emerald-400 font-bold">⚡ TOP 0.1% APEX TRADER</span>
+                  <h2 className="text-lg font-bold text-white">{displayUsername}</h2>
+                  <span className="text-[10px] text-emerald-400 font-bold tracking-wider flex items-center gap-1 mt-0.5">
+                    ⚡ TOP 0.1% APEX TRADER
+                  </span>
                 </div>
               </div>
 
@@ -226,7 +379,7 @@ export default function Profile() {
                       setFollowersCount(prev => isFollowing ? prev - 1 : prev + 1);
                       showToast(isFollowing ? `Unfollowed ${displayUsername}` : `Following ${displayUsername}`);
                     }}
-                    className={`px-4 py-2 rounded-lg text-[11px] font-black tracking-wider transition-all cursor-pointer ${
+                    className={`px-4 py-2 rounded-lg text-[11px] font-bold tracking-wider transition-all cursor-pointer ${
                       isFollowing 
                         ? 'bg-white/10 text-zinc-300 border border-white/10 hover:bg-rose-500/20 hover:text-rose-400' 
                         : 'bg-white text-black hover:bg-zinc-200'
@@ -237,7 +390,7 @@ export default function Profile() {
                 ) : (
                   <button 
                     onClick={() => showToast('Edit profile modal opened')}
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-[11px] font-black text-white transition-all cursor-pointer"
+                    className="px-3.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-[11px] font-bold text-white transition-all cursor-pointer flex items-center gap-1.5"
                   >
                     ⚙️ EDIT PROFILE
                   </button>
@@ -249,49 +402,50 @@ export default function Profile() {
               Solana Trench Runner ⚡ Scalping early Apex bonding curve launches & Raydium CPMM breakouts. 0x Execution.
             </div>
 
-            <div className="flex items-center gap-6 text-[11px] border-t border-b border-white/5 py-2">
+            <div className="flex items-center justify-around text-[11px] border-t border-b border-white/5 py-2">
               <div>
-                <strong className="text-white font-mono text-xs">{followersCount.toLocaleString()}</strong> <span className="text-zinc-500">Followers</span>
+                <strong className="text-white font-bold text-xs">{followersCount.toLocaleString()}</strong> <span className="text-zinc-500">Followers</span>
               </div>
               <div className="w-[1px] h-3 bg-white/10" />
               <div>
-                <strong className="text-white font-mono text-xs">184</strong> <span className="text-zinc-500">Following</span>
+                <strong className="text-white font-bold text-xs">184</strong> <span className="text-zinc-500">Following</span>
               </div>
               <div className="w-[1px] h-3 bg-white/10" />
               <div>
-                <strong className="text-emerald-400 font-mono text-xs">89.4%</strong> <span className="text-zinc-500">Copy Win Rate</span>
+                <strong className="text-emerald-400 font-bold text-xs">89.4%</strong> <span className="text-zinc-500">Copy Win Rate</span>
               </div>
             </div>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex bg-[#101012] border border-white/10 rounded-lg p-1 gap-1">
+          <div className="flex bg-[#101012] border-b border-white/10 rounded-xl overflow-hidden shrink-0">
             {[
               { id: 'callouts', label: `🔥 ALPHA CALLS (${callouts.length})` },
-              { id: 'positions', label: `📊 OPEN POSITIONS (${positions.length})` },
-              { id: 'launches', label: `🚀 DEPLOYED TOKENS (${deployedTokens.length})` },
+              { id: 'positions', label: `📊 POSITIONS (${positions.length})` },
+              { id: 'launches', label: `🚀 TOKENS (${deployedTokens.length})` },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-2 text-[11px] font-bold rounded transition-all cursor-pointer border ${
+                className={`flex-1 py-3 text-[11px] font-bold transition-all cursor-pointer relative flex items-center justify-center hover:bg-white/5 ${
                   activeTab === tab.id 
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40 shadow-[0_0_12px_rgba(8,153,129,0.15)]' 
-                    : 'bg-transparent text-zinc-400 border-transparent hover:text-white hover:bg-white/5'
+                    ? 'text-emerald-400 font-extrabold' 
+                    : 'text-zinc-400 hover:text-white'
                 }`}
               >
-                {tab.label}
+                <span>{tab.label}</span>
+                {activeTab === tab.id && (
+                  <div className="absolute bottom-0 h-0.5 w-16 bg-emerald-400 rounded-full" />
+                )}
               </button>
             ))}
           </div>
 
-          {/* Callouts Feed */}
+          {/* Feed Content */}
           {activeTab === 'callouts' && (
             <div className="space-y-3">
               {callouts.map((post) => (
-                <div key={post.id} className="bg-[#101012] border border-white/10 rounded-xl hover:border-emerald-500/30 transition-all shadow-xl p-4 space-y-3">
-                  
-                  {/* Main Post Header */}
+                <div key={post.id} className="bg-[#101012] border border-white/10 rounded-xl p-4 space-y-3 transition-all hover:border-white/20">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center font-bold text-emerald-400 text-xs">
@@ -301,24 +455,22 @@ export default function Profile() {
                       <span className="text-zinc-500 text-[11px]">• {post.time}</span>
                     </div>
 
-                    <span className="bg-emerald-500/10 text-emerald-400 font-black text-xs px-2.5 py-1 rounded border border-emerald-500/30 flex items-center gap-1">
+                    <span className="bg-emerald-500/10 text-emerald-400 font-bold text-xs px-2.5 py-1 rounded border border-emerald-500/30 flex items-center gap-1">
                       🚀 {post.multiplier} ({post.pnlPercent})
                     </span>
                   </div>
 
-                  {/* Main Post Text */}
                   <p className="text-xs text-zinc-200 leading-relaxed font-sans">{post.text}</p>
 
-                  {/* Quoted Token Box (X-Style Quote Card) */}
-                  <div className="bg-black/80 hover:bg-black/90 p-3.5 rounded-2xl border border-white/10 space-y-3 transition-colors">
+                  <div className="bg-black/80 p-3.5 rounded-xl border border-white/10 space-y-3">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-2.5">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-black text-sm shadow-[0_0_10px_rgba(8,153,129,0.2)]">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-sm">
                           WE
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-black text-sm text-white">{post.symbol}</span>
+                            <span className="font-bold text-sm text-white">{post.symbol}</span>
                             <span className="text-zinc-400 text-[11px]">{post.name}</span>
                           </div>
                           <button 
@@ -333,11 +485,11 @@ export default function Profile() {
                       <div className="flex items-center gap-4 text-right">
                         <div>
                           <div className="text-[9px] text-zinc-500">ENTRY MC</div>
-                          <div className="text-xs font-mono font-bold text-zinc-300">{post.entryMC}</div>
+                          <div className="text-xs font-bold text-zinc-300">{post.entryMC}</div>
                         </div>
                         <div className="border-l border-white/10 pl-4">
                           <div className="text-[9px] text-zinc-500">CURRENT MC</div>
-                          <div className="text-xs font-mono font-black text-emerald-400">{post.currentMC}</div>
+                          <div className="text-xs font-bold text-emerald-400">{post.currentMC}</div>
                         </div>
                       </div>
                     </div>
@@ -345,19 +497,19 @@ export default function Profile() {
                     <div className="grid grid-cols-4 gap-2 text-[10px] bg-white/5 p-2 rounded-lg border border-white/5">
                       <div>
                         <span className="text-zinc-500 block">LIQUIDITY</span>
-                        <strong className="text-white font-mono">{post.liquidity}</strong>
+                        <strong className="text-white font-semibold">{post.liquidity}</strong>
                       </div>
                       <div>
                         <span className="text-zinc-500 block">DEV HOLDING</span>
-                        <strong className="text-amber-400 font-mono">{post.devHolding}</strong>
+                        <strong className="text-amber-400 font-semibold">{post.devHolding}</strong>
                       </div>
                       <div>
-                        <span className="text-zinc-500 block">TOP 10 HOLDERS</span>
-                        <strong className="text-emerald-400 font-mono">{post.top10Holding}</strong>
+                        <span className="text-zinc-500 block">TOP 10</span>
+                        <strong className="text-emerald-400 font-semibold">{post.top10Holding}</strong>
                       </div>
                       <div>
-                        <span className="text-zinc-500 block">SAFETY SCORE</span>
-                        <strong className="text-emerald-400 font-mono">{post.rugScore}</strong>
+                        <span className="text-zinc-500 block">SAFETY</span>
+                        <strong className="text-emerald-400 font-semibold">{post.rugScore}</strong>
                       </div>
                     </div>
 
@@ -377,111 +529,316 @@ export default function Profile() {
                     </div>
                   </div>
 
-                  {/* X-Style Action Bar Below Quote Card */}
-                  <div className="flex items-center justify-between pt-2 text-zinc-400 text-xs px-1">
+                  {/* REAL X (TWITTER) ENGAGEMENT METRICS ROW */}
+                  <div className="flex items-center justify-between pt-2 px-2 text-zinc-500 text-xs border-t border-white/5">
                     
-                    {/* Reply */}
+                    {/* Reply Icon */}
                     <button 
-                      onClick={() => showToast(`Opening replies for ${post.symbol}...`)}
-                      className="flex items-center gap-1.5 hover:text-sky-400 transition-colors cursor-pointer group"
+                      onClick={() => toggleReplyBox(post.id)}
+                      className="flex items-center gap-1.5 hover:text-sky-400 transition-colors group cursor-pointer"
                     >
-                      <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                        <path d="M1.751 10c0-4.42 3.584-8 8-8h4.498c4.416 0 8 3.58 8 8 0 4.42-3.584 8-8 8h-1.681l-4.908 4.91a.998.998 0 01-1.708-.707V18c-2.32-.29-4.201-2.02-4.201-4zm8-6c-3.313 0-6 2.69-6 6 0 3.31 2.687 6 6 6h2.152a.998.998 0 01.707.293L15 18.707V17a1 1 0 011-1h2.249c3.313 0 6-2.69 6-6s-2.687-6-6-6H9.751z"/>
-                      </svg>
-                      <span className="font-mono text-[11px]">{post.replies}</span>
+                      <div className="p-1.5 rounded-full group-hover:bg-sky-500/10 transition-colors">
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                          <path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.59-4 7.01v2.11c0 .82-.9 1.32-1.6.9l-2.6-1.56a10.16 10.16 0 0 1-1.9.18h-2.39c-4.42 0-8.005-3.58-8.005-8zm8.005-6c-3.313 0-6.005 2.69-6.005 6s2.692 6 6.005 6h2.39c.56 0 1.11.08 1.63.24l1.22.73v-1.29c0-.55.45-1 1-1 2.24 0 4.13-1.8 4.13-4.04 0-3.39-2.74-6.13-6.13-6.13h-4.24z"/>
+                        </svg>
+                      </div>
+                      <span className="text-[11px] font-medium group-hover:text-sky-400">{post.replies}</span>
                     </button>
 
-                    {/* Repost */}
+                    {/* Repost Icon */}
                     <button 
                       onClick={() => handleToggleRepost(post.id)}
-                      className={`flex items-center gap-1.5 transition-colors cursor-pointer group ${
-                        post.isReposted ? 'text-emerald-400 font-bold' : 'hover:text-emerald-400'
-                      }`}
+                      className={`flex items-center gap-1.5 transition-colors group cursor-pointer ${post.isReposted ? 'text-emerald-400' : 'hover:text-emerald-400'}`}
                     >
-                      <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                        <path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 20.12l-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14z"/>
-                      </svg>
-                      <span className="font-mono text-[11px]">{post.reposts}</span>
+                      <div className="p-1.5 rounded-full group-hover:bg-emerald-500/10 transition-colors">
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                          <path d="M4.5 3.88l4.42 4.42-1.42 1.42L5.5 7.72V15c0 1.66 1.34 3 3 3h7v2H8.5c-2.76 0-5-2.24-5-5V7.72L1.5 9.72.08 8.3 4.5 3.88zM19.5 20.12l-4.42-4.42 1.42-1.42 2 2V9c0-1.66-1.34-3-3-3h-7V4h7c2.76 0 5 2.24 5 5v8.28l2-2 1.42 1.42-4.42 4.42z"/>
+                        </svg>
+                      </div>
+                      <span className="text-[11px] font-medium">{post.reposts}</span>
                     </button>
 
-                    {/* Like */}
+                    {/* Like Icon */}
                     <button 
                       onClick={() => handleToggleLike(post.id)}
-                      className={`flex items-center gap-1.5 transition-colors cursor-pointer group ${
-                        post.isLiked ? 'text-rose-500 font-bold' : 'hover:text-rose-500'
-                      }`}
+                      className={`flex items-center gap-1.5 transition-colors group cursor-pointer ${post.isLiked ? 'text-rose-500' : 'hover:text-rose-500'}`}
                     >
-                      <svg className={`w-4 h-4 group-hover:scale-110 transition-transform ${post.isLiked ? 'fill-rose-500' : 'fill-current'}`} viewBox="0 0 24 24">
-                        <path d="M12 21.638h-.014C9.403 21.59 1.95 14.851 1.95 8.478c0-3.064 2.525-5.754 5.548-5.754 2.072 0 3.916 1.127 4.902 2.822 1.012-1.711 2.83-2.822 4.902-2.822 3.023 0 5.548 2.69 5.548 5.754 0 6.373-7.453 13.112-9.936 13.16L12 21.638z"/>
-                      </svg>
-                      <span className="font-mono text-[11px]">{post.likes}</span>
+                      <div className="p-1.5 rounded-full group-hover:bg-rose-500/10 transition-colors">
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                          {post.isLiked ? (
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                          ) : (
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35zm-4.5-16.35C5.52 5 4 6.52 4 8.5c0 2.9 2.8 5.56 7.37 9.71L12 18.82l.63-.57c4.57-4.15 7.37-6.81 7.37-9.71 0-1.98-1.52-3.5-3.5-3.5-1.32 0-2.58.72-3.17 1.85h-1.66c-.59-1.13-1.85-1.85-3.17-1.85z"/>
+                          )}
+                        </svg>
+                      </div>
+                      <span className="text-[11px] font-medium">{post.likes}</span>
                     </button>
 
-                    {/* Views */}
-                    <div className="flex items-center gap-1.5 text-zinc-500 hover:text-sky-400 cursor-pointer">
-                      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                        <path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21v-7h2v7H4zM13.25 21V11.5h2V21h-2z"/>
-                      </svg>
-                      <span className="font-mono text-[11px]">{post.views}</span>
-                    </div>
-
-                    {/* Right utilities: Bookmark & Share */}
-                    <div className="flex items-center gap-4">
-                      <button 
-                        onClick={() => handleToggleBookmark(post.id)}
-                        className={`hover:text-sky-400 transition-colors cursor-pointer ${post.isBookmarked ? 'text-sky-400' : ''}`}
-                      >
-                        <svg className={`w-4 h-4 ${post.isBookmarked ? 'fill-current' : 'fill-none stroke-current stroke-2'}`} viewBox="0 0 24 24">
-                          <path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v16.73a.75.75 0 0 1-1.18.61L12 16.5l-6.82 5.34A.75.75 0 0 1 4 21.23V4.5z"/>
-                        </svg>
-                      </button>
-
-                      <button 
-                        onClick={() => showToast(`Share link copied for ${post.symbol}!`)}
-                        className="hover:text-sky-400 transition-colors cursor-pointer"
-                      >
+                    {/* Views / Impressions Icon */}
+                    <div className="flex items-center gap-1.5 hover:text-sky-400 transition-colors group cursor-pointer">
+                      <div className="p-1.5 rounded-full group-hover:bg-sky-500/10 transition-colors">
                         <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                          <path d="M12 2.591l5.707 5.707-1.414 1.414-3.293-3.293V16h-2V6.419L7.707 9.712 6.293 8.298 12 2.591zM4 19h16v2H4v-2z"/>
+                          <path d="M8.75 21V3h2v18h-2zM18.75 21V11h2v10h-2zM3.75 21V15h2v6h-2zM13.75 21V7h2v14h-2z"/>
                         </svg>
-                      </button>
+                      </div>
+                      <span className="text-[11px] font-medium">{post.views}</span>
                     </div>
+
+                    {/* Bookmark Icon */}
+                    <button 
+                      onClick={() => handleToggleBookmark(post.id)}
+                      className={`flex items-center gap-1.5 transition-colors group cursor-pointer ${post.isBookmarked ? 'text-sky-400' : 'hover:text-sky-400'}`}
+                    >
+                      <div className="p-1.5 rounded-full group-hover:bg-sky-500/10 transition-colors">
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                          <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z"/>
+                        </svg>
+                      </div>
+                    </button>
 
                   </div>
+
+                  {/* Interactive Inline Reply Section */}
+                  {replyInputOpen[post.id] && (
+                    <div className="pt-2 border-t border-white/5 space-y-2">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Post your reply..."
+                          value={replyText[post.id] || ''}
+                          onChange={(e) => setReplyText({ ...replyText, [post.id]: e.target.value })}
+                          className="flex-1 bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                        />
+                        <button
+                          onClick={() => handleAddReply(post.id)}
+                          className="px-3 py-1.5 bg-emerald-500 text-black font-bold text-xs rounded-lg hover:bg-emerald-400 cursor-pointer"
+                        >
+                          Reply
+                        </button>
+                      </div>
+
+                      {post.commentList.length > 0 && (
+                        <div className="space-y-1.5 pt-1">
+                          {post.commentList.map((c) => (
+                            <div key={c.id} className="bg-white/5 p-2 rounded text-[11px] flex justify-between">
+                              <span className="text-emerald-400 font-bold">{c.user}:</span>
+                              <span className="text-zinc-300">{c.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                 </div>
               ))}
             </div>
           )}
 
+          {activeTab === 'positions' && (
+            <div className="space-y-3">
+              {positions.map((pos) => (
+                <div key={pos.id} className="p-4 bg-[#101012] border border-white/10 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold flex items-center justify-center text-sm">
+                        {pos.symbol.substring(1, 3)}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-white">{pos.symbol}</span>
+                          <span className="text-zinc-400 text-xs">{pos.name}</span>
+                          <span className="bg-emerald-500/20 text-emerald-400 text-[9px] font-bold px-2 py-0.5 rounded border border-emerald-500/40">
+                            {pos.type}
+                          </span>
+                        </div>
+                        <button 
+                          onClick={() => showToast(`Copied CA: ${pos.ca}`)}
+                          className="text-[9px] text-zinc-500 hover:text-emerald-400 transition-colors cursor-pointer"
+                        >
+                          CA: {pos.ca} 📋
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="text-base font-bold text-emerald-400">{pos.pnlPercent}</div>
+                      <div className="text-xs font-bold text-zinc-300">{pos.pnlSol}</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2 text-[10px] bg-black/60 p-2.5 rounded-lg border border-white/5">
+                    <div>
+                      <span className="text-zinc-500 block">ENTRY PRICE</span>
+                      <strong className="text-zinc-200">{pos.entryPrice}</strong>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 block">MARK PRICE</span>
+                      <strong className="text-emerald-400">{pos.currentPrice}</strong>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 block">SIZE</span>
+                      <strong className="text-white">{pos.size}</strong>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 block">TP / SL</span>
+                      <strong className="text-zinc-300">{pos.tp} / {pos.sl}</strong>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[10px] text-zinc-500">MEV Protected execution</span>
+                    <button
+                      onClick={() => handleClosePosition(pos.id, pos.symbol)}
+                      className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded font-bold text-[10px] transition-all cursor-pointer"
+                    >
+                      CLOSE POSITION ✕
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+         {activeTab === 'launches' && (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    {deployedTokens.map((token) => (
+      <div key={token.id} className="p-3.5 bg-[#101012] border border-white/10 rounded-xl space-y-3 flex flex-col justify-between hover:border-white/20 transition-all">
+        
+        {/* Header */}
+        <div className="flex items-start justify-between gap-2 border-b border-white/5 pb-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-600 to-cyan-500 flex items-center justify-center text-white font-bold text-xs shrink-0">
+              {token.symbol.substring(1, 3)}
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-bold text-xs text-white truncate">{token.symbol}</span>
+                <span className="text-zinc-400 text-[10px] truncate">{token.name}</span>
+              </div>
+              <button 
+                onClick={() => showToast(`Copied CA: ${token.ca}`)}
+                className="text-[9px] text-zinc-500 hover:text-emerald-400 transition-colors cursor-pointer block truncate"
+              >
+                CA: {token.ca} 📋
+              </button>
+            </div>
+          </div>
+
+          <button 
+            onClick={() => showToast(`Opening terminal chart for ${token.symbol}`)}
+            className="px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded font-bold text-[9px] cursor-pointer shrink-0"
+          >
+            TRADE 📈
+          </button>
         </div>
 
-        {/* Right Sidebar */}
-        <div className="hidden lg:flex lg:col-span-4 flex-col gap-3 sticky top-0 self-start font-mono pb-16">
-          <div className="p-4 bg-[#101012] border border-white/10 rounded-xl space-y-2 shadow-xl">
+        {/* Bonding Curve Bar */}
+        <div className="space-y-1 bg-black/40 p-2 rounded-lg border border-white/5">
+          <div className="flex justify-between items-center text-[9px]">
+            <span className="text-zinc-400 font-bold">BONDING CURVE</span>
+            <span className="text-emerald-400 font-bold">{token.bondingCurve}%</span>
+          </div>
+          <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+            <div 
+              className="bg-emerald-400 h-full rounded-full transition-all duration-500" 
+              style={{ width: `${token.bondingCurve}%` }}
+            />
+          </div>
+        </div>
+
+        {/* 2x2 Grid Stats */}
+        <div className="grid grid-cols-2 gap-1.5 text-[9px] bg-black/60 p-2 rounded-lg border border-white/5">
+          <div>
+            <span className="text-zinc-500 block">MARKET CAP</span>
+            <strong className="text-emerald-400 font-semibold">{token.marketCap}</strong>
+          </div>
+          <div>
+            <span className="text-zinc-500 block">LIQUIDITY</span>
+            <strong className="text-white font-semibold">{token.liquidity}</strong>
+          </div>
+          <div>
+            <span className="text-zinc-500 block">FEES EARNED</span>
+            <strong className="text-amber-400 font-semibold">{token.creatorFeesEarned}</strong>
+          </div>
+          <div>
+            <span className="text-zinc-500 block">LP STATUS</span>
+            <strong className="text-emerald-400 font-semibold">{token.lpStatus}</strong>
+          </div>
+        </div>
+
+        <div className="text-[9px] text-zinc-500 text-right">
+          Deployed {token.age} • {token.platform}
+        </div>
+
+      </div>
+    ))}
+  </div>
+)}
+
+        </div>
+
+        {/* RIGHT COLUMN */}
+        <div className="hidden xl:flex xl:col-span-3 flex-col gap-3 h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pl-1 pb-6">
+          
+          {/* Wallet Balance Widget */}
+          <div className="p-4 bg-[#101012] border border-white/10 rounded-xl space-y-2">
             <div className="flex justify-between items-center text-[10px] text-zinc-400">
               <span className="font-bold uppercase tracking-wider">Trench Wallet Balance</span>
-              <span className="text-emerald-400">+14.2% (24h)</span>
+              <span className="text-emerald-400 font-bold">+14.2% (24h)</span>
             </div>
-            <div className="text-2xl font-black text-white">90.19 SOL</div>
+            {/* CLEAN UN-SLASHED ZEROS */}
+            <div className="text-2xl font-black text-white tracking-tight">90.19 SOL</div>
             <div className="text-[10px] text-zinc-500">~$16,613.00 USD</div>
           </div>
 
-          <div className="p-3.5 bg-[#101012] border border-white/10 rounded-xl space-y-2.5 shadow-xl">
+          {/* Whale Radar */}
+          <div className="p-3.5 bg-[#101012] border border-white/10 rounded-xl space-y-2.5">
             <div className="flex items-center justify-between text-[10px]">
               <span className="font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"/>
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"/>
                 WHALE RADAR
               </span>
               <span className="text-zinc-500">Live Stream</span>
             </div>
-            <div className="p-2 bg-black/50 border border-white/5 rounded-lg flex justify-between items-center text-[10px]">
-              <div>
-                <div className="text-emerald-400 font-bold">Whale Buy 45 SOL</div>
-                <div className="text-zinc-500">$WEN • Wallet 8xV...10</div>
+
+            <div className="space-y-2">
+              <div className="p-2 bg-black/50 border border-white/5 rounded-lg flex justify-between items-center text-[10px]">
+                <div>
+                  <div className="text-emerald-400 font-bold">Whale Buy 45 SOL</div>
+                  <div className="text-zinc-500">$WEN • Wallet 8xV...10</div>
+                </div>
+                <span className="text-zinc-500 text-[9px]">1m ago</span>
               </div>
-              <span className="text-zinc-500 text-[9px]">1m ago</span>
+
+              <div className="p-2 bg-black/50 border border-white/5 rounded-lg flex justify-between items-center text-[10px]">
+                <div>
+                  <div className="text-emerald-400 font-bold">Whale Buy 120 SOL</div>
+                  <div className="text-zinc-500">$SOLX • Wallet 3pA...99</div>
+                </div>
+                <span className="text-zinc-500 text-[9px]">4m ago</span>
+              </div>
             </div>
           </div>
+
+          {/* Quick Launcher */}
+          <div className="p-4 bg-[#101012] border border-emerald-500/30 rounded-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-white font-bold text-xs">🚀 FORGE A TOKEN</span>
+              <span className="text-emerald-400 text-[10px] font-bold">0.02 SOL FEE</span>
+            </div>
+            <p className="text-[10px] text-zinc-400 font-sans">
+              Deploy your own bonding curve token straight from your terminal profile.
+            </p>
+            <button 
+              onClick={() => showToast('Opening Apex Token Forge modal...')}
+              className="w-full py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs rounded-lg transition-all cursor-pointer"
+            >
+              + LAUNCH TOKEN NOW
+            </button>
+          </div>
+
         </div>
 
       </div>
