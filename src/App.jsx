@@ -6,7 +6,7 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
 // --- SOLANA PROVIDER INTEGRATION ---
-import SolanaProvider from './components/SolanaProvider'; // 🚀 Added Solana Web3 Context Wrapper
+import SolanaProvider from './components/SolanaProvider';
 
 // --- GLOBAL STREAM CONTEXT & FLOATING PLAYER ---
 import { StreamProvider, useStream } from './components/StreamProvider';
@@ -61,9 +61,7 @@ function AppContent() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   
-  // 🔍 NEW: Global search query state for header search integration
   const [searchQuery, setSearchQuery] = useState('');
-  // 🏷️ NEW: Top-bar tab selection state matching Phantom's navigation model
   const [topNavTab, setTopNavTab] = useState('Discover');
   const [isHeaderDropdownOpen, setIsHeaderDropdownOpen] = useState(false);
   
@@ -135,7 +133,6 @@ function AppContent() {
     }
   }, [selectedTokenData]);
 
-  // 🚀 REAL DEVNET BALANCE FETCHING (Replaces fake state with actual Solana network queries)
   useEffect(() => {
     if (connected && publicKey) {
       const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
@@ -144,7 +141,7 @@ function AppContent() {
         try {
           const lamports = await connection.getBalance(publicKey);
           const solBalance = lamports / LAMPORTS_PER_SOL;
-          const currentSolPriceUSD = 145; // Testnet estimated benchmark rate
+          const currentSolPriceUSD = 145; 
 
           setUserPortfolio(prev => {
             const nonSolAssets = prev.filter(t => t.symbol !== 'SOL');
@@ -177,11 +174,11 @@ function AppContent() {
   const userSolBalance = userPortfolio.find(t => t.symbol === 'SOL')?.balance || 0;
 
   const handleTokenClick = (token) => {
-  if (!token) return;
-  setPreviousPage(activePage);
-  setSelectedTokenData(token);
-  setActivePage('tokenhome');
-};
+    if (!token) return;
+    setPreviousPage(activePage);
+    setSelectedTokenData(token);
+    setActivePage('tokenhome');
+  };
 
   const handleOpenTradePortal = (token) => {
     setSelectedTokenData(token);
@@ -217,7 +214,6 @@ function AppContent() {
       return;
     }
 
-    // 🚀 Send the transaction straight to your deployed Solana hook and Phantom wallet!
     const success = await executeTradeOnChain(tradeMode, amount, selectedTokenData?.mintAddress, null, null, selectedTokenData?.isGraduated);
     
     if (success) {
@@ -226,46 +222,45 @@ function AppContent() {
     }
   };
 
- const handleForgeSuccess = (newToken) => {
-  const forgedToken = {
-    ...newToken,
-    isGraduated: false,
-    isMine: true,
-    progress: newToken.initialSnipe ? ((parseFloat(newToken.initialSnipe)/85)*100) : 0,
-    created_at: newToken?.created_at || newToken?.createdAt || new Date().toISOString()
+  const handleForgeSuccess = (newToken) => {
+    const forgedToken = {
+      ...newToken,
+      isGraduated: false,
+      isMine: true,
+      progress: newToken.initialSnipe ? ((parseFloat(newToken.initialSnipe)/85)*100) : 0,
+      created_at: newToken?.created_at || newToken?.createdAt || new Date().toISOString()
+    };
+
+    setGlobalTokens(prev => [forgedToken, ...prev]);
+
+    setGlobalTransactions(prev => [{
+      id: Date.now().toString(),
+      type: 'Deploy',
+      details: `Forged Token: ${forgedToken.symbol}`,
+      time: 'Just now',
+      amount: `- 0.002 SOL`,
+      color: 'text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.3)]',
+      hash: Math.random().toString(36).substring(2, 10)
+    }, ...prev]);
+
+    if (forgedToken.initialSnipe > 0) {
+      setUserPortfolio(prev => [
+        ...prev,
+        { 
+          symbol: forgedToken.symbol, 
+          name: forgedToken.name, 
+          balance: forgedToken.initialSnipe * 1850420, 
+          valueUSD: forgedToken.initialSnipe * 145, 
+          icon: forgedToken.icon,
+          imagePreview: forgedToken.imagePreview 
+        }
+      ]);
+    }
+
+    setSelectedTokenData(forgedToken);
+    setPreviousPage(activePage);
+    setActivePage('tokenhome');
   };
-
-  setGlobalTokens(prev => [forgedToken, ...prev]);
-
-  setGlobalTransactions(prev => [{
-    id: Date.now().toString(),
-    type: 'Deploy',
-    details: `Forged Token: ${forgedToken.symbol}`,
-    time: 'Just now',
-    amount: `- 0.002 SOL`,
-    color: 'text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.3)]',
-    hash: Math.random().toString(36).substring(2, 10)
-  }, ...prev]);
-
-  if (forgedToken.initialSnipe > 0) {
-    setUserPortfolio(prev => [
-      ...prev,
-      { 
-        symbol: forgedToken.symbol, 
-        name: forgedToken.name, 
-        balance: forgedToken.initialSnipe * 1850420, 
-        valueUSD: forgedToken.initialSnipe * 145, 
-        icon: forgedToken.icon,
-        imagePreview: forgedToken.imagePreview 
-      }
-    ]);
-  }
-
-  // 🚀 Route to TokenHome for the new token
-  setSelectedTokenData(forgedToken);
-  setPreviousPage(activePage);
-  setActivePage('tokenhome');
-};
 
   const formatWithCommas = (val) => {
     if (!val) return '';
@@ -291,7 +286,7 @@ function AppContent() {
         return <Home 
                  tokens={globalTokens} 
                  trendingTokens={trendingTokens} 
-                 migratingTokens={[]} // 👈 CHANGE THIS LINE
+                 migratingTokens={[]}
                  graduatedTokens={graduatedTokens}
                  onTokenClick={handleTokenClick} 
                  setActivePage={(page) => { setPreviousPage('home'); setActivePage(page); }} 
@@ -307,7 +302,7 @@ function AppContent() {
           <div className="h-full p-4 sm:p-6 overflow-hidden">
             <LaunchesView 
               newTokens={trendingTokens} 
-              migratingTokens={[]} // 👈 CHANGE THIS LINE TOO
+              migratingTokens={[]}
               migratedTokens={graduatedTokens} 
             />
           </div>
@@ -352,22 +347,21 @@ function AppContent() {
             onOpenSwap={() => toggleModal('swap', true)}
           />
         );
-     case 'profile':
-  return (
-    <Profile
-      isOwnProfile={!publicProfileView}
-      userProfile={publicProfileView || userProfile}
-      isFollowingUser={isFollowingCurrentView}
-      onFollowToggle={() => setIsFollowingCurrentView(!isFollowingCurrentView)}
-      onBack={() => { setPublicProfileView(null); setActivePage(previousPage === 'profile' ? 'home' : previousPage); }}
-      onOpenSettings={() => setIsSettingsOpen(true)}
-    />
-  );
+      case 'profile':
+        return (
+          <Profile
+            isOwnProfile={!publicProfileView}
+            userProfile={publicProfileView || userProfile}
+            isFollowingUser={isFollowingCurrentView}
+            onFollowToggle={() => setIsFollowingCurrentView(!isFollowingCurrentView)}
+            onBack={() => { setPublicProfileView(null); setActivePage(previousPage === 'profile' ? 'home' : previousPage); }}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+          />
+        );
 
-     case 'tokens':
+      case 'tokens':
       case 'tokenhome': 
       case 'tokenchat': {
-        // Fallback to first available token if none selected (e.g., clicking sidebar icon directly)
         const activeToken = selectedTokenData || (globalTokens && globalTokens.length > 0 ? globalTokens[0] : null);
 
         return (
@@ -384,20 +378,10 @@ function AppContent() {
               }
             }}
             setActivePage={setActivePage}
-           handleSidebarNavigation={handleSidebarNavigation}
+            handleSidebarNavigation={handleSidebarNavigation}
           />
         );
       }
-
-      case 'tokenchat':
-        return (
-          <TokenHome 
-            selectedTokenData={selectedTokenData}
-            setSelectedTokenData={setSelectedTokenData}
-            globalTokens={globalTokens}
-            userSolBalance={userPortfolio?.find(t => t.symbol === 'SOL')?.balance || 0}
-          />
-        );
 
       default: 
         return <Home 
@@ -414,8 +398,9 @@ function AppContent() {
     }
   };
 
-return (
-    <div className="fixed inset-0 bg-[#050505] text-white flex w-full h-full overflow-hidden select-none">
+  return (
+    // 1. LOCKED VIEWPORT: Replaced h-full with h-[100dvh]
+    <div className="fixed inset-0 bg-[#050505] text-white flex w-full h-[100dvh] overflow-hidden select-none">
       <style>{`
         * {
           -webkit-touch-callout: none;
@@ -447,7 +432,7 @@ return (
       />
 
       {/* --- DESKTOP SIDEBAR --- */}
-      <div className="hidden md:block w-16 h-full bg-[#0A0A0A] border-r border-white/5 shrink-0 z-40">
+      <div className="hidden md:block w-16 h-[100dvh] bg-[#0A0A0A] border-r border-white/5 shrink-0 z-40">
         <Sidebar currentView={activePage} setCurrentView={handleSidebarNavigation} userProfile={userProfile} />
       </div>
 
@@ -456,7 +441,7 @@ return (
         <div className="fixed inset-0 z-[200] md:hidden flex" onClick={() => setIsMobileSidebarOpen(false)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-fadeIn" />
           <div 
-            className="w-[260px] h-full bg-[#0A0A0A] border-r border-white/5 shadow-[20px_0_50px_rgba(0,0,0,0.8)] relative z-10 flex flex-col"
+            className="w-[260px] h-[100dvh] bg-[#0A0A0A] border-r border-white/5 shadow-[20px_0_50px_rgba(0,0,0,0.8)] relative z-10 flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex-1 overflow-y-auto">
@@ -467,28 +452,30 @@ return (
       )}
 
       {/* --- MAIN CONTENT CONTAINER --- */}
-<div className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
-  
- {/* TOP HEADER BAR */}
-<Navbar
-  activeRoute={activePage || 'discover'}
-  setActiveRoute={setActivePage}
-  setForgeModalOpen={() => setModals(prev => ({ ...prev, forge: true }))}
-  onOpenForgeModal={() => setModals(prev => ({ ...prev, forge: true }))}
-  onOpenNotifications={() => setIsNotificationsOpen(true)}
-  onOpenProfile={() => setActivePage('profile')}
-  onOpenSettings={() => setIsSettingsOpen(true)}
-  userProfile={userProfile}
-/>
+      {/* 2. STRICT MIN-H-0: Prevents child components from stretching the screen height */}
+      <div className="flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden">
+        
+        {/* TOP HEADER BAR */}
+        <Navbar
+          activeRoute={activePage || 'discover'}
+          setActiveRoute={setActivePage}
+          setForgeModalOpen={() => setModals(prev => ({ ...prev, forge: true }))}
+          onOpenForgeModal={() => setModals(prev => ({ ...prev, forge: true }))}
+          onOpenNotifications={() => setIsNotificationsOpen(true)}
+          onOpenProfile={() => setActivePage('profile')}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          userProfile={userProfile}
+        />
 
-  {/* --- DYNAMIC CONTENT AREA --- */}
-  <div className="flex-1 w-full h-full overflow-hidden flex flex-col p-0 m-0 bg-[#0c0d10]">
-    {renderContent()}
-  </div>
+        {/* --- DYNAMIC CONTENT AREA --- */}
+        <div className="flex-1 w-full min-h-0 overflow-hidden flex flex-col p-0 m-0 bg-[#0c0d10]">
+          {renderContent()}
+        </div>
 
         {/* --- LOCKED BOTTOM NAVIGATION --- */}
+        {/* 3. SHRINK-0 (Not Absolute): Claims physical space at the bottom to prevent layout overlap */}
         {activePage?.toLowerCase() !== 'tokenhome' && activePage?.toLowerCase() !== 'tokenchat' && activePage?.toLowerCase() !== 'settings' && activePage?.toLowerCase() !== 'profile' && (
-          <div className="md:hidden absolute bottom-0 left-0 right-0 z-50 bg-[#050505]">
+          <div className="md:hidden shrink-0 w-full z-50 bg-[#050505] border-t border-white/5 pb-[env(safe-area-inset-bottom)]">
             <BottomNav activePage={activePage} setActivePage={setActivePage} userProfile={userProfile} />
           </div>
         )}
@@ -594,10 +581,9 @@ return (
         notifications={dummyNotifications} 
       />
 
-      {/* Add Settings Drawer here */}
-     <SettingsDrawer
-       isOpen={isSettingsOpen}
-       onClose={() => setIsSettingsOpen(false)}
+      <SettingsDrawer
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
       />
 
       {modals.deposit && <DepositModal isOpen={modals.deposit} onClose={() => toggleModal('deposit', false)} />}

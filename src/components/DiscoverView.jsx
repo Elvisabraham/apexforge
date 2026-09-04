@@ -13,8 +13,8 @@ export default function DiscoverView({
   const currentTab = activeRoute.toLowerCase();
 
   return (
-    <div className="flex flex-col w-full h-full text-white bg-[#0e0f12] p-0 m-0 overflow-hidden">
-      {/* Main Content Container - Fits flush right beneath global navbar */}
+    // FIXED: Changed bg-[#0e0f12] to pure bg-black
+    <div className="flex flex-col w-full h-full text-white bg-black p-0 m-0 overflow-hidden">
       <div className="flex-1 w-full h-full min-h-0 overflow-hidden p-0 m-0">
         {currentTab === 'discover' ? (
           <DiscoverHomeView 
