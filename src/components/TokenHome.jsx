@@ -5,9 +5,20 @@ import TokenChat from './TokenChat';
 import TrackView from './TrackView';
 import SwapModal from './SwapModal';
 import TradeWidget from './TradeWidget';
-import { ChevronLeft, Globe } from 'lucide-react';
+import { 
+  TrendingUp,
+  Activity,
+  Repeat2,
+  MessageSquare,
+  Heart,
+  BarChart2,
+  Share2,
+  Check,
+  ChevronLeft,
+  Globe
+} from 'lucide-react';
 
-// Professional DEX Dollar Sign
+// Professional DEX Dollar Sign (Solid vertical line "cross up down")
 const DexDollarIcon = ({ className = "w-4 h-4", strokeWidth = 2.5 }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
     <line x1="12" y1="2" x2="12" y2="22"></line>
@@ -125,12 +136,12 @@ export default function TokenHome({
     <div className="w-full h-full bg-[#0c0d10] text-white overflow-hidden select-none relative">
       
       {/* ===================================================================== */}
-      {/* 1. MOBILE NATIVE VIEW (SINGLE SCROLL + COMPACT PINNED WIDGET) */}
+      {/* 1. MOBILE NATIVE VIEW (SINGLE SCROLL + COMPACT PINNED BUTTON) */}
       {/* ===================================================================== */}
       <div className="flex lg:hidden flex-col w-full h-full bg-[#0a0b0e] relative">
         
         {/* Scrollable Main Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pb-2">
+        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pb-4">
           
           {/* Top Navbar */}
           <div className="flex items-center justify-between p-3 border-b border-white/5 bg-[#0c0d10] sticky top-0 z-30 shadow-md">
@@ -238,7 +249,9 @@ export default function TokenHome({
               />
             </div>
             <div className="flex justify-between items-center text-[9px] text-zinc-500 mt-2">
-              <span>Graduate at ${currentToken?.targetMcap || '69k'} mcap</span>
+              <span className="flex items-center">
+                Graduate at <DexDollarIcon className="w-2.5 h-2.5 mx-0.5" strokeWidth={2}/> {currentToken?.targetMcap || '69k'} mcap
+              </span>
               <span>{(currentToken?.bondingProgress ?? 72) >= 100 ? 'Graduated' : 'In Progress'}</span>
             </div>
           </div>
@@ -248,7 +261,7 @@ export default function TokenHome({
             {[
               { id: 'callouts', label: 'Callouts' },
               { id: 'holders', label: 'Holders' },
-              { id: 'about', label: 'About' } // Renamed from Chat to About
+              { id: 'about', label: 'About' }
             ].map((tab) => (
                 <button
                   key={tab.id}
@@ -293,63 +306,19 @@ export default function TokenHome({
           </div>
         </div>
 
-        {/* ULTRA-COMPACT PINNED BOTTOM TRADE WIDGET */}
-        <div className="shrink-0 bg-[#121318] border-t border-white/10 p-2.5 z-40 shadow-[0_-5px_15px_rgba(0,0,0,0.5)]">
-          {/* Buy/Sell Tabs (Thin) */}
-          <div className="flex gap-1 bg-[#1a1b22] p-1 rounded-lg mb-2 shadow-inner">
-            <button 
-              onClick={() => setTradeMode('buy')} 
-              className={`flex-1 py-1.5 text-xs font-black uppercase tracking-wider rounded-md transition-all ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow-sm' : 'text-zinc-500'}`}
-            >
-              Buy
-            </button>
-            <button 
-              onClick={() => setTradeMode('sell')} 
-              className={`flex-1 py-1.5 text-xs font-black uppercase tracking-wider rounded-md transition-all ${tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow-sm' : 'text-zinc-500'}`}
-            >
-              Sell
-            </button>
-          </div>
-
-          {/* Amount Input (Compact) */}
-          <div className="bg-[#050505] border border-white/5 rounded-lg px-3 py-1.5 mb-2 flex items-center justify-between shadow-inner focus-within:border-[#00f2a1]/50">
-            <div className="flex flex-col flex-1">
-              <span className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest mb-0.5">Amount</span>
-              <input 
-                type="text" inputMode="decimal" placeholder="0.0" 
-                value={tradeAmount} 
-                onChange={(e) => setTradeAmount(e.target.value.replace(/[^0-9.]/g, ''))} 
-                className="bg-transparent text-lg font-black text-white w-full outline-none font-mono tracking-tight" 
-              />
-            </div>
-            <span className="text-[10px] font-black text-white font-mono bg-white/5 px-2 py-1 rounded">SOL</span>
-          </div>
-
-          {/* Quick Amounts (Thin) */}
-          <div className="flex gap-1.5 mb-2">
-            {['0.1', '0.5', '1', 'Max'].map(amt => (
-              <button 
-                key={amt} 
-                onClick={() => setTradeAmount(amt === 'Max' ? '10' : amt)} 
-                className="flex-1 bg-[#1a1b22] border border-white/5 hover:bg-white/10 py-1.5 rounded-md text-[10px] font-black text-zinc-300 shadow-sm"
-              >
-                {amt}
-              </button>
-            ))}
-          </div>
-
-          {/* Action Button (Compact) */}
+        {/* ULTRA-COMPACT PINNED BOTTOM TRADE BUTTON (Only the button remains) */}
+        <div className="shrink-0 bg-[#121318] border-t border-white/10 p-3 z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] pb-[max(env(safe-area-inset-bottom),1rem)]">
           <button 
-            onClick={handleExecuteTrade} 
-            className={`w-full py-2.5 rounded-lg font-black uppercase text-xs tracking-widest transition-all active:scale-[0.98] ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow-[0_0_10px_rgba(0,242,161,0.2)]' : 'bg-[#F23645] text-white shadow-[0_0_10px_rgba(242,54,69,0.2)]'}`}
+            onClick={() => handleExecuteTrade('buy', '', currentToken)} 
+            className="w-full py-4 rounded-xl font-black uppercase text-sm tracking-widest transition-all active:scale-[0.98] bg-[#00f2a1] text-black shadow-[0_0_15px_rgba(0,242,161,0.3)] hover:opacity-90"
           >
-            {tradeMode === 'buy' ? 'PLACE BUY ORDER' : 'EXECUTE SELL'}
+            TRADE {currentToken?.symbol}
           </button>
         </div>
       </div>
 
       {/* ===================================================================== */}
-      {/* 2. DESKTOP VIEW - EXACTLY RESTORED FROM USER PROMPT */}
+      {/* 2. DESKTOP VIEW - PERFECTLY RESTORED & DOLLAR MATCHED */}
       {/* ===================================================================== */}
       <div className="hidden lg:grid grid-cols-12 h-full gap-2 p-2 w-full">
         {/* LEFT SIDEBAR */}
@@ -388,9 +357,13 @@ export default function TokenHome({
             )}
           </div>
 
+          {/* Desktop Portfolio Balance - Upgraded Dollar Sign */}
           <div className="p-2.5 border-t border-white/5 bg-[#0a0b0e] flex items-center justify-between shrink-0">
             <span className="text-[11px] text-zinc-500 font-bold">Portfolio Balance</span>
-            <span className="text-xs font-mono font-black text-[#00f2a1]">$99.60</span>
+            <span className="flex items-center text-xs font-mono font-black text-[#00f2a1]">
+              <DexDollarIcon className="w-3 h-3 mr-[1px]" strokeWidth={3} />
+              99.60
+            </span>
           </div>
         </div>
 
@@ -420,7 +393,7 @@ export default function TokenHome({
                     onClick={() => handleToggleFollow(currentToken)}
                     className={`text-[9px] font-bold px-2 py-0.5 rounded transition-all cursor-pointer ${
                       isFollowing 
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                        ? 'bg-[#00f2a1]/20 text-[#00f2a1]' 
                         : 'bg-[#1c1d24] hover:bg-white/20 text-zinc-300'
                     }`}
                   >
@@ -444,15 +417,21 @@ export default function TokenHome({
               </div>
             </div>
 
-            {/* Scrollable Right Ticker */}
+            {/* Desktop Scrollable Right Ticker - Upgraded Dollar Signs */}
             <div className="flex items-center gap-6 overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] font-mono shrink whitespace-nowrap">
               <div className="text-right shrink-0">
                 <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Price</span>
-                <span className="text-sm font-black text-white">{formatPhantomPrice(currentToken?.price || 0.05439)}</span>
+                <span className="flex items-center justify-end text-sm font-black text-white">
+                  <DexDollarIcon className="w-3.5 h-3.5 text-zinc-400 mr-[1px]" strokeWidth={3} />
+                  {String(currentToken?.price || '0.05439').replace('$', '')}
+                </span>
               </div>
               <div className="text-right shrink-0">
                 <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Market Cap</span>
-                <span className="text-sm font-black text-white">{currentToken.mcap || '$10.88K'}</span>
+                <span className="flex items-center justify-end text-sm font-black text-white">
+                  <DexDollarIcon className="w-3.5 h-3.5 text-zinc-400 mr-[1px]" strokeWidth={3} />
+                  {String(currentToken.mcap || '10.88K').replace('$', '')}
+                </span>
               </div>
               <div className="text-right shrink-0">
                 <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">24h Change</span>
@@ -462,7 +441,10 @@ export default function TokenHome({
               </div>
               <div className="text-right shrink-0">
                 <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Liquidity</span>
-                <span className="text-sm font-black text-white">{currentToken.liquidity || '$5.67K'}</span>
+                <span className="flex items-center justify-end text-sm font-black text-white">
+                  <DexDollarIcon className="w-3.5 h-3.5 text-zinc-400 mr-[1px]" strokeWidth={3} />
+                  {String(currentToken.liquidity || '5.67K').replace('$', '')}
+                </span>
               </div>
               <div className="text-right shrink-0">
                 <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Supply</span>
@@ -536,7 +518,11 @@ export default function TokenHome({
               <div className="p-3 border-b border-white/5 bg-[#0a0b0e] shrink-0">
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-[10px] text-zinc-500 font-bold">5m Vol</span>
-                  <span className="text-xs font-mono font-black text-white">$349.5K</span>
+                  {/* Desktop Quick Swap 5m Vol - Upgraded Dollar Sign */}
+                  <span className="flex items-center text-xs font-mono font-black text-white">
+                    <DexDollarIcon className="w-3 h-3 text-zinc-400 mr-[1px]" strokeWidth={3} />
+                    349.5K
+                  </span>
                 </div>
                 <div className="flex justify-between items-center text-[10px] font-mono mb-1">
                   <span className="text-[#089981]">1.12K • $157.4K</span>
@@ -558,7 +544,10 @@ export default function TokenHome({
                     <div className="bg-[#00f2a1] h-full rounded-full transition-all duration-500 shadow-[0_0_8px_#00f2a1]" style={{ width: `${Math.min(currentToken?.bondingProgress ?? 72, 100)}%` }}/>
                   </div>
                   <div className="flex justify-between items-center text-[9px] text-zinc-500 mt-1.5">
-                    <span>Graduate at ${currentToken?.targetMcap || '69k'} mcap</span>
+                    {/* Desktop Quick Swap Bonding Curve - Upgraded Dollar Sign */}
+                    <span className="flex items-center">
+                      Graduate at <DexDollarIcon className="w-2.5 h-2.5 mx-0.5" strokeWidth={2}/> {currentToken?.targetMcap || '69k'} mcap
+                    </span>
                     <span>{(currentToken?.bondingProgress ?? 72) >= 100 ? 'Graduated' : 'In Progress'}</span>
                   </div>
                 </div>
