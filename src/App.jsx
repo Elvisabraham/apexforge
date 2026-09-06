@@ -399,7 +399,6 @@ function AppContent() {
   };
 
   return (
-    // 1. LOCKED VIEWPORT: Replaced h-full with h-[100dvh]
     <div className="fixed inset-0 bg-[#050505] text-white flex w-full h-[100dvh] overflow-hidden select-none">
       <style>{`
         * {
@@ -452,20 +451,21 @@ function AppContent() {
       )}
 
       {/* --- MAIN CONTENT CONTAINER --- */}
-      {/* 2. STRICT MIN-H-0: Prevents child components from stretching the screen height */}
       <div className="flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden">
         
-        {/* TOP HEADER BAR */}
-        <Navbar
-          activeRoute={activePage || 'discover'}
-          setActiveRoute={setActivePage}
-          setForgeModalOpen={() => setModals(prev => ({ ...prev, forge: true }))}
-          onOpenForgeModal={() => setModals(prev => ({ ...prev, forge: true }))}
-          onOpenNotifications={() => setIsNotificationsOpen(true)}
-          onOpenProfile={() => setActivePage('profile')}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          userProfile={userProfile}
-        />
+        {/* TOP HEADER BAR (Hidden on Mobile inside TokenHome to save space) */}
+        <div className={activePage?.toLowerCase() === 'tokenhome' || activePage?.toLowerCase() === 'tokenchat' ? 'hidden lg:block' : 'block'}>
+          <Navbar
+            activeRoute={activePage || 'discover'}
+            setActiveRoute={setActivePage}
+            setForgeModalOpen={() => setModals(prev => ({ ...prev, forge: true }))}
+            onOpenForgeModal={() => setModals(prev => ({ ...prev, forge: true }))}
+            onOpenNotifications={() => setIsNotificationsOpen(true)}
+            onOpenProfile={() => setActivePage('profile')}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            userProfile={userProfile}
+          />
+        </div>
 
         {/* --- DYNAMIC CONTENT AREA --- */}
         <div className="flex-1 w-full min-h-0 overflow-hidden flex flex-col p-0 m-0 bg-[#0c0d10]">
@@ -473,7 +473,6 @@ function AppContent() {
         </div>
 
         {/* --- LOCKED BOTTOM NAVIGATION --- */}
-        {/* 3. SHRINK-0 (Not Absolute): Claims physical space at the bottom to prevent layout overlap */}
         {activePage?.toLowerCase() !== 'tokenhome' && activePage?.toLowerCase() !== 'tokenchat' && activePage?.toLowerCase() !== 'settings' && activePage?.toLowerCase() !== 'profile' && (
           <div className="md:hidden shrink-0 w-full z-50 bg-[#050505] border-t border-white/5 pb-[env(safe-area-inset-bottom)]">
             <BottomNav activePage={activePage} setActivePage={setActivePage} userProfile={userProfile} />
