@@ -207,6 +207,14 @@ function AppContent() {
     setActivePage(page);
   };
 
+  // TEMPORARY MOCK BLOCKCHAIN ENGINE
+  const executeTradeOnChain = async (mode, amount, mintAddress, param4, param5, isGraduated) => {
+    console.log(`⛓️ MOCK WEB3: Executing ${mode} of ${amount} SOL for CA: ${mintAddress}`);
+    // Simulate a 1.5-second blockchain network delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    return true; // Force a successful trade
+  };
+
  const handleExecuteTrade = async (mode, amt, token) => {
     console.log("👉 Trade Triggered:", { mode, amt, token });
     
