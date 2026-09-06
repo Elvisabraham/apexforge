@@ -208,24 +208,39 @@ function AppContent() {
   };
 
  const handleExecuteTrade = async (mode, amt, token) => {
+    console.log("👉 Trade Triggered:", { mode, amt, token });
+    
     const amount = parseFloat(amt);
     if (isNaN(amount) || amount <= 0) {
       alert("⚠️ Please enter a valid amount to trade.");
       return;
     }
 
-    // Call your Web3 contract execution
-    const success = await executeTradeOnChain(
-      mode, 
-      amount, 
-      token?.mintAddress, 
-      null, 
-      null, 
-      token?.isGraduated
-    );
-    
-    if (success) {
-      console.log("Trade executed successfully!");
+    if (!connected || !publicKey) {
+      alert("⚠️ Wallet not connected! Please connect Phantom first.");
+      return;
+    }
+
+    try {
+      console.log("🚀 Executing on-chain trade for CA:", token?.mintAddress);
+      
+      const success = await executeTradeOnChain(
+        mode,
+        amount,
+        token?.mintAddress,
+        null,
+        null,
+        token?.isGraduated
+      );
+
+      console.log("Trade outcome:", success);
+
+      if (success) {
+        alert(`✅ Successfully ${mode === 'buy' ? 'Bought' : 'Sold'} ${token?.symbol || 'Tokens'}!`);
+      }
+    } catch (error) {
+      console.error("❌ On-Chain Trade Error:", error);
+      alert(`Trade Failed: ${error?.message || error}`);
     }
   };
 
