@@ -207,18 +207,25 @@ function AppContent() {
     setActivePage(page);
   };
 
-  const handleExecuteTrade = async () => {
-    const amount = parseFloat(tradeAmount);
+ const handleExecuteTrade = async (mode, amt, token) => {
+    const amount = parseFloat(amt);
     if (isNaN(amount) || amount <= 0) {
       alert("⚠️ Please enter a valid amount to trade.");
       return;
     }
 
-    const success = await executeTradeOnChain(tradeMode, amount, selectedTokenData?.mintAddress, null, null, selectedTokenData?.isGraduated);
+    // Call your Web3 contract execution
+    const success = await executeTradeOnChain(
+      mode, 
+      amount, 
+      token?.mintAddress, 
+      null, 
+      null, 
+      token?.isGraduated
+    );
     
     if (success) {
-      setIsTradePortalOpen(false);
-      setTradeAmount('');
+      console.log("Trade executed successfully!");
     }
   };
 
@@ -372,11 +379,7 @@ function AppContent() {
             userSolBalance={userPortfolio?.find(t => t.symbol === 'SOL')?.balance || 0}
             formatWithCommas={(val) => val?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") || val}
             calculateTokenYield={(amt) => amt ? (parseFloat(amt) * 1000).toFixed(2) : '0'}
-            handleExecuteTrade={(mode, amt, token) => {
-              if (handleOpenTradePortal) {
-                handleOpenTradePortal(token, mode, amt);
-              }
-            }}
+           handleExecuteTrade={handleExecuteTrade}
             setActivePage={setActivePage}
             handleSidebarNavigation={handleSidebarNavigation}
           />
