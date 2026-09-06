@@ -18,6 +18,7 @@ import {
   Globe
 } from 'lucide-react';
 import TokenCallouts from './TokenCallouts';
+import TokenHolders from './TokenHolders';
 
 // Professional DEX Dollar Sign
 const DexDollarIcon = ({ className = "w-4 h-4", strokeWidth = 2.5 }) => (
@@ -264,14 +265,14 @@ export default function TokenHome({
             ))}
           </div>
 
-         {/* Activity Content Area */}
-<div className="flex-1 bg-[#0c0d10] p-3 min-h-[300px]">
-  {mobileActivityTab === 'callouts' && (
-    <TokenCallouts tokenSymbol={currentToken.symbol} />
-  )}
+        {/* Activity Content Area */}
+<div className="flex-1 bg-[#0c0d10] p-4 min-h-[300px]">
+  {mobileActivityTab === 'callouts' && <TokenCallouts tokenSymbol={currentToken.symbol} />}
+  
   {mobileActivityTab === 'holders' && (
-    <div className="text-zinc-500 text-center font-mono text-xs py-10 border border-dashed border-white/10 rounded-lg">HOLDERS CONTENT HERE</div>
+    <TokenHolders top10Percentage={currentToken.top10} />
   )}
+  
   {mobileActivityTab === 'about' && (
               <div className="space-y-4">
                 <div className="text-sm font-bold text-white mb-2">Coin Creator</div>
