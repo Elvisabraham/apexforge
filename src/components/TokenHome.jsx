@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   Globe
 } from 'lucide-react';
+import TokenCallouts from './TokenCallouts';
 
 // Professional DEX Dollar Sign
 const DexDollarIcon = ({ className = "w-4 h-4", strokeWidth = 2.5 }) => (
