@@ -18,7 +18,7 @@ import {
   Globe
 } from 'lucide-react';
 
-// Professional DEX Dollar Sign (Solid vertical line "cross up down")
+// Professional DEX Dollar Sign
 const DexDollarIcon = ({ className = "w-4 h-4", strokeWidth = 2.5 }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
     <line x1="12" y1="2" x2="12" y2="22"></line>
@@ -59,8 +59,9 @@ export default function TokenHome({
   calculateTokenYield = () => '0',
   handleExecuteTrade = () => {}
 }) {
-  // Mobile Activity Tab
-  const [mobileActivityTab, setMobileActivityTab] = useState('callouts'); // 'callouts', 'holders', 'about'
+  // Mobile States
+  const [mobileActivityTab, setMobileActivityTab] = useState('callouts');
+  const [showMobileMcap, setShowMobileMcap] = useState(true); // Toggles between MCap and Price
   
   // Desktop States
   const [leftTab, setLeftTab] = useState('Tokens');
@@ -136,12 +137,12 @@ export default function TokenHome({
     <div className="w-full h-full bg-[#0c0d10] text-white overflow-hidden select-none relative">
       
       {/* ===================================================================== */}
-      {/* 1. MOBILE NATIVE VIEW (SINGLE SCROLL + COMPACT PINNED BUTTON) */}
+      {/* 1. MOBILE NATIVE VIEW (SINGLE SCROLL + COMPACT PINNED WIDGET) */}
       {/* ===================================================================== */}
       <div className="flex lg:hidden flex-col w-full h-full bg-[#0a0b0e] relative">
         
         {/* Scrollable Main Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pb-4">
+        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pb-2">
           
           {/* Top Navbar */}
           <div className="flex items-center justify-between p-3 border-b border-white/5 bg-[#0c0d10] sticky top-0 z-30 shadow-md">
@@ -163,61 +164,48 @@ export default function TokenHome({
             </div>
           </div>
 
-          {/* Token Header Metadata */}
-          <div className="p-4 bg-[#0c0d10] flex flex-col gap-4">
-            <div className="flex justify-between items-start">
-                <div className="flex gap-3 items-center min-w-0">
-                  <div className="w-12 h-12 rounded-full border border-white/10 overflow-hidden bg-white/5 flex items-center justify-center text-xl shrink-0 shadow-inner">
-                    {currentToken.imagePreview ? <img src={currentToken.imagePreview} className="w-full h-full object-cover" /> : currentToken.icon}
+          {/* Token Header Metadata (Cleaned Up - Toggle MCap/Price) */}
+          <div className="p-4 bg-[#0c0d10] flex justify-between items-start gap-4">
+              <div className="flex gap-3 items-center min-w-0">
+                <div className="w-12 h-12 rounded-full border border-white/10 overflow-hidden bg-white/5 flex items-center justify-center text-xl shrink-0 shadow-inner">
+                  {currentToken.imagePreview ? <img src={currentToken.imagePreview} className="w-full h-full object-cover" /> : currentToken.icon}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-black text-white truncate max-w-[120px]">{currentToken.name || currentToken.symbol}</span>
+                    <span className="text-[9px] bg-[#1c1d24] text-zinc-400 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider shrink-0">{currentToken.symbol}</span>
                   </div>
-                  <div className="flex flex-col min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-black text-white truncate max-w-[120px]">{currentToken.name || currentToken.symbol}</span>
-                      <span className="text-[9px] bg-[#1c1d24] text-zinc-400 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider shrink-0">{currentToken.symbol}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-mono mt-1">
-                      <span>1d ago</span>
-                      <span>•</span>
-                      <button onClick={() => handleCopyCA(currentToken.mintAddress)} className="flex items-center gap-1 hover:text-white relative">
-                          {currentToken.mintAddress?.substring(0, 8)}...
-                          {copiedCA && <span className="absolute -top-6 left-0 bg-[#00f2a1] text-black px-1.5 py-0.5 rounded shadow z-50">Copied</span>}
-                      </button>
-                    </div>
+                  <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-mono mt-1">
+                    <span>1d ago</span>
+                    <span>•</span>
+                    <button onClick={() => handleCopyCA(currentToken.mintAddress)} className="flex items-center gap-1 hover:text-white relative">
+                        {currentToken.mintAddress?.substring(0, 8)}...
+                        {copiedCA && <span className="absolute -top-6 left-0 bg-[#00f2a1] text-black px-1.5 py-0.5 rounded shadow z-50">Copied</span>}
+                    </button>
                   </div>
                 </div>
-                <div className="flex flex-col items-end text-right mt-1 shrink-0">
-                  <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-0.5">Market Cap</span>
-                  <span className="flex items-center text-lg font-black text-white">
-                      <DexDollarIcon className="w-4 h-4 text-zinc-400 mr-[1px]" strokeWidth={3} />
-                      {String(currentToken.mcap || '10.0K').replace('$', '')}
-                  </span>
-                  <span className={`text-xs font-black mt-0.5 ${currentToken.isPositive !== false ? 'text-[#089981]' : 'text-[#F23645]'}`}>
-                      {currentToken.change24h || '+161.33%'}
-                  </span>
+              </div>
+              
+              {/* Interactive Market Cap / Price Toggle */}
+              <div 
+                className="flex flex-col items-end text-right mt-1 shrink-0 cursor-pointer group"
+                onClick={() => setShowMobileMcap(!showMobileMcap)}
+              >
+                <div className="flex items-center gap-1 text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-0.5 group-hover:text-zinc-400 transition-colors">
+                  <span>{showMobileMcap ? 'Market Cap' : 'Price'}</span>
+                  <Repeat2 className="w-2.5 h-2.5 opacity-50 group-hover:opacity-100" />
                 </div>
-            </div>
-
-            {/* Mobile Quick Stats Grid (No Socials) */}
-            <div className="grid grid-cols-3 gap-2 border-t border-white/5 pt-3">
-                <div className="flex flex-col">
-                  <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Price</span>
-                  <span className="text-[11px] font-mono text-white flex items-center mt-0.5">
-                    <DexDollarIcon className="w-2.5 h-2.5 text-zinc-400 mr-[1px]" strokeWidth={3}/>
-                    {String(currentToken.price || '0.0001').replace('$', '')}
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Liquidity</span>
-                  <span className="text-[11px] font-mono text-white flex items-center mt-0.5">
-                    <DexDollarIcon className="w-2.5 h-2.5 text-zinc-400 mr-[1px]" strokeWidth={3}/>
-                    {String(currentToken.liquidity || '5.67K').replace('$', '')}
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Holders</span>
-                  <span className="text-[11px] font-mono text-white mt-0.5">529</span>
-                </div>
-            </div>
+                <span className="flex items-center text-lg font-black text-white transition-all">
+                    <DexDollarIcon className="w-4 h-4 text-zinc-400 mr-[1px]" strokeWidth={3} />
+                    {showMobileMcap 
+                      ? String(currentToken.mcap || '10.0K').replace('$', '')
+                      : String(currentToken.price || '0.0001').replace('$', '')
+                    }
+                </span>
+                <span className={`text-xs font-black mt-0.5 ${currentToken.isPositive !== false ? 'text-[#089981]' : 'text-[#F23645]'}`}>
+                    {currentToken.change24h || '+161.33%'}
+                </span>
+              </div>
           </div>
 
           {/* Mobile Chart Block */}
