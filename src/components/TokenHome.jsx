@@ -5,17 +5,7 @@ import TokenChat from './TokenChat';
 import TrackView from './TrackView';
 import SwapModal from './SwapModal';
 import TradeWidget from './TradeWidget';
-import { 
-  TrendingUp,
-  Activity,
-  Repeat2,
-  MessageSquare,
-  Heart,
-  BarChart2,
-  Share2,
-  Check,
-  ChevronLeft
-} from 'lucide-react';
+import { ChevronLeft, Globe } from 'lucide-react';
 
 // Professional DEX Dollar Sign
 const DexDollarIcon = ({ className = "w-4 h-4", strokeWidth = 2.5 }) => (
@@ -39,12 +29,10 @@ const TelegramIcon = ({ className = "w-3 h-3" }) => (
   </svg>
 );
 
-// Solana 3-bar icon
+// Solana SVG Logo Component
 const SolIcon = ({ className = "w-2.5 h-2.5" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="4" y1="6" x2="20" y2="6"></line>
-    <line x1="4" y1="12" x2="20" y2="12"></line>
-    <line x1="4" y1="18" x2="20" y2="18"></line>
+  <svg className={className} viewBox="0 0 397 311" fill="currentColor">
+    <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7zM64.6 3.8C67 1.4 70.3 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8zM332.4 120.9c-2.4-2.4-5.7-3.8-9.2-3.8H5.8c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" />
   </svg>
 );
 
@@ -60,8 +48,8 @@ export default function TokenHome({
   calculateTokenYield = () => '0',
   handleExecuteTrade = () => {}
 }) {
-  // Mobile Activity Tab State
-  const [mobileActivityTab, setMobileActivityTab] = useState('feed'); // 'feed', 'holders', 'chat'
+  // Mobile Activity Tab
+  const [mobileActivityTab, setMobileActivityTab] = useState('callouts'); // 'callouts', 'holders', 'about'
   
   // Desktop States
   const [leftTab, setLeftTab] = useState('Tokens');
@@ -73,8 +61,6 @@ export default function TokenHome({
   // Trade States
   const [tradeMode, setTradeMode] = useState('buy');
   const [tradeAmount, setTradeAmount] = useState('');
-  const [showFeeDetails, setShowFeeDetails] = useState(false);
-  const [isSellPercentageMode, setIsSellPercentageMode] = useState(false);
   
   const [followedSymbols, setFollowedSymbols] = useState([]);
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
@@ -96,18 +82,18 @@ export default function TokenHome({
   };
 
   const currentToken = selectedTokenData || globalTokens[0] || {
-    name: 'PSMOKE',
-    symbol: 'PSMOKE',
-    price: '0.05439',
-    mcap: '10.88K',
+    name: 'Heieheue',
+    symbol: 'NEIEHEJ',
+    price: '0.0001',
+    mcap: '10.0K',
     change24h: '+161.33%',
     isPositive: true,
-    mintAddress: '15trade.phantom.com...',
+    mintAddress: '4bUkBugu...',
     liquidity: '5.67K',
-    supply: '2B',
+    supply: '1B',
     top10: '50.64%',
     vol24h: '729.55M',
-    icon: '💨'
+    icon: '🔥'
   };
 
   const getTokenKey = (t) => (t?.symbol || t?.mintAddress || t?.address || t?.id || '').toLowerCase();
@@ -123,9 +109,9 @@ export default function TokenHome({
   };
 
   const baseTokens = globalTokens && globalTokens.length > 0 ? globalTokens : [
-    { symbol: 'PSTACIA', mcap: '$8.54M', change24h: '+51.14%', isPositive: true },
-    { symbol: 'JUP', mcap: '$729.55M', change24h: '+2.3%', isPositive: true },
-    { symbol: 'ALCH', mcap: '$30.45M', change24h: '+13.84%', isPositive: true },
+    { symbol: 'VKHH', mcap: '$10.0K', change24h: '+0.0%', isPositive: true },
+    { symbol: 'YDYDUUUT', mcap: '$10.0K', change24h: '+0.0%', isPositive: true },
+    { symbol: 'JSHDHSUSV', mcap: '$10.0K', change24h: '+0.0%', isPositive: true },
   ];
 
   const displayedTokens = leftTab === 'Follows'
@@ -139,12 +125,13 @@ export default function TokenHome({
     <div className="w-full h-full bg-[#0c0d10] text-white overflow-hidden select-none relative">
       
       {/* ===================================================================== */}
-      {/* 1. MOBILE NATIVE VIEW (SINGLE SCROLL + PINNED BUY WIDGET) */}
+      {/* 1. MOBILE NATIVE VIEW (SINGLE SCROLL + COMPACT PINNED WIDGET) */}
       {/* ===================================================================== */}
       <div className="flex lg:hidden flex-col w-full h-full bg-[#0a0b0e] relative">
         
         {/* Scrollable Main Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pb-2">
+          
           {/* Top Navbar */}
           <div className="flex items-center justify-between p-3 border-b border-white/5 bg-[#0c0d10] sticky top-0 z-30 shadow-md">
             <button 
@@ -168,14 +155,14 @@ export default function TokenHome({
           {/* Token Header Metadata */}
           <div className="p-4 bg-[#0c0d10] flex flex-col gap-4">
             <div className="flex justify-between items-start">
-                <div className="flex gap-3 items-center">
+                <div className="flex gap-3 items-center min-w-0">
                   <div className="w-12 h-12 rounded-full border border-white/10 overflow-hidden bg-white/5 flex items-center justify-center text-xl shrink-0 shadow-inner">
                     {currentToken.imagePreview ? <img src={currentToken.imagePreview} className="w-full h-full object-cover" /> : currentToken.icon}
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-lg font-black text-white">{currentToken.name || currentToken.symbol}</span>
-                      <span className="text-[9px] bg-[#1c1d24] text-zinc-400 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">{currentToken.symbol}</span>
+                      <span className="text-lg font-black text-white truncate max-w-[120px]">{currentToken.name || currentToken.symbol}</span>
+                      <span className="text-[9px] bg-[#1c1d24] text-zinc-400 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider shrink-0">{currentToken.symbol}</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-mono mt-1">
                       <span>1d ago</span>
@@ -187,11 +174,11 @@ export default function TokenHome({
                     </div>
                   </div>
                 </div>
-                <div className="flex flex-col items-end text-right mt-1">
+                <div className="flex flex-col items-end text-right mt-1 shrink-0">
                   <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-0.5">Market Cap</span>
                   <span className="flex items-center text-lg font-black text-white">
                       <DexDollarIcon className="w-4 h-4 text-zinc-400 mr-[1px]" strokeWidth={3} />
-                      {String(currentToken.mcap || '10.88K').replace('$', '')}
+                      {String(currentToken.mcap || '10.0K').replace('$', '')}
                   </span>
                   <span className={`text-xs font-black mt-0.5 ${currentToken.isPositive !== false ? 'text-[#089981]' : 'text-[#F23645]'}`}>
                       {currentToken.change24h || '+161.33%'}
@@ -199,13 +186,13 @@ export default function TokenHome({
                 </div>
             </div>
 
-            {/* Mobile Quick Stats Grid */}
+            {/* Mobile Quick Stats Grid (No Socials) */}
             <div className="grid grid-cols-3 gap-2 border-t border-white/5 pt-3">
                 <div className="flex flex-col">
                   <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Price</span>
                   <span className="text-[11px] font-mono text-white flex items-center mt-0.5">
                     <DexDollarIcon className="w-2.5 h-2.5 text-zinc-400 mr-[1px]" strokeWidth={3}/>
-                    {String(currentToken.price || '0.05439').replace('$', '')}
+                    {String(currentToken.price || '0.0001').replace('$', '')}
                   </span>
                 </div>
                 <div className="flex flex-col">
@@ -223,7 +210,7 @@ export default function TokenHome({
           </div>
 
           {/* Mobile Chart Block */}
-          <div className="w-full h-[320px] bg-[#0e0f14] border-y border-white/5 relative flex flex-col shrink-0">
+          <div className="w-full h-[280px] bg-[#0e0f14] border-y border-white/5 relative flex flex-col shrink-0">
             <div className="absolute top-3 left-3 right-3 flex justify-between z-10">
                 <div className="flex gap-1 bg-[#0a0b0e]/80 backdrop-blur border border-white/10 rounded p-1">
                   {['15m', '1h', '4h', '1d'].map((tf, i) => (
@@ -244,29 +231,29 @@ export default function TokenHome({
               <span className="text-zinc-400 font-semibold">Bonding Curve</span>
               <span className="text-[#00f2a1] font-bold">{currentToken?.bondingProgress ?? 72}%</span>
             </div>
-            <div className="w-full bg-[#1c1d24] rounded-full h-2 overflow-hidden shadow-inner">
+            <div className="w-full bg-[#1c1d24] rounded-full h-1.5 overflow-hidden shadow-inner">
               <div 
                 className="bg-[#00f2a1] h-full rounded-full transition-all duration-500 shadow-[0_0_10px_#00f2a1]" 
                 style={{ width: `${Math.min(currentToken?.bondingProgress ?? 72, 100)}%` }}
               />
             </div>
-            <div className="flex justify-between items-center text-[10px] text-zinc-500 mt-2">
+            <div className="flex justify-between items-center text-[9px] text-zinc-500 mt-2">
               <span>Graduate at ${currentToken?.targetMcap || '69k'} mcap</span>
               <span>{(currentToken?.bondingProgress ?? 72) >= 100 ? 'Graduated' : 'In Progress'}</span>
             </div>
           </div>
 
-          {/* 3 Section Buttons for Activities */}
+          {/* 3 Section Buttons for Activities (Callouts, Holders, About) */}
           <div className="flex border-b border-white/5 bg-[#0a0b0e] sticky top-[60px] z-20 shadow-md">
             {[
-              { id: 'feed', label: 'Callouts' },
+              { id: 'callouts', label: 'Callouts' },
               { id: 'holders', label: 'Holders' },
-              { id: 'chat', label: 'Chat' }
+              { id: 'about', label: 'About' } // Renamed from Chat to About
             ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setMobileActivityTab(tab.id)}
-                  className={`flex-1 py-3.5 text-xs font-black uppercase tracking-widest border-b-[3px] transition-colors ${
+                  className={`flex-1 py-3 text-[11px] font-black uppercase tracking-widest border-b-[3px] transition-colors ${
                     mobileActivityTab === tab.id ? 'border-[#00f2a1] text-white bg-white/5' : 'border-transparent text-zinc-500'
                   }`}
                 >
@@ -277,60 +264,84 @@ export default function TokenHome({
 
           {/* Activity Content Area */}
           <div className="flex-1 bg-[#0c0d10] p-4 min-h-[300px]">
-            {mobileActivityTab === 'feed' && <div className="text-zinc-500 text-center font-mono text-xs py-10 border border-dashed border-white/10 rounded-lg">FEED CONTENT HERE</div>}
+            {mobileActivityTab === 'callouts' && <div className="text-zinc-500 text-center font-mono text-xs py-10 border border-dashed border-white/10 rounded-lg">FEED CONTENT HERE</div>}
             {mobileActivityTab === 'holders' && <div className="text-zinc-500 text-center font-mono text-xs py-10 border border-dashed border-white/10 rounded-lg">HOLDERS CONTENT HERE</div>}
-            {mobileActivityTab === 'chat' && <TokenChat tokenSymbol={currentToken.symbol} />}
+            {mobileActivityTab === 'about' && (
+              <div className="space-y-4">
+                <div className="text-sm font-bold text-white mb-2">Coin Creator</div>
+                <div className="flex items-center gap-3 bg-[#121318] p-3 rounded-lg border border-white/5">
+                   <div className="w-10 h-10 bg-rose-500 rounded-full flex items-center justify-center text-xl">👾</div>
+                   <div className="flex-1">
+                      <div className="text-sm font-bold text-white">0xf971...</div>
+                      <div className="text-xs text-zinc-500 font-mono">0 Forged</div>
+                   </div>
+                   <button className="bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">Follow</button>
+                </div>
+                <div className="mt-4">
+                   <div className="text-sm font-bold text-white mb-2">Description</div>
+                   <p className="text-xs text-zinc-400 leading-relaxed">
+                     The launchpad for memecoins paired to ptokens. Built for the trenches.
+                   </p>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-3">
+                   <span className="bg-[#1c1d24] text-zinc-300 text-[10px] px-2 py-1 rounded border border-white/5 font-mono flex items-center gap-1"><Globe className="w-3 h-3"/> Website</span>
+                   <span className="bg-[#1c1d24] text-zinc-300 text-[10px] px-2 py-1 rounded border border-white/5 font-mono flex items-center gap-1"><XIcon className="w-3 h-3"/> Twitter</span>
+                   <span className="bg-[#1c1d24] text-zinc-300 text-[10px] px-2 py-1 rounded border border-white/5 font-mono flex items-center gap-1"><TelegramIcon className="w-3 h-3"/> Telegram</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* PINNED BOTTOM TRADE WIDGET (Like Pump.fun) */}
-        <div className="shrink-0 bg-[#121318] border-t border-white/10 p-3.5 rounded-t-2xl z-30 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] pb-[max(env(safe-area-inset-bottom),1rem)]">
-          {/* Buy/Sell Tabs */}
-          <div className="flex gap-1 bg-[#1a1b22] p-1 rounded-xl mb-3 shadow-inner">
+        {/* ULTRA-COMPACT PINNED BOTTOM TRADE WIDGET */}
+        <div className="shrink-0 bg-[#121318] border-t border-white/10 p-2.5 z-40 shadow-[0_-5px_15px_rgba(0,0,0,0.5)]">
+          {/* Buy/Sell Tabs (Thin) */}
+          <div className="flex gap-1 bg-[#1a1b22] p-1 rounded-lg mb-2 shadow-inner">
             <button 
-              onClick={() => { setTradeMode('buy'); setIsSellPercentageMode(false); }} 
-              className={`flex-1 py-2 text-sm font-black rounded-lg transition-all ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow-md' : 'text-zinc-500'}`}
+              onClick={() => setTradeMode('buy')} 
+              className={`flex-1 py-1.5 text-xs font-black uppercase tracking-wider rounded-md transition-all ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow-sm' : 'text-zinc-500'}`}
             >
               Buy
             </button>
             <button 
               onClick={() => setTradeMode('sell')} 
-              className={`flex-1 py-2 text-sm font-black rounded-lg transition-all ${tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow-md' : 'text-zinc-500'}`}
+              className={`flex-1 py-1.5 text-xs font-black uppercase tracking-wider rounded-md transition-all ${tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow-sm' : 'text-zinc-500'}`}
             >
               Sell
             </button>
           </div>
 
-          {/* Amount Input */}
-          <div className="bg-[#050505] border border-white/5 rounded-xl px-4 py-3 mb-3 flex items-center justify-between shadow-inner focus-within:border-[#00f2a1]/50">
+          {/* Amount Input (Compact) */}
+          <div className="bg-[#050505] border border-white/5 rounded-lg px-3 py-1.5 mb-2 flex items-center justify-between shadow-inner focus-within:border-[#00f2a1]/50">
             <div className="flex flex-col flex-1">
-              <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Amount</span>
+              <span className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest mb-0.5">Amount</span>
               <input 
                 type="text" inputMode="decimal" placeholder="0.0" 
                 value={tradeAmount} 
                 onChange={(e) => setTradeAmount(e.target.value.replace(/[^0-9.]/g, ''))} 
-                className="bg-transparent text-2xl font-black text-white w-full outline-none font-mono tracking-tight" 
+                className="bg-transparent text-lg font-black text-white w-full outline-none font-mono tracking-tight" 
               />
             </div>
+            <span className="text-[10px] font-black text-white font-mono bg-white/5 px-2 py-1 rounded">SOL</span>
           </div>
 
-          {/* Quick Amounts */}
-          <div className="grid grid-cols-4 gap-2 mb-3">
+          {/* Quick Amounts (Thin) */}
+          <div className="flex gap-1.5 mb-2">
             {['0.1', '0.5', '1', 'Max'].map(amt => (
               <button 
                 key={amt} 
                 onClick={() => setTradeAmount(amt === 'Max' ? '10' : amt)} 
-                className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 py-2.5 rounded-lg text-xs font-black text-zinc-300 shadow-sm"
+                className="flex-1 bg-[#1a1b22] border border-white/5 hover:bg-white/10 py-1.5 rounded-md text-[10px] font-black text-zinc-300 shadow-sm"
               >
                 {amt}
               </button>
             ))}
           </div>
 
-          {/* Action Button */}
+          {/* Action Button (Compact) */}
           <button 
             onClick={handleExecuteTrade} 
-            className={`w-full py-3.5 rounded-xl font-black uppercase text-sm tracking-widest transition-all active:scale-[0.98] ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow-[0_0_15px_rgba(0,242,161,0.3)]' : 'bg-[#F23645] text-white shadow-[0_0_15px_rgba(242,54,69,0.3)]'}`}
+            className={`w-full py-2.5 rounded-lg font-black uppercase text-xs tracking-widest transition-all active:scale-[0.98] ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow-[0_0_10px_rgba(0,242,161,0.2)]' : 'bg-[#F23645] text-white shadow-[0_0_10px_rgba(242,54,69,0.2)]'}`}
           >
             {tradeMode === 'buy' ? 'PLACE BUY ORDER' : 'EXECUTE SELL'}
           </button>
@@ -338,126 +349,274 @@ export default function TokenHome({
       </div>
 
       {/* ===================================================================== */}
-      {/* 2. DESKTOP VIEW - PERFECTLY RESTORED & COLOR-MATCHED */}
+      {/* 2. DESKTOP VIEW - EXACTLY RESTORED FROM USER PROMPT */}
       {/* ===================================================================== */}
       <div className="hidden lg:grid grid-cols-12 h-full gap-2 p-2 w-full">
         {/* LEFT SIDEBAR */}
         <div className={`${isSidebarOpen ? 'col-span-4 xl:col-span-3' : 'hidden'} bg-[#121318] border border-white/5 rounded-xl flex flex-col h-full overflow-hidden`}>
           <div className="flex items-center border-b border-white/5 bg-[#0a0b0e] p-1.5 gap-1 shrink-0">
             {['Tokens', 'Follows', 'Track'].map((tab) => (
-              <button key={tab} type="button" onClick={() => handleTabClick(tab)} className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${leftTab === tab ? 'bg-[#1c1d24] text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}>{tab}</button>
+              <button
+                key={tab}
+                type="button"
+                onClick={() => handleTabClick(tab)}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  leftTab === tab
+                    ? 'bg-[#1c1d24] text-white shadow'
+                    : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                {tab}
+              </button>
             ))}
           </div>
-          <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden">
-            {displayedTokens.map((item, idx) => (
-              <SidebarTokenRow key={idx} token={item} isActive={(selectedTokenData?.symbol || currentToken?.symbol) === item.symbol} onSelect={(token) => setSelectedTokenData && setSelectedTokenData(token)} />
-            ))}
+
+          <div className="flex-1 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {displayedTokens.length === 0 && leftTab === 'Follows' ? (
+              <div className="p-8 text-center text-xs font-semibold text-zinc-500">
+                No followed tokens yet
+              </div>
+            ) : (
+              displayedTokens.map((item, idx) => (
+                <SidebarTokenRow
+                  key={item.id || item.address || item.symbol || idx}
+                  token={item}
+                  isActive={(selectedTokenData?.symbol || currentToken?.symbol) === item.symbol}
+                  onSelect={(token) => setSelectedTokenData && setSelectedTokenData(token)}
+                />
+              ))
+            )}
           </div>
+
           <div className="p-2.5 border-t border-white/5 bg-[#0a0b0e] flex items-center justify-between shrink-0">
             <span className="text-[11px] text-zinc-500 font-bold">Portfolio Balance</span>
-            <span className="flex items-center text-sm font-mono font-black text-[#00f2a1]">
-              <DexDollarIcon className="w-3.5 h-3.5 mr-[1px]" strokeWidth={2.5} />
-              99.60
-            </span>
+            <span className="text-xs font-mono font-black text-[#00f2a1]">$99.60</span>
           </div>
         </div>
 
-        {/* CENTER COLUMN: CHART */}
+        {/* CENTER COLUMN: CHART & HEADER STATS */}
         <div className={`${isSidebarOpen ? 'col-span-5 xl:col-span-6' : 'col-span-8 xl:col-span-9'} flex flex-col h-full gap-2 overflow-hidden transition-all duration-200`}>
+          
+          {/* Token Meta Header */}
           <div className="bg-[#121318] border border-white/5 rounded-xl p-2.5 flex items-center justify-between shrink-0 gap-4 overflow-hidden">
             <div className="flex items-center gap-2.5 shrink-0 pr-3 border-r border-white/5">
-              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="-ml-2.5 -my-2.5 self-stretch w-5 bg-[#1c1d24] hover:bg-white/10 border-r border-white/5 rounded-l-xl flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
-                <ChevronLeft className={`w-4 h-4 transition-transform ${isSidebarOpen ? '' : 'rotate-180'}`} />
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="-ml-2.5 -my-2.5 self-stretch w-5 bg-[#1c1d24] hover:bg-white/10 border-r border-white/5 rounded-l-xl flex items-center justify-center text-zinc-500 hover:text-white transition-colors shrink-0"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d={isSidebarOpen ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"} />
+                </svg>
               </button>
-              <div className="w-9 h-9 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-sm font-bold overflow-hidden">
-                {currentToken.imagePreview ? <img src={currentToken.imagePreview} className="w-full h-full object-cover" /> : currentToken.icon}
+
+              <div className="w-9 h-9 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-sm font-bold overflow-hidden shrink-0 ml-0.5">
+                {currentToken.imagePreview ? <img src={currentToken.imagePreview} alt={currentToken.symbol} className="w-full h-full object-cover" /> : currentToken.icon}
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-sm font-black text-white tracking-wide">{currentToken.name || currentToken.symbol}</h1>
-                  <button onClick={() => handleToggleFollow(currentToken)} className={`text-[9px] font-bold px-2 py-0.5 rounded transition-all cursor-pointer ${isFollowing ? 'bg-[#00f2a1]/20 text-[#00f2a1]' : 'bg-[#1c1d24] text-zinc-300'}`}>{isFollowing ? '✓' : '+ Follow'}</button>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleFollow(currentToken)}
+                    className={`text-[9px] font-bold px-2 py-0.5 rounded transition-all cursor-pointer ${
+                      isFollowing 
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                        : 'bg-[#1c1d24] hover:bg-white/20 text-zinc-300'
+                    }`}
+                  >
+                    {isFollowing ? '✓ Following' : '+ Follow'}
+                  </button>
                 </div>
                 <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-mono mt-0.5">
-                  <span>1d</span> <span>•</span>
+                  <span>1d</span><span>•</span>
                   <button onClick={() => handleCopyCA(currentToken.mintAddress)} className="flex items-center gap-1 hover:text-white relative">
-                    <span>{currentToken.mintAddress?.substring(0,6)}...</span>
-                    {copiedCA && <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#00f2a1] text-black text-[9px] font-bold px-1.5 py-0.5 rounded">Copied!</span>}
+                    <span className="truncate max-w-[85px]">{currentToken.mintAddress || 'Cyknvgvyl97eW6tj...'}</span>
+                    <svg className="w-3 h-3 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    {copiedCA && <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#00f2a1] text-black text-[9px] font-bold px-1.5 py-0.5 rounded shadow z-50">Copied!</span>}
                   </button>
                   <span className="text-zinc-700">|</span>
                   <div className="flex items-center gap-2 text-zinc-400">
+                    <a href={currentToken.website || "#"} className="hover:text-white"><Globe className="w-3.5 h-3.5"/></a>
                     <a href={currentToken.twitter || "#"} className="hover:text-white"><XIcon className="w-3.5 h-3.5"/></a>
                     <a href={currentToken.telegram || "#"} className="hover:text-white"><TelegramIcon className="w-3.5 h-3.5"/></a>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-6 overflow-x-auto [&::-webkit-scrollbar]:hidden font-mono shrink whitespace-nowrap">
+
+            {/* Scrollable Right Ticker */}
+            <div className="flex items-center gap-6 overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] font-mono shrink whitespace-nowrap">
               <div className="text-right shrink-0">
-                <span className="block text-[9px] text-zinc-500 font-bold uppercase">Price</span>
-                <span className="flex items-center text-xs font-black text-white"><DexDollarIcon className="w-3 h-3 text-zinc-400 mr-[1px]"/>{String(currentToken?.price || '0.05439').replace('$','')}</span>
+                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Price</span>
+                <span className="text-sm font-black text-white">{formatPhantomPrice(currentToken?.price || 0.05439)}</span>
               </div>
               <div className="text-right shrink-0">
-                <span className="block text-[9px] text-zinc-500 font-bold uppercase">Market Cap</span>
-                <span className="flex items-center text-xs font-black text-white"><DexDollarIcon className="w-3 h-3 text-zinc-400 mr-[1px]"/>{String(currentToken.mcap || '10.88K').replace('$','')}</span>
+                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Market Cap</span>
+                <span className="text-sm font-black text-white">{currentToken.mcap || '$10.88K'}</span>
               </div>
               <div className="text-right shrink-0">
-                <span className="block text-[9px] text-zinc-500 font-bold uppercase">24h Change</span>
-                <span className={`text-xs font-black ${currentToken.isPositive !== false ? 'text-[#089981]' : 'text-[#F23645]'}`}>{currentToken.change24h || '+161.33%'}</span>
+                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">24h Change</span>
+                <span className={`text-sm font-black ${currentToken.isPositive !== false ? 'text-[#089981]' : 'text-[#F23645]'}`}>
+                  {currentToken.change24h || '+161.33%'}
+                </span>
               </div>
               <div className="text-right shrink-0">
-                <span className="block text-[9px] text-zinc-500 font-bold uppercase">Liquidity</span>
-                <span className="flex items-center text-xs font-black text-white"><DexDollarIcon className="w-3 h-3 text-zinc-400 mr-[1px]"/>{String(currentToken.liquidity || '5.67K').replace('$','')}</span>
+                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Liquidity</span>
+                <span className="text-sm font-black text-white">{currentToken.liquidity || '$5.67K'}</span>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Supply</span>
+                <span className="text-sm font-black text-white">{currentToken.supply || '2B'}</span>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Top 10</span>
+                <span className="text-sm font-black text-amber-500">{currentToken.top10 || '50.64%'}</span>
               </div>
             </div>
           </div>
-          <div className="flex-1 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-hidden relative">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 text-xs text-zinc-400 font-medium bg-[#0a0b0e]">
-              <div className="flex gap-2">{['15m', '1h', '4h', '1d'].map((tf, i) => (<button key={tf} className={`px-2 py-0.5 rounded text-[11px] hover:text-white ${i===0?'bg-white/10 text-white font-bold':''}`}>{tf}</button>))}</div>
+
+          {/* TradingView Container */}
+          <div className="flex-1 min-h-0 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-hidden relative">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 text-xs text-zinc-400 font-medium shrink-0 bg-[#0a0b0e]">
+              <div className="flex items-center gap-2">
+                {['15m', '1h', '4h', '1d'].map((tf, i) => (
+                  <button key={tf} className={`px-2 py-0.5 rounded text-[11px] hover:text-white ${i === 0 ? 'bg-white/10 text-white font-bold' : ''}`}>{tf}</button>
+                ))}
+                <span className="h-3 w-[1px] bg-white/10 mx-1" />
+                <button className="text-white font-bold text-[11px]">Price / MCap</button>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-500">
+                <span>Show Outliers</span><span>•</span><span>Phantom</span>
+              </div>
             </div>
-            <div className="flex-1 flex flex-col items-center justify-center bg-[#0e0f14] relative">
+
+            <div className="flex-1 min-h-0 w-full relative bg-[#0e0f14] flex items-center justify-center">
               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#089981_1px,transparent_1px)] [background-size:16px_16px]" />
-              <div className="z-10 text-center"><div className="text-4xl mb-2">📈</div><span className="text-xs text-zinc-400 font-mono tracking-wider uppercase">TRADINGVIEW REAL-TIME CHART</span></div>
+              <div className="z-10 text-center">
+                <div className="text-4xl mb-2">📈</div>
+                <span className="text-xs text-zinc-400 font-mono tracking-wider uppercase">TRADINGVIEW REAL-TIME CHART WIDGET EMBED</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between px-3 py-1.5 border-t border-white/5 bg-[#0a0b0e] text-[10px] font-mono text-zinc-500 shrink-0">
+              <div className="flex items-center gap-3">
+                {['5y', '1y', '6m', '3m', '1m', '5d', '1d'].map((range, i) => (
+                  <span key={range} className={`cursor-pointer hover:text-white ${i === 6 ? 'text-zinc-300' : ''}`}>{range}</span>
+                ))}
+              </div>
+              <span>13:16:04 (UTC+1)</span>
             </div>
           </div>
         </div>
 
-        {/* RIGHT SIDEBAR */}
-        <div className="col-span-3 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden">
+        {/* RIGHT SIDEBAR (SWAP/TRADE) */}
+        <div className="col-span-3 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <div className="flex items-center border-b border-white/5 bg-[#0a0b0e] p-1.5 gap-1 shrink-0">
-            <button onClick={() => setRightPanelMode('swap')} className={`flex-1 py-1.5 text-xs font-bold rounded-lg ${rightPanelMode === 'swap' ? 'bg-[#1c1d24] text-white shadow border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}>⚡ Quick Swap</button>
-            <button onClick={() => setRightPanelMode('hub')} className={`flex-1 py-1.5 text-xs font-bold rounded-lg ${rightPanelMode === 'hub' ? 'bg-[#1c1d24] text-white shadow border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}>📊 Market Hub</button>
+            <button
+              onClick={() => setRightPanelMode('swap')}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                rightPanelMode === 'swap' ? 'bg-[#1c1d24] text-white shadow border border-white/10' : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              ⚡ Quick Swap
+            </button>
+            <button
+              onClick={() => setRightPanelMode('hub')}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                rightPanelMode === 'hub' ? 'bg-[#1c1d24] text-white shadow border border-white/10' : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              📊 Market Hub
+            </button>
           </div>
+
           {rightPanelMode === 'swap' ? (
-            <div className="flex-1 flex flex-col p-3 space-y-4">
-              <div className="bg-[#1c1d24] p-3 rounded-xl font-mono shadow-inner border border-white/5">
-                <div className="flex justify-between items-center text-xs mb-1.5">
-                  <span className="text-zinc-400 font-semibold">Bonding Curve</span>
-                  <span className="text-[#00f2a1] font-bold">{currentToken?.bondingProgress ?? 72}%</span>
+            <div className="flex-1 flex flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              
+              <div className="p-3 border-b border-white/5 bg-[#0a0b0e] shrink-0">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[10px] text-zinc-500 font-bold">5m Vol</span>
+                  <span className="text-xs font-mono font-black text-white">$349.5K</span>
                 </div>
-                <div className="w-full bg-[#0a0b0e] rounded-full h-1.5 overflow-hidden">
-                  <div className="bg-[#00f2a1] h-full rounded-full transition-all duration-500 shadow-[0_0_8px_#00f2a1]" style={{ width: `${Math.min(currentToken?.bondingProgress ?? 72, 100)}%` }}/>
+                <div className="flex justify-between items-center text-[10px] font-mono mb-1">
+                  <span className="text-[#089981]">1.12K • $157.4K</span>
+                  <span className="text-[#F23645]">979 • $192.1K</span>
+                </div>
+                <div className="h-1 bg-white/5 rounded-full flex overflow-hidden">
+                  <div className="bg-[#089981] h-full" style={{ width: '45%' }} />
+                  <div className="bg-[#F23645] h-full" style={{ width: '55%' }} />
                 </div>
               </div>
-              <div className="flex gap-1 bg-[#1a1b22] p-1 rounded-xl">
-                <button onClick={() => setTradeMode('buy')} className={`flex-1 py-2 text-sm font-black rounded-lg transition-colors ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow-md' : 'text-zinc-500 hover:text-white'}`}>Buy</button>
-                <button onClick={() => setTradeMode('sell')} className={`flex-1 py-2 text-sm font-black rounded-lg transition-colors ${tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}>Sell</button>
+
+              <div className="p-3 space-y-4">
+                <div className="bg-[#121318] p-3 rounded-xl border border-white/5 font-mono">
+                  <div className="flex justify-between items-center text-xs mb-1.5">
+                    <span className="text-zinc-400 font-semibold">Bonding Curve</span>
+                    <span className="text-[#00f2a1] font-bold">{currentToken?.bondingProgress ?? 72}%</span>
+                  </div>
+                  <div className="w-full bg-zinc-800/80 rounded-full h-1.5 overflow-hidden">
+                    <div className="bg-[#00f2a1] h-full rounded-full transition-all duration-500 shadow-[0_0_8px_#00f2a1]" style={{ width: `${Math.min(currentToken?.bondingProgress ?? 72, 100)}%` }}/>
+                  </div>
+                  <div className="flex justify-between items-center text-[9px] text-zinc-500 mt-1.5">
+                    <span>Graduate at ${currentToken?.targetMcap || '69k'} mcap</span>
+                    <span>{(currentToken?.bondingProgress ?? 72) >= 100 ? 'Graduated' : 'In Progress'}</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <div className="flex gap-1 bg-[#1a1b22] p-1 rounded-lg flex-1">
+                    <button onClick={() => { setTradeMode('buy'); setIsSellPercentageMode(false); }} className={`flex-1 py-1.5 text-xs font-black rounded-md transition-colors ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow' : 'text-zinc-500 hover:text-white'}`}>Buy</button>
+                    <button onClick={() => setTradeMode('sell')} className={`flex-1 py-1.5 text-xs font-black rounded-md transition-colors ${tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow' : 'text-zinc-500 hover:text-white'}`}>Sell</button>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-[10px] text-zinc-500 font-bold mb-1 px-1 uppercase tracking-wider">
+                    <span>Amount to {tradeMode}</span>
+                    <span>{tradeMode === 'buy' ? 'SOL' : currentToken.symbol}</span>
+                  </div>
+                  <div className="bg-[#0c0d10] border border-white/5 rounded-lg flex items-center px-3 py-2.5 focus-within:border-[#8145e6]/50">
+                    <input type="text" placeholder="0" value={tradeAmount} onChange={(e) => setTradeAmount(e.target.value)} className="w-full bg-transparent outline-none text-xl font-mono font-black text-white placeholder-zinc-700" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-1.5">
+                  {['0.1', '0.25', '0.5', '1', '5', 'Max'].map((val) => (
+                    <button key={val} type="button" onClick={() => setTradeAmount(val === 'Max' ? '10' : val)} className="py-1.5 bg-[#1a1b22] hover:bg-white/10 rounded-md text-[11px] font-bold text-zinc-400 hover:text-white transition-colors flex items-center justify-center gap-1 cursor-pointer">
+                      <span>{val}</span>{val !== 'Max' && <SolIcon className="w-2.5 h-2.5 text-zinc-400" />}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-1 text-[10px] font-mono text-zinc-500 pt-1">
+                  <div className="flex justify-between"><span>Amount</span><span className="text-white font-bold">≈ 324.59M {currentToken.symbol}</span></div>
+                  <div className="flex justify-between"><span>Holdings</span><span className="text-white font-bold">0 {currentToken.symbol}</span></div>
+                </div>
+
+                <button onClick={handleExecuteTrade} className={`w-full py-3 rounded-xl font-black text-xs transition-transform active:scale-[0.98] ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black hover:bg-[#00d990]' : 'bg-[#F23645] text-white hover:bg-[#e02a39]'}`}>
+                  {tradeMode === 'buy' ? 'Add SOL for fees' : `SELL ${currentToken?.symbol}`}
+                </button>
               </div>
-              <div className="bg-[#050505] border border-white/5 rounded-xl flex items-center px-4 py-3 focus-within:border-[#00f2a1]/50 shadow-inner">
-                <input type="text" placeholder="0" value={tradeAmount} onChange={(e) => setTradeAmount(e.target.value)} className="w-full bg-transparent outline-none text-2xl font-mono font-black text-white placeholder-zinc-700" />
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {['0.1', '0.5', '1', '5', '10', 'Max'].map(val => (
-                  <button key={val} onClick={() => setTradeAmount(val === 'Max' ? '10' : val)} className="py-2 bg-[#1a1b22] border border-white/5 hover:bg-white/10 rounded-lg text-xs font-black text-zinc-300 flex items-center justify-center gap-1 shadow-sm">
-                    <span>{val}</span>{val !== 'Max' && <SolIcon />}
-                  </button>
-                ))}
-              </div>
-              <button onClick={handleExecuteTrade} className={`w-full py-3.5 rounded-xl font-black text-sm tracking-widest uppercase active:scale-[0.98] transition-transform ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow-[0_0_15px_rgba(0,242,161,0.3)]' : 'bg-[#F23645] text-white shadow-[0_0_15px_rgba(242,54,69,0.3)]'}`}>
-                {tradeMode === 'buy' ? 'Add SOL for fees' : `SELL ${currentToken?.symbol}`}
-              </button>
             </div>
           ) : (
-             <div className="flex-1 p-3 bg-[#0c0d10] text-zinc-500 text-xs text-center font-mono">MARKET HUB CONTENT</div>
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex overflow-x-auto border-b border-white/5 bg-[#0a0b0e] shrink-0 [&::-webkit-scrollbar]:hidden">
+                {[
+                  { id: 'trades', label: 'Trades' },
+                  { id: 'chat', label: 'Chat' },
+                  { id: 'positions', label: 'Positions' },
+                  { id: 'top_traders', label: 'Traders' },
+                  { id: 'holders', label: 'Holders' }
+                ].map((tab) => (
+                  <button key={tab.id} onClick={() => setActiveHubTab(tab.id)} className={`px-3 py-2 text-[11px] font-bold border-b-2 transition-colors whitespace-nowrap ${activeHubTab === tab.id ? 'border-[#089981] text-white bg-white/5' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}>{tab.label}</button>
+                ))}
+              </div>
+              <div className="flex-1 overflow-y-auto p-3 bg-[#0c0d10]">
+                 <div className="h-full min-h-[200px] flex items-center justify-center text-xs text-zinc-500 font-mono border-t border-white/5">
+                   {activeHubTab.toUpperCase()} CONTENT COMPONENT
+                 </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
