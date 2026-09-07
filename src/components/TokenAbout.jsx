@@ -33,7 +33,7 @@ export default function TokenAbout({ currentToken, onOpenChat }) {
   return (
     <div className="space-y-4 text-left pb-4">
       
-      {/* 1. COIN CREATOR CARD (Truncated & Copyable) */}
+      {/* 1. COIN CREATOR CARD */}
       <div>
         <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Coin Creator</div>
         <div className="flex items-center justify-between bg-[#121318] p-3 rounded-xl border border-white/5 shadow-sm">
@@ -58,14 +58,14 @@ export default function TokenAbout({ currentToken, onOpenChat }) {
             </div>
           </div>
           
-          <button className="bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-colors shrink-0 ml-2 active:scale-95">
-            Follow
+          <button className="bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors shrink-0 ml-2 active:scale-95">
+            Follow Dev
           </button>
         </div>
       </div>
 
-      {/* 2. PROMINENT CHAT BANNER (Tapping opens the mobile Chat Drawer) */}
-      <div>
+      {/* 2. PROMINENT CHAT BANNER (Hidden on Desktop, Visible on Mobile) */}
+      <div className="block lg:hidden">
         <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Community</div>
         <button 
           onClick={onOpenChat}
@@ -99,8 +99,8 @@ export default function TokenAbout({ currentToken, onOpenChat }) {
         </p>
       </div>
 
-      {/* 4. SOCIAL LINKS */}
-      <div className="flex flex-wrap gap-2 pt-1">
+      {/* 4. SOCIAL LINKS (Hidden on Desktop, Visible on Mobile) */}
+      <div className="flex flex-wrap gap-2 pt-1 lg:hidden">
         <a href={currentToken?.website || '#'} className="bg-[#1c1d24] hover:bg-white/10 text-zinc-300 text-[11px] px-3 py-2 rounded-lg border border-white/5 font-mono flex items-center gap-1.5 transition-colors">
           <Globe className="w-3.5 h-3.5"/> Website
         </a>
