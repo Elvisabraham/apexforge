@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { createChart, ColorType } from 'lightweight-charts';
+import { createChart, ColorType, CandlestickSeries } from 'lightweight-charts';
 
 export default function TokenChart() {
   const chartContainerRef = useRef();
@@ -7,11 +7,15 @@ export default function TokenChart() {
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    // 1. Initialize the Chart
+    const width = chartContainerRef.current.clientWidth || 600;
+    const height = chartContainerRef.current.clientHeight || 350;
+
     const chart = createChart(chartContainerRef.current, {
+      width,
+      height,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: '#71717a', // zinc-500
+        textColor: '#71717a',
       },
       grid: {
         vertLines: { color: 'rgba(255, 255, 255, 0.03)' },
@@ -20,6 +24,9 @@ export default function TokenChart() {
       timeScale: {
         timeVisible: true,
         borderVisible: false,
+        barSpacing: 12,
+        minBarSpacing: 4,
+        rightOffset: 8,
       },
       rightPriceScale: {
         borderVisible: false,
@@ -30,8 +37,7 @@ export default function TokenChart() {
       }
     });
 
-    // 2. Configure the Candlestick Series matching your brand colors
-    const candlestickSeries = chart.addCandlestickSeries({
+    const candlestickSeries = chart.addSeries(CandlestickSeries, {
       upColor: '#00f2a1',
       downColor: '#F23645',
       borderVisible: false,
@@ -39,38 +45,37 @@ export default function TokenChart() {
       wickDownColor: '#F23645',
     });
 
-    // 3. Generate Realistic Bonding Curve Dummy Data
+    // Generate 250 candles to fill wide screens
     const data = [];
-    let time = Math.floor(Date.now() / 1000) - 86400; // Start 24h ago
-    let price = 0.000050;
+    let time = Math.floor(Date.now() / 1000) - (250 * 900);
+    let price = 0.000035;
 
-    for (let i = 0; i < 100; i++) {
-      const volatility = price * 0.08;
+    for (let i = 0; i < 250; i++) {
+      const volatility = price * 0.07;
       const open = price;
-      // Slight upward bias to simulate a trending pump token
-      const close = open + (Math.random() - 0.42) * volatility; 
-      const high = Math.max(open, close) + Math.random() * (volatility * 0.5);
-      const low = Math.min(open, close) - Math.random() * (volatility * 0.5);
-      
+      const close = open + (Math.random() - 0.47) * volatility;
+      const high = Math.max(open, close) + Math.random() * (volatility * 0.4);
+      const low = Math.min(open, close) - Math.random() * (volatility * 0.4);
+
       data.push({ time, open, high, low, close });
-      time += 900; // 15m intervals
-      price = close;
+      time += 900;
+      price = Math.max(0.00001, close);
     }
 
     candlestickSeries.setData(data);
+    chart.timeScale().fitContent();
 
-    // 4. Handle Responsive Resizing
     const handleResize = () => {
+      if (!chartContainerRef.current) return;
       chart.applyOptions({
         width: chartContainerRef.current.clientWidth,
         height: chartContainerRef.current.clientHeight,
       });
+      chart.timeScale().fitContent();
     };
 
     window.addEventListener('resize', handleResize);
-    chart.timeScale().fitContent();
 
-    // Cleanup on unmount
     return () => {
       window.removeEventListener('resize', handleResize);
       chart.remove();
