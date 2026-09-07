@@ -3,6 +3,7 @@ import { createChart, ColorType, CandlestickSeries, HistogramSeries } from 'ligh
 
 export default function TokenChart({ currentToken, chartMode = 'price' }) {
   const chartContainerRef = useRef();
+  const legendRef = useRef(); // High-performance DOM ref for the OHLC legend
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -23,7 +24,6 @@ export default function TokenChart({ currentToken, chartMode = 'price' }) {
         horzLines: { color: 'rgba(255, 255, 255, 0.03)' },
       },
       localization: {
-        // DYNAMIC FORMATTER: Changes based on Price or MCap mode
         priceFormatter: (value) => {
           if (chartMode === 'mcap') {
             if (value >= 1000000) return '$' + (value / 1000000).toFixed(2) + 'M';
@@ -45,7 +45,7 @@ export default function TokenChart({ currentToken, chartMode = 'price' }) {
       rightPriceScale: {
         borderVisible: false,
         scaleMargins: {
-          top: 0.1,
+          top: 0.15, // Pushed down slightly to make room for the OHLC legend
           bottom: 0.25, 
         },
       },
@@ -67,7 +67,7 @@ export default function TokenChart({ currentToken, chartMode = 'price' }) {
       color: '#26a69a',
       priceFormat: { type: 'volume' },
       priceScaleId: '', 
-      lastValueVisible: false, // FIX: This completely removes the weird second red label
+      lastValueVisible: false, 
       priceLineVisible: false,
     });
     
@@ -75,7 +75,7 @@ export default function TokenChart({ currentToken, chartMode = 'price' }) {
       scaleMargins: { top: 0.8, bottom: 0 },
     });
 
-    // Extract exact numbers for Price vs Market Cap
+    // 1. DATA GENERATION
     const rawPrice = parseFloat(String(currentToken?.price || '0.05439').replace(/[^0-9.]/g, ''));
     let rawMcap = 10880; 
     if (currentToken?.mcap) {
@@ -86,7 +86,6 @@ export default function TokenChart({ currentToken, chartMode = 'price' }) {
       else rawMcap = mNum;
     }
 
-    // Set the target based on the current mode
     const targetValue = chartMode === 'mcap' ? rawMcap : rawPrice;
     
     const candleData = [];
@@ -95,7 +94,6 @@ export default function TokenChart({ currentToken, chartMode = 'price' }) {
     let closePrice = targetValue; 
 
     for (let i = 0; i < 500; i++) {
-      // FIX: Lowered volatility to 1.2% so candles stay tall and beautiful
       const volatility = closePrice * 0.012; 
       const openPrice = closePrice - (Math.random() - 0.45) * volatility; 
       const high = Math.max(openPrice, closePrice) + (Math.random() * volatility * 0.5);
@@ -116,8 +114,45 @@ export default function TokenChart({ currentToken, chartMode = 'price' }) {
 
     candlestickSeries.setData(candleData);
     volumeSeries.setData(volumeData);
-    
     chart.timeScale().fitContent();
+
+    // 2. HIGH-PERFORMANCE OHLC LEGEND ENGINE
+    const lastCandle = candleData[candleData.length - 1];
+    const lastVol = volumeData[volumeData.length - 1];
+
+    const formatDecimals = (val) => chartMode === 'mcap' ? (val >= 1000 ? (val/1000).toFixed(2)+'K' : val.toFixed(2)) : val.toFixed(5);
+    const formatVol = (val) => val >= 1000000 ? (val / 1000000).toFixed(2) + 'M' : (val >= 1000 ? (val / 1000).toFixed(2) + 'K' : val);
+
+    const updateLegend = (param) => {
+      if (!legendRef.current) return;
+      
+      const validCrosshair = !(param === undefined || param.time === undefined || param.point.x < 0 || param.point.y < 0);
+      let candle = lastCandle;
+      let vol = lastVol.value;
+
+      if (validCrosshair) {
+        const crosshairCandle = param.seriesData.get(candlestickSeries);
+        const crosshairVol = param.seriesData.get(volumeSeries);
+        if (crosshairCandle) candle = crosshairCandle;
+        if (crosshairVol) vol = crosshairVol.value;
+      }
+
+      const colorClass = candle.close >= candle.open ? 'text-[#00f2a1]' : 'text-[#F23645]';
+
+      // Directly update DOM for maximum performance
+      legendRef.current.innerHTML = `
+        <div class="flex items-center gap-3 text-[10px] font-mono tracking-tight bg-[#0c0d10]/80 backdrop-blur rounded px-2 py-0.5 border border-white/5">
+          <span class="text-zinc-500">O<span class="${colorClass} ml-1">${formatDecimals(candle.open)}</span></span>
+          <span class="text-zinc-500">H<span class="${colorClass} ml-1">${formatDecimals(candle.high)}</span></span>
+          <span class="text-zinc-500">L<span class="${colorClass} ml-1">${formatDecimals(candle.low)}</span></span>
+          <span class="text-zinc-500">C<span class="${colorClass} ml-1">${formatDecimals(candle.close)}</span></span>
+          <span class="text-zinc-500 ml-1">Vol<span class="text-zinc-300 ml-1">${formatVol(vol)}</span></span>
+        </div>
+      `;
+    };
+
+    chart.subscribeCrosshairMove(updateLegend);
+    updateLegend({}); // Initial render
 
     const handleResize = () => {
       if (!chartContainerRef.current) return;
@@ -133,7 +168,13 @@ export default function TokenChart({ currentToken, chartMode = 'price' }) {
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, [currentToken, chartMode]); // Re-draws chart anytime the token OR the mode changes
+  }, [currentToken, chartMode]); 
 
-  return <div ref={chartContainerRef} className="absolute inset-0 w-full h-full" />;
+  return (
+    <div className="absolute inset-0 w-full h-full relative">
+      <div ref={chartContainerRef} className="absolute inset-0 w-full h-full" />
+      {/* Absolute positioning keeps the legend hovering beautifully over the grid */}
+      <div ref={legendRef} className="absolute top-[42px] left-3 z-10 pointer-events-none" />
+    </div>
+  );
 }
