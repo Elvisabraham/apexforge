@@ -48,14 +48,12 @@ export default function ShareModal({ currentToken, onClose }) {
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, '_blank');
   };
 
-  // THE GOLDEN FIX: Fault-Tolerant Engine Config
+  // THE FIX: Removed cacheBust (which breaks Vite) and added useCORS (allows external images)
   const exportConfig = {
-    cacheBust: true,
+    useCORS: true, 
     backgroundColor: '#0a0b0e',
     pixelRatio: 2,
     skipFonts: true,
-    // If a server blocks an image or a file is missing, replace it with a transparent pixel instead of crashing!
-    imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
     style: { transform: 'scale(1)', transformOrigin: 'top left' }
   };
 
@@ -74,8 +72,8 @@ export default function ShareModal({ currentToken, onClose }) {
         link.click();
         document.body.removeChild(link);
       } catch (err) {
-        console.error('Image Generation Blocked by CORS:', err);
-        alert('Failed to save image due to strict browser security. Copying text instead!');
+        console.error('Image Generation Blocked:', err);
+        alert('Browser security blocked the image download. Copying text instead!');
         handleCopy();
       }
     }
@@ -139,7 +137,6 @@ export default function ShareModal({ currentToken, onClose }) {
           
           <div className="flex justify-between items-center mb-5 border-b border-white/5 pb-3">
             <span className="text-[12px] font-black tracking-widest text-white uppercase flex items-center gap-1.5">
-              {/* NOTE: You must place your actual logo image inside the 'public' folder and name it exactly 'logo.png' */}
               <img src="/logo.png" alt="" className="w-5 h-5 object-contain" onError={(e) => e.target.style.display='none'} />
               APEX<span className="text-[#00f2a1]">FORGE</span>
             </span>
