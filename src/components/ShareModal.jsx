@@ -2,14 +2,12 @@ import React, { useState } from 'react';
 import { X, Copy, Check, Download, Share } from 'lucide-react';
 import { toPng } from 'html-to-image';
 
-// Standard X (Twitter) Icon
 const XIcon = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
   </svg>
 );
 
-// Your Custom DexDollarIcon
 const DexDollarIcon = ({ className = "w-3 h-3", strokeWidth = 3 }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
     <line x1="12" y1="1" x2="12" y2="23"></line>
@@ -24,8 +22,16 @@ export default function ShareModal({ currentToken, onClose }) {
   const symbol = currentToken?.symbol || 'TKN';
   const charSum = symbol.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
   
-  const rawAddress = (currentToken?.mintAddress || `7hVVo${charSum}czBBsc2G9Xm`).replace(/^CA:\s*/i, '');
-  const formattedAddress = rawAddress.length > 10 ? `${rawAddress.slice(0, 6)}...${rawAddress.slice(-4)}` : rawAddress;
+  // 1. Get address and strip any hardcoded "CA:" text
+  let rawAddress = (currentToken?.mintAddress || `7hVVo${charSum}czBBsc2G9Xm`).replace(/^CA:\s*/i, '');
+  
+  // 2. SAFEGUARD: If test data is fake (like "Forge...Solana"), force a real-looking Solana CA
+  if (rawAddress.includes('.') || rawAddress.length < 32) {
+    rawAddress = `7hVVo${charSum}czBBsc2G9Xm89xQr${symbol.toUpperCase()}kP`;
+  }
+
+  // 3. Shorten it cleanly for the Image Card UI
+  const formattedAddress = `${rawAddress.slice(0, 6)}...${rawAddress.slice(-4)}`;
   
   const mockPrice = ((charSum % 80) + 1) * 0.0001;
   const mockMcap = ((charSum % 90) + 10) + 'K';
@@ -33,11 +39,11 @@ export default function ShareModal({ currentToken, onClose }) {
   const displayPrice = (currentToken?.price || mockPrice.toFixed(5)).toString().replace(/\$/g, '');
   const displayMcap = (currentToken?.mcap || mockMcap).toString().replace(/\$/g, '');
 
-  // NEW: Calculate the 24h Percentage Change
   const rawChange = currentToken?.change24h || `+${((charSum % 150) + 15).toFixed(2)}%`;
   const isPositive = rawChange.toString().startsWith('+') || parseFloat(rawChange) > 0;
   const displayChange = rawChange.toString().startsWith('+') || rawChange.toString().startsWith('-') ? rawChange : `+${rawChange}`;
 
+  // 4. Reverted back to "CA:" and passing the full, real-looking address
   const shareText = `Apeing $${symbol} on ApexForge! 🚀\nCA: ${rawAddress}\n\nTrade here: ${window.location.href}`;
 
   const handleCopy = () => {
@@ -132,7 +138,6 @@ export default function ShareModal({ currentToken, onClose }) {
             <div className="bg-black/40 p-4 rounded-2xl border border-white/5 shadow-inner">
               <div className="flex justify-between items-start mb-1">
                 <span className="block text-[10px] text-zinc-500 uppercase font-black tracking-widest">Price</span>
-                {/* 24h Percentage Change Added Here */}
                 <span className={`text-[11px] font-black tracking-wider ${isPositive ? 'text-[#00f2a1]' : 'text-[#F23645]'}`}>
                   {displayChange}
                 </span>
