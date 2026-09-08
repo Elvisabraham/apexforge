@@ -242,20 +242,23 @@ export default function TokenHome({
               
               <div 
                 className="flex flex-col items-end text-right mt-1 shrink-0 cursor-pointer group"
-                onClick={() => setShowMobileMcap(!showMobileMcap)}
+                // 1. Now wired directly to the Universal Chart State
+                onClick={() => setChartMode(chartMode === 'price' ? 'mcap' : 'price')}
               >
                 <div className="flex items-center gap-1 text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-0.5 group-hover:text-zinc-400 transition-colors">
-                  <span>{showMobileMcap ? 'Market Cap' : 'Price'}</span>
+                  {/* 2. Text updates instantly with the chart */}
+                  <span>{chartMode === 'mcap' ? 'Market Cap' : 'Price'}</span>
                   <Repeat2 className="w-2.5 h-2.5 opacity-50 group-hover:opacity-100" />
                 </div>
-                <span className="flex items-center text-lg font-black text-white transition-all">
+                {/* 3. Added tabular-nums so the font perfectly matches the TradingView axis */}
+                <span className="flex items-center text-lg font-black text-white transition-all tabular-nums tracking-tight">
                     <DexDollarIcon className="w-4 h-4 text-zinc-400 mr-[1px]" strokeWidth={3} />
-                    {showMobileMcap 
-                      ? String(currentToken.mcap || '10.0K').replace('$', '')
-                      : String(currentToken.price || '0.0001').replace('$', '')
+                    {chartMode === 'mcap' 
+                      ? String(currentToken.mcap || '10.88K').replace('$', '')
+                      : String(currentToken.price || '0.05439').replace('$', '')
                     }
                 </span>
-                <span className={`text-xs font-black mt-0.5 ${currentToken.isPositive !== false ? 'text-[#089981]' : 'text-[#F23645]'}`}>
+                <span className={`text-xs font-black mt-0.5 tabular-nums ${currentToken.isPositive !== false ? 'text-[#089981]' : 'text-[#F23645]'}`}>
                     {currentToken.change24h || '+161.33%'}
                 </span>
               </div>
