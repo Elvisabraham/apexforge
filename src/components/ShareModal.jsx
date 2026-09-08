@@ -48,37 +48,38 @@ export default function ShareModal({ currentToken, onClose }) {
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, '_blank');
   };
 
-  // FIXED: Forces the browser to recognize the download link on Desktop Chrome/Edge
+  // FAULT-TOLERANT EXPORT CONFIGURATION
+  const exportConfig = {
+    cacheBust: true,
+    backgroundColor: '#0a0b0e',
+    pixelRatio: 2,
+    skipFonts: true, // Prevents engine crash from external font timeouts
+    style: { transform: 'scale(1)', transformOrigin: 'top left' }
+  };
+
   const handleSaveImage = async () => {
     setIsDownloading(true);
     const cardElement = document.getElementById('apex-share-card');
     
     if (cardElement) {
       try {
-        const dataUrl = await toPng(cardElement, { 
-          cacheBust: true, 
-          backgroundColor: '#0a0b0e', 
-          pixelRatio: 2,
-          style: { transform: 'scale(1)', transformOrigin: 'top left' }
-        });
-        
+        const dataUrl = await toPng(cardElement, exportConfig);
         const link = document.createElement('a');
         link.download = `ApexForge-${symbol}.png`;
         link.href = dataUrl;
         
-        // Critical fix for desktop browsers:
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
       } catch (err) {
-        console.error('Error saving image:', err);
-        alert('Failed to generate image. Please try again.');
+        console.error('Image Generation Blocked by CORS:', err);
+        alert('Browser security blocked the image download. Copying text instead!');
+        handleCopy();
       }
     }
     setIsDownloading(false);
   };
 
-  // FIXED: Alerts Windows/Desktop users that they must copy or use X instead
   const handleNativeShare = async () => {
     setIsSharing(true);
     const cardElement = document.getElementById('apex-share-card');
@@ -86,32 +87,36 @@ export default function ShareModal({ currentToken, onClose }) {
     try {
       let shared = false;
 
-      // 1. Try fully native image file sharing (Mobile / Safari)
+      // 1. Try fully native image file sharing
       if (navigator.canShare && cardElement) {
-        const blob = await toBlob(cardElement, { cacheBust: true, backgroundColor: '#0a0b0e', pixelRatio: 2 });
-        if (blob) {
-          const file = new File([blob], `ApexForge-${symbol}.png`, { type: 'image/png' });
-          if (navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: `ApexForge: ${symbol}`,
-              text: shareText,
-            });
-            shared = true;
+        try {
+          const blob = await toBlob(cardElement, exportConfig);
+          if (blob) {
+            const file = new File([blob], `ApexForge-${symbol}.png`, { type: 'image/png' });
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: `ApexForge: ${symbol}`,
+                text: shareText,
+              });
+              shared = true;
+            }
           }
+        } catch (imgErr) {
+          console.warn('Silent image failure, falling back to text share:', imgErr);
         }
       }
 
-      // 2. Try text-only native sharing
+      // 2. Fallback to text-only native sharing
       if (!shared && navigator.share) {
         await navigator.share({ title: `ApexForge: ${symbol}`, text: shareText });
         shared = true;
       }
 
-      // 3. Fallback for Windows PC / Unsupported desktop browsers
+      // 3. Ultimate Fallback for Desktop browsers
       if (!shared) {
         handleCopy();
-        alert("Native sharing is only supported on mobile devices. The token info has been copied to your clipboard instead!");
+        alert("The token info has been copied to your clipboard!");
       }
     } catch (err) {
       console.log('Share canceled or failed:', err);
@@ -135,6 +140,7 @@ export default function ShareModal({ currentToken, onClose }) {
           
           <div className="flex justify-between items-center mb-5 border-b border-white/5 pb-3">
             <span className="text-[12px] font-black tracking-widest text-white uppercase flex items-center gap-1.5">
+              {/* NOTE: Ensure logo.png actually exists in your public folder! */}
               <img src="/logo.png" alt="ApexForge" className="w-5 h-5 object-contain" onError={(e) => e.target.style.display='none'} />
               APEX<span className="text-[#00f2a1]">FORGE</span>
             </span>
@@ -143,7 +149,6 @@ export default function ShareModal({ currentToken, onClose }) {
 
           <div className="flex items-center gap-4 mb-6">
             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/10 bg-[#1c1d24] flex items-center justify-center text-2xl font-black text-white shadow-lg shrink-0">
-              {/* Removed crossOrigin to prevent strict browser blocks on external links */}
               {currentToken?.imagePreview ? (
                 <img src={currentToken.imagePreview} alt="" className="w-full h-full object-cover" />
               ) : (
