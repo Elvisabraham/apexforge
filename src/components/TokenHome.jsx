@@ -217,20 +217,22 @@ export default function TokenHome({
   const mockMcap = ((charSum % 90) + 10) + '.' + (charSum % 9) + 'K';
   const mockChangeNum = (charSum % 200) - 50;
   const mockLiq = ((charSum % 40) + 5) + '.' + (charSum % 9) + 'K';
+  const mockVol = ((charSum % 85) + 15) + '.' + (charSum % 9) + 'K'; // NEW: Volume
   const mockTop10 = ((charSum % 30) + 40) + '.' + (charSum % 99) + '%';
-  const mockTime = (charSum % 59) + 1 + (charSum % 2 === 0 ? 'm' : 'h'); // e.g. "12m" or "4h"
+  const mockTime = (charSum % 59) + 1 + (charSum % 2 === 0 ? 'm' : 'h');
 
   const displayPrice = currentToken?.price?.replace('$', '') || mockPrice;
   const displayMcap = currentToken?.mcap?.replace('$', '') || mockMcap;
   const changeVal = currentToken?.change24h || `${mockChangeNum >= 0 ? '+' : ''}${mockChangeNum.toFixed(2)}%`;
   const isPositive = currentToken?.isPositive !== undefined ? currentToken.isPositive : mockChangeNum >= 0;
   const displayLiq = currentToken?.liquidity?.replace('$', '') || mockLiq;
+  const displayVol = currentToken?.vol24h?.replace('$', '') || mockVol; // NEW: Volume
   const displaySupply = currentToken?.supply || '1B';
   const displayTop10 = currentToken?.top10 || mockTop10;
   
   const rawAddress = currentToken?.mintAddress || `7hVVo${charSum}czBBsc2G9Xm`;
   const formattedAddress = rawAddress.length > 10 ? `${rawAddress.slice(0, 4)}...${rawAddress.slice(-4)}` : rawAddress;
-
+  
   return (
     <div className="w-full h-full bg-[#0c0d10] text-white overflow-hidden select-none relative">
       
@@ -270,7 +272,7 @@ export default function TokenHome({
                   </div>
                 {/* FIXED TIME & CA */}
                   <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-medium mt-1">
-                    <span>{mockTime} ago</span>
+                    <span>{mockTime}</span>
                     <span>•</span>
                     <button onClick={() => handleCopyCA(rawAddress)} className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors relative group">
                         <span className="tabular-nums tracking-tight group-hover:text-[#00f2a1] transition-colors">{formattedAddress}</span>
@@ -297,6 +299,32 @@ export default function TokenHome({
                     {changeVal}
                 </span>
               </div>
+          </div>
+
+{/* NEW: MOBILE STATS BAR (Scrollable) */}
+          <div className="flex items-center gap-6 overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-[#0c0d10] px-4 pb-3 pt-1 border-b border-white/5 shrink-0">
+            <div className="text-left shrink-0">
+              <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">24h Vol</span>
+              <span className="flex items-center text-xs font-black text-white tabular-nums tracking-tight">
+                <DexDollarIcon className="w-3 h-3 text-zinc-400 mr-[1px]" strokeWidth={3} />
+                {displayVol}
+              </span>
+            </div>
+            <div className="text-left shrink-0">
+              <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">Liquidity</span>
+              <span className="flex items-center text-xs font-black text-white tabular-nums tracking-tight">
+                <DexDollarIcon className="w-3 h-3 text-zinc-400 mr-[1px]" strokeWidth={3} />
+                {displayLiq}
+              </span>
+            </div>
+            <div className="text-left shrink-0">
+              <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">Supply</span>
+              <span className="text-xs font-black text-white tabular-nums tracking-tight">{displaySupply}</span>
+            </div>
+            <div className="text-left shrink-0">
+              <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">Top 10</span>
+              <span className="text-xs font-black text-amber-500 tabular-nums tracking-tight">{displayTop10}</span>
+            </div>
           </div>
 
           <div className="w-full h-[280px] bg-[#0e0f14] border-y border-white/5 relative flex flex-col shrink-0">
@@ -561,7 +589,7 @@ export default function TokenHome({
                 </div>
                 {/* FIXED TIME, CA, & SOCIALS */}
                 <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-medium mt-0.5">
-                  <span>{mockTime} ago</span>
+                  <span>{mockTime}</span>
                   <span>•</span>
                   <button onClick={() => handleCopyCA(rawAddress)} className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors relative group">
                     <span className="tabular-nums tracking-tight group-hover:text-[#00f2a1] transition-colors">{formattedAddress}</span>
@@ -570,10 +598,10 @@ export default function TokenHome({
                   </button>
                   <span className="text-zinc-700 mx-1">|</span>
                   <div className="flex items-center gap-2 text-zinc-400">
-                    <a href={currentToken.website || "#"} className="hover:text-white transition-colors"><Globe className="w-3.5 h-3.5"/></a>
-                    <a href={currentToken.twitter || "#"} className="hover:text-white transition-colors"><XIcon className="w-3.5 h-3.5"/></a>
-                    <a href={currentToken.telegram || "#"} className="hover:text-white transition-colors"><TelegramIcon className="w-3.5 h-3.5"/></a>
-                    <a href={`https://solscan.io/token/${rawAddress}`} target="_blank" rel="noreferrer" className="hover:text-white transition-colors"><SearchIcon className="w-3.5 h-3.5"/></a>
+                    <a href={currentToken.website || "#"} target="_blank" rel="noreferrer" onClick={(e) => !currentToken.website && e.preventDefault()} className="hover:text-white transition-colors cursor-pointer"><Globe className="w-3.5 h-3.5"/></a>
+                    <a href={currentToken.twitter || "#"} target="_blank" rel="noreferrer" onClick={(e) => !currentToken.twitter && e.preventDefault()} className="hover:text-white transition-colors cursor-pointer"><XIcon className="w-3.5 h-3.5"/></a>
+                    <a href={currentToken.telegram || "#"} target="_blank" rel="noreferrer" onClick={(e) => !currentToken.telegram && e.preventDefault()} className="hover:text-white transition-colors cursor-pointer"><TelegramIcon className="w-3.5 h-3.5"/></a>
+                    <a href={`https://solscan.io/token/${rawAddress}`} target="_blank" rel="noreferrer" className="hover:text-white transition-colors cursor-pointer"><SearchIcon className="w-3.5 h-3.5"/></a>
                   </div>
                 </div>
               </div>
@@ -599,6 +627,14 @@ export default function TokenHome({
                 <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">24h Change</span>
                 <span className={`text-sm font-black tabular-nums tracking-tight ${isPositive ? 'text-[#089981]' : 'text-[#F23645]'}`}>
                   {changeVal}
+                </span>
+              </div>
+              {/* NEW: 24H Volume */}
+              <div className="text-right shrink-0">
+                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">24h Vol</span>
+                <span className="flex items-center justify-end text-sm font-black text-white tabular-nums tracking-tight">
+                  <DexDollarIcon className="w-3.5 h-3.5 text-zinc-400 mr-[1px]" strokeWidth={3} />
+                  {displayVol}
                 </span>
               </div>
               <div className="text-right shrink-0">
