@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, Download, Share } from 'lucide-react';
-import { toPng } from 'html-to-image';
+import { X, Copy, Check, Download, Share as ShareIcon } from 'lucide-react';
+import { toPng, toBlob } from 'html-to-image';
 
 const XIcon = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -18,19 +18,12 @@ const DexDollarIcon = ({ className = "w-3 h-3", strokeWidth = 3 }) => (
 export default function ShareModal({ currentToken, onClose }) {
   const [copied, setCopied] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   const symbol = currentToken?.symbol || 'TKN';
   const charSum = symbol.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
   
-  // 1. Get address and strip any hardcoded "CA:" text
   let rawAddress = (currentToken?.mintAddress || `7hVVo${charSum}czBBsc2G9Xm`).replace(/^CA:\s*/i, '');
-  
-  // 2. SAFEGUARD: If test data is fake (like "Forge...Solana"), force a real-looking Solana CA
-  if (rawAddress.includes('.') || rawAddress.length < 32) {
-    rawAddress = `7hVVo${charSum}czBBsc2G9Xm89xQr${symbol.toUpperCase()}kP`;
-  }
-
-  // 3. Shorten it cleanly for the Image Card UI
   const formattedAddress = `${rawAddress.slice(0, 6)}...${rawAddress.slice(-4)}`;
   
   const mockPrice = ((charSum % 80) + 1) * 0.0001;
@@ -43,7 +36,6 @@ export default function ShareModal({ currentToken, onClose }) {
   const isPositive = rawChange.toString().startsWith('+') || parseFloat(rawChange) > 0;
   const displayChange = rawChange.toString().startsWith('+') || rawChange.toString().startsWith('-') ? rawChange : `+${rawChange}`;
 
-  // 4. Reverted back to "CA:" and passing the full, real-looking address
   const shareText = `Apeing $${symbol} on ApexForge! 🚀\nCA: ${rawAddress}\n\nTrade here: ${window.location.href}`;
 
   const handleCopy = () => {
@@ -59,15 +51,9 @@ export default function ShareModal({ currentToken, onClose }) {
   const handleSaveImage = async () => {
     setIsDownloading(true);
     const cardElement = document.getElementById('apex-share-card');
-    
     if (cardElement) {
       try {
-        const dataUrl = await toPng(cardElement, {
-          cacheBust: true,
-          backgroundColor: '#0a0b0e',
-          pixelRatio: 2
-        });
-        
+        const dataUrl = await toPng(cardElement, { cacheBust: true, backgroundColor: '#0a0b0e', pixelRatio: 2 });
         const link = document.createElement('a');
         link.download = `ApexForge-${symbol}.png`;
         link.href = dataUrl;
@@ -79,29 +65,39 @@ export default function ShareModal({ currentToken, onClose }) {
     setIsDownloading(false);
   };
 
-  const handleShare = async () => {
-    if (navigator.share) {
+  // THE ULTIMATE MOBILE FIX: Generates an actual image file and feeds it to the native OS
+  const handleNativeShare = async () => {
+    setIsSharing(true);
+    const cardElement = document.getElementById('apex-share-card');
+    
+    if (cardElement) {
       try {
-        await navigator.share({
-          title: `ApexForge: ${symbol}`,
-          text: shareText,
-        });
+        const blob = await toBlob(cardElement, { cacheBust: true, backgroundColor: '#0a0b0e', pixelRatio: 2 });
+        const file = new File([blob], `ApexForge-${symbol}.png`, { type: 'image/png' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: `ApexForge: ${symbol}`,
+            text: shareText,
+          });
+        } else if (navigator.share) {
+          await navigator.share({ title: `ApexForge: ${symbol}`, text: shareText });
+        } else {
+          handleCopy();
+        }
       } catch (err) {
-        console.log('Error sharing:', err);
+        console.log('Share canceled or failed:', err);
       }
-    } else {
-      handleCopy();
     }
+    setIsSharing(false);
   };
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
       <div className="w-full max-w-sm relative text-left animate-in fade-in zoom-in-95 duration-150">
         
-        <button 
-          onClick={onClose}
-          className="absolute -top-12 right-0 text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-full transition-colors cursor-pointer border border-white/10"
-        >
+        <button onClick={onClose} className="absolute -top-12 right-0 text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-full transition-colors cursor-pointer border border-white/10">
           <X className="w-5 h-5" />
         </button>
 
@@ -163,34 +159,21 @@ export default function ShareModal({ currentToken, onClose }) {
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="space-y-3">
-          <button 
-            onClick={handleTweet}
-            className="w-full bg-white hover:bg-zinc-200 text-black font-black text-sm py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-lg active:scale-[0.98]"
-          >
+          <button onClick={handleTweet} className="w-full bg-white hover:bg-zinc-200 text-black font-black text-sm py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-lg active:scale-[0.98]">
             <XIcon className="w-4 h-4 fill-black" /> Post on X
           </button>
           
           <div className="grid grid-cols-3 gap-2">
-            <button 
-              onClick={handleSaveImage}
-              disabled={isDownloading}
-              className={`bg-[#1c1d24] hover:bg-white/10 text-zinc-300 font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-1.5 border border-white/10 transition-colors cursor-pointer active:scale-[0.98] ${isDownloading ? 'opacity-50' : ''}`}
-            >
+            <button onClick={handleSaveImage} disabled={isDownloading} className={`bg-[#1c1d24] hover:bg-white/10 text-zinc-300 font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-1.5 border border-white/10 transition-colors cursor-pointer active:scale-[0.98] ${isDownloading ? 'opacity-50' : ''}`}>
               <Download className={`w-4 h-4 ${isDownloading ? 'animate-bounce text-[#00f2a1]' : ''}`} /> 
               {isDownloading ? 'Saving...' : 'Save'}
             </button>
-            <button 
-              onClick={handleShare}
-              className="bg-[#1c1d24] hover:bg-white/10 text-zinc-300 font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-1.5 border border-white/10 transition-colors cursor-pointer active:scale-[0.98]"
-            >
-              <Share className="w-4 h-4" /> Share
+            <button onClick={handleNativeShare} disabled={isSharing} className={`bg-[#1c1d24] hover:bg-white/10 text-zinc-300 font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-1.5 border border-white/10 transition-colors cursor-pointer active:scale-[0.98] ${isSharing ? 'opacity-50' : ''}`}>
+              <ShareIcon className={`w-4 h-4 ${isSharing ? 'animate-pulse text-[#00f2a1]' : ''}`} /> 
+              {isSharing ? 'Loading...' : 'Share'}
             </button>
-            <button 
-              onClick={handleCopy}
-              className="bg-[#1c1d24] hover:bg-white/10 text-zinc-300 font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-1.5 border border-white/10 transition-colors cursor-pointer active:scale-[0.98]"
-            >
+            <button onClick={handleCopy} className="bg-[#1c1d24] hover:bg-white/10 text-zinc-300 font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-1.5 border border-white/10 transition-colors cursor-pointer active:scale-[0.98]">
               {copied ? <Check className="w-4 h-4 text-[#00f2a1]" /> : <Copy className="w-4 h-4" />} Copy
             </button>
           </div>
