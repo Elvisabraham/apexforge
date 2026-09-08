@@ -21,6 +21,14 @@ import {
   X
 } from 'lucide-react';
 
+// Explorer/Search Icon
+const SearchIcon = ({ className = "w-3 h-3" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8"></circle>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+  </svg>
+);
+
 // Professional DEX Dollar Sign
 const DexDollarIcon = ({ className = "w-4 h-4", strokeWidth = 2.5 }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
@@ -193,6 +201,28 @@ export default function TokenHome({
       })
     : baseTokens;
 
+    // ==========================================
+  // UNIVERSAL DATA ENGINE (Syncs Header & Sidebar)
+  // ==========================================
+  const charSum = (currentToken?.symbol || 'TKN').split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const mockPrice = ((charSum % 80) * 0.00012 + 0.00005).toFixed(5);
+  const mockMcap = ((charSum % 90) + 10) + '.' + (charSum % 9) + 'K';
+  const mockChangeNum = (charSum % 200) - 50;
+  const mockLiq = ((charSum % 40) + 5) + '.' + (charSum % 9) + 'K';
+  const mockTop10 = ((charSum % 30) + 40) + '.' + (charSum % 99) + '%';
+  const mockTime = (charSum % 59) + 1 + (charSum % 2 === 0 ? 'm' : 'h'); // e.g. "12m" or "4h"
+
+  const displayPrice = currentToken?.price?.replace('$', '') || mockPrice;
+  const displayMcap = currentToken?.mcap?.replace('$', '') || mockMcap;
+  const changeVal = currentToken?.change24h || `${mockChangeNum >= 0 ? '+' : ''}${mockChangeNum.toFixed(2)}%`;
+  const isPositive = currentToken?.isPositive !== undefined ? currentToken.isPositive : mockChangeNum >= 0;
+  const displayLiq = currentToken?.liquidity?.replace('$', '') || mockLiq;
+  const displaySupply = currentToken?.supply || '1B';
+  const displayTop10 = currentToken?.top10 || mockTop10;
+  
+  const rawAddress = currentToken?.mintAddress || `7hVVo${charSum}czBBsc2G9Xm`;
+  const formattedAddress = rawAddress.length > 10 ? `${rawAddress.slice(0, 4)}...${rawAddress.slice(-4)}` : rawAddress;
+
   return (
     <div className="w-full h-full bg-[#0c0d10] text-white overflow-hidden select-none relative">
       
@@ -222,19 +252,20 @@ export default function TokenHome({
 
           <div className="p-4 bg-[#0c0d10] flex justify-between items-start gap-4">
               <div className="flex gap-3 items-center min-w-0">
-                <div className="w-12 h-12 rounded-full border border-white/10 overflow-hidden bg-white/5 flex items-center justify-center text-xl shrink-0 shadow-inner">
-                  {currentToken.imagePreview ? <img src={currentToken.imagePreview} className="w-full h-full object-cover" /> : currentToken.icon}
+                <div className="w-12 h-12 rounded-full border border-white/10 overflow-hidden bg-gradient-to-br from-zinc-800 to-[#121318] flex items-center justify-center text-xl shrink-0 shadow-inner">
+                  {currentToken.imagePreview ? <img src={currentToken.imagePreview} className="w-full h-full object-cover" /> : (currentToken.icon || currentToken.symbol?.slice(0,2).toUpperCase())}
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-lg font-black text-white truncate max-w-[120px]">{currentToken.name || currentToken.symbol}</span>
                     <span className="text-[9px] bg-[#1c1d24] text-zinc-400 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider shrink-0">{currentToken.symbol}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-mono mt-1">
-                    <span>1d ago</span>
+                  {/* FIXED TIME & CA */}
+                  <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-medium mt-1">
+                    <span>{mockTime} ago</span>
                     <span>•</span>
-                    <button onClick={() => handleCopyCA(currentToken.mintAddress)} className="flex items-center gap-1 hover:text-white relative">
-                        {currentToken.mintAddress?.substring(0, 8)}...
+                    <button onClick={() => handleCopyCA(rawAddress)} className="flex items-center gap-1 hover:text-white transition-colors relative">
+                        <span className="tabular-nums tracking-tight">{formattedAddress}</span>
                         {copiedCA && <span className="absolute -top-6 left-0 bg-[#00f2a1] text-black px-1.5 py-0.5 rounded shadow z-50">Copied</span>}
                     </button>
                   </div>
@@ -243,24 +274,18 @@ export default function TokenHome({
               
               <div 
                 className="flex flex-col items-end text-right mt-1 shrink-0 cursor-pointer group"
-                // 1. Now wired directly to the Universal Chart State
                 onClick={() => setChartMode(chartMode === 'price' ? 'mcap' : 'price')}
               >
                 <div className="flex items-center gap-1 text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-0.5 group-hover:text-zinc-400 transition-colors">
-                  {/* 2. Text updates instantly with the chart */}
                   <span>{chartMode === 'mcap' ? 'Market Cap' : 'Price'}</span>
                   <Repeat2 className="w-2.5 h-2.5 opacity-50 group-hover:opacity-100" />
                 </div>
-                {/* 3. Added tabular-nums so the font perfectly matches the TradingView axis */}
                 <span className="flex items-center text-lg font-black text-white transition-all tabular-nums tracking-tight">
                     <DexDollarIcon className="w-4 h-4 text-zinc-400 mr-[1px]" strokeWidth={3} />
-                    {chartMode === 'mcap' 
-                      ? String(currentToken.mcap || '10.88K').replace('$', '')
-                      : String(currentToken.price || '0.05439').replace('$', '')
-                    }
+                    {chartMode === 'mcap' ? displayMcap : displayPrice}
                 </span>
-                <span className={`text-xs font-black mt-0.5 tabular-nums ${currentToken.isPositive !== false ? 'text-[#089981]' : 'text-[#F23645]'}`}>
-                    {currentToken.change24h || '+161.33%'}
+                <span className={`text-xs font-black mt-0.5 tabular-nums tracking-tight ${isPositive ? 'text-[#089981]' : 'text-[#F23645]'}`}>
+                    {changeVal}
                 </span>
               </div>
           </div>
@@ -507,8 +532,8 @@ export default function TokenHome({
                 </svg>
               </button>
 
-              <div className="w-9 h-9 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-sm font-bold overflow-hidden shrink-0 ml-0.5">
-                {currentToken.imagePreview ? <img src={currentToken.imagePreview} alt={currentToken.symbol} className="w-full h-full object-cover" /> : currentToken.icon}
+              <div className="w-9 h-9 border border-white/10 rounded-full flex items-center justify-center text-sm font-black overflow-hidden shrink-0 ml-0.5 bg-gradient-to-br from-zinc-800 to-[#121318] text-white">
+                {currentToken.imagePreview ? <img src={currentToken.imagePreview} alt={currentToken.symbol} className="w-full h-full object-cover" /> : (currentToken.icon || currentToken.symbol?.slice(0,2).toUpperCase())}
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -525,57 +550,60 @@ export default function TokenHome({
                     {isFollowing ? '✓ Following' : '+ Follow'}
                   </button>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-mono mt-0.5">
-                  <span>1d</span><span>•</span>
-                  <button onClick={() => handleCopyCA(currentToken.mintAddress)} className="flex items-center gap-1 hover:text-white relative">
-                    <span className="truncate max-w-[85px]">{currentToken.mintAddress || 'Cyknvgvyl97eW6tj...'}</span>
+                {/* FIXED TIME, CA, & SOCIALS */}
+                <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-medium mt-0.5">
+                  <span>{mockTime}</span><span>•</span>
+                  <button onClick={() => handleCopyCA(rawAddress)} className="flex items-center gap-1 hover:text-white transition-colors relative">
+                    <span className="tabular-nums tracking-tight">{formattedAddress}</span>
                     {copiedCA && <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#00f2a1] text-black text-[9px] font-bold px-1.5 py-0.5 rounded shadow z-50">Copied!</span>}
                   </button>
                   <span className="text-zinc-700">|</span>
                   <div className="flex items-center gap-2 text-zinc-400">
-                    <a href={currentToken.website || "#"} className="hover:text-white"><Globe className="w-3.5 h-3.5"/></a>
-                    <a href={currentToken.twitter || "#"} className="hover:text-white"><XIcon className="w-3.5 h-3.5"/></a>
-                    <a href={currentToken.telegram || "#"} className="hover:text-white"><TelegramIcon className="w-3.5 h-3.5"/></a>
+                    <a href={currentToken.website || "#"} className="hover:text-white transition-colors"><Globe className="w-3.5 h-3.5"/></a>
+                    <a href={currentToken.twitter || "#"} className="hover:text-white transition-colors"><XIcon className="w-3.5 h-3.5"/></a>
+                    <a href={currentToken.telegram || "#"} className="hover:text-white transition-colors"><TelegramIcon className="w-3.5 h-3.5"/></a>
+                    <a href={`https://solscan.io/token/${rawAddress}`} target="_blank" rel="noreferrer" className="hover:text-white transition-colors"><SearchIcon className="w-3.5 h-3.5"/></a>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-6 overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] font-mono shrink whitespace-nowrap">
+            {/* FIXED METRICS: Real data + tabular-nums instead of font-mono */}
+            <div className="flex items-center gap-6 overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] shrink whitespace-nowrap">
               <div className="text-right shrink-0">
-                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Price</span>
-                <span className="flex items-center justify-end text-sm font-black text-white">
+                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">Price</span>
+                <span className="flex items-center justify-end text-sm font-black text-white tabular-nums tracking-tight">
                   <DexDollarIcon className="w-3.5 h-3.5 text-zinc-400 mr-[1px]" strokeWidth={3} />
-                  {String(currentToken?.price || '0.05439').replace('$', '')}
+                  {displayPrice}
                 </span>
               </div>
               <div className="text-right shrink-0">
-                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Market Cap</span>
-                <span className="flex items-center justify-end text-sm font-black text-white">
+                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">Market Cap</span>
+                <span className="flex items-center justify-end text-sm font-black text-white tabular-nums tracking-tight">
                   <DexDollarIcon className="w-3.5 h-3.5 text-zinc-400 mr-[1px]" strokeWidth={3} />
-                  {String(currentToken.mcap || '10.88K').replace('$', '')}
+                  {displayMcap}
                 </span>
               </div>
               <div className="text-right shrink-0">
-                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">24h Change</span>
-                <span className={`text-sm font-black ${currentToken.isPositive !== false ? 'text-[#089981]' : 'text-[#F23645]'}`}>
-                  {currentToken.change24h || '+161.33%'}
+                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">24h Change</span>
+                <span className={`text-sm font-black tabular-nums tracking-tight ${isPositive ? 'text-[#089981]' : 'text-[#F23645]'}`}>
+                  {changeVal}
                 </span>
               </div>
               <div className="text-right shrink-0">
-                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Liquidity</span>
-                <span className="flex items-center justify-end text-sm font-black text-white">
+                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">Liquidity</span>
+                <span className="flex items-center justify-end text-sm font-black text-white tabular-nums tracking-tight">
                   <DexDollarIcon className="w-3.5 h-3.5 text-zinc-400 mr-[1px]" strokeWidth={3} />
-                  {String(currentToken.liquidity || '5.67K').replace('$', '')}
+                  {displayLiq}
                 </span>
               </div>
               <div className="text-right shrink-0">
-                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Supply</span>
-                <span className="text-sm font-black text-white">{currentToken.supply || '2B'}</span>
+                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">Supply</span>
+                <span className="text-sm font-black text-white tabular-nums tracking-tight">{displaySupply}</span>
               </div>
               <div className="text-right shrink-0">
-                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Top 10</span>
-                <span className="text-sm font-black text-amber-500">{currentToken.top10 || '50.64%'}</span>
+                <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">Top 10</span>
+                <span className="text-sm font-black text-amber-500 tabular-nums tracking-tight">{displayTop10}</span>
               </div>
             </div>
           </div>
