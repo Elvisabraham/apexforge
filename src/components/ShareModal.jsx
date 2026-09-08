@@ -48,12 +48,14 @@ export default function ShareModal({ currentToken, onClose }) {
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, '_blank');
   };
 
-  // FAULT-TOLERANT EXPORT CONFIGURATION
+  // THE GOLDEN FIX: Fault-Tolerant Engine Config
   const exportConfig = {
     cacheBust: true,
     backgroundColor: '#0a0b0e',
     pixelRatio: 2,
-    skipFonts: true, // Prevents engine crash from external font timeouts
+    skipFonts: true,
+    // If a server blocks an image or a file is missing, replace it with a transparent pixel instead of crashing!
+    imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
     style: { transform: 'scale(1)', transformOrigin: 'top left' }
   };
 
@@ -73,7 +75,7 @@ export default function ShareModal({ currentToken, onClose }) {
         document.body.removeChild(link);
       } catch (err) {
         console.error('Image Generation Blocked by CORS:', err);
-        alert('Browser security blocked the image download. Copying text instead!');
+        alert('Failed to save image due to strict browser security. Copying text instead!');
         handleCopy();
       }
     }
@@ -87,7 +89,6 @@ export default function ShareModal({ currentToken, onClose }) {
     try {
       let shared = false;
 
-      // 1. Try fully native image file sharing
       if (navigator.canShare && cardElement) {
         try {
           const blob = await toBlob(cardElement, exportConfig);
@@ -107,13 +108,11 @@ export default function ShareModal({ currentToken, onClose }) {
         }
       }
 
-      // 2. Fallback to text-only native sharing
       if (!shared && navigator.share) {
         await navigator.share({ title: `ApexForge: ${symbol}`, text: shareText });
         shared = true;
       }
 
-      // 3. Ultimate Fallback for Desktop browsers
       if (!shared) {
         handleCopy();
         alert("The token info has been copied to your clipboard!");
@@ -140,8 +139,8 @@ export default function ShareModal({ currentToken, onClose }) {
           
           <div className="flex justify-between items-center mb-5 border-b border-white/5 pb-3">
             <span className="text-[12px] font-black tracking-widest text-white uppercase flex items-center gap-1.5">
-              {/* NOTE: Ensure logo.png actually exists in your public folder! */}
-              <img src="/logo.png" alt="ApexForge" className="w-5 h-5 object-contain" onError={(e) => e.target.style.display='none'} />
+              {/* NOTE: You must place your actual logo image inside the 'public' folder and name it exactly 'logo.png' */}
+              <img src="/logo.png" alt="" className="w-5 h-5 object-contain" onError={(e) => e.target.style.display='none'} />
               APEX<span className="text-[#00f2a1]">FORGE</span>
             </span>
             <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">Built for the trenches</span>
@@ -150,7 +149,7 @@ export default function ShareModal({ currentToken, onClose }) {
           <div className="flex items-center gap-4 mb-6">
             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/10 bg-[#1c1d24] flex items-center justify-center text-2xl font-black text-white shadow-lg shrink-0">
               {currentToken?.imagePreview ? (
-                <img src={currentToken.imagePreview} alt="" className="w-full h-full object-cover" />
+                <img src={currentToken.imagePreview} crossOrigin="anonymous" alt="" className="w-full h-full object-cover" />
               ) : (
                 symbol.slice(0, 2).toUpperCase()
               )}
