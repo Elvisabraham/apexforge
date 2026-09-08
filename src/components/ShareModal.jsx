@@ -23,8 +23,8 @@ export default function ShareModal({ currentToken, onClose }) {
   const symbol = currentToken?.symbol || 'TKN';
   const charSum = symbol.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
   
-  let rawAddress = (currentToken?.mintAddress || `7hVVo${charSum}czBBsc2G9Xm`).replace(/^CA:\s*/i, '');
-  const formattedAddress = `${rawAddress.slice(0, 6)}...${rawAddress.slice(-4)}`;
+  const rawAddress = (currentToken?.mintAddress || `7hVVo${charSum}czBBsc2G9Xm`).replace(/^CA:\s*/i, '');
+  const formattedAddress = rawAddress.length > 10 ? `${rawAddress.slice(0, 6)}...${rawAddress.slice(-4)}` : rawAddress;
   
   const mockPrice = ((charSum % 80) + 1) * 0.0001;
   const mockMcap = ((charSum % 90) + 10) + 'K';
@@ -48,47 +48,73 @@ export default function ShareModal({ currentToken, onClose }) {
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, '_blank');
   };
 
+  // FIXED: Forces the browser to recognize the download link on Desktop Chrome/Edge
   const handleSaveImage = async () => {
     setIsDownloading(true);
     const cardElement = document.getElementById('apex-share-card');
+    
     if (cardElement) {
       try {
-        const dataUrl = await toPng(cardElement, { cacheBust: true, backgroundColor: '#0a0b0e', pixelRatio: 2 });
+        const dataUrl = await toPng(cardElement, { 
+          cacheBust: true, 
+          backgroundColor: '#0a0b0e', 
+          pixelRatio: 2,
+          style: { transform: 'scale(1)', transformOrigin: 'top left' }
+        });
+        
         const link = document.createElement('a');
         link.download = `ApexForge-${symbol}.png`;
         link.href = dataUrl;
+        
+        // Critical fix for desktop browsers:
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
       } catch (err) {
         console.error('Error saving image:', err);
+        alert('Failed to generate image. Please try again.');
       }
     }
     setIsDownloading(false);
   };
 
-  // THE ULTIMATE MOBILE FIX: Generates an actual image file and feeds it to the native OS
+  // FIXED: Alerts Windows/Desktop users that they must copy or use X instead
   const handleNativeShare = async () => {
     setIsSharing(true);
     const cardElement = document.getElementById('apex-share-card');
     
-    if (cardElement) {
-      try {
-        const blob = await toBlob(cardElement, { cacheBust: true, backgroundColor: '#0a0b0e', pixelRatio: 2 });
-        const file = new File([blob], `ApexForge-${symbol}.png`, { type: 'image/png' });
+    try {
+      let shared = false;
 
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: `ApexForge: ${symbol}`,
-            text: shareText,
-          });
-        } else if (navigator.share) {
-          await navigator.share({ title: `ApexForge: ${symbol}`, text: shareText });
-        } else {
-          handleCopy();
+      // 1. Try fully native image file sharing (Mobile / Safari)
+      if (navigator.canShare && cardElement) {
+        const blob = await toBlob(cardElement, { cacheBust: true, backgroundColor: '#0a0b0e', pixelRatio: 2 });
+        if (blob) {
+          const file = new File([blob], `ApexForge-${symbol}.png`, { type: 'image/png' });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: `ApexForge: ${symbol}`,
+              text: shareText,
+            });
+            shared = true;
+          }
         }
-      } catch (err) {
-        console.log('Share canceled or failed:', err);
       }
+
+      // 2. Try text-only native sharing
+      if (!shared && navigator.share) {
+        await navigator.share({ title: `ApexForge: ${symbol}`, text: shareText });
+        shared = true;
+      }
+
+      // 3. Fallback for Windows PC / Unsupported desktop browsers
+      if (!shared) {
+        handleCopy();
+        alert("Native sharing is only supported on mobile devices. The token info has been copied to your clipboard instead!");
+      }
+    } catch (err) {
+      console.log('Share canceled or failed:', err);
     }
     setIsSharing(false);
   };
@@ -97,7 +123,10 @@ export default function ShareModal({ currentToken, onClose }) {
     <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
       <div className="w-full max-w-sm relative text-left animate-in fade-in zoom-in-95 duration-150">
         
-        <button onClick={onClose} className="absolute -top-12 right-0 text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-full transition-colors cursor-pointer border border-white/10">
+        <button 
+          onClick={onClose}
+          className="absolute -top-12 right-0 text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-full transition-colors cursor-pointer border border-white/10"
+        >
           <X className="w-5 h-5" />
         </button>
 
@@ -114,8 +143,9 @@ export default function ShareModal({ currentToken, onClose }) {
 
           <div className="flex items-center gap-4 mb-6">
             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/10 bg-[#1c1d24] flex items-center justify-center text-2xl font-black text-white shadow-lg shrink-0">
+              {/* Removed crossOrigin to prevent strict browser blocks on external links */}
               {currentToken?.imagePreview ? (
-                <img src={currentToken.imagePreview} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" />
+                <img src={currentToken.imagePreview} alt="" className="w-full h-full object-cover" />
               ) : (
                 symbol.slice(0, 2).toUpperCase()
               )}
@@ -160,20 +190,34 @@ export default function ShareModal({ currentToken, onClose }) {
         </div>
 
         <div className="space-y-3">
-          <button onClick={handleTweet} className="w-full bg-white hover:bg-zinc-200 text-black font-black text-sm py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-lg active:scale-[0.98]">
+          <button 
+            onClick={handleTweet}
+            className="w-full bg-white hover:bg-zinc-200 text-black font-black text-sm py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-lg active:scale-[0.98]"
+          >
             <XIcon className="w-4 h-4 fill-black" /> Post on X
           </button>
           
           <div className="grid grid-cols-3 gap-2">
-            <button onClick={handleSaveImage} disabled={isDownloading} className={`bg-[#1c1d24] hover:bg-white/10 text-zinc-300 font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-1.5 border border-white/10 transition-colors cursor-pointer active:scale-[0.98] ${isDownloading ? 'opacity-50' : ''}`}>
+            <button 
+              onClick={handleSaveImage}
+              disabled={isDownloading}
+              className={`bg-[#1c1d24] hover:bg-white/10 text-zinc-300 font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-1.5 border border-white/10 transition-colors cursor-pointer active:scale-[0.98] ${isDownloading ? 'opacity-50' : ''}`}
+            >
               <Download className={`w-4 h-4 ${isDownloading ? 'animate-bounce text-[#00f2a1]' : ''}`} /> 
               {isDownloading ? 'Saving...' : 'Save'}
             </button>
-            <button onClick={handleNativeShare} disabled={isSharing} className={`bg-[#1c1d24] hover:bg-white/10 text-zinc-300 font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-1.5 border border-white/10 transition-colors cursor-pointer active:scale-[0.98] ${isSharing ? 'opacity-50' : ''}`}>
+            <button 
+              onClick={handleNativeShare}
+              disabled={isSharing}
+              className={`bg-[#1c1d24] hover:bg-white/10 text-zinc-300 font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-1.5 border border-white/10 transition-colors cursor-pointer active:scale-[0.98] ${isSharing ? 'opacity-50' : ''}`}
+            >
               <ShareIcon className={`w-4 h-4 ${isSharing ? 'animate-pulse text-[#00f2a1]' : ''}`} /> 
               {isSharing ? 'Loading...' : 'Share'}
             </button>
-            <button onClick={handleCopy} className="bg-[#1c1d24] hover:bg-white/10 text-zinc-300 font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-1.5 border border-white/10 transition-colors cursor-pointer active:scale-[0.98]">
+            <button 
+              onClick={handleCopy}
+              className="bg-[#1c1d24] hover:bg-white/10 text-zinc-300 font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-1.5 border border-white/10 transition-colors cursor-pointer active:scale-[0.98]"
+            >
               {copied ? <Check className="w-4 h-4 text-[#00f2a1]" /> : <Copy className="w-4 h-4" />} Copy
             </button>
           </div>
