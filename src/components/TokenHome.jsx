@@ -76,6 +76,7 @@ export default function TokenHome({
   const [activeHubTab, setActiveHubTab] = useState('trades');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [chartMode, setChartMode] = useState('price'); // 'price' or 'mcap'
+  const [activeTimeframe, setActiveTimeframe] = useState('15m');
 
   // Trade States
   const [tradeMode, setTradeMode] = useState('buy');
@@ -266,9 +267,22 @@ export default function TokenHome({
 
           <div className="w-full h-[280px] bg-[#0e0f14] border-y border-white/5 relative flex flex-col shrink-0">
             <div className="absolute top-3 left-3 right-3 flex justify-between z-10 pointer-events-none">
-                <div className="flex items-center gap-1 bg-[#0a0b0e]/90 backdrop-blur border border-white/10 rounded-lg p-1 pointer-events-auto shadow-md">
-                  {['15m', '1h', '4h', '1d'].map((tf, i) => (
-                    <button key={tf} className={`px-2 py-0.5 rounded text-[10px] font-bold ${i === 0 ? 'bg-white/10 text-white' : 'text-zinc-500'}`}>{tf}</button>
+
+               {/* Trench Timeframes */}
+               <div className="flex items-center gap-1 bg-[#0a0b0e]/90 backdrop-blur border border-white/10 rounded-lg p-1 pointer-events-auto shadow-md">
+                  {/* Now wired to activeTimeframe state just like desktop */}
+                  {['1s', '1m', '5m', '15m', '1h', '4h'].map((tf) => (
+                    <button 
+                      key={tf} 
+                      onClick={() => setActiveTimeframe(tf)}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                        activeTimeframe === tf 
+                          ? 'bg-[#1c1d24] text-white shadow-sm border border-white/10' 
+                          : 'text-zinc-500 hover:text-white'
+                      }`}
+                    >
+                      {tf}
+                    </button>
                   ))}
                   <span className="h-3 w-[1px] bg-white/10 mx-0.5" />
                   {/* Mobile Tap-to-Switch Button */}
@@ -569,10 +583,21 @@ export default function TokenHome({
          <div className="flex-1 min-h-0 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-hidden relative">
             <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 text-xs text-zinc-400 font-medium shrink-0 bg-[#0a0b0e]">
               <div className="flex items-center gap-2">
-                {/* Timeframes */}
-                <div className="flex items-center gap-1 bg-[#121318] p-0.5 rounded-lg border border-white/5">
-                  {['15m', '1h', '4h', '1d'].map((tf, i) => (
-                    <button key={tf} className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${i === 0 ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>{tf}</button>
+
+                {/* Trench Timeframes */}
+                <div className="flex items-center gap-1 bg-[#121318] p-0.5 rounded-lg border border-white/5 shadow-inner">
+                  {['1s', '1m', '5m', '15m', '1h', '4h'].map((tf) => (
+                    <button 
+                      key={tf} 
+                      onClick={() => setActiveTimeframe(tf)}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                        activeTimeframe === tf 
+                          ? 'bg-[#1c1d24] text-white shadow-sm border border-white/10' 
+                          : 'text-zinc-500 hover:text-zinc-300'
+                      }`}
+                    >
+                      {tf}
+                    </button>
                   ))}
                 </div>
 
@@ -605,22 +630,10 @@ export default function TokenHome({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-500">
-                <span>Show Outliers</span><span>•</span><span>Phantom</span>
-              </div>
             </div>
 
             <div className="flex-1 min-h-0 w-full relative bg-[#0e0f14]">
                <TokenChart currentToken={currentToken} chartMode={chartMode} />
-            </div>
-
-            <div className="flex items-center justify-between px-3 py-1.5 border-t border-white/5 bg-[#0a0b0e] text-[10px] font-mono text-zinc-500 shrink-0">
-              <div className="flex items-center gap-3">
-                {['5y', '1y', '6m', '3m', '1m', '5d', '1d'].map((range, i) => (
-                  <span key={range} className={`cursor-pointer hover:text-white ${i === 6 ? 'text-zinc-300' : ''}`}>{range}</span>
-                ))}
-              </div>
-              <span>13:16:04 (UTC+1)</span>
             </div>
           </div>
         </div>
