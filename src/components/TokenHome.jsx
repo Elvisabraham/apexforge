@@ -849,12 +849,12 @@ export default function TokenHome({
               </div>
 
               {/* DESKTOP CONTENT RENDER */}
-              <div className="flex-1 overflow-y-auto p-3 bg-[#0c0d10] custom-scrollbar">
-                 {activeHubTab === 'trades' && typeof TokenCallouts !== 'undefined' && <TokenCallouts tokenSymbol={currentToken.symbol} />}
-                 {activeHubTab === 'holders' && typeof TokenHolders !== 'undefined' && <TokenHolders top10Percentage={currentToken.top10} />}
-                 {activeHubTab === 'chat' && typeof TokenChat !== 'undefined' && <TokenChat tokenSymbol={currentToken.symbol} />}
-                 {activeHubTab === 'about' && typeof TokenAbout !== 'undefined' && <TokenAbout currentToken={currentToken} />}
-              </div>
+              <div className="flex-1 overflow-y-auto bg-[#0c0d10] custom-scrollbar">
+  {activeHubTab === 'trades' && typeof TokenTrades !== 'undefined' && <TokenTrades currentToken={currentToken} />}
+  {activeHubTab === 'callouts' && typeof TokenCallouts !== 'undefined' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
+  {activeHubTab === 'holders' && typeof TokenHolders !== 'undefined' && <TokenHolders top10Percentage={currentToken?.top10} />}
+  {activeHubTab === 'about' && typeof TokenAbout !== 'undefined' && <TokenAbout currentToken={currentToken} />}
+</div>
             </div>
           )}
         </div>
