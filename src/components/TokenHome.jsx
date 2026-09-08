@@ -7,6 +7,8 @@ import TokenCallouts from './TokenCallouts';
 import TokenHolders from './TokenHolders';
 import TokenAbout from './TokenAbout';
 import TokenChart from './TokenChart';
+import TokenTrades from './TokenTrades';
+import ShareModal from './ShareModal';
 import { 
   TrendingUp,
   Activity,
@@ -81,11 +83,12 @@ export default function TokenHome({
   handleExecuteTrade = () => {}
 }) {
   // Mobile States
-  const [mobileActivityTab, setMobileActivityTab] = useState('callouts');
+  const [mobileActivityTab, setMobileActivityTab] = useState('trades');
   const [showMobileMcap, setShowMobileMcap] = useState(true);
   const [isMobileTradeOpen, setIsMobileTradeOpen] = useState(false);
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
-  
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+ 
   // Desktop States
   const [leftTab, setLeftTab] = useState('Tokens');
   const [rightPanelMode, setRightPanelMode] = useState('swap'); 
@@ -232,7 +235,7 @@ export default function TokenHome({
   
   const rawAddress = currentToken?.mintAddress || `7hVVo${charSum}czBBsc2G9Xm`;
   const formattedAddress = rawAddress.length > 10 ? `${rawAddress.slice(0, 4)}...${rawAddress.slice(-4)}` : rawAddress;
-  
+
   return (
     <div className="w-full h-full bg-[#0c0d10] text-white overflow-hidden select-none relative">
       
@@ -241,22 +244,46 @@ export default function TokenHome({
       {/* ===================================================================== */}
       <div className="flex lg:hidden flex-col w-full h-full bg-[#0a0b0e] relative">
         <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pb-4">
-          <div className="flex items-center justify-between p-3 border-b border-white/5 bg-[#0c0d10] sticky top-0 z-30 shadow-md">
-            <button 
+          <div className="flex items-center justify-between p-3 border-b border-white/5 bg-[#0c0d10] sticky top-0 z-30">
+            {/* Back Button */}
+            <button
               onClick={() => {
                 if (typeof handleSidebarNavigation === 'function') handleSidebarNavigation('home');
                 else if (typeof setActivePage === 'function') setActivePage('home');
-              }} 
-              className="text-zinc-400 hover:text-white flex items-center gap-1 p-1 bg-[#121318] rounded-lg border border-white/5"
+              }}
+              className="text-zinc-400 hover:text-white flex items-center gap-1 p-1 bg-[#13141a] rounded-lg border border-white/5 cursor-pointer"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Portfolio</span>
-              <span className="flex items-center text-xs font-mono font-black text-[#00f2a1]">
-                <DexDollarIcon className="w-3 h-3 mr-[1px]" strokeWidth={3} />
-                {(userSolBalance || 99.60).toFixed(2)}
-              </span>
+            
+            {/* Right Side: Portfolio Balance + Share/Star Icons */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Portfolio</span>
+                <span className="flex items-center text-xs font-mono font-black text-[#00f2a1]">
+                  <DexDollarIcon className="w-3 h-3 mr-[1px]" strokeWidth={3} />
+                  {(userSolBalance || 99.60).toFixed(2)}
+                </span>
+              </div>
+
+              {/* Share & Favorite Buttons in Top Bar */}
+              <div className="flex items-center gap-1.5 border-l border-white/10 pl-3">
+                <button 
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="p-1.5 bg-[#171820] hover:bg-white/10 text-zinc-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+                  title="Share Card"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                </button>
+                
+                <button 
+                  onClick={() => handleToggleFollow(currentToken)}
+                  className={`p-1.5 rounded-lg transition-colors cursor-pointer ${isFollowing ? 'bg-[#00f2a1]/20 text-[#00f2a1]' : 'bg-[#171820] hover:bg-white/10 text-zinc-400 hover:text-white'}`}
+                  title="Favorite Token"
+                >
+                  <svg className="w-3.5 h-3.5" fill={isFollowing ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.18-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -270,15 +297,27 @@ export default function TokenHome({
                     <span className="text-lg font-black text-white truncate max-w-[120px]">{currentToken.name || currentToken.symbol}</span>
                     <span className="text-[9px] bg-[#1c1d24] text-zinc-400 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider shrink-0">{currentToken.symbol}</span>
                   </div>
-                {/* FIXED TIME & CA */}
-                  <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-medium mt-1">
-                    <span>{mockTime}</span>
-                    <span>•</span>
-                    <button onClick={() => handleCopyCA(rawAddress)} className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors relative group">
-                        <span className="tabular-nums tracking-tight group-hover:text-[#00f2a1] transition-colors">{formattedAddress}</span>
-                        <CopyIcon className="w-2.5 h-2.5 group-hover:text-[#00f2a1] transition-colors" />
-                        {copiedCA && <span className="absolute -top-6 left-0 bg-[#00f2a1] text-black px-1.5 py-0.5 rounded shadow z-50">Copied</span>}
-                    </button>
+
+                {/* FIXED TIME, CA, & MOBILE SOCIALS (For Screenshots) */}
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] text-zinc-500 font-medium mt-1">
+                    <div className="flex items-center gap-1.5">
+                      <span>{mockTime}</span>
+                      <span>•</span>
+                      <button onClick={() => handleCopyCA(rawAddress)} className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors relative group">
+                          <span className="tabular-nums tracking-tight group-hover:text-[#00f2a1] transition-colors">{formattedAddress}</span>
+                          <CopyIcon className="w-2.5 h-2.5 group-hover:text-[#00f2a1] transition-colors" />
+                          {copiedCA && <span className="absolute -top-6 left-0 bg-[#00f2a1] text-black px-1.5 py-0.5 rounded shadow z-50">Copied</span>}
+                      </button>
+                    </div>
+                    
+                    {/* Socials - Visible right on the main chart view! */}
+                    <span className="text-zinc-700 hidden sm:inline">|</span>
+                    <div className="flex items-center gap-2.5 text-zinc-400 ml-0.5">
+                      <a href={currentToken.website || "#"} target="_blank" rel="noreferrer" onClick={(e) => !currentToken.website && e.preventDefault()} className="hover:text-white transition-colors cursor-pointer"><Globe className="w-3 h-3"/></a>
+                      <a href={currentToken.twitter || "#"} target="_blank" rel="noreferrer" onClick={(e) => !currentToken.twitter && e.preventDefault()} className="hover:text-white transition-colors cursor-pointer"><XIcon className="w-3 h-3"/></a>
+                      <a href={currentToken.telegram || "#"} target="_blank" rel="noreferrer" onClick={(e) => !currentToken.telegram && e.preventDefault()} className="hover:text-white transition-colors cursor-pointer"><TelegramIcon className="w-3 h-3"/></a>
+                      <a href={`https://solscan.io/token/${rawAddress}`} target="_blank" rel="noreferrer" className="hover:text-white transition-colors cursor-pointer"><SearchIcon className="w-3 h-3"/></a>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -299,32 +338,6 @@ export default function TokenHome({
                     {changeVal}
                 </span>
               </div>
-          </div>
-
-{/* NEW: MOBILE STATS BAR (Scrollable) */}
-          <div className="flex items-center gap-6 overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-[#0c0d10] px-4 pb-3 pt-1 border-b border-white/5 shrink-0">
-            <div className="text-left shrink-0">
-              <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">24h Vol</span>
-              <span className="flex items-center text-xs font-black text-white tabular-nums tracking-tight">
-                <DexDollarIcon className="w-3 h-3 text-zinc-400 mr-[1px]" strokeWidth={3} />
-                {displayVol}
-              </span>
-            </div>
-            <div className="text-left shrink-0">
-              <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">Liquidity</span>
-              <span className="flex items-center text-xs font-black text-white tabular-nums tracking-tight">
-                <DexDollarIcon className="w-3 h-3 text-zinc-400 mr-[1px]" strokeWidth={3} />
-                {displayLiq}
-              </span>
-            </div>
-            <div className="text-left shrink-0">
-              <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">Supply</span>
-              <span className="text-xs font-black text-white tabular-nums tracking-tight">{displaySupply}</span>
-            </div>
-            <div className="text-left shrink-0">
-              <span className="block text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">Top 10</span>
-              <span className="text-xs font-black text-amber-500 tabular-nums tracking-tight">{displayTop10}</span>
-            </div>
           </div>
 
           <div className="w-full h-[280px] bg-[#0e0f14] border-y border-white/5 relative flex flex-col shrink-0">
@@ -383,10 +396,11 @@ export default function TokenHome({
 
           <div className="flex border-b border-white/5 bg-[#0a0b0e] sticky top-[60px] z-20 shadow-md">
             {[
-              { id: 'callouts', label: 'Callouts' },
-              { id: 'holders', label: 'Holders' },
-              { id: 'about', label: 'About' }
-            ].map((tab) => (
+          { id: 'trades', label: 'Trades' },
+          { id: 'callouts', label: 'Callouts' },
+          { id: 'holders', label: 'Holders' },
+          { id: 'about', label: 'About' }
+        ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setMobileActivityTab(tab.id)}
@@ -400,14 +414,15 @@ export default function TokenHome({
           </div>
 
           <div className="flex-1 bg-[#0c0d10] p-4 min-h-[300px] flex flex-col">
-            {mobileActivityTab === 'callouts' && typeof TokenCallouts !== 'undefined' && <TokenCallouts tokenSymbol={currentToken.symbol} />}
-            {mobileActivityTab === 'holders' && typeof TokenHolders !== 'undefined' && <TokenHolders top10Percentage={currentToken.top10} />}
-           {mobileActivityTab === 'about' && (
-  <TokenAbout 
-    currentToken={currentToken} 
-    onOpenChat={() => setIsMobileChatOpen(true)} 
-  />
-)}
+           {mobileActivityTab === 'trades' && <TokenTrades currentToken={currentToken} />}
+        {mobileActivityTab === 'callouts' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
+        {mobileActivityTab === 'holders' && <TokenHolders top10Percentage={displayTop10} />}
+        {mobileActivityTab === 'about' && (
+          <TokenAbout 
+            currentToken={currentToken} 
+            onOpenChat={() => setIsMobileChatOpen(true)} 
+          />
+        )}
           </div>
         </div>
 
@@ -508,6 +523,11 @@ export default function TokenHome({
           </div>
         </div>
       </div>
+
+      {/* SHARE MODAL OVERLAY */}
+      {isShareModalOpen && (
+        <ShareModal currentToken={currentToken} onClose={() => setIsShareModalOpen(false)} />
+      )}
 
       {/* ===================================================================== */}
       {/* 2. DESKTOP VIEW - LIVE AMM MATH INJECTED */}
