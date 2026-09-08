@@ -58,6 +58,14 @@ const SolIcon = ({ className = "w-2.5 h-2.5" }) => (
   </svg>
 );
 
+// Copy Icon
+const CopyIcon = ({ className = "w-3 h-3" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+  </svg>
+);
+
 export default function TokenHome({
   setActivePage,
   handleSidebarNavigation,
@@ -260,12 +268,13 @@ export default function TokenHome({
                     <span className="text-lg font-black text-white truncate max-w-[120px]">{currentToken.name || currentToken.symbol}</span>
                     <span className="text-[9px] bg-[#1c1d24] text-zinc-400 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider shrink-0">{currentToken.symbol}</span>
                   </div>
-                  {/* FIXED TIME & CA */}
+                {/* FIXED TIME & CA */}
                   <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-medium mt-1">
                     <span>{mockTime} ago</span>
                     <span>•</span>
-                    <button onClick={() => handleCopyCA(rawAddress)} className="flex items-center gap-1 hover:text-white transition-colors relative">
-                        <span className="tabular-nums tracking-tight">{formattedAddress}</span>
+                    <button onClick={() => handleCopyCA(rawAddress)} className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors relative group">
+                        <span className="tabular-nums tracking-tight group-hover:text-[#00f2a1] transition-colors">{formattedAddress}</span>
+                        <CopyIcon className="w-2.5 h-2.5 group-hover:text-[#00f2a1] transition-colors" />
                         {copiedCA && <span className="absolute -top-6 left-0 bg-[#00f2a1] text-black px-1.5 py-0.5 rounded shadow z-50">Copied</span>}
                     </button>
                   </div>
@@ -552,12 +561,14 @@ export default function TokenHome({
                 </div>
                 {/* FIXED TIME, CA, & SOCIALS */}
                 <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-medium mt-0.5">
-                  <span>{mockTime}</span><span>•</span>
-                  <button onClick={() => handleCopyCA(rawAddress)} className="flex items-center gap-1 hover:text-white transition-colors relative">
-                    <span className="tabular-nums tracking-tight">{formattedAddress}</span>
+                  <span>{mockTime} ago</span>
+                  <span>•</span>
+                  <button onClick={() => handleCopyCA(rawAddress)} className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors relative group">
+                    <span className="tabular-nums tracking-tight group-hover:text-[#00f2a1] transition-colors">{formattedAddress}</span>
+                    <CopyIcon className="w-2.5 h-2.5 group-hover:text-[#00f2a1] transition-colors" />
                     {copiedCA && <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#00f2a1] text-black text-[9px] font-bold px-1.5 py-0.5 rounded shadow z-50">Copied!</span>}
                   </button>
-                  <span className="text-zinc-700">|</span>
+                  <span className="text-zinc-700 mx-1">|</span>
                   <div className="flex items-center gap-2 text-zinc-400">
                     <a href={currentToken.website || "#"} className="hover:text-white transition-colors"><Globe className="w-3.5 h-3.5"/></a>
                     <a href={currentToken.twitter || "#"} className="hover:text-white transition-colors"><XIcon className="w-3.5 h-3.5"/></a>
