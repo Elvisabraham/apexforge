@@ -71,18 +71,64 @@ const activeReceiveAsset = portfolio.find(a => a.symbol === swapReceiveAsset) ||
     ? calculateExpectedOutput('1', true) 
     : calculateExpectedOutput('1', false);
 
-  return (
+    return (
     <div 
       className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md animate-fadeIn"
       onClick={onClose}
     >
       <div 
-        className="w-full max-w-[420px] bg-[#050505] border-t sm:border border-white/10 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 relative shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col h-auto max-h-[90vh] overflow-y-auto scrollbar-hide animate-slideUpNative"
+        id="mobile-swap-drawer"
+        className="w-full max-w-[420px] bg-[#050505] border-t sm:border border-white/10 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 relative shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col h-auto max-h-[90vh] overflow-y-auto scrollbar-hide animate-slideUpNative transition-transform duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         
-        {/* iOS-style drag handle for mobile */}
-        <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-6 sm:hidden"></div>
+        {/* DRAG HANDLE (60fps iOS-style fluid swipe tracking) */}
+        <div 
+          className="w-full flex flex-col items-center py-2 pb-6 cursor-grab active:cursor-grabbing shrink-0 relative z-50 sm:hidden"
+          onTouchStart={(e) => {
+            const drawer = document.getElementById('mobile-swap-drawer');
+            if (!drawer) return;
+            drawer.dataset.startY = e.touches[0].clientY;
+            // Instantly stick to the finger without animation lag
+            drawer.style.transitionDuration = '0ms'; 
+          }}
+          onTouchMove={(e) => {
+            const drawer = document.getElementById('mobile-swap-drawer');
+            if (!drawer) return;
+            const startY = parseFloat(drawer.dataset.startY);
+            const currentY = e.touches[0].clientY;
+            const deltaY = currentY - startY;
+            
+            // Physically drag the drawer down with the finger
+            if (deltaY > 0) {
+              drawer.style.transform = `translateY(${deltaY}px)`;
+            }
+          }}
+          onTouchEnd={(e) => {
+            const drawer = document.getElementById('mobile-swap-drawer');
+            if (!drawer) return;
+            const startY = parseFloat(drawer.dataset.startY);
+            const endY = e.changedTouches[0].clientY;
+            const deltaY = endY - startY;
+            
+            // Restore smooth CSS animations
+            drawer.style.transitionDuration = '300ms'; 
+            
+            if (deltaY > 120) {
+              // Pulled down far enough -> Close it completely
+              drawer.style.transform = ''; 
+              onClose(); 
+            } else {
+              // Didn't pull far enough -> Snap back up like iOS
+              drawer.style.transform = 'translateY(0px)';
+              setTimeout(() => { if (drawer) drawer.style.transform = ''; }, 300);
+            }
+          }}
+        >
+          {/* Invisible hit area for easier grabbing */}
+          <div className="absolute top-0 left-0 w-full h-12" />
+          <div className="w-12 h-1.5 bg-white/10 rounded-full relative pointer-events-none" />
+        </div>
 
         {/* Header */}
         <div className="flex justify-between items-center mb-6 relative">
