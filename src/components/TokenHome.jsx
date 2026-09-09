@@ -522,40 +522,65 @@ export default function TokenHome({
         </div>
       </div>
 
-      {/* NATIVE LOCAL MOBILE CHAT DRAWER */}
+       {/* NATIVE LOCAL MOBILE CHAT DRAWER */}
           <div className={`fixed inset-0 z-[200] lg:hidden transition-opacity duration-300 ${isMobileChatOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
             
             {/* Dark Background Overlay */}
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMobileChatOpen(false)} />
             
-            {/* DRAWER: Changed to h-[100dvh] to touch the absolute top of the screen */}
+            {/* DRAWER */}
             <div 
+              id="mobile-chat-drawer"
               className={`absolute bottom-0 left-0 w-full h-[100dvh] bg-[#0c0d10] rounded-t-3xl pt-2 pb-0 flex flex-col z-10 transition-transform duration-300 ${isMobileChatOpen ? 'translate-y-0' : 'translate-y-full'}`}
             >
               
-              {/* Drag Handle (Now supports tap AND swipe down to close) */}
+              {/* DRAG HANDLE (60fps iOS-style fluid swipe tracking) */}
               <div 
-                className="w-full flex justify-center py-2 pb-3 cursor-grab active:cursor-grabbing shrink-0"
-                onClick={() => setIsMobileChatOpen(false)}
+                className="w-full flex flex-col items-center py-2 pb-4 cursor-grab active:cursor-grabbing shrink-0 relative z-50"
                 onTouchStart={(e) => {
-                  // Record where the finger first touched the screen
-                  e.currentTarget.dataset.touchStartY = e.touches[0].clientY;
+                  const drawer = document.getElementById('mobile-chat-drawer');
+                  drawer.dataset.startY = e.touches[0].clientY;
+                  // Instantly stick to the finger without animation lag
+                  drawer.style.transitionDuration = '0ms'; 
+                }}
+                onTouchMove={(e) => {
+                  const drawer = document.getElementById('mobile-chat-drawer');
+                  const startY = parseFloat(drawer.dataset.startY);
+                  const currentY = e.touches[0].clientY;
+                  const deltaY = currentY - startY;
+                  
+                  // Physically drag the drawer down with the finger
+                  if (deltaY > 0) {
+                    drawer.style.transform = `translateY(${deltaY}px)`;
+                  }
                 }}
                 onTouchEnd={(e) => {
-                  const startY = parseFloat(e.currentTarget.dataset.touchStartY);
+                  const drawer = document.getElementById('mobile-chat-drawer');
+                  const startY = parseFloat(drawer.dataset.startY);
                   const endY = e.changedTouches[0].clientY;
+                  const deltaY = endY - startY;
                   
-                  // If the finger dragged downward by more than 40 pixels, close it
-                  if (endY - startY > 40) {
+                  // Restore smooth CSS animations
+                  drawer.style.transitionDuration = '300ms'; 
+                  
+                  if (deltaY > 150) {
+                    // Pulled down far enough -> Close it completely
+                    drawer.style.transform = ''; 
                     setIsMobileChatOpen(false);
+                  } else {
+                    // Didn't pull far enough -> Snap back to the top like iOS
+                    drawer.style.transform = 'translateY(0px)';
+                    setTimeout(() => { if (drawer) drawer.style.transform = ''; }, 300);
                   }
                 }}
               >
-                <div className="w-16 h-1.5 bg-white/20 rounded-full" />
+                {/* Invisible hit area to make grabbing much easier */}
+                <div className="absolute top-0 left-0 w-full h-12" />
+                <div className="w-16 h-1.5 bg-white/20 rounded-full relative pointer-events-none" />
               </div>
 
               {/* Chat Container */}
-              <div className="flex-1 w-full overflow-hidden flex flex-col rounded-t-2xl">
+              <div className="flex-1 w-full overflow-hidden flex flex-col rounded-t-2xl bg-[#050505]">
                 <TokenChat 
                   token={currentToken} 
                   onBack={() => setIsMobileChatOpen(false)} 
