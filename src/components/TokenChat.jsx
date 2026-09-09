@@ -405,66 +405,44 @@ const [tradeAmount, setTradeAmount] = useState('');
         }
       `}</style>
 
-      {/* --- HEADER --- */}
+      {/* --- HEADER (Cleaned up, Trade button removed from here) --- */}
       <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
-         <button onClick={onBack} className="p-2 -ml-2 text-zinc-400 hover:text-white transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-          </button>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <span className="text-lg font-black text-white uppercase">{tokenSymbol} HQ</span>
             </div>
-            
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_5px_#00FF66]"></span>
               <span className="text-[10px] font-black text-[#00FF66] uppercase tracking-widest">
-    {token?.onlineCount || '1,420'} Online
-  </span>
+                {token?.onlineCount || '1,420'} Online
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Outer wrapper to align the Price block and Trade button perfectly side-by-side */}
-    <div className="flex items-center gap-3">
-      
-     {/* 🚀 DYNAMIC TOGGLE: PRICE & MARKET CAP (Wired to the Mini-Engine!) */}
-      <div className="flex flex-col items-end shrink-0">
-        <div 
-          onClick={() => setDisplayMode(prev => prev === 'price' ? 'mcap' : 'price')}
-          className="cursor-pointer select-none group"
-          title="Click to switch between Price and Market Cap"
-        >
-          <div className="text-white font-extrabold text-sm sm:text-base tracking-tight group-hover:text-emerald-400 transition-colors flex items-center justify-end">
-            {displayMode === 'price' ? (
-              formatProPrice(`$${(Number(realUsdPrice) > 0 ? Number(realUsdPrice) : 0.00000229).toFixed(8)}`)
-            ) : (
-              (() => {
-                const numPrice = Number(realUsdPrice) > 0 ? Number(realUsdPrice) : 0.00000229;
-                const mcapVal = numPrice * 1000000000;
-                const formatted = mcapVal >= 1e9 
-                  ? `${(mcapVal / 1e9).toFixed(2)}B` 
-                  : mcapVal >= 1e6 
-                  ? `${(mcapVal / 1e6).toFixed(2)}M` 
-                  : `${(mcapVal / 1e3).toFixed(2)}K`;
-                return formatProPrice(`$${formatted}`);
-              })()
-            )}
-          </div>
-        </div>
-        
-        {/* 24H Percentage (Wired to TRUE REAL values to prevent 0.00% wipe) */}
-        <span className={`${realIsPositive ? 'text-[#00FF66]' : 'text-[#FF3B69]'} flex items-center gap-1 text-[10px] font-semibold mt-0.5 justify-end`}>
-          {realIsPositive ? '▲' : '▼'} {Math.abs(Number(realPriceChangePct) || 0).toFixed(2)}% <span className="text-[#787B86] font-normal">24H</span>
-        </span>
-      </div>
-          <button 
-            onClick={() => setIsBuyModalOpen(true)}
-            className={`px-3.5 py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-white shadow-lg transition-colors active:scale-95 ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 shadow-[0_0_15px_rgba(245,158,11,0.3)] text-black' : 'bg-[#089981] hover:bg-[#06806b] shadow-[0_0_15px_rgba(8,153,129,0.3)]'}`}
+        {/* Price & Market Cap only (Trade button moved down!) */}
+        <div className="flex flex-col items-end shrink-0">
+          <div 
+            onClick={() => setDisplayMode(prev => prev === 'price' ? 'mcap' : 'price')}
+            className="cursor-pointer select-none group"
           >
-            <span className="text-[10px] font-black uppercase tracking-widest leading-none">Trade</span>
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-          </button>
+            <div className="text-white font-extrabold text-sm sm:text-base tracking-tight group-hover:text-emerald-400 transition-colors flex items-center justify-end">
+              {displayMode === 'price' ? (
+                formatProPrice(`$${(Number(realUsdPrice) > 0 ? Number(realUsdPrice) : 0.00000229).toFixed(8)}`)
+              ) : (
+                (() => {
+                  const numPrice = Number(realUsdPrice) > 0 ? Number(realUsdPrice) : 0.00000229;
+                  const mcapVal = numPrice * 1000000000;
+                  const formatted = mcapVal >= 1e9 ? `${(mcapVal / 1e9).toFixed(2)}B` : mcapVal >= 1e6 ? `${(mcapVal / 1e6).toFixed(2)}M` : `${(mcapVal / 1e3).toFixed(2)}K`;
+                  return formatProPrice(`$${formatted}`);
+                })()
+              )}
+            </div>
+          </div>
+          <span className={`${realIsPositive ? 'text-[#00FF66]' : 'text-[#FF3B69]'} flex items-center gap-1 text-[10px] font-semibold mt-0.5 justify-end`}>
+            {realIsPositive ? '▲' : '▼'} {Math.abs(Number(realPriceChangePct) || 0).toFixed(2)}% <span className="text-[#787B86] font-normal">24H</span>
+          </span>
         </div>
       </header>
 
@@ -495,8 +473,23 @@ const [tradeAmount, setTradeAmount] = useState('');
         <span className="text-[10px] text-zinc-500 font-mono shrink-0 ml-2">ApexDev</span>
       </div>
 
+      {/* --- LOWER QUICK TRADE BAR --- */}
+      <div className="flex-none bg-[#121217] border-b border-white/[0.05] px-4 py-2.5 flex items-center justify-between z-20 shadow-md">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Instant Execution</span>
+          <span className="text-xs font-black text-white">Ape into ${tokenSymbol}</span>
+        </div>
+        <button 
+          onClick={() => setIsBuyModalOpen(true)}
+          className={`px-5 py-2 rounded-xl flex items-center justify-center gap-2 text-white shadow-lg transition-transform active:scale-95 ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 text-black font-black' : 'bg-[#089981] hover:bg-[#06806b]'}`}
+        >
+          <span className="text-xs font-black uppercase tracking-widest">TRADE</span>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+        </button>
+      </div>
+
       {/* --- CHAT FEED --- */}
-     <div className="flex-1 overflow-y-auto p-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-[#050505]" onClick={() => setActiveReactionId(null)}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-[#050505]" onClick={() => setActiveReactionId(null)}>
         {messages.map((dbMsg) => {
             // 🚀 ADAPTER: Translate Supabase database fields into your custom UI fields
             const msg = {
@@ -522,7 +515,6 @@ const [tradeAmount, setTradeAmount] = useState('');
               </div>
             );
           }
-
           return (
             <div key={msg.id} className={`flex w-full ${msg.isMe ? 'justify-end' : 'justify-start'} mb-1`}>
               <div className={`flex flex-col max-w-[85%] ${msg.isMe ? 'items-end' : 'items-start'} group relative`}>
