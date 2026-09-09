@@ -446,22 +446,36 @@ const [tradeAmount, setTradeAmount] = useState('');
         </div>
       </header>
 
-      {/* --- TOP HOLDERS --- */}
-      <div className="flex-none bg-[#121212] border-b border-white/[0.03] py-2 px-4 shadow-inner z-30 relative">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Top Room Holders</span>
-          <span onClick={() => setIsHoldersModalOpen(true)} className="text-[10px] font-bold text-[#089981] cursor-pointer hover:text-white transition-colors">View All</span>
-        </div>
-       <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1">
-          {topHolders.map((whale, idx) => (
-            <div key={whale.id} onClick={() => onOpenProfile ? onOpenProfile(whale.name) : setIsHoldersModalOpen(true)} className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group">
-              <div className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-transform group-hover:scale-105 ${idx === 0 ? 'border-amber-400' : 'border-white/10'}`}>
-                <img src={whale.avatar} alt={whale.name} className="w-full h-full object-cover" />
+     {/* --- TOP HOLDERS & TRADE ACTION ROW --- */}
+      <div className="flex-none bg-[#121212] border-b border-white/[0.03] py-2.5 px-4 shadow-inner z-30 relative flex justify-between items-center gap-2">
+        
+        {/* Left Side: Holders List */}
+        <div className="flex flex-col overflow-hidden w-full">
+          <div className="flex items-center gap-3 mb-1.5">
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Top Room Holders</span>
+            <span onClick={() => setIsHoldersModalOpen(true)} className="text-[10px] font-bold text-[#089981] cursor-pointer hover:text-white transition-colors shrink-0">View All</span>
+          </div>
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1 pr-4">
+            {topHolders.map((whale, idx) => (
+              <div key={whale.id} onClick={() => onOpenProfile ? onOpenProfile(whale.name) : setIsHoldersModalOpen(true)} className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group">
+                <div className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-transform group-hover:scale-105 ${idx === 0 ? 'border-amber-400' : 'border-white/10'}`}>
+                  <img src={whale.avatar} alt={whale.name} className="w-full h-full object-cover" />
+                </div>
+                <span className="text-[8px] font-black text-zinc-400">{whale.holding}</span>
               </div>
-              <span className="text-[8px] font-black text-zinc-400">{whale.holding}</span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
+
+        {/* Right Side: Trade Button */}
+        <button 
+          onClick={() => setIsBuyModalOpen(true)}
+          className={`shrink-0 px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-white shadow-lg transition-transform active:scale-95 ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 shadow-[0_0_15px_rgba(245,158,11,0.2)] text-black font-black' : 'bg-[#089981] hover:bg-[#06806b] shadow-[0_0_15px_rgba(8,153,129,0.2)]'}`}
+        >
+          <span className="text-[10px] font-black uppercase tracking-widest leading-none">Trade</span>
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+        </button>
+
       </div>
 
       {/* --- PINNED DEV ANNOUNCEMENT BANNER --- */}
@@ -471,21 +485,6 @@ const [tradeAmount, setTradeAmount] = useState('');
           <p className="text-[11px] font-bold text-amber-200 truncate">🎯 Target: Raydium graduation at 85 SOL. Keep pushing!</p>
         </div>
         <span className="text-[10px] text-zinc-500 font-mono shrink-0 ml-2">ApexDev</span>
-      </div>
-
-      {/* --- LOWER QUICK TRADE BAR --- */}
-      <div className="flex-none bg-[#121217] border-b border-white/[0.05] px-4 py-2.5 flex items-center justify-between z-20 shadow-md">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Instant Execution</span>
-          <span className="text-xs font-black text-white">Ape into ${tokenSymbol}</span>
-        </div>
-        <button 
-          onClick={() => setIsBuyModalOpen(true)}
-          className={`px-5 py-2 rounded-xl flex items-center justify-center gap-2 text-white shadow-lg transition-transform active:scale-95 ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 text-black font-black' : 'bg-[#089981] hover:bg-[#06806b]'}`}
-        >
-          <span className="text-xs font-black uppercase tracking-widest">TRADE</span>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-        </button>
       </div>
 
       {/* --- CHAT FEED --- */}
