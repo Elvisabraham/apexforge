@@ -655,22 +655,72 @@ const [tradeAmount, setTradeAmount] = useState('');
         </div>
       )}
 
-      {/* --- INLINE TRADE MODAL --- */}
-      {isBuyModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="absolute inset-0" onClick={() => setIsBuyModalOpen(false)}></div>
-          
-          <div className={`bg-[#1C1C1E] border-t ${displayToken.isGraduated ? 'border-amber-500/30' : (tradeMode === 'buy' ? 'border-[#089981]/30' : 'border-[#F23645]/30')} rounded-t-3xl w-full max-w-lg p-6 relative z-10 animate-slideUpNative flex flex-col transition-colors duration-300`}>
-             <div className="flex justify-between items-center mb-6">
-                <div className="flex flex-col">
-                  <h3 className="text-lg font-black text-white uppercase tracking-widest flex items-center gap-2">
-                    Trade {displayToken.symbol}
-                    {displayToken.isGraduated && <span className="bg-amber-500/10 text-amber-500 text-[8px] px-1.5 py-0.5 rounded uppercase border border-amber-500/20">DEX Swap</span>}
-                  </h3>
-                  {displayToken.isGraduated && <span className="text-[9px] text-zinc-500 font-bold uppercase mt-1">Jupiter Aggregator Routing</span>}
+       {/* --- INLINE TRADE MODAL --- */}
+          {isBuyModalOpen && (
+            <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn transition-opacity">
+              <div className="absolute inset-0" onClick={() => setIsBuyModalOpen(false)}></div>
+              
+              {/* DRAWER CONTAINER: Added ID and smooth transition for swipe-to-close */}
+              <div 
+                id="chat-inline-trade-drawer"
+                className={`w-full max-w-md bg-[#1C1C1E] border-t ${displayToken.isGraduated ? 'border-amber-500/30' : (tradeMode === 'buy' ? 'border-[#00f2a1]/30' : 'border-[#F23645]/30')} rounded-t-3xl p-5 relative z-10 shadow-[0_-10px_50px_rgba(0,0,0,0.8)] transition-transform duration-300 ease-out`}
+              >
+                
+                {/* DRAG HANDLE (60fps iOS-style fluid swipe tracking) */}
+                <div 
+                  className="w-full flex flex-col items-center pb-5 cursor-grab active:cursor-grabbing shrink-0 relative z-50 lg:hidden"
+                  onTouchStart={(e) => {
+                    const drawer = document.getElementById('chat-inline-trade-drawer');
+                    if (!drawer) return;
+                    drawer.dataset.startY = e.touches[0].clientY;
+                    drawer.style.transitionDuration = '0ms'; 
+                  }}
+                  onTouchMove={(e) => {
+                    const drawer = document.getElementById('chat-inline-trade-drawer');
+                    if (!drawer) return;
+                    const startY = parseFloat(drawer.dataset.startY);
+                    const currentY = e.touches[0].clientY;
+                    const deltaY = currentY - startY;
+                    
+                    if (deltaY > 0) {
+                      drawer.style.transform = `translateY(${deltaY}px)`;
+                    }
+                  }}
+                  onTouchEnd={(e) => {
+                    const drawer = document.getElementById('chat-inline-trade-drawer');
+                    if (!drawer) return;
+                    const startY = parseFloat(drawer.dataset.startY);
+                    const endY = e.changedTouches[0].clientY;
+                    const deltaY = endY - startY;
+                    
+                    drawer.style.transitionDuration = '300ms'; 
+                    
+                    if (deltaY > 120) {
+                      drawer.style.transform = ''; 
+                      setIsBuyModalOpen(false); // Closes this specific chat modal!
+                    } else {
+                      drawer.style.transform = 'translateY(0px)';
+                      setTimeout(() => { if (drawer) drawer.style.transform = ''; }, 300);
+                    }
+                  }}
+                >
+                  {/* Invisible hit area for easier grabbing */}
+                  <div className="absolute -top-4 left-0 w-full h-12" />
+                  <div className="w-12 h-1.5 bg-white/20 rounded-full relative pointer-events-none" />
                 </div>
-                <button onClick={() => setIsBuyModalOpen(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg></button>
-             </div>
+
+               {/* --- RESTORED HEADER --- */}
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex flex-col">
+                <h3 className="text-lg font-black text-white uppercase tracking-widest flex items-center gap-2">
+                  Trade {displayToken?.symbol}
+                  {displayToken?.isGraduated && <span className="bg-amber-500/10 text-amber-500 text-[8px] px-1.5 rounded uppercase tracking-widest">Graduated</span>}
+                </h3>
+              </div>
+              <button onClick={() => setIsBuyModalOpen(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
+                <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
 
              {/* 🚀 INJECT THE MASTER COMPONENT HERE */}
           <TradeWidget 
