@@ -728,57 +728,91 @@ export default function TokenHome({
             </div>
 
             <div className="flex-1 min-h-0 w-full relative bg-[#0e0f14]">
-               <TokenChart currentToken={currentToken} chartMode={chartMode} />
+                <TokenChart currentToken={currentToken} chartMode={chartMode} />
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* RIGHT SIDEBAR (PERSISTENT BONDING CURVE + TABS) */}
-        <div className="col-span-3 bg-[#121318] border border-white/5 rounded-xl flex flex-col h-full overflow-hidden">
-          
-          <div className="p-3 border-b border-white/5 bg-[#0a0b0e] shrink-0 font-mono">
-            <div className="flex justify-between items-center text-xs mb-1.5">
-              <span className="text-zinc-400 font-semibold">Bonding Curve</span>
-              <span className="text-[#00f2a1] font-bold">{currentToken?.bondingProgress ?? 72}%</span>
-            </div>
-            <div className="w-full bg-[#1c1d24] rounded-full h-1.5 overflow-hidden shadow-inner">
-              <div 
-                className="bg-[#00f2a1] h-full rounded-full transition-all duration-500 shadow-[0_0_8px_#00f2a1]" 
-                style={{ width: `${Math.min(currentToken?.bondingProgress ?? 72, 100)}%` }}
-              />
-            </div>
-            <div className="flex justify-between items-center text-[9px] text-zinc-500 mt-1.5">
-              <span className="flex items-center">
-                Graduate at <DexDollarIcon className="w-2.5 h-2.5 mx-0.5" strokeWidth={2}/> {currentToken?.targetMcap || '69k'} mcap
-              </span>
-              <span>{(currentToken?.bondingProgress ?? 72) >= 100 ? 'Graduated' : 'In Progress'}</span>
-            </div>
-          </div>
+            {/* 2. MARKET HUB TABS CARD (UNDER CHART - PHANTOM STYLE) */}
+            <div className="flex-1 min-h-0 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-hidden">
+              {/* Tab Navigation */}
+              <div className="flex items-center overflow-x-auto border-b border-white/5 bg-[#0a0b0e] shrink-0 [&::-webkit-scrollbar]:hidden px-2">
+                {[
+                  { id: 'trades', label: 'Trades' },
+                  { id: 'callouts', label: 'Callouts' },
+                  { id: 'holders', label: 'Holders' },
+                  { id: 'about', label: 'About' }
+                ].map((tab) => (
+                  <button 
+                    key={tab.id} 
+                    type="button"
+                    onClick={() => setActiveHubTab(tab.id)} 
+                    className={`px-5 py-2.5 text-xs font-black tracking-widest uppercase transition-all whitespace-nowrap cursor-pointer relative ${
+                      activeHubTab === tab.id 
+                        ? 'text-[#00f2a1]' 
+                        : 'text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    {tab.label}
+                    {activeHubTab === tab.id && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00f2a1] shadow-[0_0_8px_rgba(0,242,161,0.5)]" />
+                    )}
+                  </button>
+                ))}
+              </div>
 
-          <div className="flex items-center border-b border-white/5 bg-[#0a0b0e] p-1.5 gap-1 shrink-0">
-            <button
-              onClick={() => setRightPanelMode('swap')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                rightPanelMode === 'swap' ? 'bg-[#1c1d24] text-white shadow border border-white/10' : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              ⚡ Quick Swap
-            </button>
-            <button
-              onClick={() => setRightPanelMode('hub')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                rightPanelMode === 'hub' ? 'bg-[#1c1d24] text-white shadow border border-white/10' : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              📊 Market Hub
-            </button>
+              {/* Tab Content Rendering */}
+              <div className="flex-1 min-h-0 overflow-y-auto bg-[#0c0d10] custom-scrollbar">
+                {activeHubTab === 'trades' && typeof TokenTrades !== 'undefined' && <TokenTrades currentToken={currentToken} />}
+                {activeHubTab === 'callouts' && typeof TokenCallouts !== 'undefined' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
+                {activeHubTab === 'holders' && typeof TokenHolders !== 'undefined' && <TokenHolders top10Percentage={currentToken?.top10} />}
+                {activeHubTab === 'about' && typeof TokenAbout !== 'undefined' && <TokenAbout currentToken={currentToken} />}
+              </div>
+            </div>
+
           </div>
 
-          {rightPanelMode === 'swap' ? (
+          {/* ===================================================================== */}
+          {/* RIGHT SIDEBAR (DEDICATED EXECUTION ZONE) */}
+          {/* ===================================================================== */}
+          <div className="col-span-3 bg-[#121318] border border-white/5 rounded-xl flex flex-col h-full overflow-hidden">
+            
+            {/* BONDING CURVE */}
+            <div className="p-3 border-b border-white/5 bg-[#0a0b0e] shrink-0 font-mono">
+              <div className="flex justify-between items-center text-xs mb-1.5">
+                <span className="text-zinc-400 font-semibold">Bonding Curve</span>
+                <span className="text-[#00f2a1] font-bold">{currentToken?.bondingProgress ?? 72}%</span>
+              </div>
+              <div className="w-full bg-[#1c1d24] rounded-full h-1.5 overflow-hidden shadow-inner">
+                <div 
+                  className="bg-[#00f2a1] h-full rounded-full transition-all duration-500 shadow-[0_0_8px_#00f2a1]" 
+                  style={{ width: `${Math.min(currentToken?.bondingProgress ?? 72, 100)}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center text-[9px] text-zinc-500 mt-1.5">
+                <span className="flex items-center">
+                  Graduate at <DexDollarIcon className="w-2.5 h-2.5 mx-0.5" strokeWidth={2}/> {currentToken?.targetMcap || '69k'} mcap
+                </span>
+                <span>{(currentToken?.bondingProgress ?? 72) >= 100 ? 'Graduated' : 'In Progress'}</span>
+              </div>
+            </div>
+
+            {/* DEDICATED SWAP WIDGET */}
             <div className="flex-1 flex flex-col overflow-y-auto p-3 space-y-4 [&::-webkit-scrollbar]:hidden">
               <div className="flex gap-1 bg-[#1a1b22] p-1 rounded-lg">
-                <button onClick={() => { setTradeMode('buy'); setTradeAmount(''); }} className={`flex-1 py-1.5 text-xs font-black rounded-md transition-colors ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow' : 'text-zinc-500 hover:text-white'}`}>Buy</button>
-                <button onClick={() => { setTradeMode('sell'); setTradeAmount(''); }} className={`flex-1 py-1.5 text-xs font-black rounded-md transition-colors ${tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow' : 'text-zinc-500 hover:text-white'}`}>Sell</button>
+                <button 
+                  type="button"
+                  onClick={() => { setTradeMode('buy'); setTradeAmount(''); }} 
+                  className={`flex-1 py-1.5 text-xs font-black rounded-md transition-colors cursor-pointer ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow' : 'text-zinc-500 hover:text-white'}`}
+                >
+                  Buy
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => { setTradeMode('sell'); setTradeAmount(''); }} 
+                  className={`flex-1 py-1.5 text-xs font-black rounded-md transition-colors cursor-pointer ${tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow' : 'text-zinc-500 hover:text-white'}`}
+                >
+                  Sell
+                </button>
               </div>
 
               <div>
@@ -787,18 +821,36 @@ export default function TokenHome({
                   <span>{tradeMode === 'buy' ? 'SOL' : currentToken.symbol}</span>
                 </div>
                 <div className="bg-[#0c0d10] border border-white/5 rounded-lg flex items-center px-3 py-2.5 focus-within:border-[#00f2a1]/50">
-                  <input type="text" placeholder="0.0" value={tradeAmount} onChange={(e) => setTradeAmount(e.target.value.replace(/[^0-9.]/g, ''))} className="w-full bg-transparent outline-none text-xl font-mono font-black text-white placeholder-zinc-700" />
+                  <input 
+                    type="text" 
+                    placeholder="0.0" 
+                    value={tradeAmount} 
+                    onChange={(e) => setTradeAmount(e.target.value.replace(/[^0-9.]/g, ''))} 
+                    className="w-full bg-transparent outline-none text-xl font-mono font-black text-white placeholder-zinc-700" 
+                  />
                 </div>
               </div>
 
               <div className="flex justify-between items-center">
-                 <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
-                   Wallet: {tradeMode === 'buy' ? `${(userSolBalance || 0).toFixed(4)} SOL` : `0 ${currentToken.symbol}`}
-                 </span>
-                 <div className="flex gap-2">
-                   <button onClick={handleHalfClick} className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 px-2 py-1 rounded-md text-[9px] font-black text-zinc-300 uppercase">Half</button>
-                   <button onClick={handleMaxClick} className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 px-2 py-1 rounded-md text-[9px] font-black text-zinc-300 uppercase">Max</button>
-                 </div>
+                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+                  Wallet: {tradeMode === 'buy' ? `${(userSolBalance || 0).toFixed(4)} SOL` : `0 ${currentToken.symbol}`}
+                </span>
+                <div className="flex gap-2">
+                  <button 
+                    type="button"
+                    onClick={handleHalfClick} 
+                    className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 px-2 py-1 rounded-md text-[9px] font-black text-zinc-300 uppercase cursor-pointer"
+                  >
+                    Half
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={handleMaxClick} 
+                    className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 px-2 py-1 rounded-md text-[9px] font-black text-zinc-300 uppercase cursor-pointer"
+                  >
+                    Max
+                  </button>
+                </div>
               </div>
 
               <div className="flex flex-col gap-2 p-3 bg-[#0A0A0A] border border-white/5 rounded-xl shadow-inner">
@@ -818,47 +870,19 @@ export default function TokenHome({
                 </button>
               ) : (
                 <button 
+                  type="button"
                   onClick={executeTokenTrade} 
-                  disabled={!cleanNumericAmount || isProcessing}
-                  className={`w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-auto ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black hover:bg-[#00d990]' : 'bg-[#F23645] text-white hover:bg-[#e02a39]'}`}
+                  disabled={!cleanNumericAmount || isProcessing} 
+                  className={`w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-auto cursor-pointer ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black hover:bg-[#00d990]' : 'bg-[#F23645] text-white hover:bg-[#e02a39]'}`}
                 >
                   {isProcessing ? 'Confirming...' : (tradeMode === 'buy' ? 'PLACE BUY ORDER' : `SELL ${currentToken?.symbol}`)}
                 </button>
               )}
             </div>
-          ) : (
-            <div className="flex-1 flex flex-col overflow-hidden">
-              {/* DESKTOP TABS (Strictly 4 Tabs) */}
-              <div className="flex overflow-x-auto border-b border-white/5 bg-[#0a0b0e] shrink-0 [&::-webkit-scrollbar]:hidden">
-                {[
-                  { id: 'trades', label: 'Callouts' },
-                  { id: 'holders', label: 'Holders' },
-                  { id: 'chat', label: 'Chat' },
-                  { id: 'about', label: 'About' }
-                ].map((tab) => (
-                  <button 
-                    key={tab.id} 
-                    onClick={() => setActiveHubTab(tab.id)} 
-                    className={`flex-1 py-2.5 text-[11px] font-bold border-b-2 transition-colors whitespace-nowrap ${
-                      activeHubTab === tab.id ? 'border-[#00f2a1] text-white bg-white/5' : 'border-transparent text-zinc-500 hover:text-zinc-300'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
 
-              {/* DESKTOP CONTENT RENDER */}
-              <div className="flex-1 overflow-y-auto bg-[#0c0d10] custom-scrollbar">
-  {activeHubTab === 'trades' && typeof TokenTrades !== 'undefined' && <TokenTrades currentToken={currentToken} />}
-  {activeHubTab === 'callouts' && typeof TokenCallouts !== 'undefined' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
-  {activeHubTab === 'holders' && typeof TokenHolders !== 'undefined' && <TokenHolders top10Percentage={currentToken?.top10} />}
-  {activeHubTab === 'about' && typeof TokenAbout !== 'undefined' && <TokenAbout currentToken={currentToken} />}
-</div>
-            </div>
-          )}
+          </div>
+
         </div>
       </div>
-    </div>
   );
 }
