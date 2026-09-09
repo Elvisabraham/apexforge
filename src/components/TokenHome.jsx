@@ -525,7 +525,7 @@ export default function TokenHome({
       {/* NATIVE LOCAL MOBILE CHAT DRAWER */}
       <div className={`fixed inset-0 z-[100] lg:hidden flex items-end transition-opacity duration-300 ${isMobileChatOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}>
         <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMobileChatOpen(false)} />
-        <div className={`w-full h-[75vh] bg-[#121318] border-t border-white/10 rounded-t-3xl p-4 flex flex-col relative z-10 shadow-2xl transition-transform duration-300 ease-out ${isMobileChatOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+       <div className={`w-full h-[calc(100dvh-60px)] bg-[#121318] border-t border-white/10 rounded-t-3xl p-4 flex flex-col...`}>
           <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-3 shrink-0" />
           <div className="flex justify-between items-center pb-3 border-b border-white/5 shrink-0">
             <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
