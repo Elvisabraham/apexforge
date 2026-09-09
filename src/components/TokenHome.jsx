@@ -412,38 +412,45 @@ export default function TokenHome({
             </div>
           </div>
 
+          {/* ========================================================================= */}
+          {/* ACTIVITY TABS */}
+          {/* ========================================================================= */}
           <div className="flex border-b border-white/5 bg-[#0a0b0e] sticky top-[60px] z-20 shadow-md">
             {[
-          { id: 'trades', label: 'Trades' },
-          { id: 'callouts', label: 'Callouts' },
-          { id: 'holders', label: 'Holders' },
-          { id: 'about', label: 'About' }
-        ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setMobileActivityTab(tab.id)}
-                  className={`flex-1 py-3 text-[11px] font-black uppercase tracking-widest border-b-[3px] transition-colors ${
-                    mobileActivityTab === tab.id ? 'border-[#00f2a1] text-white bg-white/5' : 'border-transparent text-zinc-500'
-                  }`}
-                >
-                  {tab.label}
-                </button>
+              { id: 'trades', label: 'Trades' },
+              { id: 'callouts', label: 'Callouts' },
+              { id: 'holders', label: 'Holders' },
+              { id: 'about', label: 'About' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setMobileActivityTab(tab.id)}
+                className={`flex-1 py-3 text-[11px] font-black uppercase tracking-widest border-b-[3px] transition-colors ${
+                  mobileActivityTab === tab.id ? 'border-[#00f2a1] text-white bg-white/5' : 'border-transparent text-zinc-500'
+                }`}
+              >
+                {tab.label}
+              </button>
             ))}
           </div>
 
+          {/* TAB CONTENT */}
           <div className="flex-1 bg-[#0c0d10] p-4 min-h-[300px] flex flex-col">
-           {mobileActivityTab === 'trades' && <TokenTrades currentToken={currentToken} />}
-        {mobileActivityTab === 'callouts' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
-        {mobileActivityTab === 'holders' && <TokenHolders top10Percentage={displayTop10} />}
-        {mobileActivityTab === 'about' && (
-          <TokenAbout 
-            currentToken={currentToken} 
-            onOpenChat={() => setIsMobileChatOpen(true)} 
-          />
-        )}
+            {mobileActivityTab === 'trades' && <TokenTrades currentToken={currentToken} />}
+            {mobileActivityTab === 'callouts' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
+            {mobileActivityTab === 'holders' && <TokenHolders top10Percentage={displayTop10} />}
+            {mobileActivityTab === 'about' && (
+              <TokenAbout 
+                currentToken={currentToken} 
+                onOpenChat={() => setIsMobileChatOpen(true)} 
+              />
+            )}
           </div>
-        </div>
+        </div> {/* <--- RESTORED: THIS CLOSES THE MAIN PAGE CONTAINER FROM LINE 258 */}
 
+        {/* ========================================================================= */}
+        {/* BOTTOM TRADE BUTTON */}
+        {/* ========================================================================= */}
         <div className="shrink-0 bg-[#121318] border-t border-white/10 p-3 z-30 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] pb-[max(env(safe-area-inset-bottom),1rem)]">
           <button 
             onClick={() => setIsMobileTradeOpen(true)} 
@@ -453,18 +460,60 @@ export default function TokenHome({
           </button>
         </div>
 
-        {/* NATIVE LOCAL MOBILE DRAWER (Live AMM Math Injected) */}
+        {/* ========================================================================= */}
+        {/* 1. NATIVE LOCAL MOBILE TRADE DRAWER (iOS Swipe-to-Dismiss Enabled)       */}
+        {/* ========================================================================= */}
         <div className={`fixed inset-0 z-[100] lg:hidden flex items-end transition-opacity duration-300 ${isMobileTradeOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMobileTradeOpen(false)} />
-          <div className={`w-full bg-[#121318] border-t border-white/10 rounded-t-3xl p-5 relative z-10 shadow-[0_-10px_50px_rgba(0,0,0,0.8)] transition-transform duration-300 ease-out pb-[max(env(safe-area-inset-bottom),1.25rem)] ${isMobileTradeOpen ? 'translate-y-0' : 'translate-y-full'}`}>
-            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-5" />
+          <div 
+            id="mobile-trade-drawer"
+            className={`w-full bg-[#121318] border-t border-white/10 rounded-t-3xl p-5 relative z-10 shadow-[0_-10px_50px_rgba(0,0,0,0.8)] transition-transform duration-300 ease-out pb-[max(env(safe-area-inset-bottom),1.25rem)] ${isMobileTradeOpen ? 'translate-y-0' : 'translate-y-full'}`}
+          >
+            {/* DRAG HANDLE */}
+            <div 
+              className="w-full flex flex-col items-center pb-5 cursor-grab active:cursor-grabbing shrink-0 relative z-50 lg:hidden"
+              onTouchStart={(e) => {
+                const drawer = document.getElementById('mobile-trade-drawer');
+                if (!drawer) return;
+                drawer.dataset.startY = e.touches[0].clientY;
+                drawer.style.transitionDuration = '0ms'; 
+              }}
+              onTouchMove={(e) => {
+                const drawer = document.getElementById('mobile-trade-drawer');
+                if (!drawer) return;
+                const startY = parseFloat(drawer.dataset.startY);
+                const currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
+                if (deltaY > 0) {
+                  drawer.style.transform = `translateY(${deltaY}px)`;
+                }
+              }}
+              onTouchEnd={(e) => {
+                const drawer = document.getElementById('mobile-trade-drawer');
+                if (!drawer) return;
+                const startY = parseFloat(drawer.dataset.startY);
+                const endY = e.changedTouches[0].clientY;
+                const deltaY = endY - startY;
+                drawer.style.transitionDuration = '300ms'; 
+                if (deltaY > 120) {
+                  drawer.style.transform = ''; 
+                  setIsMobileTradeOpen(false);
+                } else {
+                  drawer.style.transform = 'translateY(0px)';
+                  setTimeout(() => { if (drawer) drawer.style.transform = ''; }, 300);
+                }
+              }}
+            >
+              <div className="absolute -top-4 left-0 w-full h-12" />
+              <div className="w-12 h-1.5 bg-white/20 rounded-full relative pointer-events-none" />
+            </div>
             
             <div className="flex justify-between items-center mb-5">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden bg-white/5 flex items-center justify-center text-sm shrink-0 shadow-inner">
-                  {currentToken.imagePreview ? <img src={currentToken.imagePreview} className="w-full h-full object-cover" /> : currentToken.icon}
+                  {currentToken?.imagePreview ? <img src={currentToken.imagePreview} className="w-full h-full object-cover" /> : currentToken?.icon}
                 </div>
-                <h3 className="text-sm font-black text-white uppercase tracking-widest">{currentToken.symbol}</h3>
+                <h3 className="text-sm font-black text-white uppercase tracking-widest">{currentToken?.symbol}</h3>
               </div>
               <button onClick={() => setIsMobileTradeOpen(false)} className="text-zinc-500 hover:text-white bg-white/5 p-1.5 rounded-full"><X className="w-4 h-4"/></button>
             </div>
@@ -480,13 +529,13 @@ export default function TokenHome({
                 <input type="text" inputMode="decimal" placeholder="0.0" value={tradeAmount} onChange={(e) => setTradeAmount(e.target.value.replace(/[^0-9.]/g, ''))} className="bg-transparent text-2xl font-black text-white w-full outline-none font-mono tracking-tight" />
               </div>
               <span className="text-xs font-black text-white font-mono bg-[#1a1b22] px-3 py-1.5 rounded-md">
-                {tradeMode === 'buy' ? 'SOL' : currentToken.symbol}
+                {tradeMode === 'buy' ? 'SOL' : currentToken?.symbol}
               </span>
             </div>
             
             <div className="flex justify-between items-center mb-4">
                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
-                 Wallet: {tradeMode === 'buy' ? `${(userSolBalance || 0).toFixed(4)} SOL` : `0 ${currentToken.symbol}`}
+                 Wallet: {tradeMode === 'buy' ? `${(userSolBalance || 0).toFixed(4)} SOL` : `0 ${currentToken?.symbol}`}
                </span>
                <div className="flex gap-2">
                  <button onClick={handleHalfClick} className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 px-3 py-1.5 rounded-md text-[10px] font-black text-zinc-300 shadow-sm uppercase">Half</button>
@@ -520,80 +569,77 @@ export default function TokenHome({
             )}
           </div>
         </div>
-      </div>
 
-         {/* NATIVE LOCAL MOBILE CHAT DRAWER */}
-          <div className={`fixed inset-0 z-[200] lg:hidden transition-opacity duration-300 ${isMobileChatOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-            
-            {/* Dark Background Overlay */}
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMobileChatOpen(false)} />
-            
-            {/* DRAWER: h-[100dvh] added back to touch the ceiling! */}
+        {/* ========================================================================= */}
+        {/* 2. NATIVE LOCAL MOBILE CHAT DRAWER */}
+        {/* ========================================================================= */}
+        <div className={`fixed inset-0 z-[200] lg:hidden transition-opacity duration-300 ${isMobileChatOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMobileChatOpen(false)} />
+          <div 
+            id="mobile-chat-drawer"
+            className={`absolute bottom-0 left-0 w-full h-[100dvh] bg-[#0c0d10] rounded-t-3xl pt-2 pb-0 flex flex-col z-10 transition-transform duration-300 ${isMobileChatOpen ? 'translate-y-0' : 'translate-y-full'}`}
+          >
+            {/* DRAG HANDLE */}
             <div 
-              id="mobile-chat-drawer"
-              className={`absolute bottom-0 left-0 w-full h-[100dvh] bg-[#0c0d10] rounded-t-3xl pt-2 pb-0 flex flex-col z-10 transition-transform duration-300 ${isMobileChatOpen ? 'translate-y-0' : 'translate-y-full'}`}
+              className="w-full flex flex-col items-center py-2 pb-4 cursor-grab active:cursor-grabbing shrink-0 relative z-50"
+              onTouchStart={(e) => {
+                const drawer = document.getElementById('mobile-chat-drawer');
+                if (!drawer) return;
+                drawer.dataset.startY = e.touches[0].clientY;
+                drawer.style.transitionDuration = '0ms'; 
+              }}
+              onTouchMove={(e) => {
+                const drawer = document.getElementById('mobile-chat-drawer');
+                if (!drawer) return;
+                const startY = parseFloat(drawer.dataset.startY);
+                const currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
+                if (deltaY > 0) {
+                  drawer.style.transform = `translateY(${deltaY}px)`;
+                }
+              }}
+              onTouchEnd={(e) => {
+                const drawer = document.getElementById('mobile-chat-drawer');
+                if (!drawer) return;
+                const startY = parseFloat(drawer.dataset.startY);
+                const endY = e.changedTouches[0].clientY;
+                const deltaY = endY - startY;
+                drawer.style.transitionDuration = '300ms'; 
+                if (deltaY > 150) {
+                  drawer.style.transform = ''; 
+                  setIsMobileChatOpen(false);
+                } else {
+                  drawer.style.transform = 'translateY(0px)';
+                  setTimeout(() => { if (drawer) drawer.style.transform = ''; }, 300);
+                }
+              }}
             >
-              
-              {/* DRAG HANDLE (60fps iOS-style fluid swipe tracking) */}
-              <div 
-                className="w-full flex flex-col items-center py-2 pb-4 cursor-grab active:cursor-grabbing shrink-0 relative z-50"
-                onTouchStart={(e) => {
-                  const drawer = document.getElementById('mobile-chat-drawer');
-                  if (!drawer) return;
-                  drawer.dataset.startY = e.touches[0].clientY;
-                  drawer.style.transitionDuration = '0ms'; 
-                }}
-                onTouchMove={(e) => {
-                  const drawer = document.getElementById('mobile-chat-drawer');
-                  if (!drawer) return;
-                  const startY = parseFloat(drawer.dataset.startY);
-                  const currentY = e.touches[0].clientY;
-                  const deltaY = currentY - startY;
-                  
-                  if (deltaY > 0) {
-                    drawer.style.transform = `translateY(${deltaY}px)`;
-                  }
-                }}
-                onTouchEnd={(e) => {
-                  const drawer = document.getElementById('mobile-chat-drawer');
-                  if (!drawer) return;
-                  const startY = parseFloat(drawer.dataset.startY);
-                  const endY = e.changedTouches[0].clientY;
-                  const deltaY = endY - startY;
-                  
-                  drawer.style.transitionDuration = '300ms'; 
-                  
-                  if (deltaY > 150) {
-                    drawer.style.transform = ''; 
-                    setIsMobileChatOpen(false);
-                  } else {
-                    drawer.style.transform = 'translateY(0px)';
-                    setTimeout(() => { if (drawer) drawer.style.transform = ''; }, 300);
-                  }
-                }}
-              >
-                {/* Invisible hit area to make grabbing much easier */}
-                <div className="absolute top-0 left-0 w-full h-12" />
-                <div className="w-16 h-1.5 bg-white/20 rounded-full relative pointer-events-none" />
-              </div>
+              <div className="absolute top-0 left-0 w-full h-12" />
+              <div className="w-16 h-1.5 bg-white/20 rounded-full relative pointer-events-none" />
+            </div>
 
-              {/* Chat Container */}
-              <div className="flex-1 w-full overflow-hidden flex flex-col rounded-t-2xl bg-[#050505]">
-                <TokenChat 
-                  token={currentToken} 
-                  onBack={() => setIsMobileChatOpen(false)} 
-                  userBalance={userSolBalance} 
-                />
-              </div>
-
+            <div className="flex-1 w-full overflow-hidden flex flex-col rounded-t-2xl bg-[#050505]">
+              <TokenChat 
+                token={currentToken} 
+                onBack={() => setIsMobileChatOpen(false)} 
+                userBalance={userSolBalance} 
+              />
             </div>
           </div>
+        </div>
 
-      {/* SHARE MODAL OVERLAY */}
-      {isShareModalOpen && (
-        <ShareModal currentToken={currentToken} onClose={() => setIsShareModalOpen(false)} />
-      )}
+        {/* ========================================================================= */}
+        {/* SHARE MODAL OVERLAY */}
+        {/* ========================================================================= */}
+        {isShareModalOpen && (
+          <ShareModal currentToken={currentToken} onClose={() => setIsShareModalOpen(false)} />
+        )}
 
+     {/* RESTORED: THESE CLOSING TAGS FIX YOUR ENTIRE PAGE CRASH */}
+      </div>
+    );
+    
+     
       {/* ===================================================================== */}
       {/* 2. DESKTOP VIEW - LIVE AMM MATH INJECTED */}
       {/* ===================================================================== */}
