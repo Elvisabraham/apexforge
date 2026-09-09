@@ -675,66 +675,66 @@ export default function TokenHome({
             </div>
           </div>
 
-         <div className="flex-1 min-h-0 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-hidden relative">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 text-xs text-zinc-400 font-medium shrink-0 bg-[#0a0b0e]">
-              <div className="flex items-center gap-2">
+         {/* ======================================================= */}
+          {/* SCROLLABLE MIDDLE SECTION (CHART + TABS) */}
+          {/* ======================================================= */}
+          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            
+               {/* 1. CHART CONTAINER (Perfect height to keep tabs above the fold) */}
+              <div className="h-[50vh] min-h-[380px] shrink-0 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-hidden relative">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 text-xs text-zinc-400 font-medium shrink-0 bg-[#0a0b0e]">
+                <div className="flex items-center gap-2">
+                  
+                  {/* Trench Timeframes */}
+                  <div className="flex items-center gap-1 bg-[#121318] p-0.5 rounded-lg border border-white/5 shadow-inner">
+                    {['1s', '1m', '5m', '15m', '1h', '4h'].map((tf) => (
+                      <button 
+                        key={tf} 
+                        onClick={() => setActiveTimeframe(tf)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors cursor-pointer ${
+                          activeTimeframe === tf 
+                            ? 'bg-[#1c1d24] text-white shadow-sm border border-white/10' 
+                            : 'text-zinc-500 hover:text-zinc-300'
+                        }`}
+                      >
+                        {tf}
+                      </button>
+                    ))}
+                  </div>
 
-                {/* Trench Timeframes */}
-                <div className="flex items-center gap-1 bg-[#121318] p-0.5 rounded-lg border border-white/5 shadow-inner">
-                  {['1s', '1m', '5m', '15m', '1h', '4h'].map((tf) => (
-                    <button 
-                      key={tf} 
-                      onClick={() => setActiveTimeframe(tf)}
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
-                        activeTimeframe === tf 
-                          ? 'bg-[#1c1d24] text-white shadow-sm border border-white/10' 
-                          : 'text-zinc-500 hover:text-zinc-300'
+                  <span className="h-3.5 w-[1px] bg-white/10 mx-0.5" />
+
+                  {/* Desktop Dual Switch */}
+                  <div className="flex items-center bg-[#121318] p-0.5 rounded-lg border border-white/5 shadow-inner">
+                    <button
+                      type="button"
+                      onClick={() => setChartMode('price')}
+                      className={`px-2.5 py-0.5 rounded-md text-[10px] font-black transition-all cursor-pointer ${
+                        chartMode === 'price' ? 'bg-[#00f2a1] text-black shadow-sm' : 'text-zinc-400 hover:text-white'
                       }`}
                     >
-                      {tf}
+                      Price
                     </button>
-                  ))}
-                </div>
-
-                <span className="h-3.5 w-[1px] bg-white/10 mx-0.5" />
-
-                {/* Desktop Dual Switch (Shows both Price and MCap at once) */}
-                <div className="flex items-center bg-[#121318] p-0.5 rounded-lg border border-white/5 shadow-inner">
-                  <button
-                    type="button"
-                    onClick={() => setChartMode('price')}
-                    className={`px-2.5 py-0.5 rounded-md text-[10px] font-black transition-all ${
-                      chartMode === 'price'
-                        ? 'bg-[#00f2a1] text-black shadow-sm'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    Price
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setChartMode('mcap')}
-                    className={`px-2.5 py-0.5 rounded-md text-[10px] font-black transition-all ${
-                      chartMode === 'mcap'
-                        ? 'bg-[#00f2a1] text-black shadow-sm'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    MCap
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setChartMode('mcap')}
+                      className={`px-2.5 py-0.5 rounded-md text-[10px] font-black transition-all cursor-pointer ${
+                        chartMode === 'mcap' ? 'bg-[#00f2a1] text-black shadow-sm' : 'text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      MCap
+                    </button>
+                  </div>
                 </div>
               </div>
 
-            </div>
-
-            <div className="flex-1 min-h-0 w-full relative bg-[#0e0f14]">
+              <div className="flex-1 min-h-0 w-full relative bg-[#0e0f14]">
                 <TokenChart currentToken={currentToken} chartMode={chartMode} />
               </div>
             </div>
 
-            {/* 2. MARKET HUB TABS CARD (UNDER CHART - PHANTOM STYLE) */}
-            <div className="flex-1 min-h-0 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-hidden">
-              {/* Tab Navigation */}
+            {/* 2. MARKET HUB TABS CARD (Sits naturally below the chart) */}
+            <div className="min-h-[600px] shrink-0 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-hidden">
               <div className="flex items-center overflow-x-auto border-b border-white/5 bg-[#0a0b0e] shrink-0 [&::-webkit-scrollbar]:hidden px-2">
                 {[
                   { id: 'trades', label: 'Trades' },
@@ -760,8 +760,7 @@ export default function TokenHome({
                 ))}
               </div>
 
-              {/* Tab Content Rendering */}
-              <div className="flex-1 min-h-0 overflow-y-auto bg-[#0c0d10] custom-scrollbar">
+              <div className="flex-1 overflow-y-auto bg-[#0c0d10] custom-scrollbar">
                 {activeHubTab === 'trades' && typeof TokenTrades !== 'undefined' && <TokenTrades currentToken={currentToken} />}
                 {activeHubTab === 'callouts' && typeof TokenCallouts !== 'undefined' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
                 {activeHubTab === 'holders' && typeof TokenHolders !== 'undefined' && <TokenHolders top10Percentage={currentToken?.top10} />}
@@ -770,6 +769,10 @@ export default function TokenHome({
             </div>
 
           </div>
+        </div>
+
+        {/* ===================================================================== */}
+        {/* RIGHT SIDEBAR (DEDICATED EXECUTION ZONE) */}
 
           {/* ===================================================================== */}
           {/* RIGHT SIDEBAR (DEDICATED EXECUTION ZONE) */}
