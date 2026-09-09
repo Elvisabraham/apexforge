@@ -218,10 +218,19 @@ const [tradeAmount, setTradeAmount] = useState('');
     : 0;
   const dynamicPriceImpact = Math.min(99.99, Math.max(0, rawImpact)).toFixed(2);
 
-  const formatProPrice = (val) => {
+     const formatProPrice = (val) => {
     if (!val && val !== 0) return '';
     const str = val.toString();
-    if (str.startsWith('$')) return <><span className="font-bold mr-[2px]">$</span>{str.slice(1)}</>;
+    
+    if (str.startsWith('$')) {
+      return (
+        <>
+          {/* Matches the exact Portfolio Balance style: lighter grey, clean weight */}
+          <span className="text-zinc-400 font-semibold mr-[2px]">$</span>
+          {str.slice(1)}
+        </>
+      );
+    }
     return str;
   };
 
