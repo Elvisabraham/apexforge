@@ -60,9 +60,13 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
     const channel = supabase
       .channel('chat-ticker')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `token_mint=eq.${token.mintAddress}` }, () => {
-        fetchLiveTicker();
-      })
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'trades', filter: `token_mint=eq.${token?.mint || token?.address}` },
+        () => {
+          fetchLiveTicker();
+        }
+      )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
