@@ -533,10 +533,23 @@ export default function TokenHome({
               className={`absolute bottom-0 left-0 w-full h-[100dvh] bg-[#0c0d10] rounded-t-3xl pt-2 pb-0 flex flex-col z-10 transition-transform duration-300 ${isMobileChatOpen ? 'translate-y-0' : 'translate-y-full'}`}
             >
               
-              {/* Drag Handle (Acts as the close button) */}
+              {/* Drag Handle (Now supports tap AND swipe down to close) */}
               <div 
-                className="w-full flex justify-center py-2 pb-3 cursor-pointer shrink-0"
+                className="w-full flex justify-center py-2 pb-3 cursor-grab active:cursor-grabbing shrink-0"
                 onClick={() => setIsMobileChatOpen(false)}
+                onTouchStart={(e) => {
+                  // Record where the finger first touched the screen
+                  e.currentTarget.dataset.touchStartY = e.touches[0].clientY;
+                }}
+                onTouchEnd={(e) => {
+                  const startY = parseFloat(e.currentTarget.dataset.touchStartY);
+                  const endY = e.changedTouches[0].clientY;
+                  
+                  // If the finger dragged downward by more than 40 pixels, close it
+                  if (endY - startY > 40) {
+                    setIsMobileChatOpen(false);
+                  }
+                }}
               >
                 <div className="w-16 h-1.5 bg-white/20 rounded-full" />
               </div>
