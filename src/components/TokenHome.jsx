@@ -525,16 +525,15 @@ export default function TokenHome({
       {/* NATIVE LOCAL MOBILE CHAT DRAWER */}
           <div className={`fixed inset-0 z-[200] lg:hidden transition-opacity duration-300 ${isMobileChatOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
             
-            {/* Dark Background Overlay (Tapping this also closes the drawer) */}
+            {/* Dark Background Overlay */}
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMobileChatOpen(false)} />
             
-            {/* DRAWER */}
+            {/* DRAWER: Changed to h-[100dvh] to touch the absolute top of the screen */}
             <div 
-              className={`absolute bottom-0 left-0 w-full bg-[#0c0d10] border-t border-white/10 rounded-t-3xl pt-2 pb-0 flex flex-col z-10 transition-transform duration-300 ${isMobileChatOpen ? 'translate-y-0' : 'translate-y-full'}`}
-              style={{ height: 'calc(100vh - 60px)' }}
+              className={`absolute bottom-0 left-0 w-full h-[100dvh] bg-[#0c0d10] rounded-t-3xl pt-2 pb-0 flex flex-col z-10 transition-transform duration-300 ${isMobileChatOpen ? 'translate-y-0' : 'translate-y-full'}`}
             >
               
-              {/* Drag Handle (Now acts as the massive close button) */}
+              {/* Drag Handle (Acts as the close button) */}
               <div 
                 className="w-full flex justify-center py-2 pb-3 cursor-pointer shrink-0"
                 onClick={() => setIsMobileChatOpen(false)}
@@ -542,7 +541,7 @@ export default function TokenHome({
                 <div className="w-16 h-1.5 bg-white/20 rounded-full" />
               </div>
 
-              {/* Chat Container (Outer header is gone, TokenChat takes over!) */}
+              {/* Chat Container */}
               <div className="flex-1 w-full overflow-hidden flex flex-col rounded-t-2xl">
                 <TokenChat 
                   token={currentToken} 
