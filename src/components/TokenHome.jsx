@@ -523,24 +523,37 @@ export default function TokenHome({
       </div>
 
       {/* NATIVE LOCAL MOBILE CHAT DRAWER */}
-      <div className={`fixed inset-0 z-[100] lg:hidden flex items-end transition-opacity duration-300 ${isMobileChatOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}>
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMobileChatOpen(false)} />
-       <div className={`w-full h-[calc(100dvh-60px)] bg-[#121318] border-t border-white/10 rounded-t-3xl p-4 flex flex-col...`}>
-          <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-3 shrink-0" />
-          <div className="flex justify-between items-center pb-3 border-b border-white/5 shrink-0">
-            <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#00f2a1] animate-pulse" />
-              {currentToken?.symbol} Trench Chat
-            </h3>
-            <button onClick={() => setIsMobileChatOpen(false)} className="text-zinc-500 hover:text-white bg-white/5 p-1 rounded-full">
-              <X className="w-4 h-4"/>
-            </button>
+          <div className={`fixed inset-0 z-[100] lg:hidden flex items-end transition-opacity duration-300 ${isMobileChatOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMobileChatOpen(false)} />
+            
+            {/* Drawer Container: Added flex-col so items stack vertically instead of side-by-side */}
+            <div className={`w-full h-[calc(100dvh-60px)] bg-[#0c0d10] border-t border-white/10 rounded-t-3xl p-4 flex flex-col relative z-10 transition-transform duration-300 ${isMobileChatOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+              
+              {/* Drag Handle */}
+              <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-3 shrink-0" />
+
+              {/* Drawer Header */}
+              <div className="flex justify-between items-center pb-3 border-b border-white/5 shrink-0">
+                <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#00f2a1] animate-pulse" />
+                  {currentToken?.symbol} Trench Chat
+                </h3>
+                <button onClick={() => setIsMobileChatOpen(false)} className="p-1 text-zinc-500 hover:text-white transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Chat Container: w-full flex-1 flex flex-col */}
+              <div className="flex-1 w-full overflow-hidden pt-2 flex flex-col">
+                <TokenChat 
+                  token={currentToken} 
+                  onBack={() => setIsMobileChatOpen(false)} 
+                  userBalance={userSolBalance} 
+                />
+              </div>
+
+            </div>
           </div>
-          <div className="flex-1 overflow-hidden pt-2">
-            <TokenChat tokenSymbol={currentToken?.symbol} />
-          </div>
-        </div>
-      </div>
 
       {/* SHARE MODAL OVERLAY */}
       {isShareModalOpen && (
