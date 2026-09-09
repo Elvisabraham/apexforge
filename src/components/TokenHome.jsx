@@ -527,7 +527,7 @@ export default function TokenHome({
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMobileChatOpen(false)} />
             
             {/* Drawer Container: Added flex-col so items stack vertically instead of side-by-side */}
-            <div className={`w-full h-[calc(100dvh-60px)] bg-[#0c0d10] border-t border-white/10 rounded-t-3xl p-4 flex flex-col relative z-10 transition-transform duration-300 ${isMobileChatOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+            <div className={`w-full h-[calc(100%-60px)] bg-[#0c0d10] border-t border-white/10 rounded-t-3xl p-4 flex flex-col relative z-10 transition-transform duration-300 ${isMobileChatOpen ? 'translate-y-0' : 'translate-y-full'}`}>
               
               {/* Drag Handle */}
               <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-3 shrink-0" />
