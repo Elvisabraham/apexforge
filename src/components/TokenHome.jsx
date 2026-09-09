@@ -848,14 +848,16 @@ export default function TokenHome({
             <div className="min-h-[600px] shrink-0 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-hidden">
               {/* Expanded Tab Navigation (Callouts First + Auto-Fit Grid) */}
        <div className="flex items-center w-full border-b border-white/5 bg-[#0a0b0e] shrink-0">
-  {[
-    { id: 'callouts', label: 'Callouts' },
-    { id: 'trades', label: 'Trades' },
-    { id: 'my_trades', label: 'My Trades' },
-    { id: 'top_traders', label: 'Top Traders' },
-    { id: 'holders', label: 'Holders' },
-    { id: 'about', label: 'About' }
-  ].map((tab) => (
+  [
+           {[
+            { id: 'callouts', label: 'Callouts' },
+            { id: 'trades', label: 'Trades' },
+            { id: 'my_trades', label: 'My Trades' },
+            { id: 'top_traders', label: 'Top Traders' },
+            { id: 'holders', label: 'Holders' },
+            { id: 'about', label: 'About' },
+            { id: 'chat', label: 'Chat' } 
+          ].map((tab) => (
     <button 
       key={tab.id} 
       type="button"
@@ -880,8 +882,16 @@ export default function TokenHome({
                 {activeHubTab === 'my_trades' && typeof TokenMyTrades !== 'undefined' && <TokenMyTrades currentToken={currentToken} />}
                 {activeHubTab === 'top_traders' && typeof TokenTopTraders !== 'undefined' && <TokenTopTraders currentToken={currentToken} />}
                 {activeHubTab === 'callouts' && typeof TokenCallouts !== 'undefined' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
-                {activeHubTab === 'holders' && typeof TokenHolders !== 'undefined' && <TokenHolders top10Percentage={currentToken?.top10} />}
+                {activeHubTab === 'holders' && typeof TokenHolders !== 'undefined' && <TokenHolders top10Percentage={displayTop10} />}
                 {activeHubTab === 'about' && typeof TokenAbout !== 'undefined' && <TokenAbout currentToken={currentToken} />}
+                
+                {/* NEW CHAT TAB RENDER */}
+                {activeHubTab === 'chat' && typeof TokenChat !== 'undefined' && (
+                  <TokenChat 
+                    token={currentToken} 
+                    userBalance={userSolBalance} 
+                  />
+                )}
               </div>
             </div>
 
