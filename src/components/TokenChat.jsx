@@ -408,7 +408,7 @@ const [tradeAmount, setTradeAmount] = useState('');
       {/* --- HEADER --- */}
       <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="p-2 -ml-2 text-zinc-400 hover:text-white transition-colors">
+         <button onClick={onBack} className="p-2 -ml-2 text-zinc-400 hover:text-white transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
           <div className="flex flex-col">
