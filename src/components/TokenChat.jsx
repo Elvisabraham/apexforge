@@ -387,8 +387,8 @@ const [tradeAmount, setTradeAmount] = useState('');
   };
 
   return (
-    <div className="flex flex-col w-full h-[100dvh] bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative z-50">
-      
+<div className="flex flex-col w-full h-full bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative z-50">
+
       <style>{`
         * { -webkit-tap-highlight-color: transparent !important; }
         .scrollbar-hide::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
