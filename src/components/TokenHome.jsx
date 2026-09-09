@@ -848,7 +848,6 @@ export default function TokenHome({
             <div className="min-h-[600px] shrink-0 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-hidden">
               {/* Expanded Tab Navigation (Callouts First + Auto-Fit Grid) */}
        <div className="flex items-center w-full border-b border-white/5 bg-[#0a0b0e] shrink-0">
-  [
            {[
             { id: 'callouts', label: 'Callouts' },
             { id: 'trades', label: 'Trades' },
