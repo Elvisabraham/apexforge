@@ -16,19 +16,17 @@ export default function SwapModal({
   portfolio = [],
   flipSwap,
   handleExecuteSwap,
-  formatNumber,
-  formatBalance,
-  // ADDED A FALLBACK HERE SO IT NEVER CRASHES AGAIN!
-  getAssetColor = () => 'from-zinc-700 to-zinc-900' 
+  // 🛡️ BULLETPROOF FALLBACKS: If the parent forgets these, the app stays alive!
+  formatNumber = (val) => val || '0',
+  formatBalance = (val) => val ? Number(val).toFixed(2) : '0.00',
+  getAssetColor = () => 'from-zinc-700 to-zinc-900'
 }) {
   if (!isOpen) return null;
 
   const activePayAsset = portfolio.find(a => a.symbol === swapPayAsset) || { symbol: swapPayAsset || 'SOL', balance: 0 };
-// ... the rest of your code stays exactly the same
-
-  
   const activeReceiveAsset = portfolio.find(a => a.symbol === swapReceiveAsset) || { symbol: swapReceiveAsset || 'APEX', balance: 0 }; 
 
+// ... the rest of your code stays exactly the same
   useEffect(() => {
     if (isOpen && swapPayAsset === swapReceiveAsset) {
       setSwapReceiveAsset('APEX');
