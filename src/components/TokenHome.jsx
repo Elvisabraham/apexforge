@@ -9,6 +9,8 @@ import TokenAbout from './TokenAbout';
 import TokenChart from './TokenChart';
 import TokenTrades from './TokenTrades';
 import ShareModal from './ShareModal';
+import TokenMyTrades from './TokenMyTrades';
+import TokenTopTraders from './TokenTopTraders';
 import { 
   TrendingUp,
   Activity,
@@ -54,9 +56,25 @@ const TelegramIcon = ({ className = "w-3 h-3" }) => (
 );
 
 // Solana SVG Logo Component
+// 1. The original flat icon (for clean white/grey text)
 const SolIcon = ({ className = "w-2.5 h-2.5" }) => (
   <svg className={className} viewBox="0 0 397 311" fill="currentColor">
-    <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7zM64.6 3.8C67 1.4 70.3 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8zM332.4 120.9c-2.4-2.4-5.7-3.8-9.2-3.8H5.8c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" />
+    <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7zM64.6 3.8C67 1.4 70.3 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8zM333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" />
+  </svg>
+);
+
+// 2. The gradient icon (specifically for the preset buttons)
+const SolGradientIcon = ({ className = "w-2.5 h-2.5" }) => (
+  <svg className={className} viewBox="0 0 351 304" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="solana-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#9945FF" />
+        <stop offset="100%" stopColor="#14F195" />
+      </linearGradient>
+    </defs>
+    <path d="M68.8093 9.40058C73.1895 1.83609 81.3323 0 89.9678 0H339.636C348.877 0 354.218 10.4284 348.71 17.8447L282.88 106.632C278.475 112.574 270.835 115.011 263.266 115.011H12.0125C2.6953 115.011 -2.63945 104.381 2.94697 96.9538L68.8093 9.40058Z" fill="url(#solana-gradient)"/>
+    <path d="M282.882 197.368C278.475 191.426 270.835 188.989 263.268 188.989H12.0125C2.6953 188.989 -2.63945 199.619 2.94697 207.046L68.8095 294.599C73.1897 302.164 81.3325 304 89.968 304H339.638C348.878 304 354.219 293.572 348.711 286.155L282.882 197.368Z" fill="url(#solana-gradient)"/>
+    <path d="M348.711 115.011C354.219 107.595 348.878 97.1661 339.638 97.1661H89.968C81.3325 97.1661 73.1897 99.0022 68.8095 106.567L2.94697 194.12C-2.63945 201.547 2.6953 212.177 12.0125 212.177H263.268C270.835 212.177 278.475 209.74 282.882 203.798L348.711 115.011Z" fill="url(#solana-gradient)"/>
   </svg>
 );
 
@@ -735,33 +753,39 @@ export default function TokenHome({
 
             {/* 2. MARKET HUB TABS CARD (Sits naturally below the chart) */}
             <div className="min-h-[600px] shrink-0 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-hidden">
-              <div className="flex items-center overflow-x-auto border-b border-white/5 bg-[#0a0b0e] shrink-0 [&::-webkit-scrollbar]:hidden px-2">
-                {[
-                  { id: 'trades', label: 'Trades' },
-                  { id: 'callouts', label: 'Callouts' },
-                  { id: 'holders', label: 'Holders' },
-                  { id: 'about', label: 'About' }
-                ].map((tab) => (
-                  <button 
-                    key={tab.id} 
-                    type="button"
-                    onClick={() => setActiveHubTab(tab.id)} 
-                    className={`px-5 py-2.5 text-xs font-black tracking-widest uppercase transition-all whitespace-nowrap cursor-pointer relative ${
-                      activeHubTab === tab.id 
-                        ? 'text-[#00f2a1]' 
-                        : 'text-zinc-500 hover:text-zinc-300'
-                    }`}
-                  >
-                    {tab.label}
-                    {activeHubTab === tab.id && (
-                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00f2a1] shadow-[0_0_8px_rgba(0,242,161,0.5)]" />
-                    )}
-                  </button>
-                ))}
-              </div>
+              {/* Expanded Tab Navigation (Callouts First + Auto-Fit Grid) */}
+       <div className="flex items-center w-full border-b border-white/5 bg-[#0a0b0e] shrink-0">
+  {[
+    { id: 'callouts', label: 'Callouts' },
+    { id: 'trades', label: 'Trades' },
+    { id: 'my_trades', label: 'My Trades' },
+    { id: 'top_traders', label: 'Top Traders' },
+    { id: 'holders', label: 'Holders' },
+    { id: 'about', label: 'About' }
+  ].map((tab) => (
+    <button 
+      key={tab.id} 
+      type="button"
+      onClick={() => setActiveHubTab(tab.id)} 
+      className={`flex-1 py-3.5 text-[10px] xl:text-[11px] font-black tracking-widest uppercase transition-all whitespace-nowrap cursor-pointer relative flex justify-center items-center ${
+        activeHubTab === tab.id 
+          ? 'text-[#00f2a1]' 
+          : 'text-zinc-500 hover:text-zinc-300'
+      }`}
+    >
+      {tab.label}
+      {activeHubTab === tab.id && (
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00f2a1] shadow-[0_0_8px_rgba(0,242,161,0.5)]" />
+      )}
+    </button>
+  ))}
+</div>
 
+              {/* Tab Content Rendering */}
               <div className="flex-1 overflow-y-auto bg-[#0c0d10] custom-scrollbar">
                 {activeHubTab === 'trades' && typeof TokenTrades !== 'undefined' && <TokenTrades currentToken={currentToken} />}
+                {activeHubTab === 'my_trades' && typeof TokenMyTrades !== 'undefined' && <TokenMyTrades currentToken={currentToken} />}
+                {activeHubTab === 'top_traders' && typeof TokenTopTraders !== 'undefined' && <TokenTopTraders currentToken={currentToken} />}
                 {activeHubTab === 'callouts' && typeof TokenCallouts !== 'undefined' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
                 {activeHubTab === 'holders' && typeof TokenHolders !== 'undefined' && <TokenHolders top10Percentage={currentToken?.top10} />}
                 {activeHubTab === 'about' && typeof TokenAbout !== 'undefined' && <TokenAbout currentToken={currentToken} />}
@@ -771,104 +795,127 @@ export default function TokenHome({
           </div>
         </div>
 
-        {/* ===================================================================== */}
+    {/* ===================================================================== */}
         {/* RIGHT SIDEBAR (DEDICATED EXECUTION ZONE) */}
+        {/* ===================================================================== */}
+        <div className="col-span-3 bg-[#121318] border border-white/5 rounded-xl flex flex-col h-full overflow-hidden">
+          
+          {/* BONDING CURVE (Fixed Top) */}
+          <div className="p-3 border-b border-white/5 bg-[#0a0b0e] shrink-0 font-mono">
+            <div className="flex justify-between items-center text-xs mb-1.5">
+              <span className="text-zinc-400 font-semibold">Bonding Curve</span>
+              <span className="text-[#00f2a1] font-bold">{currentToken?.bondingProgress ?? 72}%</span>
+            </div>
+            <div className="w-full bg-[#1c1d24] rounded-full h-1.5 overflow-hidden shadow-inner">
+              <div 
+                className="bg-[#00f2a1] h-full rounded-full transition-all duration-500 shadow-[0_0_8px_#00f2a1]" 
+                style={{ width: `${Math.min(currentToken?.bondingProgress ?? 72, 100)}%` }}
+              />
+            </div>
+            <div className="flex justify-between items-center text-[9px] text-zinc-500 mt-1.5">
+              <span className="flex items-center">
+                Graduate at <DexDollarIcon className="w-2.5 h-2.5 mx-0.5" strokeWidth={2}/> {currentToken?.targetMcap || '69k'} mcap
+              </span>
+              <span>{(currentToken?.bondingProgress ?? 72) >= 100 ? 'Graduated' : 'In Progress'}</span>
+            </div>
+          </div>
 
-          {/* ===================================================================== */}
-          {/* RIGHT SIDEBAR (DEDICATED EXECUTION ZONE) */}
-          {/* ===================================================================== */}
-          <div className="col-span-3 bg-[#121318] border border-white/5 rounded-xl flex flex-col h-full overflow-hidden">
-            
-            {/* BONDING CURVE */}
-            <div className="p-3 border-b border-white/5 bg-[#0a0b0e] shrink-0 font-mono">
-              <div className="flex justify-between items-center text-xs mb-1.5">
-                <span className="text-zinc-400 font-semibold">Bonding Curve</span>
-                <span className="text-[#00f2a1] font-bold">{currentToken?.bondingProgress ?? 72}%</span>
+          {/* SCROLLABLE SWAP WIDGET (Button is now unpinned inside here) */}
+          <div className="flex-1 flex flex-col overflow-y-auto p-4 space-y-4 [&::-webkit-scrollbar]:hidden">
+            <div className="flex gap-1 bg-[#1a1b22] p-1 rounded-xl shrink-0">
+              <button 
+                type="button"
+                onClick={() => { setTradeMode('buy'); setTradeAmount(''); }} 
+                className={`flex-1 py-2 text-xs font-black rounded-lg transition-colors cursor-pointer ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow' : 'text-zinc-500 hover:text-white'}`}
+              >
+                Buy
+              </button>
+              <button 
+                type="button"
+                onClick={() => { setTradeMode('sell'); setTradeAmount(''); }} 
+                className={`flex-1 py-2 text-xs font-black rounded-lg transition-colors cursor-pointer ${tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow' : 'text-zinc-500 hover:text-white'}`}
+              >
+                Sell
+              </button>
+            </div>
+
+            <div className="shrink-0">
+              <div className="flex justify-between text-[10px] text-zinc-500 font-bold mb-1.5 px-1 uppercase tracking-wider">
+                <span>Amount</span>
               </div>
-              <div className="w-full bg-[#1c1d24] rounded-full h-1.5 overflow-hidden shadow-inner">
-                <div 
-                  className="bg-[#00f2a1] h-full rounded-full transition-all duration-500 shadow-[0_0_8px_#00f2a1]" 
-                  style={{ width: `${Math.min(currentToken?.bondingProgress ?? 72, 100)}%` }}
+              
+              {/* Clean Input Field (Forced standard font to kill the slashed zero) */}
+              <div className="bg-[#0c0d10] border border-white/5 rounded-xl flex items-center px-4 py-3.5 focus-within:border-[#00f2a1]/50 transition-colors shadow-inner">
+                <input 
+                  type="text" 
+                  placeholder="0.0" 
+                  value={tradeAmount} 
+                  onChange={(e) => setTradeAmount(e.target.value.replace(/[^0-9.]/g, ''))} 
+                  className="w-full bg-transparent outline-none text-2xl font-black text-white placeholder-zinc-700 font-sans normal-nums" 
                 />
+                <div className="flex items-center gap-2 pl-4 border-l border-white/10 shrink-0">
+                  <div className="w-5 h-5 flex items-center justify-center rounded-full bg-black/50 overflow-hidden shrink-0">
+                    {/* Flat icon perfectly colored white */}
+                    {tradeMode === 'buy' ? <SolIcon className="w-3 h-3 text-white" /> : <img src={currentToken.imagePreview} className="w-full h-full object-cover" alt="" />}
+                  </div>
+                  <span className="text-sm font-black text-white">{tradeMode === 'buy' ? 'SOL' : currentToken.symbol}</span>
+                </div>
               </div>
-              <div className="flex justify-between items-center text-[9px] text-zinc-500 mt-1.5">
-                <span className="flex items-center">
-                  Graduate at <DexDollarIcon className="w-2.5 h-2.5 mx-0.5" strokeWidth={2}/> {currentToken?.targetMcap || '69k'} mcap
-                </span>
-                <span>{(currentToken?.bondingProgress ?? 72) >= 100 ? 'Graduated' : 'In Progress'}</span>
+
+              {/* THE 6-BUTTON PRESET GRID */}
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                {[0.1, 0.25, 0.5, 1, 5].map((amt) => (
+                  <button
+                    key={amt}
+                    type="button"
+                    onClick={() => setTradeAmount(amt.toString())}
+                    className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 hover:border-white/20 py-2.5 rounded-lg text-[11px] font-black text-zinc-300 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                  >
+                    {amt} 
+                    {/* Changed from green to clean solid grey */}
+                    <SolIcon className="w-2.5 h-2.5 text-zinc-400" />
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={handleMaxClick}
+                  className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 hover:border-white/20 py-2.5 rounded-lg text-[11px] font-black text-zinc-300 transition-colors cursor-pointer shadow-sm"
+                >
+                  Max
+                </button>
               </div>
             </div>
 
-            {/* DEDICATED SWAP WIDGET */}
-            <div className="flex-1 flex flex-col overflow-y-auto p-3 space-y-4 [&::-webkit-scrollbar]:hidden">
-              <div className="flex gap-1 bg-[#1a1b22] p-1 rounded-lg">
-                <button 
-                  type="button"
-                  onClick={() => { setTradeMode('buy'); setTradeAmount(''); }} 
-                  className={`flex-1 py-1.5 text-xs font-black rounded-md transition-colors cursor-pointer ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow' : 'text-zinc-500 hover:text-white'}`}
-                >
-                  Buy
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => { setTradeMode('sell'); setTradeAmount(''); }} 
-                  className={`flex-1 py-1.5 text-xs font-black rounded-md transition-colors cursor-pointer ${tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow' : 'text-zinc-500 hover:text-white'}`}
-                >
-                  Sell
-                </button>
-              </div>
+            {/* Wallet Row */}
+            <div className="flex justify-between items-center px-1 shrink-0 mt-2">
+              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+                Wallet Balance
+              </span>
+              <span className="text-[11px] font-black text-white flex items-center gap-1">
+                {tradeMode === 'buy' ? (
+                  /* Changed to text-white to completely remove the green */
+                  <><SolIcon className="w-3 h-3 text-white" /> {(userSolBalance || 0).toFixed(4)}</>
+                ) : (
+                  `0 ${currentToken.symbol}`
+                )}
+              </span>
+            </div>
 
-              <div>
-                <div className="flex justify-between text-[10px] text-zinc-500 font-bold mb-1 px-1 uppercase tracking-wider">
-                  <span>Amount to {tradeMode}</span>
-                  <span>{tradeMode === 'buy' ? 'SOL' : currentToken.symbol}</span>
-                </div>
-                <div className="bg-[#0c0d10] border border-white/5 rounded-lg flex items-center px-3 py-2.5 focus-within:border-[#00f2a1]/50">
-                  <input 
-                    type="text" 
-                    placeholder="0.0" 
-                    value={tradeAmount} 
-                    onChange={(e) => setTradeAmount(e.target.value.replace(/[^0-9.]/g, ''))} 
-                    className="w-full bg-transparent outline-none text-xl font-mono font-black text-white placeholder-zinc-700" 
-                  />
-                </div>
-              </div>
-
+            <div className="flex flex-col gap-2 p-3.5 bg-[#0A0A0A] border border-white/5 rounded-xl shadow-inner shrink-0">
               <div className="flex justify-between items-center">
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
-                  Wallet: {tradeMode === 'buy' ? `${(userSolBalance || 0).toFixed(4)} SOL` : `0 ${currentToken.symbol}`}
-                </span>
-                <div className="flex gap-2">
-                  <button 
-                    type="button"
-                    onClick={handleHalfClick} 
-                    className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 px-2 py-1 rounded-md text-[9px] font-black text-zinc-300 uppercase cursor-pointer"
-                  >
-                    Half
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={handleMaxClick} 
-                    className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 px-2 py-1 rounded-md text-[9px] font-black text-zinc-300 uppercase cursor-pointer"
-                  >
-                    Max
-                  </button>
-                </div>
+                <span className="text-[10px] font-bold text-zinc-500 uppercase">You Receive (Est.)</span>
+                <span className={`text-xs font-black ${tradeMode === 'buy' ? 'text-[#00f2a1]' : 'text-[#F23645]'}`}>≈ {estOutputText}</span>
               </div>
-
-              <div className="flex flex-col gap-2 p-3 bg-[#0A0A0A] border border-white/5 rounded-xl shadow-inner">
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase">You Receive (Est.)</span>
-                  <span className={`text-xs font-black ${tradeMode === 'buy' ? 'text-[#089981]' : 'text-[#F23645]'}`}>≈ {estOutputText}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase">Price Impact</span>
-                  <span className="text-[10px] font-black text-zinc-400">~{estPriceImpact}%</span>
-                </div>
+              <div className="flex justify-between items-center mt-1">
+                <span className="text-[10px] font-bold text-zinc-500 uppercase">Price Impact</span>
+                <span className="text-[10px] font-black text-zinc-400">~{estPriceImpact}%</span>
               </div>
+            </div>
 
+            {/* ACTION BUTTON (Unpinned, Slimmer, placed naturally at the end) */}
+            <div className="pt-2 shrink-0 mb-4">
               {(userSolBalance || 0) < 0.005 && tradeMode === 'buy' ? (
-                <button disabled className="w-full py-3 rounded-xl font-black uppercase text-xs tracking-widest bg-zinc-800 text-zinc-500 cursor-not-allowed mt-auto">
+                <button disabled className="w-full py-3 rounded-xl font-black uppercase text-xs tracking-widest bg-zinc-800 text-zinc-500 cursor-not-allowed shadow-sm">
                   Insufficient SOL
                 </button>
               ) : (
@@ -876,16 +923,16 @@ export default function TokenHome({
                   type="button"
                   onClick={executeTokenTrade} 
                   disabled={!cleanNumericAmount || isProcessing} 
-                  className={`w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-auto cursor-pointer ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black hover:bg-[#00d990]' : 'bg-[#F23645] text-white hover:bg-[#e02a39]'}`}
+                  className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black hover:bg-[#00d990]' : 'bg-[#F23645] text-white hover:bg-[#e02a39]'}`}
                 >
                   {isProcessing ? 'Confirming...' : (tradeMode === 'buy' ? 'PLACE BUY ORDER' : `SELL ${currentToken?.symbol}`)}
                 </button>
               )}
             </div>
-
+            
           </div>
-
         </div>
       </div>
+    </div>
   );
 }
