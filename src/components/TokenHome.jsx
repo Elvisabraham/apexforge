@@ -525,28 +525,25 @@ export default function TokenHome({
       {/* NATIVE LOCAL MOBILE CHAT DRAWER */}
           <div className={`fixed inset-0 z-[200] lg:hidden transition-opacity duration-300 ${isMobileChatOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
             
-            {/* Dark Background Overlay */}
+            {/* Dark Background Overlay (Tapping this also closes the drawer) */}
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMobileChatOpen(false)} />
             
-            {/* DRAWER: Absolutely anchored exactly 60px from the top! (Replaced calc and flex) */}
-            <div className={`absolute left-0 right-0 bottom-0 top-[60px] bg-[#0c0d10] border-t border-white/10 rounded-t-3xl p-4 flex flex-col z-10 transition-transform duration-300 ${isMobileChatOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+            {/* DRAWER */}
+            <div 
+              className={`absolute bottom-0 left-0 w-full bg-[#0c0d10] border-t border-white/10 rounded-t-3xl pt-2 pb-0 flex flex-col z-10 transition-transform duration-300 ${isMobileChatOpen ? 'translate-y-0' : 'translate-y-full'}`}
+              style={{ height: 'calc(100vh - 60px)' }}
+            >
               
-              {/* Drag Handle */}
-              <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-3 shrink-0" />
-
-              {/* Drawer Header */}
-              <div className="flex justify-between items-center pb-3 border-b border-white/5 shrink-0">
-                <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#00f2a1] animate-pulse" />
-                  {currentToken?.symbol} Trench Chat
-                </h3>
-                <button onClick={() => setIsMobileChatOpen(false)} className="p-1 text-zinc-500 hover:text-white transition-colors">
-                  <X className="w-4 h-4" />
-                </button>
+              {/* Drag Handle (Now acts as the massive close button) */}
+              <div 
+                className="w-full flex justify-center py-2 pb-3 cursor-pointer shrink-0"
+                onClick={() => setIsMobileChatOpen(false)}
+              >
+                <div className="w-16 h-1.5 bg-white/20 rounded-full" />
               </div>
 
-              {/* Chat Container */}
-              <div className="flex-1 w-full overflow-hidden pt-2 flex flex-col">
+              {/* Chat Container (Outer header is gone, TokenChat takes over!) */}
+              <div className="flex-1 w-full overflow-hidden flex flex-col rounded-t-2xl">
                 <TokenChat 
                   token={currentToken} 
                   onBack={() => setIsMobileChatOpen(false)} 
