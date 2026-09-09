@@ -523,11 +523,13 @@ export default function TokenHome({
       </div>
 
       {/* NATIVE LOCAL MOBILE CHAT DRAWER */}
-          <div className={`fixed inset-0 z-[100] lg:hidden flex items-end transition-opacity duration-300 ${isMobileChatOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+          <div className={`fixed inset-0 z-[200] lg:hidden transition-opacity duration-300 ${isMobileChatOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+            
+            {/* Dark Background Overlay */}
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMobileChatOpen(false)} />
             
-            {/* Drawer Container: Added flex-col so items stack vertically instead of side-by-side */}
-            <div className={`w-full h-[calc(100%-60px)] bg-[#0c0d10] border-t border-white/10 rounded-t-3xl p-4 flex flex-col relative z-10 transition-transform duration-300 ${isMobileChatOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+            {/* DRAWER: Absolutely anchored exactly 60px from the top! (Replaced calc and flex) */}
+            <div className={`absolute left-0 right-0 bottom-0 top-[60px] bg-[#0c0d10] border-t border-white/10 rounded-t-3xl p-4 flex flex-col z-10 transition-transform duration-300 ${isMobileChatOpen ? 'translate-y-0' : 'translate-y-full'}`}>
               
               {/* Drag Handle */}
               <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-3 shrink-0" />
@@ -543,7 +545,7 @@ export default function TokenHome({
                 </button>
               </div>
 
-              {/* Chat Container: w-full flex-1 flex flex-col */}
+              {/* Chat Container */}
               <div className="flex-1 w-full overflow-hidden pt-2 flex flex-col">
                 <TokenChat 
                   token={currentToken} 
