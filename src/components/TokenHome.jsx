@@ -101,7 +101,7 @@ export default function TokenHome({
   handleExecuteTrade = () => {}
 }) {
   // Mobile States
-  const [mobileActivityTab, setMobileActivityTab] = useState('trades');
+ const [mobileActivityTab, setMobileActivityTab] = useState('callouts');
   const [showMobileMcap, setShowMobileMcap] = useState(true);
   const [isMobileTradeOpen, setIsMobileTradeOpen] = useState(false);
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
