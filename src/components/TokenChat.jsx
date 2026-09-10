@@ -5,6 +5,12 @@ import { supabase } from '../supabaseClient';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 
+const DexDollarIcon = ({ className, strokeWidth }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={strokeWidth || 2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+  </svg>
+);
+
 export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile, liveUsdPrice, priceChangePct, isPositiveChange }) {
  
   const [displayMode, setDisplayMode] = useState('price'); 
