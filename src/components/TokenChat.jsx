@@ -14,39 +14,34 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [realPriceChangePct, setRealPriceChangePct] = useState(priceChangePct || 0);
   const [realIsPositive, setRealIsPositive] = useState(isPositiveChange || true);
 
- useEffect(() => {
-    if (!token?.mintAddress) return;
+   useEffect(() => {
+    if (!token) return;
 
     const fetchLiveTicker = async () => {
       const { data: trades } = await supabase
         .from('trades')
         .select('sol_amount, type')
-        .eq('token_mint', token.mintAddress);
+        .eq('token_mint', token?.mintAddress || token?.mint || token?.address);
 
       if (trades) {
-        const currentSolPrice = 76.50;
-
-       // 🧮 TRUE NET RESERVES (MINUS 1% SMART CONTRACT PROTOCOL FEE!)
+        const currentSolProfile = 76.50;
         const rawNetSol = trades.reduce((sum, t) => {
           const amount = parseFloat(t.sol_amount) || 0;
           return t.type === 'sell' ? sum - amount : sum + amount;
         }, 0);
 
-        const netSolInCurve = rawNetSol * 0.99; // 🚀 Deduct the 1% fee so it matches TokenHome perfectly!
-
-        // 2. 🚀 EXACT AMM BONDING CURVE MATH (Mirrors TokenHome)
+        const netSolInCurve = rawNetSol * 0.99;
         const currentVirtualSol = (30 + netSolInCurve) * 1e9;
         const invariantK = (30 * 1e9) * (1_000_000_000 * 1e6);
         const currentVirtualTokens = invariantK / currentVirtualSol;
         
         const calculatedSpotPriceSol = (currentVirtualSol / 1e9) / (currentVirtualTokens / 1e6);
-        const livePriceUsd = calculatedSpotPriceSol * currentSolPrice;
+        const livePriceUsd = calculatedSpotPriceSol * currentSolProfile;
 
-        // 3. Calculate True Base Price for Accurate Percentage
         const baseVirtualSol = 30 * 1e9;
         const baseVirtualTokens = invariantK / baseVirtualSol;
         const baseSpotPriceSol = (baseVirtualSol / 1e9) / (baseVirtualTokens / 1e6);
-        const basePriceUsd = baseSpotPriceSol * currentSolPrice;
+        const basePriceUsd = baseSpotPriceSol * currentSolProfile;
         
         const pctChange = ((livePriceUsd - basePriceUsd) / basePriceUsd) * 100;
 
@@ -62,14 +57,16 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
       .channel('chat-ticker')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'trades', filter: `token_mint=eq.${token?.mint || token?.address}` },
+        { event: 'INSERT', schema: 'public', table: 'trades', filter: `token_mint=eq.${token?.mintAddress || token?.mint || token?.address}` },
         () => {
           fetchLiveTicker();
         }
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { 
+      supabase.removeChannel(channel); 
+    };
   }, [token]);
 
   // 🚀 1. Set up independent local states for the balances
@@ -83,8 +80,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   useEffect(() => {
     let isMounted = true;
     const fetchMyTokenBalance = async () => {
-      // Need displayToken to exist for the mint address! 
-      // (Make sure displayToken is defined in your file, or use token.mintAddress if displayToken isn't defined yet)
       const targetMint = token?.mintAddress || token?.mint_address || token?.mint;
       
       if (!publicKey || !connection || !targetMint) return;
@@ -117,9 +112,9 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [fullscreenImage, setFullscreenImage] = useState(null);
 
   // INLINE TRADE MODAL STATE
-const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
-const [tradeMode, setTradeMode] = useState('buy');
-const [tradeAmount, setTradeAmount] = useState('');
+  const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
+  const [tradeMode, setTradeMode] = useState('buy');
+  const [tradeAmount, setTradeAmount] = useState('');
 
   // Identity Context
   const myName = `@${(userProfile?.username || 'User').replace('@', '')}`;
@@ -129,12 +124,11 @@ const [tradeAmount, setTradeAmount] = useState('');
   // 🚀 SUPABASE LIVE CHAT ENGINE
   const [messages, setMessages] = useState([]);
   const [isChatLoading, setIsChatLoading] = useState(true);
-  const tokenMint = token?.mint || token?.address || token?.symbol; // Fallback identifier
+  const tokenMint = token?.mint || token?.address || token?.symbol;
 
   useEffect(() => {
     if (!tokenMint) return;
 
-    // 1. Fetch historical messages
     const fetchMessages = async () => {
       setIsChatLoading(true);
       const { data, error } = await supabase
@@ -149,7 +143,6 @@ const [tradeAmount, setTradeAmount] = useState('');
 
     fetchMessages();
 
-    // 2. Subscribe to live WebSockets (Now listens for both INSERTS and UPDATES)
     const channel = supabase
       .channel(`chat:${tokenMint}`)
       .on(
@@ -159,7 +152,6 @@ const [tradeAmount, setTradeAmount] = useState('');
           if (payload.eventType === 'INSERT') {
             setMessages((prev) => [...prev, payload.new]);
           } else if (payload.eventType === 'UPDATE') {
-            // 🚀 Replaces the old message with the newly updated message (containing live reactions)
             setMessages((prev) => prev.map(m => m.id === payload.new.id ? payload.new : m));
           }
         }
@@ -169,7 +161,6 @@ const [tradeAmount, setTradeAmount] = useState('');
     return () => { supabase.removeChannel(channel); };
   }, [tokenMint]);
 
-  // 🚀 FORMATTER HELPER: Adds thousand commas while preserving decimals
   const formatInputWithCommas = (val) => {
     if (!val && val !== 0) return '';
     const parts = val.toString().replace(/,/g, '').split('.');
@@ -177,7 +168,6 @@ const [tradeAmount, setTradeAmount] = useState('');
     return parts.join('.');
   };
 
-  // PERMANENT MEMORY CACHE
   const rawProgress = token?.progress || 0;
   const initialMcap = parseFloat((token?.mcap || token?.marketCap || '$10.0K').replace(/[^0-9.]/g, ''));
   const isActuallyGraduated = token?.isGraduated === true || rawProgress >= 100 || initialMcap >= 69;
@@ -211,25 +201,21 @@ const [tradeAmount, setTradeAmount] = useState('');
     localStorage.setItem(localCacheKey, JSON.stringify({ curveState, userBalanceSol, userTokenBalance }));
   }, [curveState, userBalanceSol, userTokenBalance, localCacheKey]);
 
-  // 🚀 Map incoming props to match your component variables
   const userPnlPercent = token?.change || '0.0%';
   const isPnlPositive = !userPnlPercent.includes('-');
 
-  // 🚀 SANITIZED PRICE IMPACT: Strips commas before running float calculations
   const cleanNumericAmount = tradeAmount ? parseFloat(tradeAmount.toString().replace(/,/g, '')) : 0;
   const rawImpact = !isNaN(cleanNumericAmount) && cleanNumericAmount > 0 
     ? (cleanNumericAmount * (tradeMode === 'buy' ? 0.12 : 0.08)) 
     : 0;
   const dynamicPriceImpact = Math.min(99.99, Math.max(0, rawImpact)).toFixed(2);
 
-     const formatProPrice = (val) => {
+  const formatProPrice = (val) => {
     if (!val && val !== 0) return '';
     const str = val.toString();
-    
     if (str.startsWith('$')) {
       return (
         <>
-          {/* Matches the exact Portfolio Balance style: lighter grey, clean weight */}
           <span className="text-zinc-400 font-semibold mr-[2px]">$</span>
           {str.slice(1)}
         </>
@@ -255,7 +241,6 @@ const [tradeAmount, setTradeAmount] = useState('');
     { id: 5, name: 'MoonShot_99', address: '5mN7...1wQ9', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Moon', holding: '1.2%', value: '$3,600' },
   ];
 
-  // FOMO BUY BOT INJECTION
   useEffect(() => {
     const timer = setTimeout(() => {
       const fomoMessage = {
