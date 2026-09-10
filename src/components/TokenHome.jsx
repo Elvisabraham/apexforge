@@ -11,6 +11,7 @@ import TokenTrades from './TokenTrades';
 import ShareModal from './ShareModal';
 import TokenMyTrades from './TokenMyTrades';
 import TokenTopTraders from './TokenTopTraders';
+import TradeWidget from './TradeWidget';
 import { 
   TrendingUp,
   Activity,
