@@ -166,6 +166,29 @@ export default function TradeWidget({
         </div>
       </div>
 
+      {/* YOUR HOLDINGS SUMMARY */}
+      <div className="flex justify-between items-center p-4 bg-[#0A0A0A] border border-white/5 rounded-xl mb-4 shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 flex items-center justify-center rounded-full overflow-hidden border border-white/10 bg-zinc-800 shrink-0">
+            {displayToken?.image ? (
+              <img src={displayToken.image} alt="token" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-[10px]">🪙</span>
+            )}
+          </div>
+          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">My Position</span>
+        </div>
+        
+        <div className="flex flex-col items-end">
+          <span className="text-sm font-black text-white">
+            {(userTokenBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} <span className="text-zinc-400">{displayToken?.symbol || 'TKN'}</span>
+          </span>
+          <span className={`text-[11px] font-bold ${(userTokenBalance || 0) > 0 ? 'text-[#00FF66]' : 'text-zinc-600'}`}>
+            ${((userTokenBalance || 0) * (curveState?.price || 0)).toFixed(2)}
+          </span>
+        </div>
+      </div>
+
       {/* ESTIMATES OUT */}
       <div className="flex flex-col gap-2 p-4 bg-[#0A0A0A] border border-white/5 rounded-xl mb-6 shadow-inner">
         <div className="flex justify-between items-center">
