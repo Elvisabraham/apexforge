@@ -412,13 +412,13 @@ export default function TokenHome({
             </div>
           </div>
 
-          {/* ========================================================================= */}
+           {/* ========================================================================= */}
           {/* ACTIVITY TABS */}
           {/* ========================================================================= */}
           <div className="flex border-b border-white/5 bg-[#0a0b0e] sticky top-[60px] z-20 shadow-md">
             {[
-              { id: 'trades', label: 'Trades' },
-              { id: 'callouts', label: 'Callouts' },
+              { id: 'callouts', label: 'Callouts' },  // 🚀 MOVED TO FIRST
+              { id: 'trades', label: 'Trades' },      // 🚀 MOVED TO SECOND
               { id: 'holders', label: 'Holders' },
               { id: 'about', label: 'About' }
             ].map((tab) => (
