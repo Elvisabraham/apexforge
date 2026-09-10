@@ -637,7 +637,6 @@ export default function TokenHome({
 
      {/* RESTORED: THESE CLOSING TAGS FIX YOUR ENTIRE PAGE CRASH */}
       </div>
-    );
     
      
       {/* ===================================================================== */}
