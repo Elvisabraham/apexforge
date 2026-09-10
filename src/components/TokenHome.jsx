@@ -517,14 +517,31 @@ export default function TokenHome({
               <div className="w-12 h-1.5 bg-white/20 rounded-full relative pointer-events-none" />
             </div>
             
+            {/* DRAWER HEADER */}
             <div className="flex justify-between items-center mb-5">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden bg-white/5 flex items-center justify-center text-sm shrink-0 shadow-inner">
                   {currentToken?.imagePreview ? <img src={currentToken.imagePreview} className="w-full h-full object-cover" /> : currentToken?.icon}
                 </div>
-                <h3 className="text-sm font-black text-white uppercase tracking-widest">{currentToken?.symbol}</h3>
+                <h3 className="text-sm font-black text-white uppercase tracking-widest">TRADE {currentToken?.symbol}</h3>
               </div>
               <button onClick={() => setIsMobileTradeOpen(false)} className="text-zinc-500 hover:text-white bg-white/5 p-1.5 rounded-full"><X className="w-4 h-4"/></button>
+            </div>
+            
+            {/* 🚀 UNIVERSAL PRO TRADE WIDGET INJECTED HERE */}
+            <div className="w-full">
+              <TradeWidget 
+                displayToken={currentToken}
+                tradeMode={tradeMode}
+                setTradeMode={setTradeMode}
+                tradeAmount={tradeAmount}
+                setTradeAmount={setTradeAmount}
+                userBalanceSol={typeof userSolBalance !== 'undefined' ? userSolBalance : 0}
+                userTokenBalance={typeof userTokenBalance !== 'undefined' ? userTokenBalance : 0}
+                handleExecuteTrade={typeof executeTokenTrade === 'function' ? executeTokenTrade : null}
+                isProcessing={isProcessing}
+                curveState={typeof curveState !== 'undefined' ? curveState : null}
+              />
             </div>
             
             <div className="flex gap-1 bg-[#1a1b22] p-1 rounded-lg mb-3 shadow-inner">
