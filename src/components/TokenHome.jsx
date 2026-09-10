@@ -544,56 +544,6 @@ export default function TokenHome({
                 curveState={typeof curveState !== 'undefined' ? curveState : null}
               />
             </div>
-            
-            <div className="flex gap-1 bg-[#1a1b22] p-1 rounded-lg mb-3 shadow-inner">
-              <button onClick={() => { setTradeMode('buy'); setTradeAmount(''); }} className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-md transition-all ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow-sm' : 'text-zinc-500'}`}>Buy</button>
-              <button onClick={() => { setTradeMode('sell'); setTradeAmount(''); }} className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-md transition-all ${tradeMode === 'sell' ? 'bg-[#F23645] text-white shadow-sm' : 'text-zinc-500'}`}>Sell</button>
-            </div>
-            
-            <div className="bg-[#050505] border border-white/5 rounded-lg px-4 py-3 mb-3 flex items-center justify-between shadow-inner focus-within:border-[#00f2a1]/50">
-              <div className="flex flex-col flex-1">
-                <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-0.5">Amount</span>
-                <input type="text" inputMode="decimal" placeholder="0.0" value={tradeAmount} onChange={(e) => setTradeAmount(e.target.value.replace(/[^0-9.]/g, ''))} className="bg-transparent text-2xl font-black text-white w-full outline-none font-mono tracking-tight" />
-              </div>
-              <span className="text-xs font-black text-white font-mono bg-[#1a1b22] px-3 py-1.5 rounded-md">
-                {tradeMode === 'buy' ? 'SOL' : currentToken?.symbol}
-              </span>
-            </div>
-            
-            <div className="flex justify-between items-center mb-4">
-               <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
-                 Wallet: {tradeMode === 'buy' ? `${(userSolBalance || 0).toFixed(4)} SOL` : `0 ${currentToken?.symbol}`}
-               </span>
-               <div className="flex gap-2">
-                 <button onClick={handleHalfClick} className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 px-3 py-1.5 rounded-md text-[10px] font-black text-zinc-300 shadow-sm uppercase">Half</button>
-                 <button onClick={handleMaxClick} className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 px-3 py-1.5 rounded-md text-[10px] font-black text-zinc-300 shadow-sm uppercase">Max</button>
-               </div>
-            </div>
-
-            <div className="flex flex-col gap-2 p-3 bg-[#0A0A0A] border border-white/5 rounded-xl mb-4 shadow-inner">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold text-zinc-500 uppercase">You Receive (Est.)</span>
-                <span className={`text-xs font-black ${tradeMode === 'buy' ? 'text-[#089981]' : 'text-[#F23645]'}`}>≈ {estOutputText}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold text-zinc-500 uppercase">Price Impact</span>
-                <span className="text-[10px] font-black text-zinc-400">~{estPriceImpact}%</span>
-              </div>
-            </div>
-            
-            {(userSolBalance || 0) < 0.005 && tradeMode === 'buy' ? (
-              <button disabled className="w-full py-3.5 rounded-xl font-black uppercase text-xs tracking-widest bg-zinc-800 text-zinc-500 cursor-not-allowed">
-                Insufficient SOL for gas
-              </button>
-            ) : (
-              <button 
-                onClick={executeTokenTrade} 
-                disabled={!cleanNumericAmount || isProcessing}
-                className={`w-full py-3.5 rounded-xl font-black uppercase text-xs tracking-widest transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black shadow-[0_0_15px_rgba(0,242,161,0.2)]' : 'bg-[#F23645] text-white shadow-[0_0_15px_rgba(242,54,69,0.2)]'}`}
-              >
-                {isProcessing ? 'Confirming...' : (tradeMode === 'buy' ? 'PLACE BUY ORDER' : 'EXECUTE SELL')}
-              </button>
-            )}
           </div>
         </div>
 
