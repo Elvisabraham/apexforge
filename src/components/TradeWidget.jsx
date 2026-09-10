@@ -166,32 +166,6 @@ export default function TradeWidget({
         </div>
       </div>
 
-      {/* YOUR HOLDINGS SUMMARY */}
-      <div className="flex justify-between items-center p-4 bg-[#0A0A0A] border border-white/5 rounded-xl mb-4 shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 flex items-center justify-center rounded-full overflow-hidden border border-white/10 bg-zinc-800 shrink-0">
-            {displayToken?.image ? (
-              <img src={displayToken.image} alt="token" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-[10px]">🪙</span>
-            )}
-          </div>
-          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">My Position</span>
-        </div>
-        
-        {/* 🚀 FLIPPED: USD Value Top, Token Quantity Bottom */}
-        <div className="flex flex-col items-end">
-          <span className={`text-sm font-black flex items-center ${(userTokenBalance || 0) > 0 ? 'text-[#00f2a1]' : 'text-zinc-500'}`}>
-            {/* Custom Dollar Icon injected */}
-            <svg className="w-3.5 h-3.5 mr-[2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
-            {((userTokenBalance || 0) * (curveState?.price || 0)).toFixed(2)}
-          </span>
-          <span className="text-[11px] font-bold text-white mt-0.5">
-            {(userTokenBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} <span className="text-zinc-400">{displayToken?.symbol || 'TKN'}</span>
-          </span>
-        </div>
-      </div>
-
       {/* ESTIMATES OUT */}
       <div className="flex flex-col gap-2 p-4 bg-[#0A0A0A] border border-white/5 rounded-xl mb-6 shadow-inner">
         <div className="flex justify-between items-center">
