@@ -846,34 +846,34 @@ export default function TokenHome({
 
             {/* 2. MARKET HUB TABS CARD (Sits naturally below the chart) */}
             <div className="min-h-[600px] shrink-0 bg-[#121318] border border-white/5 rounded-xl flex flex-col overflow-hidden">
-              {/* Expanded Tab Navigation (Callouts First + Auto-Fit Grid) */}
-       <div className="flex items-center w-full border-b border-white/5 bg-[#0a0b0e] shrink-0">
-           {[
-            { id: 'callouts', label: 'Callouts' },
-            { id: 'trades', label: 'Trades' },
-            { id: 'my_trades', label: 'My Trades' },
-            { id: 'top_traders', label: 'Top Traders' },
-            { id: 'holders', label: 'Holders' },
-            { id: 'about', label: 'About' },
-            { id: 'chat', label: 'Chat' } 
-          ].map((tab) => (
-    <button 
-      key={tab.id} 
-      type="button"
-      onClick={() => setActiveHubTab(tab.id)} 
-      className={`flex-1 py-3.5 text-[10px] xl:text-[11px] font-black tracking-widest uppercase transition-all whitespace-nowrap cursor-pointer relative flex justify-center items-center ${
-        activeHubTab === tab.id 
-          ? 'text-[#00f2a1]' 
-          : 'text-zinc-500 hover:text-zinc-300'
-      }`}
-    >
-      {tab.label}
-      {activeHubTab === tab.id && (
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00f2a1] shadow-[0_0_8px_rgba(0,242,161,0.5)]" />
-      )}
-    </button>
-  ))}
-</div>
+               {/* Expanded Tab Navigation */}
+          <div className="flex items-center justify-around w-full border-b border-white/5 bg-[#0a0b0e] shrink-0 overflow-x-auto scrollbar-hide px-2">
+            {[
+              { id: 'callouts', label: 'Callouts' },
+              { id: 'trades', label: 'Trades' },
+              { id: 'my_trades', label: 'My Trades' },
+              { id: 'top_traders', label: 'Top Traders' },
+              { id: 'holders', label: 'Holders' },
+              { id: 'about', label: 'About' },
+              { id: 'chat', label: 'Chat' } 
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveHubTab(tab.id)}
+                className={`py-3.5 px-3 text-[10px] xl:text-[11px] font-black tracking-widest uppercase transition-all whitespace-nowrap relative shrink-0 ${
+                  activeHubTab === tab.id
+                    ? 'text-[#00f2a1]'
+                    : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                {tab.label}
+                {activeHubTab === tab.id && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00f2a1] shadow-[0_0_8px_rgba(0,242,161,0.5)]" />
+                )}
+              </button>
+            ))}
+          </div>
 
               {/* Tab Content Rendering */}
               <div className="flex-1 overflow-y-auto bg-[#0c0d10] custom-scrollbar">
