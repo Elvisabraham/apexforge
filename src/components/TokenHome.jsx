@@ -110,7 +110,7 @@ export default function TokenHome({
   // Desktop States
   const [leftTab, setLeftTab] = useState('Tokens');
   const [rightPanelMode, setRightPanelMode] = useState('swap'); 
-  const [activeHubTab, setActiveHubTab] = useState('trades');
+  const [activeHubTab, setActiveHubTab] = useState('callouts');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [chartMode, setChartMode] = useState('price'); // 'price' or 'mcap'
   const [activeTimeframe, setActiveTimeframe] = useState('15m');
