@@ -399,7 +399,10 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
         }
       `}</style>
 
-      <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between shadow-sm">
+      {/* ========================================================= */}
+      {/* 1. MOBILE-ONLY TOP HEADER (Name & Price) */}
+      {/* ========================================================= */}
+      <header className="lg:hidden flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
@@ -414,7 +417,8 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
           </div>
         </div>
 
-        <div className="flex flex-col items-end shrink-0 lg:hidden">
+        {/* Mobile Price & Market Cap */}
+        <div className="flex flex-col items-end shrink-0">
           <div 
             onClick={() => setDisplayMode(prev => prev === 'price' ? 'mcap' : 'price')}
             className="cursor-pointer select-none group"
@@ -438,13 +442,31 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
         </div>
       </header>
 
-      <div className="flex-none bg-[#121212] border-b border-white/[0.03] py-2.5 px-4 shadow-inner z-30 relative flex justify-between items-center gap-2">
-        <div className="flex flex-col overflow-hidden w-full">
-          <div className="flex items-center gap-3 mb-1.5">
+      {/* ========================================================= */}
+      {/* 2. UNIFIED DESKTOP HEADER & MOBILE HOLDERS ROW */}
+      {/* ========================================================= */}
+      <div className="flex-none bg-[#121212] border-b border-white/[0.03] py-2.5 px-4 shadow-inner z-30 relative flex justify-between items-center gap-4">
+        
+        {/* DESKTOP LEFT: Name & Online Status (Hidden on Mobile) */}
+        <div className="hidden lg:flex flex-col shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-black text-white uppercase">{tokenSymbol} HQ</span>
+          </div>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_5px_#00FF66]"></span>
+            <span className="text-[10px] font-black text-[#00FF66] uppercase tracking-widest">
+              {token?.onlineCount || '1,420'} Online
+            </span>
+          </div>
+        </div>
+
+        {/* MOBILE LEFT & DESKTOP RIGHT: Top Room Holders */}
+        <div className="flex flex-col overflow-hidden w-full lg:w-auto lg:items-end">
+          <div className="flex items-center gap-3 mb-1.5 lg:justify-end">
             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Top Room Holders</span>
             <span onClick={() => setIsHoldersModalOpen(true)} className="text-[10px] font-bold text-[#089981] cursor-pointer hover:text-white transition-colors shrink-0">View All</span>
           </div>
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1 pr-4">
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1 pr-4 lg:pr-0 lg:justify-end">
             {topHolders.map((whale, idx) => (
               <div key={whale.id} onClick={() => onOpenProfile ? onOpenProfile(whale.name) : setIsHoldersModalOpen(true)} className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group">
                 <div className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-transform group-hover:scale-105 ${idx === 0 ? 'border-amber-400' : 'border-white/10'}`}>
@@ -456,6 +478,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
           </div>
         </div>
 
+        {/* MOBILE RIGHT: Trade Button (Hidden on Desktop) */}
         <button 
           onClick={() => setIsBuyModalOpen(true)}
           className={`shrink-0 px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-white shadow-lg transition-transform active:scale-95 lg:hidden ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 shadow-[0_0_15px_rgba(245,158,11,0.2)] text-black font-black' : 'bg-[#089981] hover:bg-[#06806b] shadow-[0_0_15px_rgba(8,153,129,0.2)]'}`}
@@ -463,6 +486,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
           <span className="text-[10px] font-black uppercase tracking-widest leading-none">Trade</span>
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
         </button>
+
       </div>
 
       <div className="flex-none bg-gradient-to-r from-amber-500/20 via-[#121212] to-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between z-20">
