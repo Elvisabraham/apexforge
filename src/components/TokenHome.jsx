@@ -276,18 +276,20 @@ export default function TokenHome({
             
             {/* Right Side: Portfolio Balance + Share/Star Icons */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-full border border-white/10 transition-colors cursor-pointer">
+              {/* 🚀 MOBILE ACTIVE TOKEN BAG */}
+            <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-full border border-white/10 transition-colors cursor-pointer">
               <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">Bag:</span>
               
-              {/* font-mono removed so zeros render cleanly */}
-              <span className="text-xs font-black text-white">
-                {(typeof userTokenBalance !== 'undefined' ? userTokenBalance : 0).toLocaleString()}
-                <span className="text-zinc-400 ml-1">{currentToken?.symbol || 'TKN'}</span>
-              </span>
-              
+              {/* USD Value First with Custom Icon */}
               <span className="flex items-center text-xs font-black text-[#00f2a1]">
                 <DexDollarIcon className="w-3 h-3 mr-[1px]" strokeWidth={3} />
                 {((typeof userTokenBalance !== 'undefined' ? userTokenBalance : 0) * (typeof curveState !== 'undefined' ? curveState?.price || 0 : 0)).toFixed(2)}
+              </span>
+
+              {/* Quantity & Dynamic Symbol Second */}
+              <span className="text-xs font-black text-white">
+                ({(typeof userTokenBalance !== 'undefined' ? userTokenBalance : 0).toLocaleString()} 
+                <span className="text-zinc-400 ml-1">{currentToken?.symbol || 'TKN'}</span>)
               </span>
             </div>
 
@@ -685,34 +687,37 @@ export default function TokenHome({
             )}
           </div>
 
-          {/* 🚀 DESKTOP: ACTIVE TOKEN BAG (Replaces Global Portfolio) */}
+            {/* DESKTOP ACTIVE TOKEN BAG */}
           <div className="p-3 border-t border-white/5 bg-[#0a0b0e] flex justify-between items-center shrink-0 shadow-[0_-5px_20px_rgba(0,0,0,0.3)] z-10">
             <div className="flex flex-col">
               <span className="text-[10px] font-black tracking-widest text-zinc-500 uppercase mb-1">
                 My {currentToken?.symbol || 'Token'} Bag
               </span>
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center overflow-hidden">
-                  {currentToken?.image ? (
-                    <img src={currentToken.image} alt="token" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-[8px]">🪙</span>
-                  )}
-                </div>
-                {/* font-mono removed below to prevent crossed zeros */}
-                <span className="text-sm font-black text-white">
-                  {(typeof userTokenBalance !== 'undefined' ? userTokenBalance : 0).toLocaleString()}
-                </span>
-              </div>
+              {/* 🚀 USD Value First */}
+              <span className="flex items-center text-sm font-black text-[#00f2a1]">
+                <DexDollarIcon className="w-3.5 h-3.5 mr-[2px]" strokeWidth={3} />
+                {((typeof userTokenBalance !== 'undefined' ? userTokenBalance : 0) * (typeof curveState !== 'undefined' ? curveState?.price || 0 : 0)).toFixed(2)}
+              </span>
             </div>
             
-            {/* Custom DexDollarIcon injected, font-mono removed */}
-            <span className="flex items-center text-sm font-black text-[#00f2a1] bg-[#00f2a1]/10 px-2.5 py-1 rounded-md border border-[#00f2a1]/20">
-              <DexDollarIcon className="w-3.5 h-3.5 mr-[2px]" strokeWidth={3} />
-              {((typeof userTokenBalance !== 'undefined' ? userTokenBalance : 0) * (typeof curveState !== 'undefined' ? curveState?.price || 0 : 0)).toFixed(2)}
-            </span>
+            {/* Token Quantity & Image Second */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black text-white">
+                {(typeof userTokenBalance !== 'undefined' ? userTokenBalance : 0).toLocaleString()} {currentToken?.symbol || 'TKN'}
+              </span>
+              <div className="w-5 h-5 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center overflow-hidden">
+                {currentToken?.image ? (
+                  <img src={currentToken.image} alt="token" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-[8px]">🪙</span>
+                )}
+              </div>
+            </div>
           </div>
-          </div>
+           </div>
+
+      
+  
 
         <div className={`${isSidebarOpen ? 'col-span-5 xl:col-span-6' : 'col-span-8 xl:col-span-9'} flex flex-col h-full gap-2 overflow-hidden transition-all duration-200`}>
           <div className="bg-[#121318] border border-white/5 rounded-xl p-2.5 flex items-center justify-between shrink-0 gap-4 overflow-hidden">
