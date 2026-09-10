@@ -7,14 +7,14 @@ import { PublicKey } from '@solana/web3.js';
 
 export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile, liveUsdPrice, priceChangePct, isPositiveChange }) {
  
- const [displayMode, setDisplayMode] = useState('price'); 
+  const [displayMode, setDisplayMode] = useState('price'); 
 
- // 🚀 THE MINI-ENGINE: Fetches live trades and calculates exact bonding curve price!
+  // 🚀 THE MINI-ENGINE: Fetches live trades and calculates exact bonding curve price!
   const [realUsdPrice, setRealUsdPrice] = useState(liveUsdPrice || 0);
   const [realPriceChangePct, setRealPriceChangePct] = useState(priceChangePct || 0);
   const [realIsPositive, setRealIsPositive] = useState(isPositiveChange || true);
 
-   useEffect(() => {
+  useEffect(() => {
     if (!token) return;
 
     const fetchLiveTicker = async () => {
@@ -53,8 +53,11 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
     fetchLiveTicker();
 
+    // 🛡️ FIXED: Added Math.random() to force a unique channel name on every React remount
+    const uniqueTickerChannel = `chat-ticker-${token?.mintAddress || token?.mint || token?.address}-${Math.random()}`;
+    
     const channel = supabase
-      .channel('chat-ticker')
+      .channel(uniqueTickerChannel)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'trades', filter: `token_mint=eq.${token?.mintAddress || token?.mint || token?.address}` },
@@ -143,8 +146,11 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
     fetchMessages();
 
+    // 🛡️ FIXED: Added Math.random() to avoid StrictMode cache collisions here too!
+    const uniqueChatChannel = `chat-${tokenMint}-${Math.random()}`;
+    
     const channel = supabase
-      .channel(`chat:${tokenMint}`)
+      .channel(uniqueChatChannel)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'messages', filter: `token_mint=eq.${tokenMint}` },
@@ -265,7 +271,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
   const renderFormattedText = (text, isMe) => {
     if (!text) return '';
-    // 🚀 FIX: Handles token symbols containing spaces or special characters
     const parts = text.split(/(\$[A-Za-z0-9_\s]+)/g);
     return parts.map((part, i) => {
       if (part.startsWith('$')) {
@@ -295,7 +300,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
       reader.onload = async (event) => {
         const base64Image = event.target.result;
         
-        // 🚀 Push Image live to Supabase
         const { error } = await supabase.from('messages').insert([
           {
             token_mint: tokenMint,
@@ -312,7 +316,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   };
 
   const handleSendMockGif = async () => {
-    // 🚀 Push GIF live to Supabase
     const { error } = await supabase.from('messages').insert([
       {
         token_mint: tokenMint,
@@ -330,9 +333,8 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     if (!inputText.trim() || !tokenMint) return;
 
     const textToSend = inputText.trim();
-    setInputText(''); // Clear UI instantly for a smooth feel
+    setInputText(''); 
 
-    // 🚀 Push Text live to Supabase
     const { error } = await supabase.from('messages').insert([
       {
         token_mint: tokenMint,
@@ -347,7 +349,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   };
 
   const handleAddReaction = async (msgId, emoji) => {
-    // Find the current message and increment the emoji count
     const targetMsg = messages.find(m => m.id === msgId);
     if (!targetMsg) return;
 
@@ -355,13 +356,11 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     const newCount = (currentReactions[emoji] || 0) + 1;
     const updatedReactions = { ...currentReactions, [emoji]: newCount };
 
-    // Optimistic UI update so it feels instant for the user
     setMessages(prev => prev.map(m => 
       m.id === msgId ? { ...m, reactions: updatedReactions } : m
     ));
     setActiveReactionId(null);
 
-    // 🚀 Push Reaction Update live to Supabase
     const { error } = await supabase
       .from('messages')
       .update({ reactions: updatedReactions })
@@ -374,25 +373,22 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     const amount = parseFloat(tradeAmount.toString().replace(/,/g, ''));
     if (!amount || amount <= 0) return;
 
-    // 🚀 Send the transaction to the blockchain using your new hook!
     const success = await executeTradeOnChain(tradeMode, amount, displayToken.mintAddress, null, null, displayToken.isGraduated);
     
     if (success) {
-      // If the Phantom wallet transaction succeeds, close the modal
       setIsBuyModalOpen(false);
       setTradeAmount('');
     }
   };
 
   return (
-<div className="flex flex-col w-full h-full bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative z-50">
+    <div className="flex flex-col w-full h-full bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative z-50">
 
       <style>{`
         * { -webkit-tap-highlight-color: transparent !important; }
         .scrollbar-hide::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
         .scrollbar-hide { -ms-overflow-style: none !important; scrollbar-width: none !important; }
 
-        /* 🚀 HIDE DESKTOP BROWSER SPINNER ARROWS */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
           -webkit-appearance: none; 
@@ -403,7 +399,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
         }
       `}</style>
 
-      {/* --- HEADER (Cleaned up, Trade button removed from here) --- */}
       <header className="flex-none z-40 bg-[#0A0A0B]/95 backdrop-blur-md px-4 py-3 border-b border-white/[0.04] flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
           <div className="flex flex-col">
@@ -419,8 +414,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
           </div>
         </div>
 
-        {/* Price & Market Cap only (Trade button moved down!) */}
-        <div className="flex flex-col items-end shrink-0">
+        <div className="flex flex-col items-end shrink-0 lg:hidden">
           <div 
             onClick={() => setDisplayMode(prev => prev === 'price' ? 'mcap' : 'price')}
             className="cursor-pointer select-none group"
@@ -444,10 +438,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
         </div>
       </header>
 
-     {/* --- TOP HOLDERS & TRADE ACTION ROW --- */}
       <div className="flex-none bg-[#121212] border-b border-white/[0.03] py-2.5 px-4 shadow-inner z-30 relative flex justify-between items-center gap-2">
-        
-        {/* Left Side: Holders List */}
         <div className="flex flex-col overflow-hidden w-full">
           <div className="flex items-center gap-3 mb-1.5">
             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Top Room Holders</span>
@@ -465,18 +456,15 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
           </div>
         </div>
 
-        {/* Right Side: Trade Button */}
         <button 
           onClick={() => setIsBuyModalOpen(true)}
-          className={`shrink-0 px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-white shadow-lg transition-transform active:scale-95 ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 shadow-[0_0_15px_rgba(245,158,11,0.2)] text-black font-black' : 'bg-[#089981] hover:bg-[#06806b] shadow-[0_0_15px_rgba(8,153,129,0.2)]'}`}
+          className={`shrink-0 px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-white shadow-lg transition-transform active:scale-95 lg:hidden ${displayToken.isGraduated ? 'bg-amber-500 hover:bg-amber-600 shadow-[0_0_15px_rgba(245,158,11,0.2)] text-black font-black' : 'bg-[#089981] hover:bg-[#06806b] shadow-[0_0_15px_rgba(8,153,129,0.2)]'}`}
         >
           <span className="text-[10px] font-black uppercase tracking-widest leading-none">Trade</span>
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
         </button>
-
       </div>
 
-      {/* --- PINNED DEV ANNOUNCEMENT BANNER --- */}
       <div className="flex-none bg-gradient-to-r from-amber-500/20 via-[#121212] to-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between z-20">
         <div className="flex items-center gap-2">
           <span className="bg-amber-400 text-black text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest shrink-0">Pinned</span>
@@ -485,10 +473,8 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
         <span className="text-[10px] text-zinc-500 font-mono shrink-0 ml-2">ApexDev</span>
       </div>
 
-      {/* --- CHAT FEED --- */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-[#050505]" onClick={() => setActiveReactionId(null)}>
         {messages.map((dbMsg) => {
-            // 🚀 ADAPTER: Translate Supabase database fields into your custom UI fields
             const msg = {
               id: dbMsg.id,
               text: dbMsg.content,
@@ -546,13 +532,13 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
                   <div className={`rounded-2xl text-sm shadow-md flex flex-col ${msg.isDev ? 'bg-gradient-to-r from-amber-500/20 to-[#1A1A24] border border-amber-500/40 text-amber-100 rounded-bl-sm shadow-[0_0_15px_rgba(251,191,36,0.15)]' : msg.isMe ? 'bg-[#089981] text-white rounded-br-sm' : 'bg-[#1A1A24] border border-white/5 text-zinc-200 rounded-bl-sm'} ${msg.text ? 'px-4 py-2.5' : 'p-1'}`}>
                     {msg.image && (
-    <img 
-      src={msg.image} 
-      alt="attachment" 
-      onClick={() => setFullscreenImage(msg.image)}
-      className="max-w-[200px] sm:max-w-[250px] rounded-xl object-cover cursor-pointer hover:opacity-90 transition-opacity active:scale-95" 
-    />
-  )}
+                      <img 
+                        src={msg.image} 
+                        alt="attachment" 
+                        onClick={() => setFullscreenImage(msg.image)}
+                        className="max-w-[200px] sm:max-w-[250px] rounded-xl object-cover cursor-pointer hover:opacity-90 transition-opacity active:scale-95" 
+                      />
+                    )}
                     {msg.text && renderFormattedText(msg.text, msg.isMe)}
                   </div>
 
@@ -573,10 +559,8 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
         <div ref={messagesEndRef} />
       </div>
 
-      {/* --- INPUT AREA --- */}
       <div className="flex-none bg-[#0E0E14] border-t border-white/[0.05] p-3 pb-[max(12px,env(safe-area-inset-bottom))] shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
         <form onSubmit={handleSendMessage} className="flex items-end gap-1.5 bg-black border border-white/10 focus-within:border-[#089981]/50 rounded-3xl p-1.5 transition-all shadow-inner">
-          
           <div className="flex items-center shrink-0">
             <input 
               type="file" 
@@ -607,7 +591,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
         </form>
       </div>
 
-      {/* --- HOLDERS LEDGER MODAL --- */}
       {isHoldersModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="absolute inset-0" onClick={() => setIsHoldersModalOpen(false)}></div>
@@ -644,61 +627,56 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
         </div>
       )}
 
-       {/* --- INLINE TRADE MODAL --- */}
-          {isBuyModalOpen && (
-            <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn transition-opacity">
-              <div className="absolute inset-0" onClick={() => setIsBuyModalOpen(false)}></div>
-              
-              {/* DRAWER CONTAINER: Added ID and smooth transition for swipe-to-close */}
-              <div 
-                id="chat-inline-trade-drawer"
-                className={`w-full max-w-md bg-[#1C1C1E] border-t ${displayToken.isGraduated ? 'border-amber-500/30' : (tradeMode === 'buy' ? 'border-[#00f2a1]/30' : 'border-[#F23645]/30')} rounded-t-3xl p-5 relative z-10 shadow-[0_-10px_50px_rgba(0,0,0,0.8)] transition-transform duration-300 ease-out`}
-              >
+      {isBuyModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn transition-opacity">
+          <div className="absolute inset-0" onClick={() => setIsBuyModalOpen(false)}></div>
+          
+          <div 
+            id="chat-inline-trade-drawer"
+            className={`w-full max-w-md bg-[#1C1C1E] border-t ${displayToken.isGraduated ? 'border-amber-500/30' : (tradeMode === 'buy' ? 'border-[#00f2a1]/30' : 'border-[#F23645]/30')} rounded-t-3xl p-5 relative z-10 shadow-[0_-10px_50px_rgba(0,0,0,0.8)] transition-transform duration-300 ease-out`}
+          >
+            
+            <div 
+              className="w-full flex flex-col items-center pb-5 cursor-grab active:cursor-grabbing shrink-0 relative z-50 lg:hidden"
+              onTouchStart={(e) => {
+                const drawer = document.getElementById('chat-inline-trade-drawer');
+                if (!drawer) return;
+                drawer.dataset.startY = e.touches[0].clientY;
+                drawer.style.transitionDuration = '0ms'; 
+              }}
+              onTouchMove={(e) => {
+                const drawer = document.getElementById('chat-inline-trade-drawer');
+                if (!drawer) return;
+                const startY = parseFloat(drawer.dataset.startY);
+                const currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
                 
-                {/* DRAG HANDLE (60fps iOS-style fluid swipe tracking) */}
-                <div 
-                  className="w-full flex flex-col items-center pb-5 cursor-grab active:cursor-grabbing shrink-0 relative z-50 lg:hidden"
-                  onTouchStart={(e) => {
-                    const drawer = document.getElementById('chat-inline-trade-drawer');
-                    if (!drawer) return;
-                    drawer.dataset.startY = e.touches[0].clientY;
-                    drawer.style.transitionDuration = '0ms'; 
-                  }}
-                  onTouchMove={(e) => {
-                    const drawer = document.getElementById('chat-inline-trade-drawer');
-                    if (!drawer) return;
-                    const startY = parseFloat(drawer.dataset.startY);
-                    const currentY = e.touches[0].clientY;
-                    const deltaY = currentY - startY;
-                    
-                    if (deltaY > 0) {
-                      drawer.style.transform = `translateY(${deltaY}px)`;
-                    }
-                  }}
-                  onTouchEnd={(e) => {
-                    const drawer = document.getElementById('chat-inline-trade-drawer');
-                    if (!drawer) return;
-                    const startY = parseFloat(drawer.dataset.startY);
-                    const endY = e.changedTouches[0].clientY;
-                    const deltaY = endY - startY;
-                    
-                    drawer.style.transitionDuration = '300ms'; 
-                    
-                    if (deltaY > 120) {
-                      drawer.style.transform = ''; 
-                      setIsBuyModalOpen(false); // Closes this specific chat modal!
-                    } else {
-                      drawer.style.transform = 'translateY(0px)';
-                      setTimeout(() => { if (drawer) drawer.style.transform = ''; }, 300);
-                    }
-                  }}
-                >
-                  {/* Invisible hit area for easier grabbing */}
-                  <div className="absolute -top-4 left-0 w-full h-12" />
-                  <div className="w-12 h-1.5 bg-white/20 rounded-full relative pointer-events-none" />
-                </div>
+                if (deltaY > 0) {
+                  drawer.style.transform = `translateY(${deltaY}px)`;
+                }
+              }}
+              onTouchEnd={(e) => {
+                const drawer = document.getElementById('chat-inline-trade-drawer');
+                if (!drawer) return;
+                const startY = parseFloat(drawer.dataset.startY);
+                const endY = e.changedTouches[0].clientY;
+                const deltaY = endY - startY;
+                
+                drawer.style.transitionDuration = '300ms'; 
+                
+                if (deltaY > 120) {
+                  drawer.style.transform = ''; 
+                  setIsBuyModalOpen(false); 
+                } else {
+                  drawer.style.transform = 'translateY(0px)';
+                  setTimeout(() => { if (drawer) drawer.style.transform = ''; }, 300);
+                }
+              }}
+            >
+              <div className="absolute -top-4 left-0 w-full h-12" />
+              <div className="w-12 h-1.5 bg-white/20 rounded-full relative pointer-events-none" />
+            </div>
 
-               {/* --- RESTORED HEADER --- */}
             <div className="flex justify-between items-center mb-6">
               <div className="flex flex-col">
                 <h3 className="text-lg font-black text-white uppercase tracking-widest flex items-center gap-2">
@@ -711,24 +689,22 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
               </button>
             </div>
 
-             {/* 🚀 INJECT THE MASTER COMPONENT HERE */}
-          <TradeWidget 
-            displayToken={displayToken}
-            tradeMode={tradeMode}
-            setTradeMode={setTradeMode}
-            tradeAmount={tradeAmount}
-            setTradeAmount={setTradeAmount}
-            userBalanceSol={userBalance} 
-            userTokenBalance={userTokenBalance}
-            handleExecuteTrade={handleExecuteTrade}
-            isProcessing={isProcessing}
-            curveState={curveState}
-          />
+            <TradeWidget 
+              displayToken={displayToken}
+              tradeMode={tradeMode}
+              setTradeMode={setTradeMode}
+              tradeAmount={tradeAmount}
+              setTradeAmount={setTradeAmount}
+              userBalanceSol={userBalance} 
+              userTokenBalance={userTokenBalance}
+              handleExecuteTrade={handleExecuteTrade}
+              isProcessing={isProcessing}
+              curveState={curveState}
+            />
           </div>
         </div>
       )}
 
-{/* --- FULLSCREEN IMAGE POPUP --- */}
       {fullscreenImage && (
         <div 
           className="fixed inset-0 z-[300] flex items-center justify-center bg-black/95 backdrop-blur-md animate-fadeIn cursor-zoom-out p-4"
