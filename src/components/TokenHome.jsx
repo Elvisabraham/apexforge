@@ -690,8 +690,8 @@ export default function TokenHome({
             {/* DESKTOP ACTIVE TOKEN BAG */}
           <div className="p-3 border-t border-white/5 bg-[#0a0b0e] flex justify-between items-center shrink-0 shadow-[0_-5px_20px_rgba(0,0,0,0.3)] z-10">
             <div className="flex flex-col">
-              <span className="text-[10px] font-black tracking-widest text-zinc-500 uppercase mb-1">
-                My {currentToken?.symbol || 'Token'} Bag
+             <span className="text-[10px] font-black tracking-widest text-zinc-500 uppercase mb-1">
+              My Bag
               </span>
               {/* 🚀 USD Value First */}
               <span className="flex items-center text-sm font-black text-[#00f2a1]">
