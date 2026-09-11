@@ -1,20 +1,21 @@
 import React, { useEffect, useRef } from 'react';
 import { createChart, ColorType, CandlestickSeries, HistogramSeries } from 'lightweight-charts';
 
-export default function TokenChart({ currentToken, chartMode = 'price', liveTradeTick = null }) {
+export default function TokenChart({ currentToken, historicalData = [], liveTradeTick = null }) {
   const chartContainerRef = useRef();
   const legendRef = useRef();
   
-  // 🚀 Store references to series so we can update them live without re-rendering
+  // High-performance refs to hold series without triggering React re-renders
   const seriesRef = useRef({ candle: null, volume: null });
   const currentCandleRef = useRef(null);
 
   // =========================================================================
-  // 1. CHART INITIALIZATION (Runs ONLY once on mount)
+  // 1. CHART INITIALIZATION (Mainnet Secure - Runs once on mount)
   // =========================================================================
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
+    // Create Chart Instance
     const chart = createChart(chartContainerRef.current, {
       layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: '#71717a', fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' },
       grid: { vertLines: { color: 'rgba(255, 255, 255, 0.03)' }, horzLines: { color: 'rgba(255, 255, 255, 0.03)' } },
@@ -34,29 +35,16 @@ export default function TokenChart({ currentToken, chartMode = 'price', liveTrad
 
     seriesRef.current = { candle: candlestickSeries, volume: volumeSeries };
 
-    // --- TEMPORARY HISTORY GENERATOR (Replace with real Supabase history later) ---
-    const rawPrice = parseFloat(String(currentToken?.price || '0.05439').replace(/[^0-9.]/g, ''));
-    let closePrice = rawPrice;
-    let time = Math.floor(Date.now() / 1000) - (500 * 60); 
-    const candleHistory = [];
-    const volumeHistory = [];
-
-    for (let i = 0; i < 100; i++) {
-      const open = closePrice + (Math.random() - 0.5) * (closePrice * 0.01);
-      const high = Math.max(open, closePrice) + (Math.random() * closePrice * 0.005);
-      const low = Math.min(open, closePrice) - (Math.random() * closePrice * 0.005);
-      
-      candleHistory.push({ time: time + (i * 60), open, high, low, close: closePrice });
-      volumeHistory.push({ time: time + (i * 60), value: Math.random() * 50000, color: closePrice >= open ? 'rgba(0, 242, 161, 0.4)' : 'rgba(242, 54, 69, 0.4)' });
-      closePrice = open;
+    // Load REAL Historical Data from your database
+    if (historicalData && historicalData.length > 0) {
+      candlestickSeries.setData(historicalData.map(d => ({ time: d.time, open: d.open, high: d.high, low: d.low, close: d.close })));
+      volumeSeries.setData(historicalData.map(d => ({ time: d.time, value: d.volume, color: d.close >= d.open ? 'rgba(0, 242, 161, 0.4)' : 'rgba(242, 54, 69, 0.4)' })));
+      currentCandleRef.current = historicalData[historicalData.length - 1];
     }
-
-    candlestickSeries.setData(candleHistory);
-    volumeSeries.setData(volumeHistory);
-    currentCandleRef.current = candleHistory[candleHistory.length - 1];
+    
     chart.timeScale().fitContent();
 
-    // --- OHLC LEGEND ENGINE ---
+    // OHLC Legend Engine
     const updateLegend = (param) => {
       if (!legendRef.current) return;
       let candle = currentCandleRef.current;
@@ -71,10 +59,10 @@ export default function TokenChart({ currentToken, chartMode = 'price', liveTrad
       
       legendRef.current.innerHTML = `
         <div class="flex items-center gap-3 text-[10px] font-mono tracking-tight bg-[#0c0d10]/80 backdrop-blur rounded px-2 py-0.5 border border-white/5">
-          <span class="text-zinc-500">O<span class="${colorClass} ml-1">${candle.open.toFixed(6)}</span></span>
-          <span class="text-zinc-500">H<span class="${colorClass} ml-1">${candle.high.toFixed(6)}</span></span>
-          <span class="text-zinc-500">L<span class="${colorClass} ml-1">${candle.low.toFixed(6)}</span></span>
-          <span class="text-zinc-500">C<span class="${colorClass} ml-1">${candle.close.toFixed(6)}</span></span>
+          <span class="text-zinc-500">O<span class="${colorClass} ml-1">${candle.open.toFixed(8)}</span></span>
+          <span class="text-zinc-500">H<span class="${colorClass} ml-1">${candle.high.toFixed(8)}</span></span>
+          <span class="text-zinc-500">L<span class="${colorClass} ml-1">${candle.low.toFixed(8)}</span></span>
+          <span class="text-zinc-500">C<span class="${colorClass} ml-1">${candle.close.toFixed(8)}</span></span>
         </div>
       `;
     };
@@ -82,14 +70,15 @@ export default function TokenChart({ currentToken, chartMode = 'price', liveTrad
     chart.subscribeCrosshairMove(updateLegend);
     updateLegend({}); 
 
+    // Handle responsive resizing cleanly
     const handleResize = () => chart.applyOptions({ width: chartContainerRef.current.clientWidth, height: chartContainerRef.current.clientHeight });
     window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      chart.remove();
+      chart.remove(); // Prevents memory leaks on mainnet
     };
-  }, [currentToken?.mintAddress]); // Only re-mount if the token totally changes
+  }, [historicalData]); // Re-mounts ONLY if the historical DB array completely changes
 
   // =========================================================================
   // 2. LIVE WEBSOCKET UPDATE ENGINE
@@ -97,20 +86,20 @@ export default function TokenChart({ currentToken, chartMode = 'price', liveTrad
   useEffect(() => {
     if (!liveTradeTick || !seriesRef.current.candle || !currentCandleRef.current) return;
 
-    // Grab the active series and our last known candle
     const { candle, volume } = seriesRef.current;
     const lastCandle = currentCandleRef.current;
     
-    const newPrice = liveTradeTick.price;
-    const tradeTime = Math.floor(Date.now() / 1000);
+    const newPrice = Number(liveTradeTick.price);
+    const tradeVolume = Number(liveTradeTick.volume || 0);
+    const tradeTime = Math.floor(Date.now() / 1000); // Standard Unix Timestamp
     
-    // Check if we are still in the same 1-minute interval
+    // Check if the trade falls in the current 1-minute candle
     const isSameMinute = Math.floor(tradeTime / 60) === Math.floor(lastCandle.time / 60);
 
     let updatedCandle;
     
     if (isSameMinute) {
-      // Update existing candle (Wick tracking)
+      // Update existing candle wicks in real-time
       updatedCandle = {
         ...lastCandle,
         high: Math.max(lastCandle.high, newPrice),
@@ -118,7 +107,7 @@ export default function TokenChart({ currentToken, chartMode = 'price', liveTrad
         close: newPrice
       };
     } else {
-      // Roll over to a new 1-minute candle
+      // Start a brand new 1-minute candle
       updatedCandle = {
         time: Math.floor(tradeTime / 60) * 60,
         open: lastCandle.close,
@@ -128,11 +117,10 @@ export default function TokenChart({ currentToken, chartMode = 'price', liveTrad
       };
     }
 
-    // 🚀 Instantly paint the live data to the chart
     candle.update(updatedCandle);
     currentCandleRef.current = updatedCandle;
 
-  }, [liveTradeTick]); // Fires instantly when a new WebSocket trade arrives
+  }, [liveTradeTick]); // Instantly updates when a WebSocket message arrives
 
   return (
     <div className="absolute inset-0 w-full h-full relative">
