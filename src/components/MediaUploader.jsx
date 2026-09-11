@@ -1,95 +1,64 @@
 import React, { useState, useRef } from 'react';
+import { supabase } from '../supabaseClient'; // Ensure this path matches your project
 
 export default function MediaUploader({ onMediaSelected, mediaType = 'image' }) {
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [extractedThumbnail, setExtractedThumbnail] = useState(null);
   const [uploadType, setUploadType] = useState(mediaType);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const isVideo = file.type.startsWith('video/');
     setUploadType(isVideo ? 'video' : 'image');
+    
+    // Set a temporary local preview immediately for snappy UI
+    setPreviewUrl(URL.createObjectURL(file));
+    setIsUploading(true);
 
-    if (isVideo) {
-      // 🚀 CRITICAL FIX: Use Blob URL instead of Base64 to prevent localStorage crashes
-      const videoBlobUrl = URL.createObjectURL(file);
-      setPreviewUrl(videoBlobUrl);
+    try {
+      // 1. Generate unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 
-      const videoElement = document.createElement('video');
-      videoElement.src = videoBlobUrl;
-      videoElement.muted = true;
-      videoElement.playsInline = true;
-      videoElement.crossOrigin = 'anonymous';
-      
-      // Wait for video data to load to grab a frame
-      videoElement.onloadeddata = () => {
-        videoElement.currentTime = 1.0; 
-      };
+      // 2. Upload directly to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('token-media')
+        .upload(fileName, file);
 
-      videoElement.onseeked = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 300; // Small dimensions for localStorage safety
-        canvas.height = 300;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-        
-        // Heavy compression for the static thumbnail
-        const safeThumbnailUrl = canvas.toDataURL('image/jpeg', 0.5);
-        setExtractedThumbnail(safeThumbnailUrl);
+      if (uploadError) throw uploadError;
 
-        if (onMediaSelected) {
-          onMediaSelected({
-            file,
-            previewUrl: videoBlobUrl, // Tiny blob string (safe!)
-            thumbnailUrl: safeThumbnailUrl, // Safe compressed Base64
-            type: 'video'
-          });
-        }
-      };
-    } else {
-      // For images, we auto-compress them to keep localStorage happy
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target.result;
-        
-        const img = new Image();
-        img.src = result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 400;
-          const scaleSize = MAX_WIDTH / img.width;
-          canvas.width = MAX_WIDTH;
-          canvas.height = img.height * scaleSize;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          
-          const safeImageUrl = canvas.toDataURL('image/jpeg', 0.7);
-          
-          setPreviewUrl(safeImageUrl);
-          setExtractedThumbnail(safeImageUrl);
+      // 3. Get the permanent Public URL
+      const { data: publicUrlData } = supabase.storage
+        .from('token-media')
+        .getPublicUrl(fileName);
 
-          if (onMediaSelected) {
-            onMediaSelected({
-              file,
-              previewUrl: safeImageUrl,
-              thumbnailUrl: safeImageUrl,
-              type: 'image'
-            });
-          }
-        };
-      };
-      reader.readAsDataURL(file);
+      const permanentUrl = publicUrlData.publicUrl;
+
+      // 4. Pass the permanent URL back to Launch.jsx
+      if (onMediaSelected) {
+        onMediaSelected({
+          file,
+          previewUrl: permanentUrl, // 🚀 This is now a safe, permanent https:// link!
+          thumbnailUrl: permanentUrl,
+          type: isVideo ? 'video' : 'image'
+        });
+      }
+    } catch (error) {
+      console.error("Storage Upload Error:", error);
+      alert("Failed to upload media to Supabase. Check your bucket permissions.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
     <div className="flex flex-col gap-3 w-full">
       <div 
-        onClick={() => fileInputRef.current?.click()}
-        className="border-2 border-dashed border-white/15 hover:border-[#089981]/60 bg-[#121212] rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all group relative overflow-hidden min-h-[160px] shadow-inner"
+        onClick={() => !isUploading && fileInputRef.current?.click()}
+        className={`border-2 border-dashed border-white/15 bg-[#121212] rounded-2xl p-6 flex flex-col items-center justify-center transition-all group relative overflow-hidden min-h-[160px] shadow-inner ${isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#089981]/60 cursor-pointer'}`}
       >
         <input 
           type="file" 
@@ -97,26 +66,18 @@ export default function MediaUploader({ onMediaSelected, mediaType = 'image' }) 
           ref={fileInputRef} 
           onChange={handleFileChange} 
           className="hidden" 
+          disabled={isUploading}
         />
 
-        {previewUrl ? (
+        {isUploading ? (
+          <div className="flex flex-col items-center text-[#00f2a1]">
+            <div className="w-8 h-8 border-4 border-[#089981]/30 border-t-[#00f2a1] rounded-full animate-spin mb-2" />
+            <span className="text-xs font-bold animate-pulse uppercase tracking-widest">Uploading...</span>
+          </div>
+        ) : previewUrl ? (
           <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-black">
             {uploadType === 'video' ? (
-              <div className="relative w-full h-full flex items-center justify-center">
-                <video 
-                  src={previewUrl} 
-                  className="w-full h-full object-cover opacity-80" 
-                  muted 
-                  loop 
-                  autoPlay 
-                  playsInline
-                />
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                  <span className="bg-[#089981] text-black font-black text-[10px] px-2.5 py-1 rounded-full uppercase tracking-widest shadow-lg flex items-center gap-1">
-                    ▶ Video Trailer Active
-                  </span>
-                </div>
-              </div>
+              <video src={previewUrl} className="w-full h-full object-cover opacity-80" muted loop autoPlay playsInline />
             ) : (
               <img src={previewUrl} alt="Upload Preview" className="w-full h-full object-cover" />
             )}
@@ -129,7 +90,6 @@ export default function MediaUploader({ onMediaSelected, mediaType = 'image' }) 
               </svg>
             </div>
             <span className="text-sm font-bold text-zinc-500 group-hover:text-[#089981] transition-colors">Tap to upload media</span>
-            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mt-1 opacity-50">Videos generate static logo thumbnails ⚡</span>
           </div>
         )}
       </div>
