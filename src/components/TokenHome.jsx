@@ -99,7 +99,6 @@ export default function TokenHome({
   setSelectedTokenData,
   globalTokens = [],
   userSolBalance = 0,
-  userTokenBalance = 0,
   formatWithCommas = (val) => val,
   calculateTokenYield = () => '0',
   handleExecuteTrade = () => {}
