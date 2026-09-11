@@ -1,44 +1,134 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient'; // Make sure this path points to your client
+
+// Helper to calculate "12s ago", "2m ago", etc.
+const timeAgo = (dateString) => {
+  if (!dateString) return '';
+  const now = new Date();
+  const past = new Date(dateString);
+  const diffInSeconds = Math.floor((now - past) / 1000);
+  
+  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  return `${Math.floor(diffInSeconds / 86400)}d ago`;
+};
+
+// Helper to cleanly shorten wallet addresses
+const shortenAddress = (address) => {
+  if (!address) return 'Unknown';
+  if (address.length <= 8) return address;
+  return `${address.slice(0, 4)}...${address.slice(-4)}`;
+};
 
 export default function TokenTrades({ currentToken }) {
-  // Deterministic mock trades based on symbol
-  const charSum = (currentToken?.symbol || 'TKN').split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  
-  const mockTrades = [
-    { id: 1, type: 'BUY', sol: '2.5 SOL', token: '45,200', time: '12s ago', wallet: '7xKX...9a2b', pnl: '+12.5%' },
-    { id: 2, type: 'SELL', sol: '15.0 SOL', token: '280,100', time: '45s ago', wallet: 'Whale_Alert', pnl: '+45.2%' },
-    { id: 3, type: 'BUY', sol: '0.8 SOL', token: '14,500', time: '1m ago', wallet: '3yTR...1m8k', pnl: '-2.1%' },
-    { id: 4, type: 'BUY', sol: '5.2 SOL', token: '98,000', time: '2m ago', wallet: 'Sniper_Pro', pnl: '+88.4%' },
-    { id: 5, type: 'SELL', sol: '1.2 SOL', token: '21,000', time: '3m ago', wallet: '9zPL...4wQx', pnl: '+5.0%' },
-  ];
+  const [liveTrades, setLiveTrades] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!currentToken) return;
+    
+    // Safely extract the token's mint address based on how it's passed
+    const tokenMint = currentToken.mint_address || currentToken.mintAddress || currentToken.address || currentToken.id;
+    if (!tokenMint) return;
+
+    // 1. Fetch initial trade history
+    const fetchInitialTrades = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('trades')
+          .select('*')
+          .eq('mint_address', tokenMint)
+          .order('created_at', { ascending: false })
+          .limit(50);
+          
+        if (error) throw error;
+        setLiveTrades(data || []);
+      } catch (err) {
+        console.error("Error fetching live trades:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchInitialTrades();
+
+    // 2. 🚀 SUPABASE REALTIME LISTENER
+    const subscription = supabase
+      .channel(`live-trades-${tokenMint}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'trades',
+          filter: `mint_address=eq.${tokenMint}`
+        },
+        (payload) => {
+          console.log("🟢 NEW LIVE TRADE DETECTED:", payload.new);
+          // Instantly inject the new trade at the top of the list
+          setLiveTrades((prev) => [payload.new, ...prev]);
+        }
+      )
+      .subscribe();
+
+    // Cleanup listener on unmount or token change
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [currentToken]);
+
+  if (isLoading) {
+    return <div className="text-center text-xs text-[#00f2a1] font-mono py-10 animate-pulse uppercase tracking-widest">Syncing Blockchain...</div>;
+  }
+
+  if (liveTrades.length === 0) {
+    return <div className="text-center text-xs text-zinc-500 font-mono py-10 uppercase tracking-widest">No trades yet. Be the first!</div>;
+  }
 
   return (
     <div className="space-y-2 text-left pb-24">
-      <div className="flex items-center justify-between text-xs font-bold text-zinc-400 uppercase tracking-wider px-1 mb-1">
+      <div className="flex items-center justify-between text-[10px] font-black text-zinc-500 uppercase tracking-widest px-1 mb-2">
         <span>Transaction</span>
-        <span>Amount / PnL</span>
+        <span>Amount</span>
       </div>
       
-      {mockTrades.map((tx) => (
-        <div key={tx.id} className="bg-[#121318] p-3 rounded-xl border border-white/5 flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className={`text-[10px] font-black px-2 py-0.5 rounded ${tx.type === 'BUY' ? 'bg-[#00f2a1]/20 text-[#00f2a1]' : 'bg-[#F23645]/20 text-[#F23645]'}`}>
-              {tx.type}
-            </span>
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-white tabular-nums">{tx.sol}</span>
-              <span className="text-[10px] text-zinc-500 font-mono">{tx.wallet} • {tx.time}</span>
+      {liveTrades.map((tx) => {
+        // Defensive data parsing to handle slight variations in your DB column names
+        const typeStr = tx.type ? tx.type.toUpperCase() : (tx.is_buy ? 'BUY' : 'SELL');
+        const isBuy = typeStr === 'BUY';
+        
+        const solAmt = tx.sol_amount || tx.solAmount || 0;
+        const tokenAmt = tx.token_amount || tx.tokenAmount || 0;
+        const wallet = tx.wallet_address || tx.user_address || tx.maker || 'Unknown';
+
+        return (
+          <div key={tx.id || Math.random()} className="bg-[#121318] p-3 rounded-xl border border-white/5 flex items-center justify-between shadow-sm transition-all animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-3">
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded ${isBuy ? 'bg-[#00f2a1]/20 text-[#00f2a1]' : 'bg-[#F23645]/20 text-[#F23645]'}`}>
+                {typeStr}
+              </span>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-white tabular-nums">
+                  {parseFloat(solAmt).toFixed(3)} SOL
+                </span>
+                <span className="text-[10px] text-zinc-500 font-mono">
+                  {shortenAddress(wallet)} • {timeAgo(tx.created_at)}
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex flex-col items-end">
+              <span className="text-xs font-bold text-white tabular-nums">
+                {parseFloat(tokenAmt).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[9px] font-black tracking-widest text-zinc-600 uppercase mt-0.5">
+                Tokens
+              </span>
             </div>
           </div>
-          
-          <div className="flex flex-col items-end">
-            <span className="text-xs font-bold text-white tabular-nums">{tx.token}</span>
-            <span className={`text-[10px] font-black tabular-nums ${tx.pnl.startsWith('+') ? 'text-[#089981]' : 'text-[#F23645]'}`}>
-              {tx.pnl}
-            </span>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
