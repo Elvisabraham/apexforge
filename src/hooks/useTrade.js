@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { BN, Program, AnchorProvider, setProvider } from '@coral-xyz/anchor';
 import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
-import { getAssociatedTokenAddress, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token'; // 🟢 Added SPL import
+import { getAssociatedTokenAddress, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import idl from '../idl/idl.json';
 import { supabase } from '../supabaseClient';
 
@@ -11,7 +11,7 @@ export const useTrade = () => {
   const { connection } = useConnection();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const executeTradeOnChain = async (mode, amount, tokenMint, creatorAddress = null, referrerAddress = null, isGraduated = false) => {
+  const executeTradeOnChain = async (mode, amount, tokenMint, creatorAddress = null, referrerAddress = null, isGraduated = false, currentSolInCurve = 0) => {
     if (!wallet.publicKey) {
       alert("❌ Wallet not connected! Please connect Phantom.");
       return false;
@@ -19,55 +19,14 @@ export const useTrade = () => {
 
     setIsProcessing(true);
 
+    // ==========================================
     // 🚀 THE BRIDGE: Intercept graduated tokens and route to DEX
+    // ==========================================
     if (isGraduated) {
       console.log(`⚡ Token ${tokenMint} is graduated. Routing to Jupiter DEX...`);
-      
-      try {
-        /* 
-        // ==========================================
-        // 🚀 MAINNET JUPITER API LOGIC (Keep commented for Devnet)
-        // ==========================================
-        const quoteResponse = await (
-          await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=${mode === 'buy' ? 'So11111111111111111111111111111111111111112' : tokenMint}&outputMint=${mode === 'buy' ? tokenMint : 'So11111111111111111111111111111111111111112'}&amount=${mode === 'buy' ? amount * 1e9 : amount * 1e6}&slippageBps=50`)
-        ).json();
-
-        const { swapTransaction } = await (
-          await fetch('https://quote-api.jup.ag/v6/swap', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              quoteResponse,
-              userPublicKey: wallet.publicKey.toString(),
-              wrapAndUnwrapSol: true,
-            })
-          })
-        ).json();
-
-        const swapTransactionBuf = Buffer.from(swapTransaction, 'base64');
-        var transaction = VersionedTransaction.deserialize(swapTransactionBuf);
-        const signedTransaction = await wallet.signTransaction(transaction);
-        const rawTransaction = signedTransaction.serialize();
-        const txid = await connection.sendRawTransaction(rawTransaction, { skipPreflight: true, maxRetries: 2 });
-        await connection.confirmTransaction(txid);
-        
-        setIsProcessing(false);
-        return true; 
-        */
-
-        // ==========================================
-        // 🛠️ DEVNET SIMULATION (Active while testing)
-        // ==========================================
-        alert("⚡ Token is graduated! On Mainnet, this will instantly swap via Jupiter Liquidity Pools right here on the UI. (Devnet simulated success)");
-        setIsProcessing(false);
-        return false; 
-
-      } catch (error) {
-        console.error("Jupiter Swap Failed:", error);
-        alert("DEX Swap Failed. Pool may still be migrating to Raydium.");
-        setIsProcessing(false);
-        return false;
-      }
+      alert("⚡ Token is graduated! On Mainnet, this will swap via Jupiter Liquidity Pools.");
+      setIsProcessing(false);
+      return false; 
     }
 
     // ==========================================
@@ -81,7 +40,6 @@ export const useTrade = () => {
       const program = new Program(idl, programID, provider);
 
       // --- SETUP V2 ACCOUNTS ---
-      // For Devnet testing, missing targets route fees to your own wallet
       const APEX_TREASURY = wallet.publicKey; 
       const TOKEN_CREATOR = creatorAddress ? new PublicKey(creatorAddress) : wallet.publicKey;
       const REFERRER = referrerAddress ? new PublicKey(referrerAddress) : wallet.publicKey;
@@ -93,46 +51,32 @@ export const useTrade = () => {
         return false;
       }
 
-      if (tokenMint.includes('8AVmX9aQwZoonSolanaNet11oHEZforge')) {
-        alert("⚠️ UI Error: The app is still trying to trade the fake placeholder address! Let the database sync.");
-        setIsProcessing(false);
-        return false;
-      }
-
       const mintPubkey = new PublicKey(tokenMint.trim());
-
       const accountCheck = await provider.connection.getAccountInfo(mintPubkey, 'confirmed');
       
       if (!accountCheck) {
-        alert("⚠️ Devnet Lag: The blockchain successfully created your token, but hasn't synced it yet! Please wait 15 seconds.");
-        setIsProcessing(false);
-        return false;
-      }
-      
-      if (accountCheck.owner.toBase58() === '11111111111111111111111111111111') {
-        alert("⚠️ Launch Error: The token was saved to the database, but the blockchain rejected the mint.");
+        alert("⚠️ Chain Lag: Token mint not confirmed yet. Please wait a few seconds.");
         setIsProcessing(false);
         return false;
       }
 
-      // 2. Derive the unique Bonding Curve PDA
+      // 1. Derive Bonding Curve PDA
       const [bondingCurvePDA] = PublicKey.findProgramAddressSync(
         [Buffer.from("bonding_curve"), mintPubkey.toBuffer()],
         programID 
       );
 
-      // 3. Derive User's Associated Token Account (ATA)
+      // 2. Derive User ATA
       const userTokenAccount = await getAssociatedTokenAddress(
         mintPubkey,
         wallet.publicKey
       );
 
       const transaction = new Transaction();
+      const parsedAmount = parseFloat(amount.toString().replace(/,/g, ''));
 
       if (mode === 'buy') {
-        // Amount is in SOL (9 decimals) - 🚀 FIX: Strip commas before parsing
-        const amountInLamports = new BN(Math.floor(parseFloat(amount.toString().replace(/,/g, '')) * 1e9));
-        
+        const amountInLamports = new BN(Math.floor(parsedAmount * 1e9));
         const buyIx = await program.methods
           .buyTokens(amountInLamports)
           .accounts({
@@ -152,9 +96,7 @@ export const useTrade = () => {
         transaction.add(buyIx);
 
       } else if (mode === 'sell') {
-        // Amount is in Tokens (6 decimals) - 🚀 FIX: Strip commas before parsing
-        const tokenAmountRaw = new BN(Math.floor(parseFloat(amount.toString().replace(/,/g, '')) * 1_000_000));
-        
+        const tokenAmountRaw = new BN(Math.floor(parsedAmount * 1_000_000));
         const sellIx = await program.methods
           .sellTokens(tokenAmountRaw)
           .accounts({
@@ -174,18 +116,16 @@ export const useTrade = () => {
         transaction.add(sellIx);
       }
 
-      // 4. BUNDLE AND SEND (Wait for real confirmation!)
+      // 3. SEND TRANSACTION
       const latestBlockhash = await connection.getLatestBlockhash('confirmed');
       transaction.recentBlockhash = latestBlockhash.blockhash;
       transaction.feePayer = wallet.publicKey;
 
       const signedTx = await provider.wallet.signTransaction(transaction);
-      
       const tx = await connection.sendRawTransaction(signedTx.serialize()); 
 
-      console.log("⏳ Waiting for Solana to confirm trade...");
+      console.log("⏳ Waiting for confirmation on Solana:", tx);
       
-     // Force React to wait for the official blockchain receipt
       const confirmation = await connection.confirmTransaction({
         signature: tx,
         blockhash: latestBlockhash.blockhash,
@@ -196,56 +136,58 @@ export const useTrade = () => {
         throw new Error("Transaction rejected by the blockchain.");
       }
 
-      console.log(`🚀 ${mode.toUpperCase()} Successful! Signature:`, tx);
-      
-      // 🚀 SUPABASE VOLUME TRACKER: Update the token's 24H volume directly
-      try {
-        const solPrice = 72.57; // Your current static SOL price
-const parsedAmount = parseFloat(amount.toString().replace(/,/g, ''));
-const tradeVolumeUsd = parsedAmount * solPrice;
+      console.log(`🚀 ${mode.toUpperCase()} Confirmed! Sig:`, tx);
 
-        // 1. Fetch the token's current volume from your Supabase table
-        const { data: tokenData, error: fetchError } = await supabase
-          .from('tokens') // ⚠️ Change 'tokens' if your table is named differently!
-          .select('volume_24h')
-          .eq('mint_address', tokenMint)
-          .single();
+      // =====================================================================
+      // 🚀 4. INJECT INTO SUPABASE TRADES TABLE (TRIGGERS LIVE CHART)
+      // =====================================================================
+      const solPriceUsd = 140.0; // Current reference SOL price
+      const vSol = 30 + (currentSolInCurve || 0);
+      const vTokens = (30 * 1000000000) / vSol;
+      const priceInSol = vSol / vTokens;
+      const priceInUsd = priceInSol * solPriceUsd;
 
-        if (!fetchError && tokenData) {
-          const newVolume = (tokenData.volume_24h || 0) + tradeVolumeUsd;
-          
-          // 2. Update the table with the new total
-          await supabase
-            .from('tokens')
-            .update({ volume_24h: newVolume })
-            .eq('mint_address', tokenMint);
-            
-          console.log(`✅ Supabase Volume Updated: +$${tradeVolumeUsd.toFixed(2)}`);
-        }
-      } catch (dbErr) {
-        console.error("Volume update failed, but trade succeeded:", dbErr);
+      const tradeSolAmount = mode === 'buy' ? parsedAmount : (parsedAmount * priceInSol);
+
+      // Insert record into trades to fire the real-time WebSocket
+      await supabase.from('trades').insert([{
+        token_mint: tokenMint,
+        maker: wallet.publicKey.toString(),
+        type: mode,
+        sol_amount: tradeSolAmount,
+        price: priceInUsd,
+        tx_signature: tx,
+        created_at: new Date().toISOString()
+      }]);
+
+      // Update 24h volume on the token summary
+      const { data: tokenData } = await supabase
+        .from('tokens')
+        .select('volume_24h')
+        .eq('mint_address', tokenMint)
+        .single();
+
+      if (tokenData) {
+        await supabase
+          .from('tokens')
+          .update({ volume_24h: (tokenData.volume_24h || 0) + (tradeSolAmount * solPriceUsd) })
+          .eq('mint_address', tokenMint);
       }
 
-      alert(`🚀 Trade Successful! Tx: ${tx}`);
-      
+      alert(`🚀 Trade Confirmed! Tx: ${tx.slice(0, 8)}...`);
       setIsProcessing(false);
       return true;
 
-   } catch (err) {
+    } catch (err) {
       console.error("🔴 Trade Failed:", err);
       const errMsg = err?.message || "";
 
-      // 1. Check if the user is trying to sell without owning an account
       if (errMsg.includes("seller_token_account") && errMsg.includes("AccountNotInitialized")) {
         alert("⚠️ Trade Blocked: You cannot sell a token you don't own! (0 Balance)");
-      } 
-      // 2. Check if the curve itself is missing
-      else if (errMsg.includes("AccountNotInitialized")) {
-        alert("⚠️ Trade Failed: This token's bonding curve has not been launched on the blockchain yet!");
-      } 
-      // 3. Any other errors (like Insufficient Liquidity)
-      else {
-        alert(`Trade Failed: Check the console for details. (Error: ${errMsg})`);
+      } else if (errMsg.includes("AccountNotInitialized")) {
+        alert("⚠️ Trade Failed: Bonding curve not initialized on-chain yet.");
+      } else {
+        alert(`Trade Failed: ${errMsg || "Check console"}`);
       }
 
       setIsProcessing(false);
