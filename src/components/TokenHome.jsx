@@ -116,6 +116,10 @@ export default function TokenHome({
   const [chartMode, setChartMode] = useState('price'); // 'price' or 'mcap'
   const [activeTimeframe, setActiveTimeframe] = useState('15m');
 
+// Mainnet Chart Data States
+const [historicalTrades, setHistoricalTrades] = useState([]);
+const [liveTrade, setLiveTrade] = useState(null);
+
   // Trade States
   const [tradeMode, setTradeMode] = useState('buy');
   const [tradeAmount, setTradeAmount] = useState('');
@@ -399,7 +403,12 @@ export default function TokenHome({
                 </div>
             </div>
             <div className="flex-1 w-full relative z-0">
-               <TokenChart currentToken={currentToken} chartMode={chartMode} />
+              <TokenChart 
+              currentToken={currentToken} 
+              chartMode={chartMode}
+              historicalData={historicalTrades} 
+              liveTradeTick={liveTrade} 
+              />
             </div>
           </div>
 
@@ -839,7 +848,12 @@ export default function TokenHome({
               </div>
 
               <div className="flex-1 min-h-0 w-full relative bg-[#0e0f14]">
-                <TokenChart currentToken={currentToken} chartMode={chartMode} />
+                <TokenChart 
+                currentToken={currentToken} 
+                chartMode={chartMode}
+                historicalData={historicalTrades} 
+                liveTradeTick={liveTrade} 
+                />
               </div>
             </div>
 
