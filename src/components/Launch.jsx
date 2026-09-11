@@ -196,7 +196,8 @@ export default function Forge({ onForgeSuccess }) {
         {/* LEFT COLUMN: 01 / ASSET PARAMETERS */}
         <div className="lg:col-span-7 bg-[#121318] border border-white/5 rounded-2xl p-4 lg:p-5 space-y-4 shadow-xl">
           <div className="flex items-center justify-between border-b border-white/5 pb-3">
-            <span className="text-xs font-mono font-black tracking-widest text-[#00f2a1] uppercase">
+            {/* Removed font-mono here */}
+            <span className="text-xs font-black tracking-widest text-[#00f2a1] uppercase">
               01 / Asset Parameters
             </span>
             <span className="text-[10px] font-mono text-zinc-500 uppercase">* Required Fields</span>
@@ -351,7 +352,8 @@ export default function Forge({ onForgeSuccess }) {
           {/* 02 / LIQUIDITY SNIPE & DEPLOY CARD */}
           <div className="bg-[#121318] border border-white/5 rounded-2xl p-4 lg:p-5 space-y-4 shadow-xl">
             <div className="border-b border-white/5 pb-3">
-              <span className="text-xs font-mono font-black tracking-widest text-[#00f2a1] uppercase">
+              {/* Removed font-mono here */}
+              <span className="text-xs font-black tracking-widest text-[#00f2a1] uppercase">
                 02 / Liquidity Snipe & Deploy
               </span>
             </div>
@@ -389,7 +391,8 @@ export default function Forge({ onForgeSuccess }) {
                     key={amt}
                     type="button"
                     onClick={() => setInitialBuy(amt === '0' ? '' : amt)}
-                    className={`py-1.5 rounded-lg text-xs font-mono font-bold transition-all border cursor-pointer ${
+                    /* Removed font-mono here */
+                    className={`py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
                       initialBuy === amt || (amt === '0' && !initialBuy)
                         ? 'bg-[#089981] text-white border-[#089981] shadow-sm shadow-[#089981]/30'
                         : 'bg-[#0a0b0e] text-zinc-400 border-white/5 hover:border-white/20 hover:text-white'
