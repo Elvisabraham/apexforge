@@ -120,6 +120,68 @@ export default function TokenHome({
 const [historicalTrades, setHistoricalTrades] = useState([]);
 const [liveTrade, setLiveTrade] = useState(null);
 
+// =========================================================================
+// 🚀 SUPABASE OHLC CHART ENGINE
+// =========================================================================
+useEffect(() => {
+  if (!currentToken) return;
+
+  const fetchAndBuildChartData = async () => {
+    try {
+      // 1. Fetch real historical trades from your DB
+      const { data: trades, error } = await supabase
+        .from('trades')
+        .select('*')
+        // Checks both mintAddress and address depending on your token object structure
+        .eq('token_mint', currentToken?.mintAddress || currentToken?.address || currentToken?.mint)
+        .order('created_at', { ascending: true }); // Oldest first to draw left-to-right
+
+      if (error) throw error;
+      
+      if (!trades || trades.length === 0) {
+        setHistoricalTrades([]);
+        return;
+      }
+
+      // 2. Aggregate raw trades into 1-minute Candles (OHLC)
+      const ohlcMap = {};
+
+      trades.forEach(trade => {
+        const tradeTime = new Date(trade.created_at).getTime() / 1000;
+        const minuteTimestamp = Math.floor(tradeTime / 60) * 60; // Round down to nearest minute
+        
+        const price = Number(trade.price || trade.usd_price || 0); // Adjust to match your DB column
+        const volume = Number(trade.sol_amount || 0); // Adjust to match your DB column
+
+        if (!ohlcMap[minuteTimestamp]) {
+          ohlcMap[minuteTimestamp] = {
+            time: minuteTimestamp,
+            open: price,
+            high: price,
+            low: price,
+            close: price,
+            volume: volume
+          };
+        } else {
+          ohlcMap[minuteTimestamp].high = Math.max(ohlcMap[minuteTimestamp].high, price);
+          ohlcMap[minuteTimestamp].low = Math.min(ohlcMap[minuteTimestamp].low, price);
+          ohlcMap[minuteTimestamp].close = price;
+          ohlcMap[minuteTimestamp].volume += volume;
+        }
+      });
+
+      // 3. Convert map to sorted array and feed the chart
+      const formattedHistory = Object.values(ohlcMap).sort((a, b) => a.time - b.time);
+      setHistoricalTrades(formattedHistory);
+
+    } catch (err) {
+      console.error("Error building chart history:", err);
+    }
+  };
+
+  fetchAndBuildChartData();
+}, [currentToken]); // Re-runs instantly if the user clicks a different token
+
   // Trade States
   const [tradeMode, setTradeMode] = useState('buy');
   const [tradeAmount, setTradeAmount] = useState('');
