@@ -148,15 +148,17 @@ export const useTrade = () => {
       const priceInUsd = priceInSol * solPriceUsd;
 
       const tradeSolAmount = mode === 'buy' ? parsedAmount : (parsedAmount * priceInSol);
+      const tradeTokenAmount = mode === 'buy' ? (parsedAmount / priceInSol) : parsedAmount;
 
       console.log("Writing trade to Supabase for mint:", tokenMint);
 
-       // Insert record and capture errors
+      // Insert record and capture errors
       const { data: insertData, error: insertError } = await supabase.from('trades').insert([{
         token_mint: tokenMint,
         wallet: wallet.publicKey.toString(), 
         type: mode,
-        amount: tradeSolAmount, // 🚀 CHANGED FROM sol_amount TO amount
+        sol_amount: tradeSolAmount, // 🚀 DB wants the SOL amount
+        amount: tradeTokenAmount,   // 🚀 AND the DB wants the Token amount!
         price: priceInUsd,
         tx_signature: tx,
         created_at: new Date().toISOString()
