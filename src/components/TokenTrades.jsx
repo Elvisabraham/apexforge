@@ -25,7 +25,7 @@ export default function TokenTrades({ currentToken }) {
   const [liveTrades, setLiveTrades] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+ useEffect(() => {
     if (!currentToken) return;
     
     const tokenMint = currentToken.mint_address || currentToken.mintAddress || currentToken.address || currentToken.id;
@@ -36,8 +36,7 @@ export default function TokenTrades({ currentToken }) {
       try {
         const { data, error } = await supabase
           .from('trades')
-          // 🚨 CHANGE THIS: Replace 'token_address' with your actual Supabase column name!
-          .eq('token_address', tokenMint) 
+          .eq('token_mint', tokenMint) // 🚀 Updated to match your DB exactly
           .order('created_at', { ascending: false })
           .limit(50);
           
@@ -52,7 +51,7 @@ export default function TokenTrades({ currentToken }) {
 
     fetchInitialTrades();
 
-    // 2. 🚀 SUPABASE REALTIME LISTENER (Fixed for Strict Mode)
+    // 2. 🚀 SUPABASE REALTIME LISTENER 
     const uniqueChannelName = `live-trades-${tokenMint}-${Date.now()}`;
     const subscription = supabase
       .channel(uniqueChannelName)
@@ -62,8 +61,7 @@ export default function TokenTrades({ currentToken }) {
           event: 'INSERT',
           schema: 'public',
           table: 'trades',
-          // 🚨 CHANGE THIS: Replace 'token_address' with your actual Supabase column name!
-          filter: `token_address=eq.${tokenMint}` 
+          filter: `token_mint=eq.${tokenMint}` // 🚀 Updated to match your DB exactly
         },
         (payload) => {
           console.log("🟢 NEW LIVE TRADE DETECTED:", payload.new);
