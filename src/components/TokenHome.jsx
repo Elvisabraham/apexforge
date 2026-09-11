@@ -147,6 +147,49 @@ const [liveTrade, setLiveTrade] = useState(null);
     solInCurve: 0
   };
 
+  const { connection } = useConnection();
+  const wallet = useWallet();
+  const [userTokenBalance, setUserTokenBalance] = useState(0);
+
+  // 🎒 REAL-TIME "MY BAG" BALANCE FETCHER
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (!wallet.publicKey || !currentToken) {
+        setUserTokenBalance(0);
+        return;
+      }
+      try {
+        const rawAddress = currentToken?.mint_address || currentToken?.mintAddress || currentToken?.address || currentToken?.mint;
+        if (!rawAddress) return;
+
+        const mintPubkey = new PublicKey(rawAddress);
+        
+        // Scan the blockchain for your specific token account
+        const parsedTokenAccounts = await connection.getParsedTokenAccountsByOwner(
+          wallet.publicKey,
+          { mint: mintPubkey }
+        );
+
+        if (parsedTokenAccounts.value.length > 0) {
+          // Extract the exact UI amount (handles decimals automatically)
+          const balance = parsedTokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
+          setUserTokenBalance(balance);
+        } else {
+          setUserTokenBalance(0);
+        }
+      } catch (err) {
+        console.error("Failed to fetch bag balance:", err);
+        setUserTokenBalance(0);
+      }
+    };
+
+    fetchBalance();
+    
+    // Auto-refresh the balance every 5 seconds so it updates instantly after a trade
+    const interval = setInterval(fetchBalance, 5000);
+    return () => clearInterval(interval);
+  }, [wallet.publicKey, currentToken, connection]);
+
 // =========================================================================
 // 🚀 SUPABASE OHLC CHART ENGINE
 // =========================================================================
