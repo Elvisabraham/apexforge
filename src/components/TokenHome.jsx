@@ -184,8 +184,8 @@ const [liveTrade, setLiveTrade] = useState(null);
 
     fetchBalance();
     
-    // Auto-refresh the balance every 5 seconds so it updates instantly after a trade
-    const interval = setInterval(fetchBalance, 5000);
+    // Auto-refresh the balance every 15 seconds so it updates instantly after a trade
+    const interval = setInterval(fetchBalance, 15000);
     return () => clearInterval(interval);
   }, [wallet.publicKey, currentToken, connection]);
 
