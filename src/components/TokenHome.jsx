@@ -435,22 +435,22 @@ useEffect(() => {
             
             {/* Right Side: Portfolio Balance + Share/Star Icons */}
             <div className="flex items-center gap-3">
-              {/* 🚀 MOBILE ACTIVE TOKEN BAG */}
-            <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-full border border-white/10 transition-colors cursor-pointer">
-              <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">Bag:</span>
-              
-              {/* USD Value First with Custom Icon */}
-              <span className="flex items-center text-xs font-black text-[#00f2a1]">
-                <DexDollarIcon className="w-3 h-3 mr-[1px]" strokeWidth={3} />
-                {((typeof userTokenBalance !== 'undefined' ? userTokenBalance : 0) * (typeof curveState !== 'undefined' ? curveState?.price || 0 : 0)).toFixed(2)}
-              </span>
+              {/* MOBILE ACTIVE TOKEN BAG */}
+      <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-full border border-white/10 transition-colors">
+        <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">Bag:</span>
 
-              {/* Quantity & Dynamic Symbol Second */}
-              <span className="text-xs font-black text-white">
-                ({(typeof userTokenBalance !== 'undefined' ? userTokenBalance : 0).toLocaleString()} 
-                <span className="text-zinc-400 ml-1">{currentToken?.symbol || 'TKN'}</span>)
-              </span>
-            </div>
+        {/* USD Value First with Custom Icon */}
+        <span className="flex items-center text-xs font-black text-[#00f2a1]">
+          <DexDollarIcon className="w-3 h-3 mr-[1px]" strokeWidth={3} />
+          {(userTokenBalance * (displayPrice || 0)).toFixed(2)}
+        </span>
+
+        {/* Quantity & Dynamic Symbol Second */}
+        <span className="text-xs font-black text-white">
+          {userTokenBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+          <span className="text-zinc-400 ml-1">{currentToken?.symbol || 'TKN'}</span>
+        </span>
+      </div>
 
               {/* Share & Favorite Buttons in Top Bar */}
               <div className="flex items-center gap-1.5 border-l border-white/10 pl-3">
