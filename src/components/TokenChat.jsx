@@ -429,18 +429,19 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
             onClick={() => setDisplayMode(prev => prev === 'price' ? 'mcap' : 'price')}
             className="cursor-pointer select-none group"
           >
-            <div className="text-white font-extrabold text-sm sm:text-base tracking-tight group-hover:text-emerald-400 transition-colors flex items-center justify-end">
-              {displayMode === 'price' ? (
-                formatProPrice(`$${(Number(realUsdPrice) > 0 ? Number(realUsdPrice) : 0.00000229).toFixed(8)}`)
-              ) : (
-                (() => {
-                  const numPrice = Number(realUsdPrice) > 0 ? Number(realUsdPrice) : 0.00000229;
-                  const mcapVal = numPrice * 1000000000;
-                  const formatted = mcapVal >= 1e9 ? `${(mcapVal / 1e9).toFixed(2)}B` : mcapVal >= 1e6 ? `${(mcapVal / 1e6).toFixed(2)}M` : `${(mcapVal / 1e3).toFixed(2)}K`;
-                  return formatProPrice(`$${formatted}`);
-                })()
-              )}
-            </div>
+           <div className="flex items-center text-white font-extrabold text-sm sm:text-base tracking-tight group-hover:text-emerald-400 transition-colors">
+  <DexDollarIcon className="w-3.5 h-3.5 text-zinc-500 mr-[1px]" strokeWidth={3} />
+  {displayMode === 'price' ? (
+    formatProPrice(`${(Number(realUsdPrice) > 0 ? Number(realUsdPrice) : 0.00000229).toFixed(8)}`)
+  ) : (
+    (() => {
+      const numPrice = Number(realUsdPrice) > 0 ? Number(realUsdPrice) : 0.00000229;
+      const mcapVal = numPrice * 1000000000;
+      const formatted = mcapVal >= 1e9 ? `${(mcapVal / 1e9).toFixed(2)}B` : mcapVal >= 1e6 ? `${(mcapVal / 1e6).toFixed(2)}M` : mcapVal.toFixed(2);
+      return formatProPrice(`${formatted}`);
+    })()
+  )}
+</div>
           </div>
           <span className={`${realIsPositive ? 'text-[#00FF66]' : 'text-[#FF3B69]'} flex items-center gap-1 text-[10px] font-semibold mt-0.5 justify-end`}>
             {realIsPositive ? '▲' : '▼'} {Math.abs(Number(realPriceChangePct) || 0).toFixed(2)}% <span className="text-[#787B86] font-normal">24H</span>
