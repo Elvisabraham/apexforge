@@ -25,7 +25,7 @@ export default function TokenTrades({ currentToken }) {
   const [liveTrades, setLiveTrades] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
- useEffect(() => {
+   useEffect(() => {
     if (!currentToken) return;
     
     const tokenMint = currentToken.mint_address || currentToken.mintAddress || currentToken.address || currentToken.id;
@@ -36,11 +36,17 @@ export default function TokenTrades({ currentToken }) {
       try {
         const { data, error } = await supabase
           .from('trades')
-          .eq('token_mint', tokenMint) // 🚀 Updated to match your DB exactly
+          .select('*') // 🚀 THE MISSING PIECE! This tells Supabase to return the data.
+          .eq('token_mint', tokenMint) 
           .order('created_at', { ascending: false })
           .limit(50);
           
-        if (error) throw error;
+        if (error) {
+          console.error("🔴 Supabase Fetch Error:", error);
+          throw error;
+        }
+        
+        console.log("📦 TRADES DATA FROM DB:", data);
         setLiveTrades(data || []);
       } catch (err) {
         console.error("Error fetching live trades:", err);
@@ -61,7 +67,7 @@ export default function TokenTrades({ currentToken }) {
           event: 'INSERT',
           schema: 'public',
           table: 'trades',
-          filter: `token_mint=eq.${tokenMint}` // 🚀 Updated to match your DB exactly
+          filter: `token_mint=eq.${tokenMint}`
         },
         (payload) => {
           console.log("🟢 NEW LIVE TRADE DETECTED:", payload.new);
