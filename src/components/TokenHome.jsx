@@ -98,7 +98,6 @@ export default function TokenHome({
   globalTokens = [],
   userSolBalance = 0,
   userTokenBalance = 0,
-  isProcessing = false,
   formatWithCommas = (val) => val,
   calculateTokenYield = () => '0',
   handleExecuteTrade = () => {}
@@ -244,22 +243,6 @@ useEffect(() => {
   };
 }, [currentToken]);
 
-// 🚀 TRADE EXECUTION HOOK & HANDLER
-  const { executeTradeOnChain, isProcessing } = useTrade();
-
-  const handleTradeSubmit = async () => {
-    const mint = currentToken?.mintAddress || currentToken?.address || currentToken?.mint;
-    return await executeTradeOnChain(
-      tradeMode,
-      tradeAmount,
-      mint,
-      currentToken?.creatorAddress,
-      null,
-      currentToken?.isGraduated,
-      currentToken?.solInCurve || 0
-    );
-  };
-
   const cleanNumericAmount = parseFloat(tradeAmount.toString().replace(/,/g, '')) || 0;
   const currentVSol = 30 + (currentToken?.solInCurve || 0);
   const currentVTokens = (30 * 1000000000) / currentVSol;
@@ -305,10 +288,19 @@ useEffect(() => {
     }
   };
 
-  const executeTokenTrade = async () => {
-    await handleExecuteTrade(tradeMode, tradeAmount, currentToken);
-    setIsMobileTradeOpen(false);
-    setTradeAmount('');
+  const { executeTradeOnChain, isProcessing } = useTrade();
+
+  const handleTradeSubmit = async () => {
+    const mint = currentToken?.mintAddress || currentToken?.address || currentToken?.mint;
+    return await executeTradeOnChain(
+      tradeMode,
+      tradeAmount,
+      mint,
+      currentToken?.creatorAddress,
+      null,
+      currentToken?.isGraduated,
+      currentToken?.solInCurve || 0
+    );
   };
 
   const handleTabClick = (tab) => {
@@ -1152,7 +1144,7 @@ useEffect(() => {
               ) : (
                 <button 
                   type="button"
-                  onClick={executeTokenTrade} 
+                  onClick={handleTradeSubmit}
                   disabled={!cleanNumericAmount || isProcessing} 
                   className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer ${tradeMode === 'buy' ? 'bg-[#00f2a1] text-black hover:bg-[#00d990]' : 'bg-[#F23645] text-white hover:bg-[#e02a39]'}`}
                 >
