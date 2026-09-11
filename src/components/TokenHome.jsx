@@ -158,7 +158,7 @@ useEffect(() => {
         .from('trades')
         .select('*')
         // Checks both mintAddress and address depending on your token object structure
-        .eq('token_mint', currentToken?.mintAddress || currentToken?.address || currentToken?.mint)
+        .eq('token_mint', currentToken?.mint_address || currentToken?.mintAddress || currentToken?.address || currentToken?.mint)
         .order('created_at', { ascending: true }); // Oldest first to draw left-to-right
 
       if (error) throw error;
@@ -291,7 +291,8 @@ useEffect(() => {
   const { executeTradeOnChain, isProcessing } = useTrade();
 
   const handleTradeSubmit = async () => {
-    const mint = currentToken?.mintAddress || currentToken?.address || currentToken?.mint;
+    // Look for mint_address first (Supabase standard)
+    const mint = currentToken?.mint_address || currentToken?.mintAddress || currentToken?.address || currentToken?.mint;
     return await executeTradeOnChain(
       tradeMode,
       tradeAmount,
@@ -364,7 +365,7 @@ useEffect(() => {
   const displaySupply = currentToken?.supply || '1B';
   const displayTop10 = currentToken?.top10 || mockTop10;
   
-  const rawAddress = currentToken?.mintAddress || `7hVVo${charSum}czBBsc2G9Xm`;
+  const rawAddress = currentToken?.mint_address || currentToken?.mintAddress || currentToken?.address || currentToken?.mint || `7hVVo${charSum}cZBBsc2G9Xm`;
   const formattedAddress = rawAddress.length > 10 ? `${rawAddress.slice(0, 4)}...${rawAddress.slice(-4)}` : rawAddress;
 
   return (
