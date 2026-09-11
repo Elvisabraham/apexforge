@@ -13,6 +13,7 @@ import TokenMyTrades from './TokenMyTrades';
 import TokenTopTraders from './TokenTopTraders';
 import TradeWidget from './TradeWidget';
 import { supabase } from '../supabaseClient';
+import { useTrade } from '../hooks/useTrade';
 import { 
   TrendingUp,
   Activity,
@@ -242,6 +243,22 @@ useEffect(() => {
     supabase.removeChannel(channel); // Clean up the connection when leaving the token page
   };
 }, [currentToken]);
+
+// 🚀 TRADE EXECUTION HOOK & HANDLER
+  const { executeTradeOnChain, isProcessing } = useTrade();
+
+  const handleTradeSubmit = async () => {
+    const mint = currentToken?.mintAddress || currentToken?.address || currentToken?.mint;
+    return await executeTradeOnChain(
+      tradeMode,
+      tradeAmount,
+      mint,
+      currentToken?.creatorAddress,
+      null,
+      currentToken?.isGraduated,
+      currentToken?.solInCurve || 0
+    );
+  };
 
   const cleanNumericAmount = parseFloat(tradeAmount.toString().replace(/,/g, '')) || 0;
   const currentVSol = 30 + (currentToken?.solInCurve || 0);
@@ -640,17 +657,17 @@ useEffect(() => {
             {/* 🚀 UNIVERSAL PRO TRADE WIDGET INJECTED HERE */}
             <div className="w-full">
               <TradeWidget 
-                displayToken={currentToken}
-                tradeMode={tradeMode}
-                setTradeMode={setTradeMode}
-                tradeAmount={tradeAmount}
-                setTradeAmount={setTradeAmount}
-                userBalanceSol={typeof userSolBalance !== 'undefined' ? userSolBalance : 0}
-                userTokenBalance={typeof userTokenBalance !== 'undefined' ? userTokenBalance : 0}
-                handleExecuteTrade={typeof executeTokenTrade === 'function' ? executeTokenTrade : null}
-                isProcessing={isProcessing}
-                curveState={typeof curveState !== 'undefined' ? curveState : null}
-              />
+  displayToken={currentToken}
+  tradeMode={tradeMode}
+  setTradeMode={setTradeMode}
+  tradeAmount={tradeAmount}
+  setTradeAmount={setTradeAmount}
+  userBalanceSol={typeof userSolBalance !== 'undefined' ? userSolBalance : 0}
+  userTokenBalance={typeof userTokenBalance !== 'undefined' ? userTokenBalance : 0}
+  handleExecuteTrade={handleTradeSubmit}
+  isProcessing={isProcessing}
+  curveState={currentToken}
+/>
             </div>
           </div>
         </div>
