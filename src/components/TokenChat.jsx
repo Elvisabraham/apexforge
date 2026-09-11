@@ -437,7 +437,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     (() => {
       const numPrice = Number(realUsdPrice) > 0 ? Number(realUsdPrice) : 0.00000229;
       const mcapVal = numPrice * 1000000000;
-      const formatted = mcapVal >= 1e9 ? `${(mcapVal / 1e9).toFixed(2)}B` : mcapVal >= 1e6 ? `${(mcapVal / 1e6).toFixed(2)}M` : mcapVal.toFixed(2);
+      const formatted = mcapVal >= 1e9 ? `${(mcapVal / 1e9).toFixed(2)}B` : mcapVal >= 1e6 ? `${(mcapVal / 1e6).toFixed(2)}M` : mcapVal >= 1e3 ? `${(mcapVal / 1e3).toFixed(2)}K` : mcapVal.toFixed(2);
       return formatProPrice(`${formatted}`);
     })()
   )}
