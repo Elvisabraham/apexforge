@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SidebarTokenRow from './SidebarTokenRow';
 import { formatPhantomPrice } from '../utils/formatters';
 import TokenChat from './TokenChat';
@@ -12,6 +12,7 @@ import ShareModal from './ShareModal';
 import TokenMyTrades from './TokenMyTrades';
 import TokenTopTraders from './TokenTopTraders';
 import TradeWidget from './TradeWidget';
+import { supabase } from '../supabaseClient';
 import { 
   TrendingUp,
   Activity,
