@@ -98,13 +98,14 @@ export default function TokenTrades({ currentToken }) {
       </div>
       
       {liveTrades.map((tx) => {
-        // Defensive data parsing to handle slight variations in your DB column names
-        const typeStr = tx.type ? tx.type.toUpperCase() : (tx.is_buy ? 'BUY' : 'SELL');
+        // 🚀 Mapped directly to your actual Supabase column names
+        const typeStr = tx.type ? tx.type.toUpperCase() : 'BUY';
         const isBuy = typeStr === 'BUY';
         
-        const solAmt = tx.sol_amount || tx.solAmount || 0;
-        const tokenAmt = tx.token_amount || tx.tokenAmount || 0;
-        const wallet = tx.wallet_address || tx.user_address || tx.maker || 'Unknown';
+        // Checking all possible fallbacks for SOL amount just in case
+        const solAmt = tx.sol_amount || tx.sol || tx.solAmount || 0;
+        const tokenAmt = tx.amount || tx.token_amount || tx.tokenAmount || 0;
+        const wallet = tx.wallet || tx.wallet_address || 'Unknown';
 
         return (
           <div key={tx.id || Math.random()} className="bg-[#121318] p-3 rounded-xl border border-white/5 flex items-center justify-between shadow-sm transition-all animate-in fade-in slide-in-from-top-2 duration-300">
