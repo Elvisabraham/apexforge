@@ -149,16 +149,25 @@ export const useTrade = () => {
 
       const tradeSolAmount = mode === 'buy' ? parsedAmount : (parsedAmount * priceInSol);
 
-      // Insert record into trades to fire the real-time WebSocket
-      await supabase.from('trades').insert([{
+      console.log("Writing trade to Supabase for mint:", tokenMint);
+
+      // 🚀 FIX: Insert record and capture errors, mapping to 'wallet' column
+      const { data: insertData, error: insertError } = await supabase.from('trades').insert([{
         token_mint: tokenMint,
-        maker: wallet.publicKey.toString(),
+        wallet: wallet.publicKey.toString(), 
         type: mode,
         sol_amount: tradeSolAmount,
         price: priceInUsd,
         tx_signature: tx,
         created_at: new Date().toISOString()
-      }]);
+      }]).select();
+
+      if (insertError) {
+        console.error("❌ SUPABASE INSERT FAILED:", insertError);
+        alert(`Trade succeeded on-chain, but DB rejected it! Error: ${insertError.message}`);
+      } else {
+        console.log("✅ Trade saved to Supabase:", insertData);
+      }
 
       // Update 24h volume on the token summary
       const { data: tokenData } = await supabase
