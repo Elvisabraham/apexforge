@@ -406,7 +406,7 @@ export default function Forge({ onForgeSuccess }) {
 
             {/* CURVE FILL STATS */}
             <div className="space-y-1.5 pt-1">
-              <div className="flex justify-between text-[10px] font-mono">
+              <div className="flex justify-between text-[10px]">
                 <span className="text-zinc-400 uppercase">Estimated Initial Curve Fill</span>
                 <span className="text-[#00f2a1] font-bold">{calculatedProgress()}%</span>
               </div>
