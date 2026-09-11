@@ -120,6 +120,30 @@ export default function TokenHome({
 const [historicalTrades, setHistoricalTrades] = useState([]);
 const [liveTrade, setLiveTrade] = useState(null);
 
+  // Trade States
+  const [tradeMode, setTradeMode] = useState('buy');
+  const [tradeAmount, setTradeAmount] = useState('');
+  
+  const [followedSymbols, setFollowedSymbols] = useState([]);
+  const [copiedCA, setCopiedCA] = useState(false);
+
+  // Live Bonding Curve Math Engine
+  const currentToken = selectedTokenData || globalTokens[0] || {
+    name: 'Heieheue',
+    symbol: 'NEIEHEJ',
+    price: '0.0001',
+    mcap: '10.0K',
+    change24h: '+161.33%',
+    isPositive: true,
+    mintAddress: '4bUkBugu...',
+    liquidity: '5.67K',
+    supply: '1B',
+    top10: '50.64%',
+    vol24h: '729.55M',
+    icon: '🔥',
+    solInCurve: 0
+  };
+
 // =========================================================================
 // 🚀 SUPABASE OHLC CHART ENGINE
 // =========================================================================
@@ -181,30 +205,6 @@ useEffect(() => {
 
   fetchAndBuildChartData();
 }, [currentToken]); // Re-runs instantly if the user clicks a different token
-
-  // Trade States
-  const [tradeMode, setTradeMode] = useState('buy');
-  const [tradeAmount, setTradeAmount] = useState('');
-  
-  const [followedSymbols, setFollowedSymbols] = useState([]);
-  const [copiedCA, setCopiedCA] = useState(false);
-
-  // Live Bonding Curve Math Engine
-  const currentToken = selectedTokenData || globalTokens[0] || {
-    name: 'Heieheue',
-    symbol: 'NEIEHEJ',
-    price: '0.0001',
-    mcap: '10.0K',
-    change24h: '+161.33%',
-    isPositive: true,
-    mintAddress: '4bUkBugu...',
-    liquidity: '5.67K',
-    supply: '1B',
-    top10: '50.64%',
-    vol24h: '729.55M',
-    icon: '🔥',
-    solInCurve: 0
-  };
 
   const cleanNumericAmount = parseFloat(tradeAmount.toString().replace(/,/g, '')) || 0;
   const currentVSol = 30 + (currentToken?.solInCurve || 0);
