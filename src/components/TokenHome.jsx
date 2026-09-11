@@ -207,6 +207,42 @@ useEffect(() => {
   fetchAndBuildChartData();
 }, [currentToken]); // Re-runs instantly if the user clicks a different token
 
+// =========================================================================
+// 🚀 SUPABASE REAL-TIME WEBSOCKET (LIVE TRADES)
+// =========================================================================
+useEffect(() => {
+  if (!currentToken) return;
+
+  const mintAddress = currentToken?.mintAddress || currentToken?.address || currentToken?.mint;
+
+  // Subscribe to real-time inserts on the 'trades' table
+  const channel = supabase
+    .channel(`live-trades-${mintAddress}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'trades',
+        filter: `token_mint=eq.${mintAddress}`
+      },
+      (payload) => {
+        console.log('🚨 NEW LIVE TRADE DETECTED!', payload.new);
+        
+        // Instantly pass the new trade to the chart's live tick prop
+        setLiveTrade({
+          price: Number(payload.new.price || payload.new.usd_price || 0),
+          volume: Number(payload.new.sol_amount || 0)
+        });
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel); // Clean up the connection when leaving the token page
+  };
+}, [currentToken]);
+
   const cleanNumericAmount = parseFloat(tradeAmount.toString().replace(/,/g, '')) || 0;
   const currentVSol = 30 + (currentToken?.solInCurve || 0);
   const currentVTokens = (30 * 1000000000) / currentVSol;
