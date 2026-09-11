@@ -168,7 +168,7 @@ export default function Forge({ onForgeSuccess }) {
   const isFormReady = tokenName.trim() !== '' && tokenSymbol.trim() !== '' && imagePreview && acceptedDisclaimer && connected;
 
   return (
-    <div className="w-full h-full bg-[#0c0d10] text-white p-3 lg:p-5 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-4">
+   <div className="w-full h-full bg-[#0c0d10] text-white p-3 pb-32 lg:p-5 lg:pb-10 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-4">
       
       {/* HEADER */}
       <div className="flex items-center justify-between border-b border-white/5 pb-3">
