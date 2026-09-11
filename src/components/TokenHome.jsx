@@ -14,6 +14,8 @@ import TokenTopTraders from './TokenTopTraders';
 import TradeWidget from './TradeWidget';
 import { supabase } from '../supabaseClient';
 import { useTrade } from '../hooks/useTrade';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
 import { 
   TrendingUp,
   Activity,
