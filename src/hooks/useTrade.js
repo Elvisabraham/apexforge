@@ -151,12 +151,12 @@ export const useTrade = () => {
 
       console.log("Writing trade to Supabase for mint:", tokenMint);
 
-      // 🚀 FIX: Insert record and capture errors, mapping to 'wallet' column
+       // Insert record and capture errors
       const { data: insertData, error: insertError } = await supabase.from('trades').insert([{
         token_mint: tokenMint,
         wallet: wallet.publicKey.toString(), 
         type: mode,
-        sol_amount: tradeSolAmount,
+        amount: tradeSolAmount, // 🚀 CHANGED FROM sol_amount TO amount
         price: priceInUsd,
         tx_signature: tx,
         created_at: new Date().toISOString()
