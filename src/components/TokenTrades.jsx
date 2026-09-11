@@ -28,7 +28,6 @@ export default function TokenTrades({ currentToken }) {
   useEffect(() => {
     if (!currentToken) return;
     
-    // Safely extract the token's mint address based on how it's passed
     const tokenMint = currentToken.mint_address || currentToken.mintAddress || currentToken.address || currentToken.id;
     if (!tokenMint) return;
 
@@ -37,8 +36,8 @@ export default function TokenTrades({ currentToken }) {
       try {
         const { data, error } = await supabase
           .from('trades')
-          .select('*')
-          .eq('mint_address', tokenMint)
+          // 🚨 CHANGE THIS: Replace 'token_address' with your actual Supabase column name!
+          .eq('token_address', tokenMint) 
           .order('created_at', { ascending: false })
           .limit(50);
           
@@ -53,26 +52,27 @@ export default function TokenTrades({ currentToken }) {
 
     fetchInitialTrades();
 
-    // 2. 🚀 SUPABASE REALTIME LISTENER
+    // 2. 🚀 SUPABASE REALTIME LISTENER (Fixed for Strict Mode)
+    const uniqueChannelName = `live-trades-${tokenMint}-${Date.now()}`;
     const subscription = supabase
-      .channel(`live-trades-${tokenMint}`)
+      .channel(uniqueChannelName)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'trades',
-          filter: `mint_address=eq.${tokenMint}`
+          // 🚨 CHANGE THIS: Replace 'token_address' with your actual Supabase column name!
+          filter: `token_address=eq.${tokenMint}` 
         },
         (payload) => {
           console.log("🟢 NEW LIVE TRADE DETECTED:", payload.new);
-          // Instantly inject the new trade at the top of the list
           setLiveTrades((prev) => [payload.new, ...prev]);
         }
       )
       .subscribe();
 
-    // Cleanup listener on unmount or token change
+    // Cleanup listener safely
     return () => {
       supabase.removeChannel(subscription);
     };
