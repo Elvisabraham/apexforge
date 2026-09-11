@@ -821,20 +821,20 @@ useEffect(() => {
             {/* DESKTOP ACTIVE TOKEN BAG */}
           <div className="p-3 border-t border-white/5 bg-[#0a0b0e] flex justify-between items-center shrink-0 shadow-[0_-5px_20px_rgba(0,0,0,0.3)] z-10">
             <div className="flex flex-col">
-             <span className="text-[10px] font-black tracking-widest text-zinc-500 uppercase mb-1">
-              My Bag
+              <span className="text-[10px] font-black tracking-widest text-zinc-500 uppercase mb-1">
+                My Bag
               </span>
               {/* 🚀 USD Value First */}
               <span className="flex items-center text-sm font-black text-[#00f2a1]">
                 <DexDollarIcon className="w-3.5 h-3.5 mr-[2px]" strokeWidth={3} />
-                {((typeof userTokenBalance !== 'undefined' ? userTokenBalance : 0) * (typeof curveState !== 'undefined' ? curveState?.price || 0 : 0)).toFixed(2)}
+                {(userTokenBalance * (displayPrice || 0)).toFixed(2)}
               </span>
             </div>
             
             {/* Token Quantity & Image Second */}
             <div className="flex items-center gap-2">
               <span className="text-xs font-black text-white">
-                {(typeof userTokenBalance !== 'undefined' ? userTokenBalance : 0).toLocaleString()} {currentToken?.symbol || 'TKN'}
+                {userTokenBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} {currentToken?.symbol || 'TKN'}
               </span>
               <div className="w-5 h-5 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center overflow-hidden">
                 {currentToken?.image ? (
