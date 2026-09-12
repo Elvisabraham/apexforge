@@ -15,19 +15,27 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
  
   const [displayMode, setDisplayMode] = useState('price'); 
 
-  // 🚀 THE MINI-ENGINE: Fetches live trades and calculates exact bonding curve price!
+  // 🚀 MOVED UP: Chat & Holders State needed for live engines
+  const [messages, setMessages] = useState([]);
+  const [topHolders, setTopHolders] = useState([]);
+  const [isChatLoading, setIsChatLoading] = useState(true);
+
+  const targetMint = token?.mintAddress || token?.mint || token?.address || token?.symbol;
+  const tokenSymbol = token?.symbol || 'TKN';
+
+  // 🚀 THE MINI-ENGINE: Fetches live trades, calculates exact curve price, AND runs the FOMO Bot!
   const [realUsdPrice, setRealUsdPrice] = useState(liveUsdPrice || 0);
   const [realPriceChangePct, setRealPriceChangePct] = useState(priceChangePct || 0);
   const [realIsPositive, setRealIsPositive] = useState(isPositiveChange || true);
 
   useEffect(() => {
-    if (!token) return;
+    if (!targetMint) return;
 
     const fetchLiveTicker = async () => {
       const { data: trades } = await supabase
         .from('trades')
         .select('sol_amount, type')
-        .eq('token_mint', token?.mintAddress || token?.mint || token?.address);
+        .eq('token_mint', targetMint);
 
       if (trades) {
         const currentSolProfile = 76.50;
@@ -59,16 +67,31 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
     fetchLiveTicker();
 
-    // 🛡️ FIXED: Added Math.random() to force a unique channel name on every React remount
-    const uniqueTickerChannel = `chat-ticker-${token?.mintAddress || token?.mint || token?.address}-${Math.random()}`;
+    const uniqueTickerChannel = `chat-ticker-${targetMint}-${Math.random()}`;
     
     const channel = supabase
       .channel(uniqueTickerChannel)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'trades', filter: `token_mint=eq.${token?.mintAddress || token?.mint || token?.address}` },
-        () => {
-          fetchLiveTicker();
+        { event: 'INSERT', schema: 'public', table: 'trades', filter: `token_mint=eq.${targetMint}` },
+        (payload) => {
+          fetchLiveTicker(); // Update price
+
+          // 🚨 REAL FOMO BOT INTERCEPTOR 🚨
+          const newTrade = payload.new;
+          if (newTrade && newTrade.type?.toLowerCase() === 'buy' && parseFloat(newTrade.sol_amount) >= 1.0) {
+            const shortWallet = newTrade.wallet ? `${newTrade.wallet.slice(0, 4)}...${newTrade.wallet.slice(-4)}` : 'A whale';
+            const solAmt = parseFloat(newTrade.sol_amount).toFixed(2);
+            
+            const fomoAlert = {
+              id: `fomo-${newTrade.id || Date.now()}`,
+              isSystem: true, // Triggers your green system styling
+              content: `🟢 WHALE ALERT: ${shortWallet} just scooped ${solAmt} SOL of $${tokenSymbol}! 🐋`,
+              created_at: new Date().toISOString()
+            };
+            
+            setMessages(prev => [...prev, fomoAlert]); // Push directly to everyone's chat live
+          }
         }
       )
       .subscribe();
@@ -76,7 +99,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     return () => { 
       supabase.removeChannel(channel); 
     };
-  }, [token]);
+  }, [targetMint, tokenSymbol]);
 
   // 🚀 1. Set up independent local states for the balances
   const [userBalanceSol, setUserBalanceSol] = useState(userBalance || 0);
@@ -125,25 +148,25 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [tradeMode, setTradeMode] = useState('buy');
   const [tradeAmount, setTradeAmount] = useState('');
 
-  // Identity Context
-  const myName = `@${(userProfile?.username || 'User').replace('@', '')}`;
-  const myAvatar = userProfile?.avatar;
-  const tokenSymbol = token?.symbol || 'TKN';
+  // 🚀 TRUE WEB3 IDENTITY LINKING
+  // Falls back to truncated wallet address if they haven't set a username
+  const myName = userProfile?.username 
+    ? `@${userProfile.username.replace('@', '')}` 
+    : (publicKey ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}` : 'Anon');
+
+  // Dynamically generates a unique Dicebear avatar based on their wallet if no custom avatar exists
+  const myAvatar = userProfile?.avatar || (publicKey ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${publicKey.toBase58()}` : null);
 
   // 🚀 SUPABASE LIVE CHAT ENGINE
-  const [messages, setMessages] = useState([]);
-  const [isChatLoading, setIsChatLoading] = useState(true);
-  const tokenMint = token?.mint || token?.address || token?.symbol;
-
   useEffect(() => {
-    if (!tokenMint) return;
+    if (!targetMint) return;
 
     const fetchMessages = async () => {
       setIsChatLoading(true);
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .eq('token_mint', tokenMint)
+        .eq('token_mint', targetMint)
         .order('created_at', { ascending: true });
 
       if (!error && data) setMessages(data);
@@ -152,14 +175,13 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
     fetchMessages();
 
-    // 🛡️ FIXED: Added Math.random() to avoid StrictMode cache collisions here too!
-    const uniqueChatChannel = `chat-${tokenMint}-${Math.random()}`;
+    const uniqueChatChannel = `chat-${targetMint}-${Math.random()}`;
     
     const channel = supabase
       .channel(uniqueChatChannel)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'messages', filter: `token_mint=eq.${tokenMint}` },
+        { event: '*', schema: 'public', table: 'messages', filter: `token_mint=eq.${targetMint}` },
         (payload) => {
           if (payload.eventType === 'INSERT') {
             setMessages((prev) => [...prev, payload.new]);
@@ -171,7 +193,43 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [tokenMint]);
+  }, [targetMint]);
+
+  // 🚀 DYNAMIC TOP TRADERS (Replaces Hardcoded Array)
+  useEffect(() => {
+    const fetchTopTraders = async () => {
+      if (!targetMint) return;
+      // Aggregate the biggest bag holders directly from your trades table
+      const { data } = await supabase.from('trades').select('wallet, token_amount').eq('token_mint', targetMint);
+      
+      if (data && data.length > 0) {
+        const holdingsMap = {};
+        data.forEach(t => {
+          const amt = parseFloat(t.token_amount || 0);
+          const w = t.wallet || t.wallet_address;
+          if (w) holdingsMap[w] = (holdingsMap[w] || 0) + amt;
+        });
+        
+        // Sort by biggest bag and grab top 5
+        const sortedWhales = Object.entries(holdingsMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        
+        const formattedWhales = sortedWhales.map((whale, idx) => ({
+          id: idx,
+          name: `${whale[0].slice(0, 4)}...${whale[0].slice(-4)}`,
+          address: whale[0],
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${whale[0]}`,
+          holding: Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(whale[1]),
+          value: 'Top Buyer'
+        }));
+        
+        setTopHolders(formattedWhales);
+      } else {
+        setTopHolders([]); // No trades yet
+      }
+    };
+
+    fetchTopTraders();
+  }, [targetMint, messages]); // Auto-refreshes when new trades hit
 
   const formatInputWithCommas = (val) => {
     if (!val && val !== 0) return '';
@@ -244,28 +302,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
     return val.toString();
   };
-
-  const topHolders = [
-    { id: 1, name: 'Apex Sniper', address: '7xK2...9pQ1', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sniper', holding: '4.2%', value: '$12,450' },
-    { id: 2, name: '0xDegen', address: '3fR8...2vL4', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Degen', holding: '3.8%', value: '$11,200' },
-    { id: 3, name: 'SolWhale', address: '9pQ1...4xK2', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Whale', holding: '2.1%', value: '$6,800' },
-    { id: 4, name: 'Toly', address: '2vL4...3fR8', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Toly', holding: '1.5%', value: '$4,500' },
-    { id: 5, name: 'MoonShot_99', address: '5mN7...1wQ9', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Moon', holding: '1.2%', value: '$3,600' },
-  ];
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const fomoMessage = {
-        id: Date.now().toString(),
-        isSystem: true,
-        text: `🟢 Wallet 0x${Math.random().toString(16).slice(2, 6).toUpperCase()}... just scooped 50 SOL ($7.2k) of $${tokenSymbol}!`,
-        time: 'Just now'
-      };
-      setMessages(prev => [...prev, fomoMessage]);
-    }, 6000);
-
-    return () => clearTimeout(timer);
-  }, [tokenSymbol]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
