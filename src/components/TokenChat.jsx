@@ -21,13 +21,14 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [isChatLoading, setIsChatLoading] = useState(true);
   const [onlineCount, setOnlineCount] = useState(1); // 🟢 LIVE ONLINE STATE
 
-  const targetMint = token?.mintAddress || token?.mint || token?.address || token?.symbol;
+ const targetMint = token?.mintAddress || token?.mint || token?.address || token?.symbol;
   const tokenSymbol = token?.symbol || 'TKN';
 
   // 🚀 TRUE WEB3 IDENTITY LINKING
   const myName = userProfile?.username 
     ? `@${userProfile.username.replace('@', '')}` 
     : (publicKey ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}` : 'Anon');
+    
   const myAvatar = userProfile?.avatar || (publicKey ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${publicKey.toBase58()}` : null);
 
   // 🚀 THE MEGA-ENGINE: Live Trades, Price, Holders, and FOMO Bot
