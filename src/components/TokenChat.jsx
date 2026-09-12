@@ -236,7 +236,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     const channel = supabase.channel(uniqueChatChannel)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `token_mint=eq.${targetMint}` }, (payload) => {
         if (payload.eventType === 'INSERT') setMessages((prev) => [...prev, payload.new]);
-        else if (payload.eventType === 'UPDATE') setMessages((prev) => prev.map(m => m.id === payload.new.id ? payload.new : m));
+        else if (payload.eventType === 'UPDATE') setMessages((prev) => prev.map(m => m.id === payload.new.id ? payload.new : m))
       }).subscribe();
 
     return () => { supabase.removeChannel(channel); };
