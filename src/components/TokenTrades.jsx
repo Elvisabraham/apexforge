@@ -125,14 +125,16 @@ export default function TokenTrades({ currentToken }) {
                 </span>
                 <span className="text-[10px] text-zinc-500 font-mono group-hover:text-[#00f2a1]/80 transition-colors flex items-center gap-1">
                   {shortenAddress(wallet)} • {timeAgo(tx.created_at)}
-                  <svg className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                  {/* Made the link icon permanently visible (dimmed), lighting up on tap */}
+                  <svg className="w-2.5 h-2.5 text-zinc-600 group-hover:text-[#00f2a1] transition-colors -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                 </span>
               </div>
             </div>
             
             <div className="flex flex-col items-end">
               <span className="text-xs font-bold text-white tabular-nums">
-                {parseFloat(tokenAmt).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                {/* Automatically formats large numbers to 8.33M or 450K */}
+                {Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(tokenAmt)}
               </span>
               <span className="text-[9px] font-black tracking-widest text-zinc-600 uppercase mt-0.5">
                 Tokens
