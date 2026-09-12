@@ -540,6 +540,8 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     }
   };
 
+console.log("Chat Gate is receiving:", userBalance);
+
   return (
     <div className="flex flex-col w-full h-full bg-[#0A0A0B] text-white font-sans animate-fadeIn overflow-hidden relative z-50">
 
