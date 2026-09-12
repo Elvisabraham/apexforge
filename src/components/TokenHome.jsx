@@ -506,21 +506,21 @@ useEffect(() => {
             {/* Right Side: Portfolio Balance + Share/Star Icons */}
             <div className="flex items-center gap-3">
               {/* MOBILE ACTIVE TOKEN BAG */}
-      <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-full border border-white/10 transition-colors">
-        <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">Bag:</span>
-
-        {/* USD Value First with Custom Icon */}
-        <span className="flex items-center text-xs font-black text-[#00f2a1]">
-          <DexDollarIcon className="w-3 h-3 mr-[1px]" strokeWidth={3} />
-          {(userTokenBalance * (displayPrice || 0)).toFixed(2)}
-        </span>
-
-        {/* Quantity & Dynamic Symbol Second */}
-        <span className="text-xs font-black text-white">
-          {userTokenBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-          <span className="text-zinc-400 ml-1">{currentToken?.symbol || 'TKN'}</span>
-        </span>
-      </div>
+             <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-full border border-white/10 transition-colors shrink-0">
+  <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">Bag:</span>
+  
+  {/* USD Value First with Custom Icon */}
+  <span className="flex items-center text-xs font-black text-[#00f2a1]">
+    <DexDollarIcon className="w-3 h-3 mr-[1px]" strokeWidth={3} />
+    {Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format((userTokenBalance || 0) * (displayPrice || 0))}
+  </span>
+  
+  {/* Quantity & Dynamic Symbol Second */}
+  <span className="text-xs font-black text-white flex items-baseline">
+    {Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(userTokenBalance || 0)}
+    <span className="text-zinc-400 text-[10px] ml-1">{currentToken?.symbol || 'TKN'}</span>
+  </span>
+</div>
 
               {/* Share & Favorite Buttons in Top Bar */}
               <div className="flex items-center gap-1.5 border-l border-white/10 pl-3">
@@ -926,25 +926,33 @@ useEffect(() => {
                 My Bag
               </span>
               {/* 🚀 USD Value First */}
-              <span className="flex items-center text-sm font-black text-[#00f2a1]">
-                <DexDollarIcon className="w-3.5 h-3.5 mr-[2px]" strokeWidth={3} />
-                {(userTokenBalance * (displayPrice || 0)).toFixed(2)}
-              </span>
-            </div>
-            
-            {/* Token Quantity & Image Second */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-white">
-                {userTokenBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} {currentToken?.symbol || 'TKN'}
-              </span>
-              <div className="w-5 h-5 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center overflow-hidden">
-                {currentToken?.image ? (
-                  <img src={currentToken.image} alt="token" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-[8px]">🪙</span>
-                )}
-              </div>
-            </div>
+        <span className="flex items-center text-sm font-black text-[#00f2a1]">
+          <DexDollarIcon className="w-3.5 h-3.5 mr-[2px]" strokeWidth={3} />
+          {Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format((userTokenBalance || 0) * (displayPrice || 0))}
+        </span>
+      </div>
+
+      {/* 🚀 Token Quantity & Real Avatar Second */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-black text-white">
+          {Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(userTokenBalance || 0)} 
+          <span className="text-zinc-500 text-[10px] ml-1">{currentToken?.symbol || 'TKN'}</span>
+        </span>
+        
+        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-zinc-800 to-[#121318] border border-white/10 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
+          {(currentToken?.image_url || currentToken?.imageUrl || currentToken?.imagePreview || currentToken?.image) ? (
+            <img 
+              src={currentToken?.image_url || currentToken?.imageUrl || currentToken?.imagePreview || currentToken?.image} 
+              alt={currentToken?.symbol || "token"} 
+              className="w-full h-full object-cover" 
+            />
+          ) : (
+            <span className="text-[9px] font-bold text-white">
+              {currentToken?.icon || currentToken?.symbol?.slice(0, 1).toUpperCase() || 'T'}
+            </span>
+          )}
+        </div>
+      </div>
           </div>
            </div>
 
