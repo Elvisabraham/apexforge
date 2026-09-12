@@ -432,7 +432,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_5px_#00FF66]"></span>
               <span className="text-[10px] font-black text-[#00FF66] uppercase tracking-widest">
-                {token?.onlineCount || '1,420'} Online
+                {onlineCount} Online
               </span>
             </div>
           </div>
@@ -477,7 +477,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_5px_#00FF66]"></span>
             <span className="text-[10px] font-black text-[#00FF66] uppercase tracking-widest">
-              {token?.onlineCount || '1,420'} Online
+              {onlineCount} Online
             </span>
           </div>
         </div>
@@ -486,7 +486,9 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
         <div className="flex flex-col overflow-hidden w-full lg:w-auto lg:items-end">
           <div className="flex items-center gap-3 mb-1.5 lg:justify-end">
             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Top Room Holders</span>
-            <span onClick={() => setIsHoldersModalOpen(true)} className="text-[10px] font-bold text-[#089981] cursor-pointer hover:text-white transition-colors shrink-0">View All</span>
+            {topHolders.length > 0 && (
+              <span onClick={() => setIsHoldersModalOpen(true)} className="text-[10px] font-bold text-[#089981] cursor-pointer hover:text-white transition-colors shrink-0">View All</span>
+            )}
           </div>
           <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1 pr-4 lg:pr-0 lg:justify-end">
             {topHolders.map((whale, idx) => (
