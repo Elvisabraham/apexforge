@@ -378,7 +378,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
         
         const { error } = await supabase.from('messages').insert([
           {
-            token_mint: tokenMint,
+            token_mint: targetMint, // 🚀 FIXED
             user_address: myName || 'Anon',
             avatar: myAvatar || null,
             content: '', 
@@ -394,7 +394,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const handleSendMockGif = async () => {
     const { error } = await supabase.from('messages').insert([
       {
-        token_mint: tokenMint,
+        token_mint: targetMint, // 🚀 FIXED
         user_address: myName || 'Anon',
         avatar: myAvatar || null,
         content: '',
@@ -406,14 +406,14 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!inputText.trim() || !tokenMint) return;
+    if (!inputText.trim() || !targetMint) return; // 🚀 FIXED
 
     const textToSend = inputText.trim();
     setInputText(''); 
 
     const { error } = await supabase.from('messages').insert([
       {
-        token_mint: tokenMint,
+        token_mint: targetMint, // 🚀 FIXED
         user_address: myName || 'Anon',
         avatar: myAvatar || null,
         content: textToSend,
