@@ -392,6 +392,20 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     }
   };
 
+  const handleSelectGif = async (gifUrl) => {
+    setIsGifPickerOpen(false); // Close the menu automatically
+    const { error } = await supabase.from('messages').insert([
+      {
+        token_mint: targetMint,
+        user_address: myName || 'Anon',
+        avatar: myAvatar || null,
+        content: '',
+        image: gifUrl
+      }
+    ]);
+    if (error) console.error('Error sending GIF:', error);
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!inputText.trim() || !targetMint) return; // 🚀 FIXED
