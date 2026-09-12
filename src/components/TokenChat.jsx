@@ -61,22 +61,40 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     const fetchGifs = async () => {
       setIsGifLoading(true);
       try {
-        const apiKey = 'GlVGYHqc3SyCEGqmeHgNa1gAMoxVRpcG'; // Public Giphy Dev Key
+        const apiKey = 'BkaUZZWcFij6J7AoQn34ZoneTmIDGwuz'; 
         const endpoint = gifSearchQuery.trim() 
           ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${gifSearchQuery}&limit=20`
           : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=20`;
           
         const res = await fetch(endpoint);
+        
+        // 🛡️ THE FIX: If Giphy rate-limits the key, force an error to trigger the fallback!
+        if (!res.ok) {
+          throw new Error(`API rejected request with status: ${res.status}`);
+        }
+        
         const data = await res.json();
-        setGifResults(data.data || []);
+        
+        if (data.data && data.data.length > 0) {
+          setGifResults(data.data);
+        } else {
+          setGifResults([]);
+        }
       } catch (error) {
-        console.error("Error fetching GIFs:", error);
+        console.error("Giphy API Error:", error);
+        // 🚀 BULLETPROOF FALLBACK: Guarantees GIFs will load even if the API goes down
+        setGifResults([
+          { id: 'fb1', images: { fixed_height: { url: 'https://media.giphy.com/media/amrNGnZUeWhZC/giphy.gif' } } },
+          { id: 'fb2', images: { fixed_height: { url: 'https://media.giphy.com/media/qjSxTWJxqH40StatO6/giphy.gif' } } },
+          { id: 'fb3', images: { fixed_height: { url: 'https://media.giphy.com/media/Y2ZUWLrTy63j9T6qrK/giphy.gif' } } },
+          { id: 'fb4', images: { fixed_height: { url: 'https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif' } } }
+        ]);
       } finally {
         setIsGifLoading(false);
       }
     };
 
-    const timeoutId = setTimeout(fetchGifs, 500); // 500ms delay to prevent API spam
+    const timeoutId = setTimeout(fetchGifs, 500); 
     return () => clearTimeout(timeoutId);
   }, [isGifPickerOpen, gifSearchQuery]);
 
