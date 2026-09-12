@@ -353,7 +353,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
         return (
           <span 
             key={i} 
-            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-mono font-black text-xs mx-0.5 align-baseline shadow-sm border ${
+            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-black text-xs mx-0.5 align-baseline shadow-sm border ${
               isMe 
                 ? 'bg-black/30 text-white border-white/30' 
                 : 'bg-[#089981]/20 text-[#089981] border-[#089981]/40'
@@ -589,13 +589,13 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
               isDev: false, 
               reactions: dbMsg.reactions || {},
               image: dbMsg.image || null,
-              isSystem: false
+              isSystem: dbMsg.isSystem || false
             };
 
             if (msg.isSystem) {
             return (
               <div key={msg.id} className="flex justify-center w-full my-2 animate-slideUpNative">
-                <div className="bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66] px-4 py-2 rounded-xl text-xs font-mono font-bold text-center max-w-[90%] shadow-[0_0_10px_rgba(0,255,102,0.1)]">
+                <div className="bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66] px-4 py-2 rounded-xl text-xs font-bold text-center max-w-[90%] shadow-[0_0_10px_rgba(0,255,102,0.1)]">
                   {msg.text}
                 </div>
               </div>
