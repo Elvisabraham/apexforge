@@ -91,24 +91,30 @@ export default function TokenTrades({ currentToken }) {
   }
 
   return (
-    <div className="space-y-2 text-left pb-24">
-      <div className="flex items-center justify-between text-[10px] font-black text-zinc-500 uppercase tracking-widest px-1 mb-2">
-        <span>Transaction</span>
-        <span>Amount</span>
-      </div>
-      
+    <div className="flex flex-col gap-1 overflow-y-auto custom-scrollbar pb-20">
       {liveTrades.map((tx) => {
-        // 🚀 Mapped directly to your actual Supabase column names
-        const typeStr = tx.type ? tx.type.toUpperCase() : 'BUY';
-        const isBuy = typeStr === 'BUY';
-        
-        // Checking all possible fallbacks for SOL amount just in case
+        // Checking all possible fallbacks just in case
         const solAmt = tx.sol_amount || tx.sol || tx.solAmount || 0;
         const tokenAmt = tx.amount || tx.token_amount || tx.tokenAmount || 0;
         const wallet = tx.wallet || tx.wallet_address || 'Unknown';
+        
+        // 🚀 Grab the transaction signature from your database
+        const txSignature = tx.signature || tx.tx_signature || tx.tx_hash || tx.id;
+        
+        // Ensure Buy/Sell badge logic is bulletproof
+        const isBuy = tx.type?.toLowerCase() === 'buy' || tx.isBuy;
+        const typeStr = isBuy ? 'BUY' : 'SELL';
 
         return (
-          <div key={tx.id || Math.random()} className="bg-[#121318] p-3 rounded-xl border border-white/5 flex items-center justify-between shadow-sm transition-all animate-in fade-in slide-in-from-top-2 duration-300">
+          <div 
+            key={tx.id || Math.random()} 
+            onClick={() => {
+              if (txSignature) {
+                window.open(`https://solscan.io/tx/${txSignature}`, '_blank');
+              }
+            }}
+            className="bg-[#121318] p-3 rounded-xl border border-white/5 flex items-center justify-between shadow-sm transition-all animate-in fade-in slide-in-from-top-2 duration-300 hover:border-[#00f2a1]/40 hover:bg-white/[0.02] cursor-pointer group relative"
+          >
             <div className="flex items-center gap-3">
               <span className={`text-[10px] font-black px-2 py-0.5 rounded ${isBuy ? 'bg-[#00f2a1]/20 text-[#00f2a1]' : 'bg-[#F23645]/20 text-[#F23645]'}`}>
                 {typeStr}
@@ -117,8 +123,9 @@ export default function TokenTrades({ currentToken }) {
                 <span className="text-xs font-bold text-white tabular-nums">
                   {parseFloat(solAmt).toFixed(3)} SOL
                 </span>
-                <span className="text-[10px] text-zinc-500 font-mono">
+                <span className="text-[10px] text-zinc-500 font-mono group-hover:text-[#00f2a1]/80 transition-colors flex items-center gap-1">
                   {shortenAddress(wallet)} • {timeAgo(tx.created_at)}
+                  <svg className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                 </span>
               </div>
             </div>
