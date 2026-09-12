@@ -13,6 +13,44 @@ const DexDollarIcon = ({ className, strokeWidth }) => (
 
 export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile, liveUsdPrice, priceChangePct, isPositiveChange }) {
   
+// 🚀 RESTORED UI & TRADE STATES
+  const [userBalanceSol, setUserBalanceSol] = useState(userBalance || 0);
+  const [userTokenBalance, setUserTokenBalance] = useState(0);
+  const { executeTradeOnChain, isProcessing } = useTrade();
+  const messagesEndRef = useRef(null);
+  const [inputText, setInputText] = useState('');
+  const [activeReactionId, setActiveReactionId] = useState(null);
+  const [isHoldersModalOpen, setIsHoldersModalOpen] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
+  const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
+  const [tradeMode, setTradeMode] = useState('buy');
+  const [tradeAmount, setTradeAmount] = useState('');
+
+  // 🚀 RESTORED TOKEN BALANCE FETCHER
+  useEffect(() => {
+    let isMounted = true;
+    const fetchMyTokenBalance = async () => {
+      if (!publicKey || !connection || !targetMint) return;
+      if (targetMint === '8AVmX9aQwZoonSolanaNet11oHEZforge') return;
+
+      try {
+        const accounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
+          mint: new PublicKey(targetMint)
+        });
+
+        if (accounts.value.length > 0) {
+          const rawBalance = accounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
+          const scaledBalance = rawBalance < 1000 ? (rawBalance * 1000000) : rawBalance; 
+          if (isMounted) setUserTokenBalance(scaledBalance);
+        }
+      } catch (error) {}
+    };
+
+    fetchMyTokenBalance();
+    const intervalId = setInterval(fetchMyTokenBalance, 15000); 
+    return () => { isMounted = false; clearInterval(intervalId); };
+  }, [publicKey, connection, targetMint]);
+
   // 🚀 1. BRING WALLET HOOKS TO THE ABSOLUTE TOP
   const { publicKey } = useWallet();
   const { connection } = useConnection();
