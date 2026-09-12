@@ -412,6 +412,29 @@ useEffect(() => {
   const rawAddress = currentToken?.mint_address || currentToken?.mintAddress || currentToken?.address || currentToken?.mint || `7hVVo${charSum}cZBBsc2G9Xm`;
   const formattedAddress = rawAddress.length > 10 ? `${rawAddress.slice(0, 4)}...${rawAddress.slice(-4)}` : rawAddress;
 
+// Get the safe mint address
+  const tokenMint = currentToken?.mint_address || currentToken?.mintAddress || currentToken?.id || '';
+
+  // Copy to clipboard
+  const handleCopyAddress = () => {
+    if (!tokenMint) return;
+    navigator.clipboard.writeText(tokenMint);
+    // Optional: Add a quick toast notification here like toast("Address Copied!")
+    alert("Copied to clipboard: " + tokenMint); 
+  };
+
+  // Open Solscan Explorer
+  const openSolscan = () => {
+    if (!tokenMint) return;
+    window.open(`https://solscan.io/token/${tokenMint}`, '_blank');
+  };
+
+  // Helper to shorten the address for the UI
+  const shortenAddress = (address) => {
+    if (!address) return '';
+    return `${address.slice(0, 4)}...${address.slice(-4)}`;
+  };
+
   return (
     <div className="w-full h-full bg-[#0c0d10] text-white overflow-hidden select-none relative">
       
@@ -846,9 +869,6 @@ useEffect(() => {
           </div>
            </div>
 
-      
-  
-
         <div className={`${isSidebarOpen ? 'col-span-5 xl:col-span-6' : 'col-span-8 xl:col-span-9'} flex flex-col h-full gap-2 overflow-hidden transition-all duration-200`}>
           <div className="bg-[#121318] border border-white/5 rounded-xl p-2.5 flex items-center justify-between shrink-0 gap-4 overflow-hidden">
             <div className="flex items-center gap-2.5 shrink-0 pr-3 border-r border-white/5">
@@ -861,8 +881,16 @@ useEffect(() => {
                 </svg>
               </button>
 
-              <div className="w-9 h-9 border border-white/10 rounded-full flex items-center justify-center text-sm font-black overflow-hidden shrink-0 ml-0.5 bg-gradient-to-br from-zinc-800 to-[#121318] text-white">
-                {currentToken.imagePreview ? <img src={currentToken.imagePreview} alt={currentToken.symbol} className="w-full h-full object-cover" /> : (currentToken.icon || currentToken.symbol?.slice(0,2).toUpperCase())}
+             <div className="w-9 h-9 border border-white/10 rounded-full flex items-center justify-center text-sm font-black overflow-hidden shrink-0 ml-0.5 bg-gradient-to-br from-zinc-800 to-[#121318] text-white">
+                {(currentToken.image_url || currentToken.imageUrl || currentToken.imagePreview) ? (
+                  <img 
+                    src={currentToken.image_url || currentToken.imageUrl || currentToken.imagePreview} 
+                    alt={currentToken.symbol} 
+                    className="w-full h-full object-cover" 
+                  />
+                ) : (
+                  <span>{currentToken.icon || currentToken.symbol?.slice(0,2).toUpperCase()}</span>
+                )}
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -890,14 +918,53 @@ useEffect(() => {
                   </button>
                   <span className="text-zinc-700 mx-1">|</span>
                   <div className="flex items-center gap-2 text-zinc-400">
-                    <a href={currentToken.website || "#"} target="_blank" rel="noreferrer" onClick={(e) => !currentToken.website && e.preventDefault()} className="hover:text-white transition-colors cursor-pointer"><Globe className="w-3.5 h-3.5"/></a>
-                    <a href={currentToken.twitter || "#"} target="_blank" rel="noreferrer" onClick={(e) => !currentToken.twitter && e.preventDefault()} className="hover:text-white transition-colors cursor-pointer"><XIcon className="w-3.5 h-3.5"/></a>
-                    <a href={currentToken.telegram || "#"} target="_blank" rel="noreferrer" onClick={(e) => !currentToken.telegram && e.preventDefault()} className="hover:text-white transition-colors cursor-pointer"><TelegramIcon className="w-3.5 h-3.5"/></a>
-                    <a href={`https://solscan.io/token/${rawAddress}`} target="_blank" rel="noreferrer" className="hover:text-white transition-colors cursor-pointer"><SearchIcon className="w-3.5 h-3.5"/></a>
+                    {/* Website */}
+                    <a 
+                      href={currentToken.links?.website || currentToken.website || "#"} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      onClick={(e) => !(currentToken.links?.website || currentToken.website) && e.preventDefault()} 
+                      className={`transition-colors ${ (currentToken.links?.website || currentToken.website) ? 'hover:text-white cursor-pointer' : 'opacity-40 cursor-not-allowed' }`}
+                    >
+                      <Globe className="w-3.5 h-3.5"/>
+                    </a>
+                    
+                    {/* Twitter / X */}
+                    <a 
+                      href={currentToken.links?.twitter || currentToken.twitter || "#"} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      onClick={(e) => !(currentToken.links?.twitter || currentToken.twitter) && e.preventDefault()} 
+                      className={`transition-colors ${ (currentToken.links?.twitter || currentToken.twitter) ? 'hover:text-white cursor-pointer' : 'opacity-40 cursor-not-allowed' }`}
+                    >
+                      <XIcon className="w-3.5 h-3.5"/>
+                    </a>
+                    
+                    {/* Telegram */}
+                    <a 
+                      href={currentToken.links?.telegram || currentToken.telegram || "#"} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      onClick={(e) => !(currentToken.links?.telegram || currentToken.telegram) && e.preventDefault()} 
+                      className={`transition-colors ${ (currentToken.links?.telegram || currentToken.telegram) ? 'hover:text-white cursor-pointer' : 'opacity-40 cursor-not-allowed' }`}
+                    >
+                      <TelegramIcon className="w-3.5 h-3.5"/>
+                    </a>
+                    
+                    {/* Solscan */}
+                    <a 
+                      href={`https://solscan.io/token/${rawAddress}`} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="hover:text-[#00f2a1] text-zinc-300 transition-colors cursor-pointer ml-1"
+                      title="View on Solscan"
+                    >
+                      <SearchIcon className="w-3.5 h-3.5"/>
+                    </a>
                   </div>
                 </div>
               </div>
-            </div>
+              </div>
 
             {/* FIXED METRICS: Real data + tabular-nums instead of font-mono */}
             <div className="flex items-center gap-6 overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] shrink whitespace-nowrap">
