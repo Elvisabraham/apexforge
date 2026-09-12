@@ -13,7 +13,20 @@ const DexDollarIcon = ({ className, strokeWidth }) => (
 
 export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile, liveUsdPrice, priceChangePct, isPositiveChange }) {
   
-// 🚀 RESTORED UI & TRADE STATES
+  // 🚀 STEP 1: HOOKS AND TARGETS FIRST (Must load before anything else)
+  const { publicKey } = useWallet();
+  const { connection } = useConnection();
+  const targetMint = token?.mintAddress || token?.mint || token?.address || token?.symbol;
+  const tokenSymbol = token?.symbol || 'TKN';
+
+  // 🚀 STEP 2: IDENTITY CONTEXT (Safe to use publicKey now)
+  const myName = userProfile?.username 
+    ? `@${userProfile.username.replace('@', '')}` 
+    : (publicKey ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}` : 'Anon');
+    
+  const myAvatar = userProfile?.avatar || (publicKey ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${publicKey.toBase58()}` : null);
+
+  // 🚀 STEP 3: ALL STATE VARIABLES
   const [userBalanceSol, setUserBalanceSol] = useState(userBalance || 0);
   const [userTokenBalance, setUserTokenBalance] = useState(0);
   const { executeTradeOnChain, isProcessing } = useTrade();
@@ -26,7 +39,17 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [tradeMode, setTradeMode] = useState('buy');
   const [tradeAmount, setTradeAmount] = useState('');
 
-  // 🚀 RESTORED TOKEN BALANCE FETCHER
+  const [displayMode, setDisplayMode] = useState('price'); 
+  const [messages, setMessages] = useState([]);
+  const [topHolders, setTopHolders] = useState([]);
+  const [isChatLoading, setIsChatLoading] = useState(true);
+  const [onlineCount, setOnlineCount] = useState(1);
+
+  const [realUsdPrice, setRealUsdPrice] = useState(liveUsdPrice || 0);
+  const [realPriceChangePct, setRealPriceChangePct] = useState(priceChangePct || 0);
+  const [realIsPositive, setRealIsPositive] = useState(isPositiveChange || true);
+
+  // 🚀 STEP 4: TOKEN BALANCE FETCHER (Safely placed after hooks and targetMint exist)
   useEffect(() => {
     let isMounted = true;
     const fetchMyTokenBalance = async () => {
@@ -50,32 +73,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     const intervalId = setInterval(fetchMyTokenBalance, 15000); 
     return () => { isMounted = false; clearInterval(intervalId); };
   }, [publicKey, connection, targetMint]);
-
-  // 🚀 1. BRING WALLET HOOKS TO THE ABSOLUTE TOP
-  const { publicKey } = useWallet();
-  const { connection } = useConnection();
-
-  // 🚀 2. ALL STATE VARIABLES
-  const [displayMode, setDisplayMode] = useState('price'); 
-  const [messages, setMessages] = useState([]);
-  const [topHolders, setTopHolders] = useState([]);
-  const [isChatLoading, setIsChatLoading] = useState(true);
-  const [onlineCount, setOnlineCount] = useState(1); // 🟢 LIVE ONLINE STATE
-
-  const targetMint = token?.mintAddress || token?.mint || token?.address || token?.symbol;
-  const tokenSymbol = token?.symbol || 'TKN';
-
-  // 🚀 3. TRUE WEB3 IDENTITY LINKING (Safe to use publicKey now)
-  const myName = userProfile?.username 
-    ? `@${userProfile.username.replace('@', '')}` 
-    : (publicKey ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}` : 'Anon');
-    
-  const myAvatar = userProfile?.avatar || (publicKey ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${publicKey.toBase58()}` : null);
-
-  // 🚀 4. THE MEGA-ENGINE: Live Trades, Price, Holders, and FOMO Bot
-  const [realUsdPrice, setRealUsdPrice] = useState(liveUsdPrice || 0);
-  const [realPriceChangePct, setRealPriceChangePct] = useState(priceChangePct || 0);
-  const [realIsPositive, setRealIsPositive] = useState(isPositiveChange || true);
 
   useEffect(() => {
     if (!targetMint) return;
