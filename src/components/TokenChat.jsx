@@ -12,26 +12,29 @@ const DexDollarIcon = ({ className, strokeWidth }) => (
 );
 
 export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile, liveUsdPrice, priceChangePct, isPositiveChange }) {
- 
-  const [displayMode, setDisplayMode] = useState('price'); 
+  
+  // 🚀 1. BRING WALLET HOOKS TO THE ABSOLUTE TOP
+  const { publicKey } = useWallet();
+  const { connection } = useConnection();
 
-  // 🚀 MOVED UP: Live Chat, Holders, and Online Count States
+  // 🚀 2. ALL STATE VARIABLES
+  const [displayMode, setDisplayMode] = useState('price'); 
   const [messages, setMessages] = useState([]);
   const [topHolders, setTopHolders] = useState([]);
   const [isChatLoading, setIsChatLoading] = useState(true);
   const [onlineCount, setOnlineCount] = useState(1); // 🟢 LIVE ONLINE STATE
 
- const targetMint = token?.mintAddress || token?.mint || token?.address || token?.symbol;
+  const targetMint = token?.mintAddress || token?.mint || token?.address || token?.symbol;
   const tokenSymbol = token?.symbol || 'TKN';
 
-  // 🚀 TRUE WEB3 IDENTITY LINKING
+  // 🚀 3. TRUE WEB3 IDENTITY LINKING (Safe to use publicKey now)
   const myName = userProfile?.username 
     ? `@${userProfile.username.replace('@', '')}` 
     : (publicKey ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}` : 'Anon');
     
   const myAvatar = userProfile?.avatar || (publicKey ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${publicKey.toBase58()}` : null);
 
-  // 🚀 THE MEGA-ENGINE: Live Trades, Price, Holders, and FOMO Bot
+  // 🚀 4. THE MEGA-ENGINE: Live Trades, Price, Holders, and FOMO Bot
   const [realUsdPrice, setRealUsdPrice] = useState(liveUsdPrice || 0);
   const [realPriceChangePct, setRealPriceChangePct] = useState(priceChangePct || 0);
   const [realIsPositive, setRealIsPositive] = useState(isPositiveChange || true);
