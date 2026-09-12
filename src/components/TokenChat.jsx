@@ -39,12 +39,13 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [tradeMode, setTradeMode] = useState('buy');
   const [tradeAmount, setTradeAmount] = useState('');
 
+  const [isGifPickerOpen, setIsGifPickerOpen] = useState(false);
+
   const [displayMode, setDisplayMode] = useState('price'); 
   const [messages, setMessages] = useState([]);
   const [topHolders, setTopHolders] = useState([]);
   const [isChatLoading, setIsChatLoading] = useState(true);
   const [onlineCount, setOnlineCount] = useState(1);
-  const [isGifPickerOpen, setIsGifPickerOpen] = useState(false);
 
   const [realUsdPrice, setRealUsdPrice] = useState(liveUsdPrice || 0);
   const [realPriceChangePct, setRealPriceChangePct] = useState(priceChangePct || 0);
@@ -664,35 +665,67 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="flex-none bg-[#0E0E14] border-t border-white/[0.05] p-3 pb-[max(12px,env(safe-area-inset-bottom))] shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-        <form onSubmit={handleSendMessage} className="flex items-end gap-1.5 bg-black border border-white/10 focus-within:border-[#089981]/50 rounded-3xl p-1.5 transition-all shadow-inner">
+      {/* 🟢 ENTIRE CHAT INPUT SECTION */}
+      <div className="flex-none bg-[#0E0E14] border-t border-white/5 p-3 relative">
+        
+        {/* 🟢 GIF PICKER MENU (Now safely absolute positioned so it never breaks layout) */}
+        {isGifPickerOpen && (
+          <div className="absolute bottom-[70px] left-3 bg-[#050505] border border-white/10 rounded-xl p-2 w-[300px] shadow-2xl z-50">
+            <div className="flex justify-between items-center mb-2 px-1">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Select GIF</span>
+              <button type="button" onClick={() => setIsGifPickerOpen(false)} className="text-zinc-500 hover:text-white text-xs">✕</button>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto scrollbar-hide rounded-lg p-0.5">
+              <img src="https://media.giphy.com/media/amrNGnZUeWhZC/giphy.gif" onClick={(e) => handleSelectGif(e.target.src)} className="w-full h-20 object-cover cursor-pointer hover:border hover:border-[#089981] rounded-md transition-all" alt="gif" />
+              <img src="https://media.giphy.com/media/qjSxTWJxqH40StatO6/giphy.gif" onClick={(e) => handleSelectGif(e.target.src)} className="w-full h-20 object-cover cursor-pointer hover:border hover:border-[#089981] rounded-md transition-all" alt="gif" />
+              <img src="https://media.giphy.com/media/Y2ZUWLrTy63j9T6qrK/giphy.gif" onClick={(e) => handleSelectGif(e.target.src)} className="w-full h-20 object-cover cursor-pointer hover:border hover:border-[#089981] rounded-md transition-all" alt="gif" />
+              <img src="https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif" onClick={(e) => handleSelectGif(e.target.src)} className="w-full h-20 object-cover cursor-pointer hover:border hover:border-[#089981] rounded-md transition-all" alt="gif" />
+            </div>
+          </div>
+        )}
+
+        {/* 🟢 THE CHAT FORM */}
+        <form onSubmit={handleSendMessage} className="flex items-end gap-1.5 bg-black border border-white/10 focus-within:border-[#089981]/50 rounded-xl p-1 pr-1.5 transition-colors">
           <div className="flex items-center shrink-0">
-            <input 
-              type="file" 
-              accept="image/*" 
-              ref={fileInputRef} 
-              className="hidden" 
-              onChange={handleImageUpload} 
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleImageUpload}
             />
-            <button 
-              type="button" 
-              onClick={() => fileInputRef.current.click()} 
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
               className="p-2 text-zinc-500 hover:text-white transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
             </button>
+            
             <button
-          type="button"
-          onClick={() => setIsGifPickerOpen(!isGifPickerOpen)}
-          className="p-2 text-zinc-500 hover:text-[#089981] transition-colors font-black text-xs"
-        >
-          GIF
-        </button>
+              type="button"
+              onClick={() => setIsGifPickerOpen(!isGifPickerOpen)}
+              className={`p-2 transition-colors font-black text-xs ${isGifPickerOpen ? 'text-[#089981]' : 'text-zinc-500 hover:text-[#089981]'}`}
+            >
+              GIF
+            </button>
           </div>
 
-          <input type="text" value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={`Shill the trenches using $${tokenSymbol}...`} className="flex-1 bg-transparent text-sm text-white placeholder-zinc-600 focus:outline-none py-3 px-1 min-w-0" />
-          
-          <button type="submit" disabled={!inputText.trim()} className="p-3 bg-[#089981] hover:bg-[#06806b] disabled:bg-[#089981]/30 text-white rounded-full transition-all active:scale-90 shrink-0 shadow-[0_0_10px_rgba(8,153,129,0.3)]"><svg className="w-4 h-4 translate-x-0.5 -translate-y-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg></button>
+          <input
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            placeholder={`Shill the trenches using $${tokenSymbol}...`}
+            className="flex-1 bg-transparent text-sm text-white placeholder-zinc-500 py-2.5 px-2 outline-none"
+          />
+
+          <button
+            type="submit"
+            disabled={!inputText.trim()}
+            className="p-3 bg-[#089981] hover:bg-[#06806b] disabled:opacity-50 disabled:hover:bg-[#089981] text-black rounded-lg transition-all"
+          >
+            <svg className="w-4 h-4 translate-y-[-1px]" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
         </form>
       </div>
 
