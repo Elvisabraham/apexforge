@@ -407,6 +407,35 @@ useEffect(() => {
       })
     : baseTokens;
 
+    // 🚀 LIVE ELAPSED TIME TRACKER
+  const [elapsedTime, setElapsedTime] = useState('0s');
+
+  useEffect(() => {
+    // Check for standard database creation timestamps
+    const createdAt = currentToken?.created_at || currentToken?.createdAt;
+    
+    if (!createdAt) {
+      setElapsedTime('Just now');
+      return;
+    }
+
+    const calculateTime = () => {
+      const now = new Date();
+      const past = new Date(createdAt);
+      const diffInSeconds = Math.floor((now - past) / 1000);
+
+      if (diffInSeconds < 60) setElapsedTime(`${diffInSeconds}s`);
+      else if (diffInSeconds < 3600) setElapsedTime(`${Math.floor(diffInSeconds / 60)}m`);
+      else if (diffInSeconds < 86400) setElapsedTime(`${Math.floor(diffInSeconds / 3600)}h`);
+      else setElapsedTime(`${Math.floor(diffInSeconds / 86400)}d`);
+    };
+
+    calculateTime(); // Calculate instantly on mount
+    const interval = setInterval(calculateTime, 10000); // Update every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [currentToken]);
+
     // ==========================================
   // UNIVERSAL DATA ENGINE (Syncs Header & Sidebar)
   // ==========================================
@@ -537,7 +566,7 @@ useEffect(() => {
                 {/* FIXED TIME, CA, & MOBILE SOCIALS (For Screenshots) */}
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] text-zinc-500 font-medium mt-1">
                     <div className="flex items-center gap-1.5">
-                      <span>{mockTime}</span>
+                      <span>{elapsedTime}</span>
                       <span>•</span>
                       <button onClick={() => handleCopyCA(rawAddress)} className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors relative group">
                           <span className="tabular-nums tracking-tight group-hover:text-[#00f2a1] transition-colors">{formattedAddress}</span>
@@ -959,7 +988,7 @@ useEffect(() => {
                 </div>
                 {/* FIXED TIME, CA, & SOCIALS */}
                 <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-medium mt-0.5">
-                  <span>{mockTime}</span>
+                  <span>{elapsedTime}</span>
                   <span>•</span>
                   <button onClick={() => handleCopyCA(rawAddress)} className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors relative group">
                     <span className="tabular-nums tracking-tight group-hover:text-[#00f2a1] transition-colors">{formattedAddress}</span>
