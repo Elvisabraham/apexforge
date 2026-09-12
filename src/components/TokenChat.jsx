@@ -697,18 +697,42 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
       {/* 🟢 ENTIRE CHAT INPUT SECTION */}
       <div className="flex-none bg-[#0E0E14] border-t border-white/5 p-3 relative">
         
-        {/* 🟢 GIF PICKER MENU (Now safely absolute positioned so it never breaks layout) */}
+        {/* 🟢 LIVE GIPHY PICKER MENU */}
         {isGifPickerOpen && (
-          <div className="absolute bottom-[70px] left-3 bg-[#050505] border border-white/10 rounded-xl p-2 w-[300px] shadow-2xl z-50">
+          <div className="absolute bottom-[70px] left-3 bg-[#050505] border border-white/10 rounded-xl p-2 w-[320px] shadow-2xl z-50">
             <div className="flex justify-between items-center mb-2 px-1">
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Select GIF</span>
               <button type="button" onClick={() => setIsGifPickerOpen(false)} className="text-zinc-500 hover:text-white text-xs">✕</button>
             </div>
-            <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto scrollbar-hide rounded-lg p-0.5">
-              <img src="https://media.giphy.com/media/amrNGnZUeWhZC/giphy.gif" onClick={(e) => handleSelectGif(e.target.src)} className="w-full h-20 object-cover cursor-pointer hover:border hover:border-[#089981] rounded-md transition-all" alt="gif" />
-              <img src="https://media.giphy.com/media/qjSxTWJxqH40StatO6/giphy.gif" onClick={(e) => handleSelectGif(e.target.src)} className="w-full h-20 object-cover cursor-pointer hover:border hover:border-[#089981] rounded-md transition-all" alt="gif" />
-              <img src="https://media.giphy.com/media/Y2ZUWLrTy63j9T6qrK/giphy.gif" onClick={(e) => handleSelectGif(e.target.src)} className="w-full h-20 object-cover cursor-pointer hover:border hover:border-[#089981] rounded-md transition-all" alt="gif" />
-              <img src="https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif" onClick={(e) => handleSelectGif(e.target.src)} className="w-full h-20 object-cover cursor-pointer hover:border hover:border-[#089981] rounded-md transition-all" alt="gif" />
+            
+            {/* 🔍 SEARCH BAR */}
+            <input 
+              type="text" 
+              placeholder="Search Giphy..." 
+              value={gifSearchQuery}
+              onChange={(e) => setGifSearchQuery(e.target.value)}
+              className="w-full bg-[#1A1A24] text-xs text-white px-2 py-2 rounded-md mb-2 outline-none border border-white/5 focus:border-[#089981]/50 transition-colors"
+            />
+
+            {/* 🎞️ GIF RESULTS GRID */}
+            <div className="grid grid-cols-2 gap-1.5 h-56 overflow-y-auto scrollbar-hide rounded-lg p-0.5">
+              {isGifLoading ? (
+                <div className="col-span-2 flex items-center justify-center text-zinc-500 text-xs py-10">
+                  Loading...
+                </div>
+              ) : gifResults.length > 0 ? (
+                gifResults.map((gif) => (
+                  <img 
+                    key={gif.id}
+                    src={gif.images.fixed_height.url} 
+                    onClick={() => handleSelectGif(gif.images.fixed_height.url)} 
+                    className="w-full h-24 object-cover cursor-pointer hover:border hover:border-[#089981] rounded-md transition-all bg-[#0E0E14]" 
+                    alt={gif.title} 
+                  />
+                ))
+              ) : (
+                <div className="col-span-2 text-center text-zinc-600 text-xs py-10">No GIFs found</div>
+              )}
             </div>
           </div>
         )}
