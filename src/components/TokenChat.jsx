@@ -681,12 +681,13 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
                   >
                     {(msg.sender || '').startsWith('@') ? msg.sender : `@${msg.sender}`}
                   </span>
-                  <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${msg.isDev ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40' : msg.isMe ? 'bg-[#089981]/20 text-[#089981]' : 'bg-white/10 text-zinc-300'}`}>
-                    {msg.badge}
-                  </span>
-                  <span className="text-[8px] font-bold text-zinc-600">{msg.time}</span>
-                </div>
-
+                  {msg.badge && (
+  <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${msg.isDev ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40' : msg.isMe ? 'bg-[#089981]/20 text-[#089981]' : 'bg-white/10 text-zinc-300'}`}>
+    {msg.badge}
+  </span>
+)}
+<span className="text-[8px] font-bold text-zinc-600">{msg.time}</span>
+</div>
                 <div className="relative cursor-pointer w-full" onMouseEnter={() => setActiveReactionId(msg.id)} onClick={(e) => { e.stopPropagation(); setActiveReactionId(msg.id); }}>
                   <div className={`absolute ${msg.isMe ? '-top-10 right-0' : '-top-10 left-0'} bg-[#121212] border border-white/10 rounded-full px-2 py-1.5 flex items-center gap-2 shadow-xl z-10 transition-all ${activeReactionId === msg.id ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}>
                     {['🚀', '💎', '🐳', '🔥'].map(emoji => (
