@@ -482,17 +482,21 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     const newCount = (currentReactions[emoji] || 0) + 1;
     const updatedReactions = { ...currentReactions, [emoji]: newCount };
 
+    // 1. Instantly update local state so the UI feels lightning fast
     setMessages(prev => prev.map(m => 
       m.id === msgId ? { ...m, reactions: updatedReactions } : m
     ));
     setActiveReactionId(null);
 
+    // 2. Persist the change directly to Supabase so it survives a refresh
     const { error } = await supabase
       .from('messages')
       .update({ reactions: updatedReactions })
       .eq('id', msgId);
-      
-    if (error) console.error('Error updating reaction:', error);
+
+    if (error) {
+      console.error('Error updating reaction in database:', error);
+    }
   };
 
   const handleExecuteTrade = async () => {
