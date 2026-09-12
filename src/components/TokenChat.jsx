@@ -789,9 +789,9 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
           </div>
         )}
 
-        {/* 🔒 TOKEN GATE CHECK */}
-        {Number(userBalance) > 0 ? (
-          /* 🟢 THE CHAT FORM */
+           {/* 🔒 TOKEN GATE CHECK */}
+           {parseFloat(String(userBalance).replace(/[^0-9.]/g, '')) > 0 ? (
+           /* 🟢 THE CHAT FORM ... */
           <form onSubmit={handleSendMessage} className="flex items-end gap-1.5 bg-black border border-white/10 focus-within:border-[#089981]/50 rounded-xl p-1 pr-1.5 transition-colors">
             <div className="flex items-center shrink-0">
               <input
