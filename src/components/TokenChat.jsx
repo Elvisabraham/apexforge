@@ -39,8 +39,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [tradeMode, setTradeMode] = useState('buy');
   const [tradeAmount, setTradeAmount] = useState('');
 
-  const [isGifPickerOpen, setIsGifPickerOpen] = useState(false);
-
   const [displayMode, setDisplayMode] = useState('price'); 
   const [messages, setMessages] = useState([]);
   const [topHolders, setTopHolders] = useState([]);
@@ -50,6 +48,37 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [realUsdPrice, setRealUsdPrice] = useState(liveUsdPrice || 0);
   const [realPriceChangePct, setRealPriceChangePct] = useState(priceChangePct || 0);
   const [realIsPositive, setRealIsPositive] = useState(isPositiveChange || true);
+
+// 🚀 GIF SEARCH STATES & ENGINE
+  const [isGifPickerOpen, setIsGifPickerOpen] = useState(false);
+  const [gifSearchQuery, setGifSearchQuery] = useState('');
+  const [gifResults, setGifResults] = useState([]);
+  const [isGifLoading, setIsGifLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isGifPickerOpen) return;
+    
+    const fetchGifs = async () => {
+      setIsGifLoading(true);
+      try {
+        const apiKey = 'GlVGYHqc3SyCEGqmeHgNa1gAMoxVRpcG'; // Public Giphy Dev Key
+        const endpoint = gifSearchQuery.trim() 
+          ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${gifSearchQuery}&limit=20`
+          : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=20`;
+          
+        const res = await fetch(endpoint);
+        const data = await res.json();
+        setGifResults(data.data || []);
+      } catch (error) {
+        console.error("Error fetching GIFs:", error);
+      } finally {
+        setIsGifLoading(false);
+      }
+    };
+
+    const timeoutId = setTimeout(fetchGifs, 500); // 500ms delay to prevent API spam
+    return () => clearTimeout(timeoutId);
+  }, [isGifPickerOpen, gifSearchQuery]);
 
   // 🚀 STEP 4: TOKEN BALANCE FETCHER (Safely placed after hooks and targetMint exist)
   useEffect(() => {
