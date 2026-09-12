@@ -463,26 +463,36 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
     const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!inputText.trim() || !targetMint) return; // 🚀 FIXED
+    if (!inputText.trim() || !targetMint) return;
 
     const textToSend = inputText.trim();
-
-    // 🛡️ SCAM & SPAM FILTER
     const textLower = textToSend.toLowerCase();
-    const bannedTerms = ['seed phrase', 'support desk', 'validate wallet', 'admin', 'guaranteed 100x', 'send sol'];
-    const hasLinks = /https?:\/\/[^\s]+/.test(textLower); 
 
-    if (hasLinks || bannedTerms.some(term => textLower.includes(term))) {
-      alert("Security Alert: Links and flagged scam terminology are not allowed.");
-      setInputText(''); // Instantly clear their malicious input
-      return; // Kill the function before it hits the database
+    // 🛡️ ADVANCED SCAM, BEGGING & SHILL FILTER
+    const bannedTerms = [
+      // Phishing & Impersonation
+      'seed phrase', 'support desk', 'validate wallet', 'admin',
+      // Begging for Money
+      'send sol', 'send me', 'need money', 'pls send', 'airdrop me', 'spare sol',
+      // Pump & Dump Advertising
+      'pump and dump', 'rug pull', 'dev dumping', 'buy my token', 'next 1000x', 'tg group', 't.me/', 'join my'
+    ];
+    
+    const hasLinks = /https?:\/\/[^\s]+/.test(textLower); 
+    // Detects any Solana Wallet Address (Base58 string, 32-44 characters)
+    const hasWalletAddress = /\b[1-9A-HJ-NP-Za-km-z]{32,44}\b/.test(textToSend);
+
+    if (hasLinks || hasWalletAddress || bannedTerms.some(term => textLower.includes(term))) {
+      alert("Security Alert: Links, wallet addresses, and spam terminology are strictly prohibited.");
+      setInputText(''); // Wipe the input
+      return; 
     }
 
     setInputText(''); // Clear input for normal messages
 
     const { error } = await supabase.from('messages').insert([
       {
-        token_mint: targetMint, // 🚀 FIXED
+        token_mint: targetMint, 
         user_address: myName || 'Anon',
         avatar: myAvatar || null,
         content: textToSend,
