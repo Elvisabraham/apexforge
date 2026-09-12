@@ -918,40 +918,44 @@ useEffect(() => {
                   </button>
                   <span className="text-zinc-700 mx-1">|</span>
                   <div className="flex items-center gap-2 text-zinc-400">
-                    {/* Website */}
-                    <a 
-                      href={currentToken.links?.website || currentToken.website || "#"} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      onClick={(e) => !(currentToken.links?.website || currentToken.website) && e.preventDefault()} 
-                      className={`transition-colors ${ (currentToken.links?.website || currentToken.website) ? 'hover:text-white cursor-pointer' : 'opacity-40 cursor-not-allowed' }`}
-                    >
-                      <Globe className="w-3.5 h-3.5"/>
-                    </a>
                     
-                    {/* Twitter / X */}
-                    <a 
-                      href={currentToken.links?.twitter || currentToken.twitter || "#"} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      onClick={(e) => !(currentToken.links?.twitter || currentToken.twitter) && e.preventDefault()} 
-                      className={`transition-colors ${ (currentToken.links?.twitter || currentToken.twitter) ? 'hover:text-white cursor-pointer' : 'opacity-40 cursor-not-allowed' }`}
-                    >
-                      <XIcon className="w-3.5 h-3.5"/>
-                    </a>
+                    {/* Website (Only shows if link exists) */}
+                    {(currentToken.links?.website || currentToken.website) && (
+                      <a 
+                        href={currentToken.links?.website || currentToken.website} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="hover:text-white transition-colors cursor-pointer"
+                      >
+                        <Globe className="w-3.5 h-3.5"/>
+                      </a>
+                    )}
                     
-                    {/* Telegram */}
-                    <a 
-                      href={currentToken.links?.telegram || currentToken.telegram || "#"} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      onClick={(e) => !(currentToken.links?.telegram || currentToken.telegram) && e.preventDefault()} 
-                      className={`transition-colors ${ (currentToken.links?.telegram || currentToken.telegram) ? 'hover:text-white cursor-pointer' : 'opacity-40 cursor-not-allowed' }`}
-                    >
-                      <TelegramIcon className="w-3.5 h-3.5"/>
-                    </a>
+                    {/* Twitter / X (Only shows if link exists) */}
+                    {(currentToken.links?.twitter || currentToken.twitter) && (
+                      <a 
+                        href={currentToken.links?.twitter || currentToken.twitter} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="hover:text-white transition-colors cursor-pointer"
+                      >
+                        <XIcon className="w-3.5 h-3.5"/>
+                      </a>
+                    )}
                     
-                    {/* Solscan */}
+                    {/* Telegram (Only shows if link exists) */}
+                    {(currentToken.links?.telegram || currentToken.telegram) && (
+                      <a 
+                        href={currentToken.links?.telegram || currentToken.telegram} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="hover:text-white transition-colors cursor-pointer"
+                      >
+                        <TelegramIcon className="w-3.5 h-3.5"/>
+                      </a>
+                    )}
+                    
+                    {/* Solscan (Always shows because every token has a mint address) */}
                     <a 
                       href={`https://solscan.io/token/${rawAddress}`} 
                       target="_blank" 
