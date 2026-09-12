@@ -79,17 +79,16 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
     // 🟢 1. FETCH EXACT NET HOLDERS
     const fetchTopTraders = async () => {
-      const { data } = await supabase.from('trades').select('wallet, token_amount, type').eq('token_mint', targetMint);
+      const { data } = await supabase.from('trades').select('*').eq('token_mint', targetMint);
       if (data && data.length > 0) {
         const holdingsMap = {};
         data.forEach(t => {
-          const amt = parseFloat(t.token_amount || 0);
-          const w = t.wallet || t.wallet_address;
-          const isSell = t.type?.toLowerCase() === 'sell';
-          
-          // TRUE MATH: Subtract sells, add buys
-          if (w) holdingsMap[w] = (holdingsMap[w] || 0) + (isSell ? -amt : amt);
-        });
+  const amt = parseFloat(t.token_amount || t.amount || t.tokens || 0);
+  const w = t.wallet || t.wallet_address || t.user_address;
+  const isSell = t.type?.toLowerCase() === 'sell';
+  
+  if (w) holdingsMap[w] = (holdingsMap[w] || 0) + (isSell ? -amt : amt);
+});
         
         // Filter out empty bags and sort highest to lowest
         const sortedWhales = Object.entries(holdingsMap)
