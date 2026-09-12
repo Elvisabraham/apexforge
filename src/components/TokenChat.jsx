@@ -44,6 +44,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [topHolders, setTopHolders] = useState([]);
   const [isChatLoading, setIsChatLoading] = useState(true);
   const [onlineCount, setOnlineCount] = useState(1);
+  const [isGifPickerOpen, setIsGifPickerOpen] = useState(false);
 
   const [realUsdPrice, setRealUsdPrice] = useState(liveUsdPrice || 0);
   const [realPriceChangePct, setRealPriceChangePct] = useState(priceChangePct || 0);
@@ -391,19 +392,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     }
   };
 
-  const handleSendMockGif = async () => {
-    const { error } = await supabase.from('messages').insert([
-      {
-        token_mint: targetMint, // 🚀 FIXED
-        user_address: myName || 'Anon',
-        avatar: myAvatar || null,
-        content: '',
-        image: 'https://media.giphy.com/media/amrNGnZUeWhZC/giphy.gif'
-      }
-    ]);
-    if (error) console.error('Error sending GIF:', error);
-  };
-
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!inputText.trim() || !targetMint) return; // 🚀 FIXED
@@ -679,13 +667,13 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
             </button>
-            <button 
-              type="button" 
-              onClick={handleSendMockGif}
-              className="p-2 text-zinc-500 hover:text-[#089981] transition-colors font-black text-xs"
-            >
-              GIF
-            </button>
+            <button
+          type="button"
+          onClick={() => setIsGifPickerOpen(!isGifPickerOpen)}
+          className="p-2 text-zinc-500 hover:text-[#089981] transition-colors font-black text-xs"
+        >
+          GIF
+        </button>
           </div>
 
           <input type="text" value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={`Shill the trenches using $${tokenSymbol}...`} className="flex-1 bg-transparent text-sm text-white placeholder-zinc-600 focus:outline-none py-3 px-1 min-w-0" />
