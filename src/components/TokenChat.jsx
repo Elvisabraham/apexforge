@@ -461,12 +461,24 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     if (error) console.error('Error sending GIF:', error);
   };
 
-  const handleSendMessage = async (e) => {
+    const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!inputText.trim() || !targetMint) return; // 🚀 FIXED
 
     const textToSend = inputText.trim();
-    setInputText(''); 
+
+    // 🛡️ SCAM & SPAM FILTER
+    const textLower = textToSend.toLowerCase();
+    const bannedTerms = ['seed phrase', 'support desk', 'validate wallet', 'admin', 'guaranteed 100x', 'send sol'];
+    const hasLinks = /https?:\/\/[^\s]+/.test(textLower); 
+
+    if (hasLinks || bannedTerms.some(term => textLower.includes(term))) {
+      alert("Security Alert: Links and flagged scam terminology are not allowed.");
+      setInputText(''); // Instantly clear their malicious input
+      return; // Kill the function before it hits the database
+    }
+
+    setInputText(''); // Clear input for normal messages
 
     const { error } = await supabase.from('messages').insert([
       {
@@ -767,50 +779,60 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
           </div>
         )}
 
-        {/* 🟢 THE CHAT FORM */}
-        <form onSubmit={handleSendMessage} className="flex items-end gap-1.5 bg-black border border-white/10 focus-within:border-[#089981]/50 rounded-xl p-1 pr-1.5 transition-colors">
-          <div className="flex items-center shrink-0">
+        {/* 🔒 TOKEN GATE CHECK */}
+        {Number(userBalance) > 0 ? (
+          /* 🟢 THE CHAT FORM */
+          <form onSubmit={handleSendMessage} className="flex items-end gap-1.5 bg-black border border-white/10 focus-within:border-[#089981]/50 rounded-xl p-1 pr-1.5 transition-colors">
+            <div className="flex items-center shrink-0">
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleImageUpload}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 text-zinc-500 hover:text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setIsGifPickerOpen(!isGifPickerOpen)}
+                className={`p-2 transition-colors font-black text-xs ${isGifPickerOpen ? 'text-[#089981]' : 'text-zinc-500 hover:text-[#089981]'}`}
+              >
+                GIF
+              </button>
+            </div>
+
             <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              className="hidden"
-              onChange={handleImageUpload}
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder={`Shill the trenches using $${tokenSymbol}...`}
+              className="flex-1 bg-transparent text-sm text-white placeholder-zinc-500 py-2.5 px-2 outline-none"
             />
+
             <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="p-2 text-zinc-500 hover:text-white transition-colors"
+              type="submit"
+              disabled={!inputText.trim()}
+              className="p-3 bg-[#089981] hover:bg-[#06806b] disabled:opacity-50 disabled:hover:bg-[#089981] text-black rounded-lg transition-all"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              <svg className="w-4 h-4 translate-y-[-1px]" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
             </button>
-            
-            <button
-              type="button"
-              onClick={() => setIsGifPickerOpen(!isGifPickerOpen)}
-              className={`p-2 transition-colors font-black text-xs ${isGifPickerOpen ? 'text-[#089981]' : 'text-zinc-500 hover:text-[#089981]'}`}
-            >
-              GIF
-            </button>
+          </form>
+        ) : (
+          /* 🛑 LOCKED STATE UI */
+          <div className="flex items-center justify-center bg-black border border-white/10 rounded-xl p-4 transition-colors">
+            <span className="text-amber-500/80 text-[11px] font-black tracking-widest uppercase">
+              🔒 Buy ${tokenSymbol || 'Tokens'} To Unlock Chat
+            </span>
           </div>
-
-          <input
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder={`Shill the trenches using $${tokenSymbol}...`}
-            className="flex-1 bg-transparent text-sm text-white placeholder-zinc-500 py-2.5 px-2 outline-none"
-          />
-
-          <button
-            type="submit"
-            disabled={!inputText.trim()}
-            className="p-3 bg-[#089981] hover:bg-[#06806b] disabled:opacity-50 disabled:hover:bg-[#089981] text-black rounded-lg transition-all"
-          >
-            <svg className="w-4 h-4 translate-y-[-1px]" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-          </button>
-        </form>
-      </div>
+        )}
+        </div>
 
       {isHoldersModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
