@@ -61,7 +61,7 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     const fetchGifs = async () => {
       setIsGifLoading(true);
       try {
-        const apiKey = 'BkaUZZWcFij6J7AoQn34ZoneTmIDGwuz'; 
+        const apiKey = 'YOUR_NEW_COPIED_KEY_HERE';
         const endpoint = gifSearchQuery.trim() 
           ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${gifSearchQuery}&limit=20`
           : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=20`;
