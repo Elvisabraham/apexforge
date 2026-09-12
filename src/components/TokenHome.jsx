@@ -863,7 +863,7 @@ useEffect(() => {
              <TokenChat
   token={currentToken}
   onBack={() => setIsMobileChatOpen(false)}
-  userBalance={yourRealBagVariable} 
+  userBalance={0} 
 />
             </div>
           </div>
@@ -1210,10 +1210,10 @@ useEffect(() => {
                 
                 {/* NEW CHAT TAB RENDER */}
                 {activeHubTab === 'chat' && typeof TokenChat !== 'undefined' && (
-<TokenChat
+                  <TokenChat
   token={currentToken}
   onBack={() => setIsMobileChatOpen(false)}
-  userBalance={yourRealBagVariable} 
+  userBalance={0} 
 />
                 )}
               </div>
