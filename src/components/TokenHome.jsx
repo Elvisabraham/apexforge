@@ -363,16 +363,33 @@ useEffect(() => {
     setTimeout(() => setCopiedCA(false), 1500);
   };
 
-  const getTokenKey = (t) => (t?.symbol || t?.mintAddress || t?.address || t?.id || '').toLowerCase();
+   const getTokenKey = (t) => (t?.symbol || t?.mintAddress || t?.address || t?.id || '').toLowerCase();
   const currentKey = getTokenKey(currentToken);
-  const isFollowing = currentKey ? followedSymbols.some(s => s.toLowerCase() === currentKey) : false;
+  
+  // Read directly from browser storage so it survives refresh
+  const savedFollows = JSON.parse(localStorage.getItem('apex_watchlist') || '[]');
+  const isFollowing = currentKey ? savedFollows.includes(currentKey) : false;
 
   const handleToggleFollow = (token) => {
     const key = getTokenKey(token);
     if (!key) return;
-    setFollowedSymbols(prev => 
-      prev.some(s => s.toLowerCase() === key) ? prev.filter(s => s.toLowerCase() !== key) : [...prev, key]
-    );
+
+    const currentSaved = JSON.parse(localStorage.getItem('apex_watchlist') || '[]');
+    let newFollows;
+
+    if (currentSaved.includes(key)) {
+      newFollows = currentSaved.filter(k => k !== key); // Unfollow
+    } else {
+      newFollows = [...currentSaved, key]; // Follow
+    }
+
+    // 1. Save to browser so it survives page reload
+    localStorage.setItem('apex_watchlist', JSON.stringify(newFollows));
+
+    // 2. Update your parent state so the left sidebar updates instantly
+    if (typeof setFollowedSymbols === 'function') {
+      setFollowedSymbols(newFollows);
+    }
   };
 
   const baseTokens = globalTokens && globalTokens.length > 0 ? globalTokens : [
@@ -384,7 +401,9 @@ useEffect(() => {
   const displayedTokens = leftTab === 'Follows'
     ? baseTokens.filter(t => {
         const tKey = getTokenKey(t);
-        return (tKey && followedSymbols.some(s => s.toLowerCase() === tKey)) || t.isFollowing || t.followed;
+        // 🚀 Read directly from the browser's permanent memory
+        const currentSaved = JSON.parse(localStorage.getItem('apex_watchlist') || '[]');
+        return (tKey && currentSaved.includes(tKey)) || t.isFollowing || t.followed;
       })
     : baseTokens;
 
@@ -495,10 +514,19 @@ useEffect(() => {
             </div>
           </div>
 
-          <div className="p-4 bg-[#0c0d10] flex justify-between items-start gap-4">
+           <div className="p-4 bg-[#0c0d10] flex justify-between items-start gap-4">
               <div className="flex gap-3 items-center min-w-0">
                 <div className="w-12 h-12 rounded-full border border-white/10 overflow-hidden bg-gradient-to-br from-zinc-800 to-[#121318] flex items-center justify-center text-xl shrink-0 shadow-inner">
-                  {currentToken.imagePreview ? <img src={currentToken.imagePreview} className="w-full h-full object-cover" /> : (currentToken.icon || currentToken.symbol?.slice(0,2).toUpperCase())}
+                  {/* FIXED AVATAR */}
+                  {(currentToken.image_url || currentToken.imageUrl || currentToken.imagePreview) ? (
+                    <img 
+                      src={currentToken.image_url || currentToken.imageUrl || currentToken.imagePreview} 
+                      className="w-full h-full object-cover" 
+                      alt={currentToken.symbol}
+                    />
+                  ) : (
+                    <span>{currentToken.icon || currentToken.symbol?.slice(0,2).toUpperCase()}</span>
+                  )}
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-2">
@@ -521,15 +549,37 @@ useEffect(() => {
                     {/* Socials - Visible right on the main chart view! */}
                     <span className="text-zinc-700 hidden sm:inline">|</span>
                     <div className="flex items-center gap-2.5 text-zinc-400 ml-0.5">
-                      <a href={currentToken.website || "#"} target="_blank" rel="noreferrer" onClick={(e) => !currentToken.website && e.preventDefault()} className="hover:text-white transition-colors cursor-pointer"><Globe className="w-3 h-3"/></a>
-                      <a href={currentToken.twitter || "#"} target="_blank" rel="noreferrer" onClick={(e) => !currentToken.twitter && e.preventDefault()} className="hover:text-white transition-colors cursor-pointer"><XIcon className="w-3 h-3"/></a>
-                      <a href={currentToken.telegram || "#"} target="_blank" rel="noreferrer" onClick={(e) => !currentToken.telegram && e.preventDefault()} className="hover:text-white transition-colors cursor-pointer"><TelegramIcon className="w-3 h-3"/></a>
-                      <a href={`https://solscan.io/token/${rawAddress}`} target="_blank" rel="noreferrer" className="hover:text-white transition-colors cursor-pointer"><SearchIcon className="w-3 h-3"/></a>
+                      {/* Website */}
+                      {(currentToken.links?.website || currentToken.website) && (
+                        <a href={currentToken.links?.website || currentToken.website} target="_blank" rel="noreferrer" className="hover:text-white transition-colors cursor-pointer">
+                          <Globe className="w-3 h-3"/>
+                        </a>
+                      )}
+                      
+                      {/* Twitter / X */}
+                      {(currentToken.links?.twitter || currentToken.twitter) && (
+                        <a href={currentToken.links?.twitter || currentToken.twitter} target="_blank" rel="noreferrer" className="hover:text-white transition-colors cursor-pointer">
+                          <XIcon className="w-3 h-3"/>
+                        </a>
+                      )}
+                      
+                      {/* Telegram */}
+                      {(currentToken.links?.telegram || currentToken.telegram) && (
+                        <a href={currentToken.links?.telegram || currentToken.telegram} target="_blank" rel="noreferrer" className="hover:text-white transition-colors cursor-pointer">
+                          <TelegramIcon className="w-3 h-3"/>
+                        </a>
+                      )}
+                      
+                      {/* Solscan */}
+                      <a href={`https://solscan.io/token/${rawAddress}`} target="_blank" rel="noreferrer" className="hover:text-[#00f2a1] text-zinc-300 transition-colors cursor-pointer ml-1" title="View on Solscan">
+                        <SearchIcon className="w-3 h-3"/>
+                      </a>
                     </div>
                   </div>
                 </div>
               </div>
-              
+
+              {/* Right side price stats */}
               <div 
                 className="flex flex-col items-end text-right mt-1 shrink-0 cursor-pointer group"
                 onClick={() => setChartMode(chartMode === 'price' ? 'mcap' : 'price')}
