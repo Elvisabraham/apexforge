@@ -193,23 +193,40 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     return () => { supabase.removeChannel(channel); };
   }, [targetMint]);
 
-  // 🟢 SUPABASE REALTIME PRESENCE (Live Online Users)
+   // 🟢 SUPABASE REALTIME PRESENCE (Live Online Users)
   useEffect(() => {
     if (!targetMint) return;
-    const presenceChannel = supabase.channel(`presence-${targetMint}`, {
-      config: { presence: { key: myName } }
+    const roomName = `presence-${targetMint}`;
+
+    // 🛡️ FIX: Force-remove any lingering cached channel from fast tab switching
+    supabase.removeChannel(supabase.channel(roomName));
+
+    const presenceChannel = supabase.channel(roomName, {
+      config: { presence: { key: myName || 'Anon' } }
     });
+
+    let isMounted = true;
 
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
+        if (!isMounted) return;
         const state = presenceChannel.presenceState();
         setOnlineCount(Math.max(1, Object.keys(state).length));
       })
       .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') await presenceChannel.track({ online_at: new Date().toISOString() });
+        if (status === 'SUBSCRIBED' && isMounted) {
+          try {
+            await presenceChannel.track({ online_at: new Date().toISOString() });
+          } catch (e) {
+            console.warn("Presence track skipped during fast unmount.");
+          }
+        }
       });
 
-    return () => { supabase.removeChannel(presenceChannel); };
+    return () => { 
+      isMounted = false;
+      supabase.removeChannel(presenceChannel); 
+    };
   }, [targetMint, myName]);
 
   // 🚀 DYNAMIC TOP TRADERS (Replaces Hardcoded Array)
