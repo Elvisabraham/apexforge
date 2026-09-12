@@ -226,7 +226,14 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     if (!targetMint) return;
     const fetchMessages = async () => {
       setIsChatLoading(true);
-      const { data, error } = await supabase.from('messages').select('*').eq('token_mint', targetMint).order('created_at', { ascending: true });
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('token_mint', targetMint)
+        .order('created_at', { ascending: true });
+      
+      console.log("SUPABASE FETCH RESULT:", { data, error, targetMint }); // 🔍 Check your browser console!
+
       if (!error && data) setMessages(data);
       setIsChatLoading(false);
     };
