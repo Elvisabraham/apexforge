@@ -860,11 +860,11 @@ useEffect(() => {
             </div>
 
             <div className="flex-1 w-full overflow-hidden flex flex-col rounded-t-2xl bg-[#050505]">
-              <TokenChat 
-                token={currentToken} 
-                onBack={() => setIsMobileChatOpen(false)} 
-                userBalance={userSolBalance} 
-              />
+              <TokenChat
+  token={currentToken}
+  onBack={() => setIsMobileChatOpen(false)}
+  userBalance={currentTokenBalance} // Swap with your exact variable name for the SPL token bag
+/>
             </div>
           </div>
         </div>
@@ -1210,10 +1210,11 @@ useEffect(() => {
                 
                 {/* NEW CHAT TAB RENDER */}
                 {activeHubTab === 'chat' && typeof TokenChat !== 'undefined' && (
-                  <TokenChat 
-                    token={currentToken} 
-                    userBalance={userSolBalance} 
-                  />
+                  <TokenChat
+  token={currentToken}
+  onBack={() => setIsMobileChatOpen(false)}
+  userBalance={currentTokenBalance} // Swap with your exact variable name for the SPL token bag
+/>
                 )}
               </div>
             </div>
