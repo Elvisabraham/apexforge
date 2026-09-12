@@ -15,15 +15,22 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
  
   const [displayMode, setDisplayMode] = useState('price'); 
 
-  // 🚀 MOVED UP: Chat & Holders State needed for live engines
+  // 🚀 MOVED UP: Live Chat, Holders, and Online Count States
   const [messages, setMessages] = useState([]);
   const [topHolders, setTopHolders] = useState([]);
   const [isChatLoading, setIsChatLoading] = useState(true);
+  const [onlineCount, setOnlineCount] = useState(1); // 🟢 LIVE ONLINE STATE
 
   const targetMint = token?.mintAddress || token?.mint || token?.address || token?.symbol;
   const tokenSymbol = token?.symbol || 'TKN';
 
-  // 🚀 THE MINI-ENGINE: Fetches live trades, calculates exact curve price, AND runs the FOMO Bot!
+  // 🚀 TRUE WEB3 IDENTITY LINKING
+  const myName = userProfile?.username 
+    ? `@${userProfile.username.replace('@', '')}` 
+    : (publicKey ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}` : 'Anon');
+  const myAvatar = userProfile?.avatar || (publicKey ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${publicKey.toBase58()}` : null);
+
+  // 🚀 THE MEGA-ENGINE: Live Trades, Price, Holders, and FOMO Bot
   const [realUsdPrice, setRealUsdPrice] = useState(liveUsdPrice || 0);
   const [realPriceChangePct, setRealPriceChangePct] = useState(priceChangePct || 0);
   const [realIsPositive, setRealIsPositive] = useState(isPositiveChange || true);
@@ -31,12 +38,42 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   useEffect(() => {
     if (!targetMint) return;
 
-    const fetchLiveTicker = async () => {
-      const { data: trades } = await supabase
-        .from('trades')
-        .select('sol_amount, type')
-        .eq('token_mint', targetMint);
+    // 🟢 1. FETCH EXACT NET HOLDERS
+    const fetchTopTraders = async () => {
+      const { data } = await supabase.from('trades').select('wallet, token_amount, type').eq('token_mint', targetMint);
+      if (data && data.length > 0) {
+        const holdingsMap = {};
+        data.forEach(t => {
+          const amt = parseFloat(t.token_amount || 0);
+          const w = t.wallet || t.wallet_address;
+          const isSell = t.type?.toLowerCase() === 'sell';
+          
+          // TRUE MATH: Subtract sells, add buys
+          if (w) holdingsMap[w] = (holdingsMap[w] || 0) + (isSell ? -amt : amt);
+        });
+        
+        // Filter out empty bags and sort highest to lowest
+        const sortedWhales = Object.entries(holdingsMap)
+          .filter(w => w[1] > 0)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5);
+        
+        setTopHolders(sortedWhales.map((whale, idx) => ({
+          id: idx,
+          name: `${whale[0].slice(0, 4)}...${whale[0].slice(-4)}`,
+          address: whale[0],
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${whale[0]}`,
+          holding: Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(whale[1]),
+          value: 'Top Buyer'
+        })));
+      } else {
+        setTopHolders([]); 
+      }
+    };
 
+    // 🟢 2. FETCH LIVE PRICE
+    const fetchLiveTicker = async () => {
+      const { data: trades } = await supabase.from('trades').select('sol_amount, type').eq('token_mint', targetMint);
       if (trades) {
         const currentSolProfile = 76.50;
         const rawNetSol = trades.reduce((sum, t) => {
@@ -66,134 +103,76 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
     };
 
     fetchLiveTicker();
+    fetchTopTraders();
 
+    // 🟢 3. LISTEN FOR TRADES TO TRIGGER UPDATES
     const uniqueTickerChannel = `chat-ticker-${targetMint}-${Math.random()}`;
-    
     const channel = supabase
       .channel(uniqueTickerChannel)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'trades', filter: `token_mint=eq.${targetMint}` },
         (payload) => {
-          fetchLiveTicker(); // Update price
+          fetchLiveTicker(); 
+          fetchTopTraders(); // Updates the holder leaderboard INSTANTLY
 
-          // 🚨 REAL FOMO BOT INTERCEPTOR 🚨
           const newTrade = payload.new;
           if (newTrade && newTrade.type?.toLowerCase() === 'buy' && parseFloat(newTrade.sol_amount) >= 1.0) {
             const shortWallet = newTrade.wallet ? `${newTrade.wallet.slice(0, 4)}...${newTrade.wallet.slice(-4)}` : 'A whale';
             const solAmt = parseFloat(newTrade.sol_amount).toFixed(2);
-            
-            const fomoAlert = {
+            setMessages(prev => [...prev, {
               id: `fomo-${newTrade.id || Date.now()}`,
-              isSystem: true, // Triggers your green system styling
+              isSystem: true,
               content: `🟢 WHALE ALERT: ${shortWallet} just scooped ${solAmt} SOL of $${tokenSymbol}! 🐋`,
               created_at: new Date().toISOString()
-            };
-            
-            setMessages(prev => [...prev, fomoAlert]); // Push directly to everyone's chat live
-          }
-        }
-      )
-      .subscribe();
-
-    return () => { 
-      supabase.removeChannel(channel); 
-    };
-  }, [targetMint, tokenSymbol]);
-
-  // 🚀 1. Set up independent local states for the balances
-  const [userBalanceSol, setUserBalanceSol] = useState(userBalance || 0);
-  const [userTokenBalance, setUserTokenBalance] = useState(0);
-
-  // 🚀 2. Hook directly into the wallet to fetch the live Token Balance just like TokenHome does!
-  const { publicKey } = useWallet();
-  const { connection } = useConnection();
-  
-  useEffect(() => {
-    let isMounted = true;
-    const fetchMyTokenBalance = async () => {
-      const targetMint = token?.mintAddress || token?.mint_address || token?.mint;
-      
-      if (!publicKey || !connection || !targetMint) return;
-      if (targetMint === '8AVmX9aQwZoonSolanaNet11oHEZforge') return;
-
-      try {
-        const accounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
-          mint: new PublicKey(targetMint)
-        });
-
-        if (accounts.value.length > 0) {
-          const rawBalance = accounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
-          const scaledBalance = rawBalance < 1000 ? (rawBalance * 1000000) : rawBalance; 
-          if (isMounted) setUserTokenBalance(scaledBalance);
-        }
-      } catch (error) {}
-    };
-
-    fetchMyTokenBalance();
-    const intervalId = setInterval(fetchMyTokenBalance, 15000); 
-    return () => { isMounted = false; clearInterval(intervalId); };
-  }, [publicKey, connection, token]);
-
-  const { executeTradeOnChain, isProcessing } = useTrade();
-
-  const messagesEndRef = useRef(null);
-  const [inputText, setInputText] = useState('');
-  const [activeReactionId, setActiveReactionId] = useState(null);
-  const [isHoldersModalOpen, setIsHoldersModalOpen] = useState(false);
-  const [fullscreenImage, setFullscreenImage] = useState(null);
-
-  // INLINE TRADE MODAL STATE
-  const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
-  const [tradeMode, setTradeMode] = useState('buy');
-  const [tradeAmount, setTradeAmount] = useState('');
-
-  // 🚀 TRUE WEB3 IDENTITY LINKING
-  // Falls back to truncated wallet address if they haven't set a username
-  const myName = userProfile?.username 
-    ? `@${userProfile.username.replace('@', '')}` 
-    : (publicKey ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}` : 'Anon');
-
-  // Dynamically generates a unique Dicebear avatar based on their wallet if no custom avatar exists
-  const myAvatar = userProfile?.avatar || (publicKey ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${publicKey.toBase58()}` : null);
-
-  // 🚀 SUPABASE LIVE CHAT ENGINE
-  useEffect(() => {
-    if (!targetMint) return;
-
-    const fetchMessages = async () => {
-      setIsChatLoading(true);
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('token_mint', targetMint)
-        .order('created_at', { ascending: true });
-
-      if (!error && data) setMessages(data);
-      setIsChatLoading(false);
-    };
-
-    fetchMessages();
-
-    const uniqueChatChannel = `chat-${targetMint}-${Math.random()}`;
-    
-    const channel = supabase
-      .channel(uniqueChatChannel)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'messages', filter: `token_mint=eq.${targetMint}` },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setMessages((prev) => [...prev, payload.new]);
-          } else if (payload.eventType === 'UPDATE') {
-            setMessages((prev) => prev.map(m => m.id === payload.new.id ? payload.new : m));
+            }]);
           }
         }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
+  }, [targetMint, tokenSymbol]);
+
+  // 🚀 SUPABASE LIVE CHAT ENGINE
+  useEffect(() => {
+    if (!targetMint) return;
+    const fetchMessages = async () => {
+      setIsChatLoading(true);
+      const { data, error } = await supabase.from('messages').select('*').eq('token_mint', targetMint).order('created_at', { ascending: true });
+      if (!error && data) setMessages(data);
+      setIsChatLoading(false);
+    };
+
+    fetchMessages();
+    const uniqueChatChannel = `chat-${targetMint}-${Math.random()}`;
+    const channel = supabase.channel(uniqueChatChannel)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `token_mint=eq.${targetMint}` }, (payload) => {
+        if (payload.eventType === 'INSERT') setMessages((prev) => [...prev, payload.new]);
+        else if (payload.eventType === 'UPDATE') setMessages((prev) => prev.map(m => m.id === payload.new.id ? payload.new : m));
+      }).subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [targetMint]);
+
+  // 🟢 SUPABASE REALTIME PRESENCE (Live Online Users)
+  useEffect(() => {
+    if (!targetMint) return;
+    const presenceChannel = supabase.channel(`presence-${targetMint}`, {
+      config: { presence: { key: myName } }
+    });
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState();
+        setOnlineCount(Math.max(1, Object.keys(state).length));
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') await presenceChannel.track({ online_at: new Date().toISOString() });
+      });
+
+    return () => { supabase.removeChannel(presenceChannel); };
+  }, [targetMint, myName]);
 
   // 🚀 DYNAMIC TOP TRADERS (Replaces Hardcoded Array)
   useEffect(() => {
