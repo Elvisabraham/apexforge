@@ -861,11 +861,11 @@ useEffect(() => {
 
             <div className="flex-1 w-full overflow-hidden flex flex-col rounded-t-2xl bg-[#050505]">
              // ✅ Correct setup
-              <TokenChat
-           token={currentToken}
-           onBack={() => setIsMobileChatOpen(false)}
-           userBalance={myBagAmount} // Replace this with your actual variable name!
-           />
+             <TokenChat
+  token={currentToken}
+  onBack={() => setIsMobileChatOpen(false)}
+  userBalance={1} 
+/>
             </div>
           </div>
         </div>
@@ -1212,11 +1212,11 @@ useEffect(() => {
                 {/* NEW CHAT TAB RENDER */}
                 {activeHubTab === 'chat' && typeof TokenChat !== 'undefined' && (
                   // ✅ Correct setup
-                 <TokenChat
-               token={currentToken}
-               onBack={() => setIsMobileChatOpen(false)}
-               userBalance={myBagAmount} // Replace this with your actual variable name!
-             />
+                <TokenChat
+  token={currentToken}
+  onBack={() => setIsMobileChatOpen(false)}
+  userBalance={1} 
+/>
                 )}
               </div>
             </div>
