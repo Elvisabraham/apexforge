@@ -963,16 +963,13 @@ console.log("Chat Gate is receiving:", userBalance);
             <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-3">
             <div className="relative w-8 h-8 rounded-full overflow-hidden bg-zinc-800 shrink-0 border border-white/10 flex items-center justify-center">
-              <span className="text-sm font-bold text-zinc-400 absolute uppercase tracking-wider">
-                {(displayToken?.symbol || 'T').substring(0, 2)}
-              </span>
               <img 
-                src={displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.icon || displayToken?.info?.imageUrl || 'invalid_link'} 
+                src={displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.icon || displayToken?.info?.imageUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol}`} 
                 alt={displayToken?.symbol} 
-                className="absolute inset-0 w-full h-full object-cover z-10 text-transparent" 
+                className="absolute inset-0 w-full h-full object-cover z-10 bg-zinc-800" 
                 onError={(e) => { 
                   e.currentTarget.onerror = null; 
-                  e.currentTarget.src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; 
+                  e.currentTarget.src = `https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol || 'TKN'}`; 
                 }}
               />
             </div>
