@@ -1328,7 +1328,7 @@ useEffect(() => {
                 <div className="flex items-center gap-2 pl-4 border-l border-white/10 shrink-0">
                   <div className="w-5 h-5 flex items-center justify-center rounded-full bg-black/50 overflow-hidden shrink-0">
                     {/* Flat icon perfectly colored white */}
-                    {tradeMode === 'buy' ? <SolIcon className="w-3 h-3 text-white" /> : <img src={currentToken.imagePreview} className="w-full h-full object-cover" alt="" />}
+                    {tradeMode === 'buy' ? <SolIcon className="w-3 h-3 text-white" /> : <img src={currentToken?.image || currentToken?.imagePreview || currentToken?.logoURI || currentToken?.image_uri || `https://api.dicebear.com/7.x/identicon/svg?seed=${currentToken?.symbol}`} alt={currentToken?.symbol} className="w-full h-full object-cover rounded-full" />}
                   </div>
                   <span className="text-sm font-black text-white">{tradeMode === 'buy' ? 'SOL' : currentToken.symbol}</span>
                 </div>
