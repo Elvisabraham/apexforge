@@ -120,7 +120,7 @@ export default function TradeWidget({
               <SolIcon className="w-4 h-4 shrink-0" />
             ) : (
              <img 
-  src={displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri || displayToken?.icon || displayToken?.info?.imageUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol}`} 
+  src={displayToken?.image_url || displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri || displayToken?.icon || displayToken?.info?.imageUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol}`}
   alt={displayToken?.symbol} 
   className="w-4 h-4 rounded-full object-cover shrink-0 bg-zinc-800" 
   onError={(e) => { 
