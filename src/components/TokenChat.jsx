@@ -961,12 +961,19 @@ console.log("Chat Gate is receiving:", userBalance);
             </div>
 
             <div className="flex justify-between items-center mb-6">
-              <div className="flex flex-col">
-                <h3 className="text-lg font-black text-white uppercase tracking-widest flex items-center gap-2">
-                  Trade {displayToken?.symbol}
-                  {displayToken?.isGraduated && <span className="bg-amber-500/10 text-amber-500 text-[8px] px-1.5 rounded uppercase tracking-widest">Graduated</span>}
-                </h3>
-              </div>
+              <div className="flex items-center gap-3">
+            <img 
+              src={displayToken?.image || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri || `https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol}`} 
+              alt={displayToken?.symbol} 
+              className="w-8 h-8 rounded-full object-cover bg-zinc-800 shrink-0 border border-white/10" 
+            />
+            <div className="flex flex-col">
+              <h3 className="text-lg font-black text-white uppercase tracking-widest flex items-center gap-2">
+                Trade {displayToken?.symbol}
+              </h3>
+              {displayToken?.isGraduated && <span className="bg-amber-500/10 text-amber-500 text-[8px] px-1.5 rounded uppercase font-bold w-fit mt-0.5">Raydium</span>}
+            </div>
+          </div>
               <button onClick={() => setIsBuyModalOpen(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
                 <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
