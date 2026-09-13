@@ -1,10 +1,18 @@
 import React from 'react';
 
-// The Real Solana Logo
-function SolIcon({ className = "w-3 h-3 text-white" }) {
+// The REAL Official Solana Logo with proper colors
+function SolIcon({ className = "w-4 h-4" }) {
   return (
-    <svg className={className} viewBox="0 0 128 128" fill="currentColor">
-      <path d="M109.1 40H30.8a6.3 6.3 0 0 0-4.5 10.7l12.8 12.8a6.3 6.3 0 0 0 4.5 1.8h78.3a6.3 6.3 0 0 0 4.5-10.7L113.6 41.8a6.3 6.3 0 0 0-4.5-1.8zM109.1 84.7H30.8a6.3 6.3 0 0 1-4.5-10.7l12.8-12.8a6.3 6.3 0 0 1 4.5-1.8h78.3a6.3 6.3 0 0 1 4.5 10.7l-12.8 12.8a6.3 6.3 0 0 1-4.5 1.8zM30.8 17.5h78.3a6.3 6.3 0 0 1 4.5 10.7L100.8 41a6.3 6.3 0 0 1-4.5 1.8H18.9a6.3 6.3 0 0 1-4.5-10.7L26.3 19.3a6.3 6.3 0 0 1 4.5-1.8z"/>
+    <svg className={className} viewBox="0 0 393.3 313.1" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="solana-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#00FFA3" />
+          <stop offset="100%" stopColor="#DC1FFF" />
+        </linearGradient>
+      </defs>
+      <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z" fill="url(#solana-grad)"/>
+      <path d="M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" fill="url(#solana-grad)"/>
+      <path d="M328.7 120.9c-2.4-2.4-5.7-3.8-9.2-3.8H2.1c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" fill="url(#solana-grad)"/>
     </svg>
   );
 }
@@ -107,22 +115,15 @@ export default function TradeWidget({
       <div className="bg-[#0A0A0A] border border-white/5 rounded-xl p-4 mb-4 shadow-sm">
         <div className="flex justify-between items-center mb-2">
           
-          <div className="flex items-center gap-2 bg-zinc-900 px-3 py-1.5 rounded-full border border-white/5">
+          <div className="flex items-center gap-2 bg-zinc-900 px-3 py-1.5 rounded-full border border-white/5 shrink-0">
             {tradeMode === 'buy' ? (
-              <div className="w-4 h-4 rounded-full bg-black flex items-center justify-center shrink-0">
-                <SolIcon className="w-2.5 h-2.5 text-white" />
-              </div>
-            ) : (displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri || displayToken?.icon || displayToken?.info?.imageUrl) ? (
-              <img 
-                src={displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri || displayToken?.icon || displayToken?.info?.imageUrl} 
-                alt={displayToken?.symbol} 
-                className="w-4 h-4 rounded-full object-cover shrink-0" 
-              />
+              <SolIcon className="w-4 h-4 shrink-0" />
             ) : (
               <img 
-                src={`https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol || 'TKN'}`} 
+                src={displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.icon || displayToken?.info?.imageUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol}`} 
                 alt={displayToken?.symbol} 
-                className="w-4 h-4 rounded-full object-cover bg-zinc-800 shrink-0" 
+                className="w-4 h-4 rounded-full object-cover shrink-0 bg-zinc-800" 
+                onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol || 'TKN'}`; }}
               />
             )}
             <span className="text-xs font-bold text-white uppercase">
