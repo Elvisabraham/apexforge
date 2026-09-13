@@ -11,7 +11,7 @@ const DexDollarIcon = ({ className, strokeWidth }) => (
   </svg>
 );
 
-export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile, liveUsdPrice, priceChangePct, isPositiveChange }) {
+  export default function TokenChat({ token, onBack, userBalance, userSolBalance, userTokenBalance, userProfile, onOpenProfile, liveUsdPrice, priceChangePct, isPositiveChange }) {
   
   // 🚀 STEP 1: HOOKS AND TARGETS FIRST (Must load before anything else)
   const { connection } = useConnection();
@@ -974,18 +974,18 @@ console.log("Chat Gate is receiving:", userBalance);
               </button>
             </div>
 
-            <TradeWidget 
-              displayToken={displayToken}
-              tradeMode={tradeMode}
-              setTradeMode={setTradeMode}
-              tradeAmount={tradeAmount}
-              setTradeAmount={setTradeAmount}
-              userBalanceSol={userBalance} 
-              userTokenBalance={userTokenBalance}
-              handleExecuteTrade={handleExecuteTrade}
-              isProcessing={isProcessing}
-              curveState={curveState}
-            />
+            <TradeWidget
+  displayToken={displayToken}
+  tradeMode={tradeMode}
+  setTradeMode={setTradeMode}
+  tradeAmount={tradeAmount}
+  setTradeAmount={setTradeAmount}
+  userBalanceSol={userSolBalance || 0}            // 👈 Now perfectly mapped to SOL
+  userTokenBalance={userTokenBalance || userBalance || 0} // 👈 Now perfectly mapped to Tokens
+  handleExecuteTrade={handleExecuteTrade}
+  isProcessing={isProcessing}
+  curveState={curveState}
+/>
           </div>
         </div>
       )}
