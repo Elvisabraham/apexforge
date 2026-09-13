@@ -77,14 +77,6 @@ const TelegramIcon = ({ className = "w-3 h-3" }) => (
   </svg>
 );
 
-// Solana SVG Logo Component
-// 1. The original flat icon (for clean white/grey text)
-const SolIcon = ({ className = "w-2.5 h-2.5" }) => (
-  <svg className={className} viewBox="0 0 397 311" fill="currentColor">
-    <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7zM64.6 3.8C67 1.4 70.3 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8zM333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" />
-  </svg>
-);
-
 // 2. The gradient icon (specifically for the preset buttons)
 const SolGradientIcon = ({ className = "w-2.5 h-2.5" }) => (
   <svg className={className} viewBox="0 0 351 304" fill="none" xmlns="http://www.w3.org/2000/svg">
