@@ -1,10 +1,10 @@
 import React from 'react';
 
-// Clean internal SolIcon component
+// The Real Solana Logo
 function SolIcon({ className = "w-3 h-3 text-white" }) {
   return (
     <svg className={className} viewBox="0 0 128 128" fill="currentColor">
-      <path d="M23.5 96.5h81c2.8 0 5 2.2 5 5s-2.2 5-5 5h-81c-2.8 0-5-2.2-5-5s2.2-5 5-5zm0-41h81c2.8 0 5 2.2 5 5s-2.2 5-5 5h-81c-2.8 0-5-2.2-5-5s2.2-5 5-5zm81-41h-81c-2.8 0-5-2.2-5-5s2.2-5 5-5h81c2.8 0 5 2.2 5 5s-2.2 5-5 5z" />
+      <path d="M109.1 40H30.8a6.3 6.3 0 0 0-4.5 10.7l12.8 12.8a6.3 6.3 0 0 0 4.5 1.8h78.3a6.3 6.3 0 0 0 4.5-10.7L113.6 41.8a6.3 6.3 0 0 0-4.5-1.8zM109.1 84.7H30.8a6.3 6.3 0 0 1-4.5-10.7l12.8-12.8a6.3 6.3 0 0 1 4.5-1.8h78.3a6.3 6.3 0 0 1 4.5 10.7l-12.8 12.8a6.3 6.3 0 0 1-4.5 1.8zM30.8 17.5h78.3a6.3 6.3 0 0 1 4.5 10.7L100.8 41a6.3 6.3 0 0 1-4.5 1.8H18.9a6.3 6.3 0 0 1-4.5-10.7L26.3 19.3a6.3 6.3 0 0 1 4.5-1.8z"/>
     </svg>
   );
 }
@@ -109,20 +109,20 @@ export default function TradeWidget({
           
           <div className="flex items-center gap-2 bg-zinc-900 px-3 py-1.5 rounded-full border border-white/5">
             {tradeMode === 'buy' ? (
-              <div className="w-4 h-4 rounded-full bg-black flex items-center justify-center">
-                <SolIcon className="w-3 h-3 text-white" />
+              <div className="w-4 h-4 rounded-full bg-black flex items-center justify-center shrink-0">
+                <SolIcon className="w-2.5 h-2.5 text-white" />
               </div>
-            ) : (displayToken?.image || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri) ? (
+            ) : (displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri || displayToken?.icon) ? (
               <img 
-                src={displayToken?.image || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri} 
+                src={displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri || displayToken?.icon} 
                 alt={displayToken?.symbol} 
-                className="w-4 h-4 rounded-full object-cover" 
+                className="w-4 h-4 rounded-full object-cover shrink-0" 
               />
             ) : (
               <img 
                 src={`https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol || 'TKN'}`} 
                 alt={displayToken?.symbol} 
-                className="w-4 h-4 rounded-full object-cover bg-zinc-800" 
+                className="w-4 h-4 rounded-full object-cover bg-zinc-800 shrink-0" 
               />
             )}
             <span className="text-xs font-bold text-white uppercase">
