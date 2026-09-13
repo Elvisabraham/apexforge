@@ -14,6 +14,7 @@ const DexDollarIcon = ({ className, strokeWidth }) => (
 export default function TokenChat({ token, onBack, userBalance, userProfile, onOpenProfile, liveUsdPrice, priceChangePct, isPositiveChange }) {
   
   // 🚀 STEP 1: HOOKS AND TARGETS FIRST (Must load before anything else)
+  const { connection } = useConnection();
   const { publicKey } = useWallet();
   const targetMint = token?.mintAddress || token?.mint || token?.address || token?.symbol;
   const tokenSymbol = token?.symbol || 'TKN';
@@ -52,6 +53,8 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [gifSearchQuery, setGifSearchQuery] = useState('');
   const [gifResults, setGifResults] = useState([]);
   const [isGifLoading, setIsGifLoading] = useState(false);
+
+  const [topHolders, setTopHolders] = useState([]);
 
   useEffect(() => {
     const fetchHolders = async () => {
