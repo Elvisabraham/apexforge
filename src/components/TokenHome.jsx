@@ -863,7 +863,7 @@ useEffect(() => {
              <TokenChat
   token={currentToken}
   onBack={() => setIsMobileChatOpen(false)}
-  userBalance={1} 
+  userBalance={userTokenBalance} 
 />
             </div>
           </div>
@@ -1213,7 +1213,7 @@ useEffect(() => {
                 <TokenChat
   token={currentToken}
   onBack={() => setIsMobileChatOpen(false)}
-  userBalance={1} 
+  userBalance={userTokenBalance} 
 />
                 )}
               </div>
