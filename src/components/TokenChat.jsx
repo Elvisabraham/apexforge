@@ -15,7 +15,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   
   // 🚀 STEP 1: HOOKS AND TARGETS FIRST (Must load before anything else)
   const { publicKey } = useWallet();
-  const { connection } = useConnection();
   const targetMint = token?.mintAddress || token?.mint || token?.address || token?.symbol;
   const tokenSymbol = token?.symbol || 'TKN';
 
@@ -41,7 +40,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
   const [displayMode, setDisplayMode] = useState('price'); 
   const [messages, setMessages] = useState([]);
-  const [topHolders, setTopHolders] = useState([]);
   const [isChatLoading, setIsChatLoading] = useState(true);
   const [onlineCount, setOnlineCount] = useState(1);
 
@@ -54,6 +52,40 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [gifSearchQuery, setGifSearchQuery] = useState('');
   const [gifResults, setGifResults] = useState([]);
   const [isGifLoading, setIsGifLoading] = useState(false);
+
+  const [topHolders, setTopHolders] = useState([]);
+  const { connection } = useConnection(); // Make sure this is imported!
+
+  useEffect(() => {
+    const fetchRealHolders = async () => {
+      // Ensure we have a token mint before fetching
+      if (!token || (!token.mint_address && !token.address)) return; 
+      
+      try {
+        const rawAddress = token.mint_address || token.address;
+        const mintPubkey = new PublicKey(rawAddress);
+        
+        // Fetch the largest accounts directly from Solana
+        const largestAccounts = await connection.getTokenLargestAccounts(mintPubkey);
+        
+        // Format the top 10 accounts for your UI
+        const formattedHolders = largestAccounts.value.slice(0, 10).map((acc, index) => ({
+          id: acc.address.toString(),
+          name: `${acc.address.toString().slice(0, 4)}...${acc.address.toString().slice(-4)}`,
+          address: acc.address.toString(),
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${acc.address.toString()}`,
+          holding: (Number(acc.amount) / 1e6).toLocaleString(), // Adjust the 1e6 based on your token's decimals
+          value: index === 0 ? "Top Buyer" : "Holder"
+        }));
+
+        setTopHolders(formattedHolders);
+      } catch (err) {
+        console.error("Failed to fetch live token holders:", err);
+      }
+    };
+
+    fetchRealHolders();
+  }, [token, connection]);
 
   useEffect(() => {
     if (!isGifPickerOpen) return;
