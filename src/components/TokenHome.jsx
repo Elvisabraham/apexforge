@@ -860,13 +860,15 @@ useEffect(() => {
             </div>
 
             <div className="flex-1 w-full overflow-hidden flex flex-col rounded-t-2xl bg-[#050505]">
-             <TokenChat
+                 <TokenChat
   token={currentToken}
   onBack={() => setIsMobileChatOpen(false)}
-  userBalance={userTokenBalance} 
-onOpenProfile={(walletAddress) => {
+  userBalance={userTokenBalance}
+  userSolBalance={userSolBalance}     // 👈 Add this
+  userTokenBalance={userTokenBalance} // 👈 Add this
+  onOpenProfile={(walletAddress) => {
     console.log("Opening profile for:", walletAddress);
-  }} 
+  }}
 />
             </div>
           </div>
@@ -1216,10 +1218,12 @@ onOpenProfile={(walletAddress) => {
                 <TokenChat
   token={currentToken}
   onBack={() => setIsMobileChatOpen(false)}
-  userBalance={userTokenBalance} 
-onOpenProfile={(walletAddress) => {
+  userBalance={userTokenBalance}
+  userSolBalance={userSolBalance}     // 👈 Add this
+  userTokenBalance={userTokenBalance} // 👈 Add this
+  onOpenProfile={(walletAddress) => {
     console.log("Opening profile for:", walletAddress);
-  }} 
+  }}
 />
                 )}
               </div>
