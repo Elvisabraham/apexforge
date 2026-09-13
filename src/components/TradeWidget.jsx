@@ -1,4 +1,5 @@
 import React from 'react';
+import { SolIcon } from './TokenHome'; // Or adjust the path if SolIcon is in a separate shared file
 
 export default function TradeWidget({
   displayToken,
