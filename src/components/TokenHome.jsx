@@ -860,7 +860,6 @@ useEffect(() => {
             </div>
 
             <div className="flex-1 w-full overflow-hidden flex flex-col rounded-t-2xl bg-[#050505]">
-             // ✅ Correct setup
              <TokenChat
   token={currentToken}
   onBack={() => setIsMobileChatOpen(false)}
@@ -1211,7 +1210,6 @@ useEffect(() => {
                 
                 {/* NEW CHAT TAB RENDER */}
                 {activeHubTab === 'chat' && typeof TokenChat !== 'undefined' && (
-                  // ✅ Correct setup
                 <TokenChat
   token={currentToken}
   onBack={() => setIsMobileChatOpen(false)}
