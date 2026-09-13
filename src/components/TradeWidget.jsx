@@ -100,15 +100,21 @@ export default function TradeWidget({
           
           <div className="flex items-center gap-2 bg-zinc-900 px-3 py-1.5 rounded-full border border-white/5">
             {tradeMode === 'buy' ? (
-              <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 to-[#089981] flex items-center justify-center text-[8px] text-white">
-                ◎
+              <div className="w-4 h-4 rounded-full bg-black flex items-center justify-center">
+                <SolIcon className="w-3 h-3 text-white" />
               </div>
-            ) : displayToken?.image ? (
-              <img src={displayToken.image} alt={displayToken.symbol} className="w-4 h-4 rounded-full object-cover" />
+            ) : (displayToken?.image || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri) ? (
+              <img 
+                src={displayToken?.image || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri} 
+                alt={displayToken?.symbol} 
+                className="w-4 h-4 rounded-full object-cover" 
+              />
             ) : (
-              <div className="w-4 h-4 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 flex items-center justify-center text-[8px] text-black">
-                🚀
-              </div>
+              <img 
+                src={`https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol || 'TKN'}`} 
+                alt={displayToken?.symbol} 
+                className="w-4 h-4 rounded-full object-cover bg-zinc-800" 
+              />
             )}
             <span className="text-xs font-bold text-white uppercase">
               {tradeMode === 'buy' ? 'SOL' : displayToken?.symbol || 'TKN'}
