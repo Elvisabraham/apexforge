@@ -119,11 +119,15 @@ export default function TradeWidget({
             {tradeMode === 'buy' ? (
               <SolIcon className="w-4 h-4 shrink-0" />
             ) : (
-              <img 
-                src={displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri || displayToken?.icon || displayToken?.info?.imageUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol}`} 
-                alt={displayToken?.symbol} 
-                className="w-4 h-4 rounded-full object-cover shrink-0 bg-zinc-800" 
-              />
+             <img 
+  src={displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri || displayToken?.icon || displayToken?.info?.imageUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol}`} 
+  alt={displayToken?.symbol} 
+  className="w-4 h-4 rounded-full object-cover shrink-0 bg-zinc-800" 
+  onError={(e) => { 
+    e.currentTarget.onerror = null; 
+    e.currentTarget.src = `https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol || 'TKN'}`; 
+  }}
+/>
             )}
             <span className="text-xs font-bold text-white uppercase">
               {tradeMode === 'buy' ? 'SOL' : displayToken?.symbol || 'TKN'}
