@@ -860,23 +860,33 @@ console.log("Chat Gate is receiving:", userBalance);
 
             <div className="flex-1 overflow-y-auto scrollbar-hide pb-6 space-y-2">
               {topHolders.map((holder, index) => (
-                <div key={holder.id} onClick={() => { setIsHoldersModalOpen(false); if(onOpenProfile) onOpenProfile(holder.name); }} className="bg-[#121212] border border-white/5 p-4 rounded-xl flex justify-between items-center cursor-pointer hover:border-[#089981]/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-mono font-bold text-zinc-500 w-4">#{index + 1}</span>
-                    <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10">
-                      <img src={holder.avatar} alt={holder.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-sm text-white">{holder.name}</span>
-                      <span className="text-[11px] font-mono text-zinc-500">{holder.address}</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-sm font-mono font-black text-[#089981]">{holder.holding}</span>
-                    <span className="text-[11px] font-mono text-zinc-400">{holder.value}</span>
-                  </div>
+            <div 
+              key={holder.id} 
+              onClick={() => { setIsHoldersModalOpen(false); if(onOpenProfile) onOpenProfile(holder.address); }} 
+              className="flex items-center justify-between p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors cursor-pointer"
+            >
+              {/* LEFT SIDE: Rank, Avatar & Text */}
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <span className="text-xs font-mono font-bold text-zinc-500 w-4 shrink-0">#{index + 1}</span>
+                <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 shrink-0">
+                  <img src={holder.avatar} alt={holder.name} className="w-full h-full object-cover" />
                 </div>
-              ))}
+                
+                {/* 🛡️ TEXT WRAPPER: Added flex-1 and min-w-0 to prevent mobile overflow */}
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="font-bold text-sm text-white truncate">{holder.name}</span>
+                  {/* ✂️ TRUNCATE: Stops the long address from pushing the balance off screen */}
+                  <span className="text-[11px] font-mono text-zinc-500 truncate">{holder.address}</span>
+                </div>
+              </div>
+
+              {/* RIGHT SIDE: Balance (Added shrink-0 to protect it from being squished) */}
+              <div className="flex flex-col items-end shrink-0 pl-3">
+                <span className="text-sm font-mono font-black text-[#089981]">{holder.holding}</span>
+                <span className="text-[11px] font-mono text-zinc-400">{holder.value}</span>
+              </div>
+            </div>
+          ))}
             </div>
           </div>
         </div>
