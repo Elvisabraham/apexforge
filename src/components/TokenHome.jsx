@@ -337,7 +337,9 @@ useEffect(() => {
   const handleTradeSubmit = async () => {
     // Look for mint_address first (Supabase standard)
     const mint = currentToken?.mint_address || currentToken?.mintAddress || currentToken?.address || currentToken?.mint;
-    return await executeTradeOnChain(
+    
+    // 1. Execute the transaction on Solana first
+    const isSuccess = await executeTradeOnChain(
       tradeMode,
       tradeAmount,
       mint,
@@ -346,6 +348,27 @@ useEffect(() => {
       currentToken?.isGraduated,
       currentToken?.solInCurve || 0
     );
+
+    // 2. If Solana trade succeeds, save the receipt to Supabase!
+    if (isSuccess) {
+      const { error } = await supabase.from('trades').insert([{
+        token_mint: mint,
+        // Ensure this matches how your wallet state is defined in this file (e.g., wallet.publicKey or just publicKey)
+        wallet: wallet?.publicKey?.toString(), 
+        // If Buy: record SOL spent. If Sell: record Tokens sold.
+        sol_amount: tradeMode === 'buy' ? parseFloat(tradeAmount) : 0,
+        token_amount: tradeMode === 'sell' ? parseFloat(tradeAmount) : 0, 
+        type: tradeMode
+      }]);
+
+      if (error) {
+        console.error("❌ Failed to save trade to DB!", error);
+      } else {
+        console.log("✅ Trade saved successfully to Holders List!");
+      }
+    }
+
+    return isSuccess;
   };
 
   const handleTabClick = (tab) => {
