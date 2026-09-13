@@ -120,16 +120,13 @@ export default function TradeWidget({
               <SolIcon className="w-4 h-4 shrink-0" />
             ) : (
               <div className="relative w-4 h-4 rounded-full overflow-hidden bg-zinc-800 shrink-0 flex items-center justify-center">
-                <span className="text-[9px] font-bold text-zinc-400 absolute uppercase">
-                  {(displayToken?.symbol || 'T').substring(0, 1)}
-                </span>
                 <img 
-                  src={displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.icon || displayToken?.info?.imageUrl || 'invalid_link'} 
+                  src={displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.icon || displayToken?.info?.imageUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol}`} 
                   alt={displayToken?.symbol} 
-                  className="absolute inset-0 w-full h-full object-cover z-10 text-transparent" 
+                  className="absolute inset-0 w-full h-full object-cover z-10 bg-zinc-800" 
                   onError={(e) => { 
                     e.currentTarget.onerror = null; 
-                    e.currentTarget.src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; 
+                    e.currentTarget.src = `https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol || 'TKN'}`; 
                   }}
                 />
               </div>
