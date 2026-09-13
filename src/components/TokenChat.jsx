@@ -371,9 +371,9 @@ const DexDollarIcon = ({ className, strokeWidth }) => (
     return { price: initialBasePrice, mcap: initialMcap, progress: displayToken.progress, solInCurve: (displayToken.progress / 100) * 85 };
   });
 
-  useEffect(() => {
-    localStorage.setItem(localCacheKey, JSON.stringify({ curveState, userBalanceSol, userTokenBalance }));
-  }, [curveState, userBalanceSol, userTokenBalance, localCacheKey]);
+ useEffect(() => {
+    localStorage.setItem(localCacheKey, JSON.stringify({ curveState, userSolBalance, userTokenBalance }));
+  }, [curveState, userSolBalance, userTokenBalance, localCacheKey]);
 
   const userPnlPercent = token?.change || '0.0%';
   const isPnlPositive = !userPnlPercent.includes('-');
