@@ -1,5 +1,13 @@
 import React from 'react';
-import { SolIcon } from './TokenHome'; // Or adjust the path if SolIcon is in a separate shared file
+
+// Clean internal SolIcon component
+function SolIcon({ className = "w-3 h-3 text-white" }) {
+  return (
+    <svg className={className} viewBox="0 0 128 128" fill="currentColor">
+      <path d="M23.5 96.5h81c2.8 0 5 2.2 5 5s-2.2 5-5 5h-81c-2.8 0-5-2.2-5-5s2.2-5 5-5zm0-41h81c2.8 0 5 2.2 5 5s-2.2 5-5 5h-81c-2.8 0-5-2.2-5-5s2.2-5 5-5zm81-41h-81c-2.8 0-5-2.2-5-5s2.2-5 5-5h81c2.8 0 5 2.2 5 5s-2.2 5-5 5z" />
+    </svg>
+  );
+}
 
 export default function TradeWidget({
   displayToken,
