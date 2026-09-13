@@ -54,33 +54,52 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [isGifLoading, setIsGifLoading] = useState(false);
 
   const [topHolders, setTopHolders] = useState([]);
-  const { connection } = useConnection(); // Make sure this is imported!
+  const { connection } = useConnection();
 
   useEffect(() => {
     const fetchRealHolders = async () => {
-      // Ensure we have a token mint before fetching
-      if (!token || (!token.mint_address && !token.address)) return; 
-      
+      // 1. Resolve the mint address across all possible naming conventions
+      const rawAddress = 
+        token?.mintAddress || 
+        token?.mint_address || 
+        token?.address || 
+        token?.mint;
+
+      if (!rawAddress || !connection) {
+        console.warn("⚠️ Holders fetch skipped: No valid mint address found on token object", token);
+        return;
+      }
+
       try {
-        const rawAddress = token.mint_address || token.address;
+        console.log("🔍 Fetching live Solana holders for mint:", rawAddress);
         const mintPubkey = new PublicKey(rawAddress);
-        
-        // Fetch the largest accounts directly from Solana
+
+        // 2. Fetch the largest token accounts from the RPC
         const largestAccounts = await connection.getTokenLargestAccounts(mintPubkey);
-        
-        // Format the top 10 accounts for your UI
-        const formattedHolders = largestAccounts.value.slice(0, 10).map((acc, index) => ({
-          id: acc.address.toString(),
-          name: `${acc.address.toString().slice(0, 4)}...${acc.address.toString().slice(-4)}`,
-          address: acc.address.toString(),
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${acc.address.toString()}`,
-          holding: (Number(acc.amount) / 1e6).toLocaleString(), // Adjust the 1e6 based on your token's decimals
-          value: index === 0 ? "Top Buyer" : "Holder"
-        }));
+        console.log(" Solana RPC largest accounts response:", largestAccounts.value);
+
+        if (!largestAccounts.value || largestAccounts.value.length === 0) {
+          console.warn("No token accounts found for this mint yet.");
+          setTopHolders([]);
+          return;
+        }
+
+        // 3. Format accounts for your UI
+        const formattedHolders = largestAccounts.value.slice(0, 10).map((acc, index) => {
+          const pubkeyStr = acc.address.toString();
+          return {
+            id: pubkeyStr,
+            name: `${pubkeyStr.slice(0, 4)}...${pubkeyStr.slice(-4)}`,
+            address: pubkeyStr,
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${pubkeyStr}`,
+            holding: (Number(acc.amount) / 1e6).toLocaleString(), // Adjust divisor to match your token decimals
+            value: index === 0 ? "Top Buyer" : "Holder"
+          };
+        });
 
         setTopHolders(formattedHolders);
       } catch (err) {
-        console.error("Failed to fetch live token holders:", err);
+        console.error("❌ Solana RPC failed to fetch holders:", err);
       }
     };
 
