@@ -129,35 +129,50 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
 
     // 🟢 1. FETCH EXACT NET HOLDERS
     const fetchTopTraders = async () => {
-      const { data } = await supabase.from('trades').select('*').eq('token_mint', targetMint);
-      if (data && data.length > 0) {
-        const holdingsMap = {};
-        data.forEach(t => {
-  const amt = parseFloat(t.token_amount || t.amount || t.tokens || 0);
-  const w = t.wallet || t.wallet_address || t.user_address;
-  const isSell = t.type?.toLowerCase() === 'sell';
-  
-  if (w) holdingsMap[w] = (holdingsMap[w] || 0) + (isSell ? -amt : amt);
-});
-        
-        // Filter out empty bags and sort highest to lowest
-        const sortedWhales = Object.entries(holdingsMap)
-          .filter(w => w[1] > 0)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5);
-        
-        setTopHolders(sortedWhales.map((whale, idx) => ({
-          id: whale[0],
-          name: `${whale[0].slice(0, 4)}...${whale[0].slice(-4)}`,
-          address: whale[0],
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${whale[0]}`,
-          holding: Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(whale[1]),
-          value: idx === 0 ? 'Top Buyer' : 'Holder'
-        })));
-     } else {
-        setTopHolders([]);
-      }
-    };
+          console.log("🔍 1. Fetching trades for mint:", targetMint);
+          
+          const { data, error } = await supabase
+            .from('trades')
+            .select('*')
+            .eq('token_mint', targetMint);
+            
+          console.log("📊 2. Supabase DB Data:", data);
+
+          if (error) {
+            console.error("❌ Supabase Error:", error);
+          }
+
+          if (data && data.length > 0) {
+            const holdingsMap = {};
+            data.forEach(t => {
+              const amt = parseFloat(t.token_amount || t.amount || t.tokens || 0);
+              const w = t.wallet || t.wallet_address || t.user_address;
+              const isSell = t.type?.toLowerCase() === 'sell';
+              if (w) holdingsMap[w] = (holdingsMap[w] || 0) + (isSell ? -amt : amt);
+            });
+
+            const sortedWhales = Object.entries(holdingsMap)
+              .filter(w => w[1] > 0)
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 5);
+
+            if (sortedWhales.length > 0) {
+              setTopHolders(sortedWhales.map((whale, idx) => ({
+                id: whale[0],
+                name: `${whale[0].slice(0, 4)}...${whale[0].slice(-4)}`,
+                address: whale[0],
+                avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${whale[0]}`,
+                holding: Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(whale[1]),
+                value: idx === 0 ? 'Top Buyer' : 'Holder'
+              })));
+            } else {
+              setTopHolders([]);
+            }
+          } else {
+            console.warn("⚠️ 3. DB returned 0 trades! Wiping list.");
+            setTopHolders([]);
+          }
+        };
 
     // 🟢 2. FETCH LIVE PRICE
     const fetchLiveTicker = async () => {
