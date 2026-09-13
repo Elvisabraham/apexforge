@@ -57,49 +57,6 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
   const [topHolders, setTopHolders] = useState([]);
 
   useEffect(() => {
-    const fetchHolders = async () => {
-      // 🛡️ FAILSAFE DATA: This loads instantly if the blockchain fetch fails
-      const fallbackData = [
-        { id: '1', name: 'HLMX...vef7', address: 'HLMXo3qJ2V475Mwho6fR8FzBM8UjwRC2g6CnR', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=1', holding: '4.96M', value: 'Top Buyer' },
-        { id: '2', name: '43pU...q2HR', address: '43pUqvLugVZYEq2mC7buVQygKJBS6pKx75gsrEDzq2HR', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=2', holding: '3.29M', value: 'Whale' },
-        { id: '3', name: '8Xyz...9AbC', address: '8XyzAbCdEfGhIjKlMnOpQrStUvWxYz1234567890', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=3', holding: '1.15M', value: 'Holder' }
-      ];
-
-      const rawAddress = token?.mintAddress || token?.mint_address || token?.address || token?.mint;
-      
-      if (!rawAddress || !connection) {
-        setTopHolders(fallbackData);
-        return;
-      }
-
-      try {
-        const mintPubkey = new PublicKey(rawAddress);
-        const largest = await connection.getTokenLargestAccounts(mintPubkey);
-        
-        if (!largest.value || largest.value.length === 0) throw new Error("No live accounts found");
-
-        const formatted = largest.value.slice(0, 10).map((acc, i) => {
-          const pubStr = acc.address.toString();
-          return {
-            id: pubStr,
-            name: `${pubStr.slice(0, 4)}...${pubStr.slice(-4)}`,
-            address: pubStr,
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${pubStr}`,
-            holding: (Number(acc.amount) / 1e6).toLocaleString(),
-            value: i === 0 ? "Top Buyer" : "Holder"
-          };
-        });
-        setTopHolders(formatted);
-      } catch (err) {
-        // 🚀 FALLBACK TRIGGERED: Keeps your UI intact during devnet testing
-        setTopHolders(fallbackData);
-      }
-    };
-
-    fetchHolders();
-  }, [token, connection]);
-
-  useEffect(() => {
     if (!isGifPickerOpen) return;
     
     const fetchGifs = async () => {
@@ -190,21 +147,16 @@ export default function TokenChat({ token, onBack, userBalance, userProfile, onO
           .slice(0, 5);
         
         setTopHolders(sortedWhales.map((whale, idx) => ({
-          id: idx,
+          id: whale[0],
           name: `${whale[0].slice(0, 4)}...${whale[0].slice(-4)}`,
           address: whale[0],
           avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${whale[0]}`,
           holding: Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(whale[1]),
-          value: 'Top Buyer'
+          value: idx === 0 ? 'Top Buyer' : 'Holder'
         })));
-      } else {
-    // 🛡️ FAILSAFE: Load fallback UI instead of wiping to []
-    setTopHolders([
-      { id: '1', name: 'HLMX...vef7', address: 'HLMXo3qJ2V475Mwho6fR8FzBM8UjwRC2g6CnR', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=1', holding: '4.96M', value: 'Top Buyer' },
-      { id: '2', name: '43pU...q2HR', address: '43pUqvLugVZYEq2mC7buVQygKJBS6pKx75gsrEDzq2HR', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=2', holding: '3.29M', value: 'Whale' },
-      { id: '3', name: '8Xyz...9AbC', address: '8XyzAbCdEfGhIjKlMnOpQrStUvWxYz1234567890', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=3', holding: '1.15M', value: 'Holder' }
-    ]);
-  }
+     } else {
+        setTopHolders([]);
+      }
     };
 
     // 🟢 2. FETCH LIVE PRICE
