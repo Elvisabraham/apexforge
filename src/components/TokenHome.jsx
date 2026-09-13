@@ -1346,7 +1346,7 @@ useEffect(() => {
                   <div className="w-5 h-5 flex items-center justify-center rounded-full bg-black/50 overflow-hidden shrink-0">
                     {/* Flat icon perfectly colored white */}
                     {tradeMode === 'buy' ? (
-  <SolIcon className="w-3 h-3 text-white" />
+  <SolIcon className="w-4 h-4 shrink-0"/>
 ) : (
   <img 
     src={currentToken?.image || currentToken?.imageUrl || currentToken?.imagePreview || currentToken?.logoURI || currentToken?.image_uri || currentToken?.icon || currentToken?.info?.imageUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${currentToken?.symbol}`} 
