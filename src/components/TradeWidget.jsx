@@ -112,9 +112,9 @@ export default function TradeWidget({
               <div className="w-4 h-4 rounded-full bg-black flex items-center justify-center shrink-0">
                 <SolIcon className="w-2.5 h-2.5 text-white" />
               </div>
-            ) : (displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri || displayToken?.icon) ? (
+            ) : (displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri || displayToken?.icon || displayToken?.info?.imageUrl) ? (
               <img 
-                src={displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri || displayToken?.icon} 
+                src={displayToken?.image || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.logoURI || displayToken?.image_uri || displayToken?.icon || displayToken?.info?.imageUrl} 
                 alt={displayToken?.symbol} 
                 className="w-4 h-4 rounded-full object-cover shrink-0" 
               />
