@@ -316,17 +316,15 @@ useEffect(() => {
 
   const handleMaxClick = () => {
     if (tradeMode === 'buy') {
-      const maxSol = Math.max(0, (userSolBalance || 0) - 0.005).toFixed(4);
-      setTradeAmount(maxSol.toString());
+      setTradeAmount(Math.max(0, (userSolBalance || 0) - 0.005).toString());
     } else {
       setTradeAmount(userTokenBalance ? userTokenBalance.toString() : "0");
     }
   };
 
-  const handleHalfClick = () => {
+ const handleHalfClick = () => {
     if (tradeMode === 'buy') {
-      const halfSol = Math.max(0, ((userSolBalance || 0) / 2)).toFixed(4);
-      setTradeAmount(halfSol);
+      setTradeAmount(Math.max(0, ((userSolBalance || 0) / 2)).toFixed(4));
     } else {
       setTradeAmount(Math.floor((userTokenBalance || 0) / 2).toString());
     }
@@ -1309,8 +1307,22 @@ useEffect(() => {
                 <input 
                   type="text" 
                   placeholder="0.0" 
-                  value={tradeAmount} 
-                  onChange={(e) => setTradeAmount(e.target.value.replace(/[^0-9.]/g, ''))} 
+                 value={
+    tradeAmount
+      ? (() => {
+          const cleanString = tradeAmount.toString().replace(/,/g, '');
+          const parts = cleanString.split('.');
+          parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          return parts.join('.');
+        })()
+      : ''
+  }
+  onChange={(e) => {
+    const rawVal = e.target.value.replace(/,/g, '');
+    if (rawVal === '' || /^\d*\.?\d*$/.test(rawVal)) {
+      setTradeAmount(rawVal);
+    }
+  }}
                   className="w-full bg-transparent outline-none text-2xl font-black text-white placeholder-zinc-700 font-sans normal-nums" 
                 />
                 <div className="flex items-center gap-2 pl-4 border-l border-white/10 shrink-0">
@@ -1324,25 +1336,48 @@ useEffect(() => {
 
               {/* THE 6-BUTTON PRESET GRID */}
               <div className="grid grid-cols-3 gap-2 mt-3">
-                {[0.1, 0.25, 0.5, 1, 5].map((amt) => (
-                  <button
-                    key={amt}
-                    type="button"
-                    onClick={() => setTradeAmount(amt.toString())}
-                    className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 hover:border-white/20 py-2.5 rounded-lg text-[11px] font-black text-zinc-300 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm"
-                  >
-                    {amt} 
-                    {/* Changed from green to clean solid grey */}
-                    <SolIcon className="w-2.5 h-2.5 text-zinc-400" />
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={handleMaxClick}
-                  className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 hover:border-white/20 py-2.5 rounded-lg text-[11px] font-black text-zinc-300 transition-colors cursor-pointer shadow-sm"
-                >
-                  Max
-                </button>
+                {tradeMode === 'buy' ? (
+                  <>
+                    {[0.1, 0.25, 0.5, 1, 5].map((amt) => (
+                      <button
+                        key={amt}
+                        type="button"
+                        onClick={() => setTradeAmount(amt.toString())}
+                        className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 hover:border-white/20 py-2.5 rounded-lg text-[11px] font-black text-zinc-300 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                      >
+                        {amt} 
+                        {/* Changed from green to clean solid grey */}
+                        <SolIcon className="w-2.5 h-2.5 text-zinc-400" />
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={handleMaxClick}
+                      className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 hover:border-white/20 py-2.5 rounded-lg text-[11px] font-black text-zinc-300 transition-colors cursor-pointer shadow-sm"
+                    >
+                      Max
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {[10, 25, 50, 60, 75, 100].map((pct) => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => {
+                          if (pct === 100) {
+                            handleMaxClick();
+                          } else {
+                            setTradeAmount(Math.floor((userTokenBalance || 0) * (pct / 100)).toString());
+                          }
+                        }}
+                        className="bg-[#1a1b22] border border-white/5 hover:bg-white/10 hover:border-white/20 py-2.5 rounded-lg text-[11px] font-black text-zinc-300 transition-colors cursor-pointer shadow-sm"
+                      >
+                        {pct}%
+                      </button>
+                    ))}
+                  </>
+                )}
               </div>
             </div>
 
@@ -1352,12 +1387,12 @@ useEffect(() => {
                 Wallet Balance
               </span>
               <span className="text-[11px] font-black text-white flex items-center gap-1">
-                {tradeMode === 'buy' ? (
-                  /* Changed to text-white to completely remove the green */
-                  <><SolIcon className="w-3 h-3 text-white" /> {(userSolBalance || 0).toFixed(4)}</>
-                ) : (
-                  `0 ${currentToken.symbol}`
-                )}
+               {tradeMode === 'buy' ? (
+            /* Changed to text-white to completely remove the green */
+            <><SolIcon className="w-3 h-3 text-white" /> {(userSolBalance || 0).toFixed(4)}</>
+          ) : (
+            `${userTokenBalance > 0 ? (userTokenBalance / 1000000).toFixed(2) + 'M' : '0'} ${currentToken?.symbol || ''}`
+          )}
               </span>
             </div>
 
