@@ -962,15 +962,11 @@ console.log("Chat Gate is receiving:", userBalance);
 
             <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-3">
-            <img 
-              src={displayToken?.image_url || displayToken?.imagePreview || displayToken?.image || displayToken?.imageUrl || displayToken?.logoURI || displayToken?.image_uri || displayToken?.icon || displayToken?.info?.imageUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol}`} 
-              alt={displayToken?.symbol} 
-              className="w-8 h-8 rounded-full object-cover bg-zinc-800 shrink-0 border border-white/10" 
-              onError={(e) => { 
-                e.currentTarget.onerror = null; 
-                e.currentTarget.src = `https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol || 'TKN'}`; 
-              }}
-            />
+           <img 
+  src={displayToken?.image_url || displayToken?.imagePreview || displayToken?.image || displayToken?.imageUrl || displayToken?.logoURI || displayToken?.image_uri || displayToken?.icon || displayToken?.info?.imageUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${displayToken?.symbol}`} 
+  alt={displayToken?.symbol} 
+  className="w-8 h-8 rounded-full object-cover bg-zinc-800 shrink-0 border border-white/10" 
+/>
             <div className="flex flex-col">
               <h3 className="text-lg font-black text-white uppercase tracking-widest flex items-center gap-2">
                 Trade {displayToken?.symbol}
