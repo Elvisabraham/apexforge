@@ -864,6 +864,9 @@ useEffect(() => {
   token={currentToken}
   onBack={() => setIsMobileChatOpen(false)}
   userBalance={userTokenBalance} 
+onOpenProfile={(walletAddress) => {
+    console.log("Opening profile for:", walletAddress);
+  }} 
 />
             </div>
           </div>
@@ -1214,6 +1217,9 @@ useEffect(() => {
   token={currentToken}
   onBack={() => setIsMobileChatOpen(false)}
   userBalance={userTokenBalance} 
+onOpenProfile={(walletAddress) => {
+    console.log("Opening profile for:", walletAddress);
+  }} 
 />
                 )}
               </div>
