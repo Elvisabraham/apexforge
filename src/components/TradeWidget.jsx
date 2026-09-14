@@ -119,18 +119,21 @@ export default function TradeWidget({
             {tradeMode === 'buy' ? (
               <SolIcon className="w-4 h-4 shrink-0" />
             ) : (
-            <div className="relative w-4 h-4 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 overflow-hidden">
-  <span className="absolute text-[9px] font-bold text-zinc-400 uppercase">
-    {(displayToken?.symbol || 'T').charAt(0)}
-  </span>
-  <img 
-    src={displayToken?.image_url || displayToken?.imagePreview || displayToken?.image || displayToken?.imageUrl || displayToken?.logoURI || ''} 
-    alt={displayToken?.symbol} 
-    className="absolute inset-0 w-full h-full object-cover z-10" 
-    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-  />
+            <div className="w-4 h-4 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 overflow-hidden">
+  {(displayToken?.image_url || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.image) ? (
+    <img 
+      src={displayToken?.image_url || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.image} 
+      alt={displayToken?.symbol} 
+      className="w-full h-full object-cover" 
+    />
+  ) : (
+    <span className="text-[9px] font-bold text-zinc-400 uppercase">
+      {displayToken?.icon || displayToken?.symbol?.charAt(0) || 'T'}
+    </span>
+  )}
 </div>
-            )}
+
+   )}
             <span className="text-xs font-bold text-white uppercase">
               {tradeMode === 'buy' ? 'SOL' : displayToken?.symbol || 'TKN'}
             </span>
