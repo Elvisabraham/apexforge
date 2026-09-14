@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Globe, MessageSquare, Copy, Check } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; // FIX 1: Import React Router for seamless navigation
 import { supabase } from '../supabaseClient'; 
 
 const XIcon = ({ className = "w-3 h-3" }) => (
@@ -23,10 +22,9 @@ const DexDollarIcon = ({ className = "w-3 h-3", strokeWidth = 3 }) => (
 );
 
 export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) {
-  const navigate = useNavigate(); // Hook into React Router
   const [copied, setCopied] = useState(false);
   const [chatCount, setChatCount] = useState(0);
-  const [isFollowing, setIsFollowing] = useState(false); // FIX 2: Follow State
+  const [isFollowing, setIsFollowing] = useState(false);
 
   const mintAddress = currentToken?.mint_address || currentToken?.mintAddress || currentToken?.address || '';
 
@@ -78,19 +76,21 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
     ? `${rawCreatorAddress.slice(0, 4)}...${rawCreatorAddress.slice(-4)}` 
     : (rawCreatorAddress || 'Anonymous Dev');
 
-  // Navigate to Dev Profile without reloading the page
   const handleDevClick = (e) => {
-    e.stopPropagation(); // Prevents bubbling up to parent tab containers
+    e.stopPropagation(); 
     if (!rawCreatorAddress) return;
+    
+    // Use the prop passed from the parent if it exists to avoid hard reloading
     if (typeof onViewProfile === 'function') {
       onViewProfile(rawCreatorAddress);
     } else {
-      navigate(`/profile/${rawCreatorAddress}`); // Smooth SPA transition
+      // Fallback if no prop is passed
+      window.location.href = `/profile/${rawCreatorAddress}`;
     }
   };
 
   const handleCopy = (e) => {
-    e.stopPropagation(); // Strictly prevents the profile route from triggering
+    e.stopPropagation(); 
     if (!rawCreatorAddress) return;
     navigator.clipboard.writeText(rawCreatorAddress);
     setCopied(true);
@@ -98,9 +98,8 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
   };
 
   const handleFollow = (e) => {
-    e.stopPropagation(); // Keeps button click isolated
+    e.stopPropagation(); 
     setIsFollowing(!isFollowing);
-    // Note: Future backend logic to insert to Supabase 'followers' table goes here
   };
 
   const displayMcap = currentToken?.mcap ? currentToken.mcap.toString().replace('$', '') : '0.00';
