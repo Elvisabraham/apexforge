@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient'; 
+import { useWallet } from '@solana/wallet-adapter-react'; // Adjust if your app imports this differently
 
 export default function Profile() {
-  const [isOwnProfile, setIsOwnProfile] = useState(true); 
+  // 1. Wallet & Core Profile State
+  const { publicKey } = useWallet();
+  const [developerAddress, setDeveloperAddress] = useState('');
+  const [profileData, setProfileData] = useState(null);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
+
+  // 2. Existing UI State Variables
   const [activeTab, setActiveTab] = useState('callouts'); 
   const [quickSolAmount, setQuickSolAmount] = useState('0.5');
   const [slippage, setSlippage] = useState('1.0');
@@ -13,23 +21,55 @@ export default function Profile() {
   const [replyInputOpen, setReplyInputOpen] = useState({});
   const [replyText, setReplyText] = useState({});
 
-  const [developerAddress, setDeveloperAddress] = useState('');
-
+  // 3. Extract URL Address & Check Ownership
   useEffect(() => {
-    // Break the URL path into pieces (e.g., /profile/43pUq...)
     const pathParts = window.location.pathname.split('/');
-    
-    // pathParts array becomes: ['', 'profile', '43pUq...']
     if (pathParts[1] === 'profile' && pathParts[2]) {
       const extractedAddress = pathParts[2];
       setDeveloperAddress(extractedAddress);
       
-      // Check your console to verify it grabbed the right one!
       console.log("Viewing Profile For:", extractedAddress);
-    }
-  }, []);
 
-  const displayUsername = "@ElvisAI";
+      // Compare URL address to the connected Phantom wallet
+      if (publicKey && publicKey.toString() === extractedAddress) {
+        setIsOwnProfile(true);
+      } else {
+        setIsOwnProfile(false);
+      }
+    }
+  }, [publicKey]);
+
+  // 4. Fetch the Developer's Data from Supabase
+  useEffect(() => {
+    if (!developerAddress) return;
+
+    const fetchProfile = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('users') // Change 'users' to your actual table name if different
+          .select('*')
+          .eq('wallet_address', developerAddress) // Change 'wallet_address' to your actual column name
+          .single();
+
+        if (data && !error) {
+          setProfileData(data);
+        }
+      } catch (err) {
+        console.warn("Could not fetch profile:", err);
+      }
+    };
+
+    fetchProfile();
+  }, [developerAddress]);
+
+  // 5. Dynamic Display Variables (Replacing the hardcoded strings)
+  const displayUsername = profileData?.username 
+    ? `@${profileData.username}` 
+    : (developerAddress ? `${developerAddress.slice(0, 4)}...${developerAddress.slice(-4)}` : "@UnknownDev");
+
+  const displayBio = profileData?.bio || "Solana Trench Runner ⚡ Scalping early Apex bonding curve launches. 0x Execution.";
+
+  // ... (Your existing const [callouts, setCallouts] array stays right below this!)
 
   const [callouts, setCallouts] = useState([
     {
