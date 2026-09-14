@@ -26,7 +26,7 @@ const DexDollarIcon = ({ className, strokeWidth }) => (
     
   const myAvatar = userProfile?.avatar || (publicKey ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${publicKey.toBase58()}` : null);
 
-const [localTokenBalance, setLocalTokenBalance] = useState(userTokenBalance || userBalance || 0);
+const [localTokenBalance, setLocalTokenBalance] = useState(0);
 
   // 🚀 STEP 3: ALL STATE VARIABLES
   const { executeTradeOnChain, isProcessing } = useTrade();
@@ -814,7 +814,7 @@ console.log("Chat Gate is receiving:", userBalance);
         )}
 
           {/* 🔒 TOKEN GATE CHECK */}
-        {(parseFloat(localTokenBalance) > 0 || parseFloat(String(userBalance).replace(/[^0-9.]/g, '')) > 0) ? (
+        {parseFloat(localTokenBalance) > 0 ? (
           <form onSubmit={handleSendMessage} className="flex items-end gap-1.5 bg-black border border-white/10 focus-within:border-[#089981]/50 rounded-xl p-1 pr-1.5 transition-colors">
            
             {/* 🟢 THE CHAT FORM */}
