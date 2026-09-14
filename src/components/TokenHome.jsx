@@ -754,12 +754,12 @@ useEffect(() => {
             {mobileActivityTab === 'trades' && <TokenTrades currentToken={currentToken} />}
             {mobileActivityTab === 'callouts' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
             {mobileActivityTab === 'holders' && <TokenHolders top10Percentage={displayTop10} />}
-            {mobileActivityTab === 'about' && (
-              <TokenAbout 
-          currentToken={currentToken}
-          onOpenChat={() => setIsMobileChatOpen(true)}
-          onViewProfile={(devAddress) => window.location.href = `/profile/${devAddress}`}
-        />
+            {activeHubTab === 'about' && typeof TokenAbout !== 'undefined' && (
+  <TokenAbout 
+    currentToken={currentToken} 
+    onOpenChat={() => setIsMobileChatOpen(true)}
+    onViewProfile={(devAddress) => window.location.href = `/profile/${devAddress}`}
+  />
             )}
           </div>
         </div> {/* <--- RESTORED: THIS CLOSES THE MAIN PAGE CONTAINER FROM LINE 258 */}
