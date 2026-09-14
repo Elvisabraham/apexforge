@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function Profile() {
   const [isOwnProfile, setIsOwnProfile] = useState(true); 
@@ -12,6 +12,22 @@ export default function Profile() {
   const [toastMessage, setToastMessage] = useState(null);
   const [replyInputOpen, setReplyInputOpen] = useState({});
   const [replyText, setReplyText] = useState({});
+
+  const [developerAddress, setDeveloperAddress] = useState('');
+
+  useEffect(() => {
+    // Break the URL path into pieces (e.g., /profile/43pUq...)
+    const pathParts = window.location.pathname.split('/');
+    
+    // pathParts array becomes: ['', 'profile', '43pUq...']
+    if (pathParts[1] === 'profile' && pathParts[2]) {
+      const extractedAddress = pathParts[2];
+      setDeveloperAddress(extractedAddress);
+      
+      // Check your console to verify it grabbed the right one!
+      console.log("Viewing Profile For:", extractedAddress);
+    }
+  }, []);
 
   const displayUsername = "@ElvisAI";
 
