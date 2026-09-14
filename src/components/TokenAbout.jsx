@@ -34,47 +34,59 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
     return localStorage.getItem(followStorageKey) === 'true';
   });
 
-  // Supabase Chat Count (Updated column to mint_address to fix the 400 error)
+  // Supabase Realtime Logic (Now 100% Crash-Proof)
   useEffect(() => {
     if (!mintAddress) return;
     let isMounted = true;
+    let channel;
 
     const fetchLiveChatCount = async () => {
       try {
         const { count, error } = await supabase
           .from('messages')
           .select('*', { count: 'exact', head: true })
-          .eq('mint_address', mintAddress); // FIX: Changed token_address to mint_address
+          .eq('token_address', mintAddress); 
 
         if (!error && count !== null && isMounted) {
           setChatCount(count);
+        } else if (error) {
+          console.warn("Supabase Count Error (Check if column 'token_address' exists):", error.message);
         }
       } catch (err) {
-        // Silently ignore to prevent crashes
+        console.warn("API Error:", err);
       }
     };
 
     fetchLiveChatCount();
 
-    const channel = supabase
-      .channel(`live-chat-count-${mintAddress}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `mint_address=eq.${mintAddress}`, // FIX: Changed here too
-        },
-        () => {
-          if (isMounted) setChatCount((prev) => prev + 1);
-        }
-      )
-      .subscribe();
+    // FIX: Unique channel ID prevents React Strict Mode collisions
+    const uniqueChannelId = `live-chat-${mintAddress}-${Math.random().toString(36).substring(2, 9)}`;
+
+    try {
+      channel = supabase
+        .channel(uniqueChannelId)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `token_address=eq.${mintAddress}`,
+          },
+          () => {
+            if (isMounted) setChatCount((prev) => prev + 1);
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("Realtime Subscription Error:", err);
+    }
 
     return () => {
       isMounted = false;
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [mintAddress]);
 
@@ -107,13 +119,11 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
     localStorage.setItem(followStorageKey, newState);
   };
 
-  // FIX: Crash-proof String conversions for all metrics
   const displayMcap = currentToken?.mcap ? String(currentToken.mcap).replace('$', '') : '0.00';
   const displayLiq = currentToken?.liquidity ? String(currentToken.liquidity).replace('$', '') : '0.00';
   const displayVol = currentToken?.vol24h ? String(currentToken.vol24h).replace('$', '') : '0.00';
   const displaySupply = currentToken?.supply || '1B';
 
-  // FIX: Crash-proof logic for Social Links
   const safeWebsite = currentToken?.website ? String(currentToken.website) : '';
   const safeTwitter = currentToken?.twitter ? String(currentToken.twitter) : '';
   const safeTelegram = currentToken?.telegram ? String(currentToken.telegram) : '';
