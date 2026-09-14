@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Globe, MessageSquare, Copy, Check } from 'lucide-react';
-import { supabase } from '../supabaseClient'; // Adjust path if your supabase client file is located elsewhere
+import { useNavigate } from 'react-router-dom'; // FIX 1: Import React Router for seamless navigation
+import { supabase } from '../supabaseClient'; 
 
 const XIcon = ({ className = "w-3 h-3" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -22,12 +23,13 @@ const DexDollarIcon = ({ className = "w-3 h-3", strokeWidth = 3 }) => (
 );
 
 export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) {
+  const navigate = useNavigate(); // Hook into React Router
   const [copied, setCopied] = useState(false);
   const [chatCount, setChatCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false); // FIX 2: Follow State
 
   const mintAddress = currentToken?.mint_address || currentToken?.mintAddress || currentToken?.address || '';
 
-  // Real message counter from Supabase
   useEffect(() => {
     if (!mintAddress) return;
     let isMounted = true;
@@ -71,37 +73,41 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
     };
   }, [mintAddress]);
 
-  // Creator address
   const rawCreatorAddress = currentToken?.creator_address || currentToken?.creatorAddress || currentToken?.dev_address || '';
   const formattedCreatorAddress = rawCreatorAddress.length > 10 
     ? `${rawCreatorAddress.slice(0, 4)}...${rawCreatorAddress.slice(-4)}` 
     : (rawCreatorAddress || 'Anonymous Dev');
 
-  // Navigate to Dev Profile
-  const handleDevClick = () => {
+  // Navigate to Dev Profile without reloading the page
+  const handleDevClick = (e) => {
+    e.stopPropagation(); // Prevents bubbling up to parent tab containers
     if (!rawCreatorAddress) return;
     if (typeof onViewProfile === 'function') {
       onViewProfile(rawCreatorAddress);
     } else {
-      window.location.href = `/profile/${rawCreatorAddress}`;
+      navigate(`/profile/${rawCreatorAddress}`); // Smooth SPA transition
     }
   };
 
-  // Real Token Metrics
-  const displayMcap = currentToken?.mcap ? currentToken.mcap.toString().replace('$', '') : '0.00';
-  const displayLiq = currentToken?.liquidity ? currentToken.liquidity.toString().replace('$', '') : '0.00';
-  const displayVol = currentToken?.vol24h ? currentToken.vol24h.toString().replace('$', '') : '0.00';
-  const displaySupply = currentToken?.supply || '1B';
-
   const handleCopy = (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Strictly prevents the profile route from triggering
     if (!rawCreatorAddress) return;
     navigator.clipboard.writeText(rawCreatorAddress);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
 
-  // Check if any valid social link exists
+  const handleFollow = (e) => {
+    e.stopPropagation(); // Keeps button click isolated
+    setIsFollowing(!isFollowing);
+    // Note: Future backend logic to insert to Supabase 'followers' table goes here
+  };
+
+  const displayMcap = currentToken?.mcap ? currentToken.mcap.toString().replace('$', '') : '0.00';
+  const displayLiq = currentToken?.liquidity ? currentToken.liquidity.toString().replace('$', '') : '0.00';
+  const displayVol = currentToken?.vol24h ? currentToken.vol24h.toString().replace('$', '') : '0.00';
+  const displaySupply = currentToken?.supply || '1B';
+
   const hasSocials = Boolean(
     (currentToken?.website && currentToken.website !== '#') ||
     (currentToken?.twitter && currentToken.twitter !== '#') ||
@@ -175,7 +181,6 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
         <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Coin Creator</div>
         <div className="flex items-center justify-between bg-[#121318] p-3 rounded-xl border border-white/5 shadow-sm">
           
-          {/* CLICKABLE LEFT SIDE: Avatar + Name trigger the profile route */}
           <div 
             onClick={handleDevClick} 
             className="flex items-center gap-3 min-w-0 cursor-pointer group"
@@ -189,7 +194,6 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
                   {formattedCreatorAddress}
                 </span>
                 
-                {/* COPY BUTTON: Safely stops the click from triggering the profile redirect */}
                 <button 
                   onClick={handleCopy}
                   type="button"
@@ -204,9 +208,16 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
             </div>
           </div>
           
-          {/* RESTORED FOLLOW BUTTON */}
-          <button className="bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors shrink-0 ml-2 active:scale-95">
-            Follow Dev
+          {/* DYNAMIC FOLLOW BUTTON */}
+          <button 
+            onClick={handleFollow}
+            className={`text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors shrink-0 ml-2 active:scale-95 ${
+              isFollowing 
+                ? 'bg-[#00f2a1]/10 text-[#00f2a1] border border-[#00f2a1]/20' 
+                : 'bg-white/10 hover:bg-white/20 text-white'
+            }`}
+          >
+            {isFollowing ? 'Following' : 'Follow Dev'}
           </button>
         </div>
       </div>
@@ -219,7 +230,7 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
         </p>
       </div>
 
-      {/* 5. SOCIAL LINKS (Completely hidden unless a valid URL is provided) */}
+      {/* 5. SOCIAL LINKS */}
       {hasSocials && (
         <div className="flex flex-wrap gap-2 pt-1 lg:hidden">
           {currentToken?.website && currentToken.website !== '#' && (
