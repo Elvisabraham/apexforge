@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Globe, MessageSquare, Copy, Check } from 'lucide-react';
-import { supabase } from '../supabaseClient'; // Adjust path if your supabase client file is located elsewhere (e.g., ../lib/supabase)
+import { supabase } from '../supabaseClient'; // Verify this matches your supabase path
 
 const XIcon = ({ className = "w-3 h-3" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -21,22 +21,19 @@ const DexDollarIcon = ({ className = "w-3 h-3", strokeWidth = 3 }) => (
   </svg>
 );
 
-export default function TokenAbout({ currentToken, onOpenChat }) {
+export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) {
   const [copied, setCopied] = useState(false);
   const [chatCount, setChatCount] = useState(0);
 
-  // Identify token mint address
   const mintAddress = currentToken?.mint_address || currentToken?.mintAddress || currentToken?.address || '';
 
-  // Query live chat message counts directly from Supabase
+  // Real message counter from Supabase
   useEffect(() => {
     if (!mintAddress) return;
-
     let isMounted = true;
 
     const fetchLiveChatCount = async () => {
       try {
-        // Query exact row count without downloading message bodies
         const { count, error } = await supabase
           .from('messages')
           .select('*', { count: 'exact', head: true })
@@ -52,7 +49,6 @@ export default function TokenAbout({ currentToken, onOpenChat }) {
 
     fetchLiveChatCount();
 
-    // Realtime listener: bump counter when new chat messages arrive
     const channel = supabase
       .channel(`live-chat-count-${mintAddress}`)
       .on(
@@ -75,13 +71,24 @@ export default function TokenAbout({ currentToken, onOpenChat }) {
     };
   }, [mintAddress]);
 
-  // Real Creator Address handling
+  // Creator address
   const rawCreatorAddress = currentToken?.creator_address || currentToken?.creatorAddress || currentToken?.dev_address || '';
   const formattedCreatorAddress = rawCreatorAddress.length > 10 
     ? `${rawCreatorAddress.slice(0, 4)}...${rawCreatorAddress.slice(-4)}` 
     : (rawCreatorAddress || 'Anonymous Dev');
 
-  // Real Token Metrics (Defaults cleanly to 0 instead of mock formulas)
+  // Navigate to Dev Profile
+  const handleDevClick = () => {
+    if (!rawCreatorAddress) return;
+    if (typeof onViewProfile === 'function') {
+      onViewProfile(rawCreatorAddress);
+    } else {
+      // Fallback for route-based setups
+      window.location.href = `/profile/${rawCreatorAddress}`;
+    }
+  };
+
+  // Real Token Metrics
   const displayMcap = currentToken?.mcap ? currentToken.mcap.toString().replace('$', '') : '0.00';
   const displayLiq = currentToken?.liquidity ? currentToken.liquidity.toString().replace('$', '') : '0.00';
   const displayVol = currentToken?.vol24h ? currentToken.vol24h.toString().replace('$', '') : '0.00';
@@ -95,10 +102,17 @@ export default function TokenAbout({ currentToken, onOpenChat }) {
     setTimeout(() => setCopied(false), 1500);
   };
 
+  // Check if any valid social link exists
+  const hasSocials = Boolean(
+    (currentToken?.website && currentToken.website !== '#') ||
+    (currentToken?.twitter && currentToken.twitter !== '#') ||
+    (currentToken?.telegram && currentToken.telegram !== '#')
+  );
+
   return (
     <div className="space-y-4 text-left pb-24">
       
-      {/* 1. COMPACT MOBILE METRICS GRID */}
+      {/* 1. METRICS GRID */}
       <div className="block lg:hidden">
         <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Token Metrics</div>
         <div className="grid grid-cols-2 gap-2">
@@ -130,7 +144,7 @@ export default function TokenAbout({ currentToken, onOpenChat }) {
         </div>
       </div>
 
-      {/* 2. PROMINENT CHAT BANNER (Now 100% Real & Live) */}
+      {/* 2. CHAT BANNER */}
       <div className="block lg:hidden">
         <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Community</div>
         <button 
@@ -157,36 +171,40 @@ export default function TokenAbout({ currentToken, onOpenChat }) {
         </button>
       </div>
 
-      {/* 3. COIN CREATOR CARD */}
+      {/* 3. COIN CREATOR CARD (Linked to Profile) */}
       <div>
         <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Coin Creator</div>
         <div className="flex items-center justify-between bg-[#121318] p-3 rounded-xl border border-white/5 shadow-sm">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 bg-[#1c1d24] rounded-full flex items-center justify-center text-lg border border-white/10 shrink-0">
+          <div 
+            onClick={handleDevClick} 
+            className="flex items-center gap-3 min-w-0 cursor-pointer group"
+          >
+            <div className="w-10 h-10 bg-[#1c1d24] group-hover:border-[#00f2a1]/40 rounded-full flex items-center justify-center text-lg border border-white/10 shrink-0 transition-colors">
               👾
             </div>
             <div className="flex flex-col min-w-0">
-              <button 
-                onClick={handleCopy}
-                disabled={!rawCreatorAddress}
-                className="flex items-center gap-1.5 text-xs font-bold text-white hover:text-[#00f2a1] transition-colors group"
-                title="Click to copy full address"
-              >
-                <span className="tabular-nums tracking-tight">{formattedCreatorAddress}</span>
-                {rawCreatorAddress && (
-                  copied ? (
-                    <Check className="w-3 h-3 text-[#00f2a1]" />
-                  ) : (
-                    <Copy className="w-3 h-3 text-zinc-500 group-hover:text-white transition-colors" />
-                  )
-                )}
-              </button>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-white group-hover:text-[#00f2a1] transition-colors tabular-nums tracking-tight">
+                  {formattedCreatorAddress}
+                </span>
+                <button 
+                  onClick={handleCopy}
+                  type="button"
+                  title="Click to copy full address"
+                  className="p-1 hover:text-white text-zinc-500 transition-colors"
+                >
+                  {copied ? <Check className="w-3 h-3 text-[#00f2a1]" /> : <Copy className="w-3 h-3" />}
+                </button>
+              </div>
               <span className="text-[10px] text-zinc-500 font-mono mt-0.5">Forged on Apex</span>
             </div>
           </div>
           
-          <button className="bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors shrink-0 ml-2 active:scale-95">
-            Follow Dev
+          <button 
+            onClick={handleDevClick}
+            className="bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors shrink-0 ml-2 active:scale-95 cursor-pointer"
+          >
+            View Profile
           </button>
         </div>
       </div>
@@ -194,41 +212,48 @@ export default function TokenAbout({ currentToken, onOpenChat }) {
       {/* 4. DESCRIPTION */}
       <div>
         <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Description</div>
-        <p className="text-xs text-zinc-300 leading-relaxed bg-[#121318] p-3.5 rounded-xl border border-white/5 shadow-sm">
+        <p className="text-xs text-zinc-300 leading-relaxed bg-[#121318] p-3.5 rounded-xl border border-white/5 shadow-sm break-words">
           {currentToken?.description || 'No description provided.'}
         </p>
       </div>
 
-      {/* 5. SOCIAL LINKS */}
-      <div className="flex flex-wrap gap-2 pt-1 lg:hidden">
-        <a 
-          href={currentToken?.website || '#'} 
-          target="_blank" 
-          rel="noreferrer" 
-          onClick={(e) => !currentToken?.website && e.preventDefault()} 
-          className={`bg-[#1c1d24] hover:bg-white/10 text-[11px] px-3 py-2 rounded-lg border border-white/5 font-mono flex items-center gap-1.5 transition-colors ${currentToken?.website ? 'text-zinc-300 cursor-pointer shadow-sm' : 'text-zinc-600 cursor-not-allowed opacity-50'}`}
-        >
-          <Globe className="w-3.5 h-3.5"/> Website
-        </a>
-        <a 
-          href={currentToken?.twitter ? `https://x.com/${currentToken.twitter.replace('@', '')}` : '#'} 
-          target="_blank" 
-          rel="noreferrer" 
-          onClick={(e) => !currentToken?.twitter && e.preventDefault()} 
-          className={`bg-[#1c1d24] hover:bg-white/10 text-[11px] px-3 py-2 rounded-lg border border-white/5 font-mono flex items-center gap-1.5 transition-colors ${currentToken?.twitter ? 'text-zinc-300 cursor-pointer shadow-sm' : 'text-zinc-600 cursor-not-allowed opacity-50'}`}
-        >
-          <XIcon className="w-3.5 h-3.5"/> Twitter
-        </a>
-        <a 
-          href={currentToken?.telegram ? (currentToken.telegram.startsWith('http') ? currentToken.telegram : `https://t.me/${currentToken.telegram.replace('@', '')}`) : '#'} 
-          target="_blank" 
-          rel="noreferrer" 
-          onClick={(e) => !currentToken?.telegram && e.preventDefault()} 
-          className={`bg-[#1c1d24] hover:bg-white/10 text-[11px] px-3 py-2 rounded-lg border border-white/5 font-mono flex items-center gap-1.5 transition-colors ${currentToken?.telegram ? 'text-zinc-300 cursor-pointer shadow-sm' : 'text-zinc-600 cursor-not-allowed opacity-50'}`}
-        >
-          <TelegramIcon className="w-3.5 h-3.5"/> Telegram
-        </a>
-      </div>
+      {/* 5. SOCIAL LINKS (Completely hidden unless a valid URL is provided) */}
+      {hasSocials && (
+        <div className="flex flex-wrap gap-2 pt-1 lg:hidden">
+          {currentToken?.website && currentToken.website !== '#' && (
+            <a 
+              href={currentToken.website.startsWith('http') ? currentToken.website : `https://${currentToken.website}`} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="bg-[#1c1d24] hover:bg-white/10 text-zinc-300 hover:text-white text-[11px] px-3 py-2 rounded-lg border border-white/5 font-mono flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+            >
+              <Globe className="w-3.5 h-3.5 text-[#00f2a1]"/> Website
+            </a>
+          )}
+
+          {currentToken?.twitter && currentToken.twitter !== '#' && (
+            <a 
+              href={currentToken.twitter.startsWith('http') ? currentToken.twitter : `https://x.com/${currentToken.twitter.replace('@', '')}`} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="bg-[#1c1d24] hover:bg-white/10 text-zinc-300 hover:text-white text-[11px] px-3 py-2 rounded-lg border border-white/5 font-mono flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+            >
+              <XIcon className="w-3.5 h-3.5 text-[#00f2a1]"/> Twitter
+            </a>
+          )}
+
+          {currentToken?.telegram && currentToken.telegram !== '#' && (
+            <a 
+              href={currentToken.telegram.startsWith('http') ? currentToken.telegram : `https://t.me/${currentToken.telegram.replace('@', '')}`} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="bg-[#1c1d24] hover:bg-white/10 text-zinc-300 hover:text-white text-[11px] px-3 py-2 rounded-lg border border-white/5 font-mono flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+            >
+              <TelegramIcon className="w-3.5 h-3.5 text-[#00f2a1]"/> Telegram
+            </a>
+          )}
+        </div>
+      )}
     </div>
   );
 }
