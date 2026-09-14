@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Globe, MessageSquare, Copy, Check } from 'lucide-react';
-import { supabase } from '../supabaseClient'; // Verify this matches your supabase path
+import { supabase } from '../supabaseClient'; // Adjust path if your supabase client file is located elsewhere
 
 const XIcon = ({ className = "w-3 h-3" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -83,7 +83,6 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
     if (typeof onViewProfile === 'function') {
       onViewProfile(rawCreatorAddress);
     } else {
-      // Fallback for route-based setups
       window.location.href = `/profile/${rawCreatorAddress}`;
     }
   };
@@ -171,10 +170,12 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
         </button>
       </div>
 
-      {/* 3. COIN CREATOR CARD (Linked to Profile) */}
+      {/* 3. COIN CREATOR CARD */}
       <div>
         <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Coin Creator</div>
         <div className="flex items-center justify-between bg-[#121318] p-3 rounded-xl border border-white/5 shadow-sm">
+          
+          {/* CLICKABLE LEFT SIDE: Avatar + Name trigger the profile route */}
           <div 
             onClick={handleDevClick} 
             className="flex items-center gap-3 min-w-0 cursor-pointer group"
@@ -187,24 +188,25 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
                 <span className="text-xs font-bold text-white group-hover:text-[#00f2a1] transition-colors tabular-nums tracking-tight">
                   {formattedCreatorAddress}
                 </span>
+                
+                {/* COPY BUTTON: Safely stops the click from triggering the profile redirect */}
                 <button 
                   onClick={handleCopy}
                   type="button"
+                  disabled={!rawCreatorAddress}
                   title="Click to copy full address"
                   className="p-1 hover:text-white text-zinc-500 transition-colors"
                 >
-                  {copied ? <Check className="w-3 h-3 text-[#00f2a1]" /> : <Copy className="w-3 h-3" />}
+                  {rawCreatorAddress && (copied ? <Check className="w-3 h-3 text-[#00f2a1]" /> : <Copy className="w-3 h-3" />)}
                 </button>
               </div>
-              <span className="text-[10px] text-zinc-500 font-mono mt-0.5">Forged on Apex</span>
+              <span className="text-[10px] text-zinc-500 font-mono mt-0.5 group-hover:text-zinc-400 transition-colors">Forged on Apex</span>
             </div>
           </div>
           
-          <button 
-            onClick={handleDevClick}
-            className="bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors shrink-0 ml-2 active:scale-95 cursor-pointer"
-          >
-            View Profile
+          {/* RESTORED FOLLOW BUTTON */}
+          <button className="bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors shrink-0 ml-2 active:scale-95">
+            Follow Dev
           </button>
         </div>
       </div>
