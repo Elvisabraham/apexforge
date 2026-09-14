@@ -28,12 +28,13 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
   const mintAddress = currentToken?.mint_address || currentToken?.mintAddress || currentToken?.address || '';
   const rawCreatorAddress = currentToken?.creator_address || currentToken?.creatorAddress || currentToken?.dev_address || '';
   
-  // FIX: Persistent Local Storage for Follow Button
+  // LocalStorage for Follow Memory
   const followStorageKey = `apex_following_${rawCreatorAddress}`;
   const [isFollowing, setIsFollowing] = useState(() => {
     return localStorage.getItem(followStorageKey) === 'true';
   });
 
+  // Supabase Chat Count (Updated column to mint_address to fix the 400 error)
   useEffect(() => {
     if (!mintAddress) return;
     let isMounted = true;
@@ -43,13 +44,13 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
         const { count, error } = await supabase
           .from('messages')
           .select('*', { count: 'exact', head: true })
-          .eq('token_address', mintAddress);
+          .eq('mint_address', mintAddress); // FIX: Changed token_address to mint_address
 
         if (!error && count !== null && isMounted) {
           setChatCount(count);
         }
       } catch (err) {
-        console.error('Failed to fetch chat metrics:', err);
+        // Silently ignore to prevent crashes
       }
     };
 
@@ -63,7 +64,7 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `token_address=eq.${mintAddress}`,
+          filter: `mint_address=eq.${mintAddress}`, // FIX: Changed here too
         },
         () => {
           if (isMounted) setChatCount((prev) => prev + 1);
@@ -81,11 +82,9 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
     ? `${rawCreatorAddress.slice(0, 4)}...${rawCreatorAddress.slice(-4)}` 
     : (rawCreatorAddress || 'Anonymous Dev');
 
-  // FIX: Safe Profile Click handler (No more Vercel 404s)
   const handleDevClick = (e) => {
     e.stopPropagation(); 
     if (!rawCreatorAddress) return;
-    
     if (typeof onViewProfile === 'function') {
       onViewProfile(rawCreatorAddress);
     } else {
@@ -101,7 +100,6 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
     setTimeout(() => setCopied(false), 1500);
   };
 
-  // FIX: Save state to browser memory on click
   const handleFollow = (e) => {
     e.stopPropagation(); 
     const newState = !isFollowing;
@@ -109,16 +107,21 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
     localStorage.setItem(followStorageKey, newState);
   };
 
-  const displayMcap = currentToken?.mcap ? currentToken.mcap.toString().replace('$', '') : '0.00';
-  const displayLiq = currentToken?.liquidity ? currentToken.liquidity.toString().replace('$', '') : '0.00';
-  const displayVol = currentToken?.vol24h ? currentToken.vol24h.toString().replace('$', '') : '0.00';
+  // FIX: Crash-proof String conversions for all metrics
+  const displayMcap = currentToken?.mcap ? String(currentToken.mcap).replace('$', '') : '0.00';
+  const displayLiq = currentToken?.liquidity ? String(currentToken.liquidity).replace('$', '') : '0.00';
+  const displayVol = currentToken?.vol24h ? String(currentToken.vol24h).replace('$', '') : '0.00';
   const displaySupply = currentToken?.supply || '1B';
 
-  const hasSocials = Boolean(
-    (currentToken?.website && currentToken.website !== '#') ||
-    (currentToken?.twitter && currentToken.twitter !== '#') ||
-    (currentToken?.telegram && currentToken.telegram !== '#')
-  );
+  // FIX: Crash-proof logic for Social Links
+  const safeWebsite = currentToken?.website ? String(currentToken.website) : '';
+  const safeTwitter = currentToken?.twitter ? String(currentToken.twitter) : '';
+  const safeTelegram = currentToken?.telegram ? String(currentToken.telegram) : '';
+
+  const hasWebsite = safeWebsite && safeWebsite !== '#';
+  const hasTwitter = safeTwitter && safeTwitter !== '#';
+  const hasTelegram = safeTelegram && safeTelegram !== '#';
+  const hasSocials = hasWebsite || hasTwitter || hasTelegram;
 
   return (
     <div className="space-y-4 text-left pb-24">
@@ -238,9 +241,9 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
       {/* 5. SOCIAL LINKS */}
       {hasSocials && (
         <div className="flex flex-wrap gap-2 pt-1 lg:hidden">
-          {currentToken?.website && currentToken.website !== '#' && (
+          {hasWebsite && (
             <a 
-              href={currentToken.website.startsWith('http') ? currentToken.website : `https://${currentToken.website}`} 
+              href={safeWebsite.startsWith('http') ? safeWebsite : `https://${safeWebsite}`} 
               target="_blank" 
               rel="noreferrer" 
               className="bg-[#1c1d24] hover:bg-white/10 text-zinc-300 hover:text-white text-[11px] px-3 py-2 rounded-lg border border-white/5 font-mono flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
@@ -249,9 +252,9 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
             </a>
           )}
 
-          {currentToken?.twitter && currentToken.twitter !== '#' && (
+          {hasTwitter && (
             <a 
-              href={currentToken.twitter.startsWith('http') ? currentToken.twitter : `https://x.com/${currentToken.twitter.replace('@', '')}`} 
+              href={safeTwitter.startsWith('http') ? safeTwitter : `https://x.com/${safeTwitter.replace('@', '')}`} 
               target="_blank" 
               rel="noreferrer" 
               className="bg-[#1c1d24] hover:bg-white/10 text-zinc-300 hover:text-white text-[11px] px-3 py-2 rounded-lg border border-white/5 font-mono flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
@@ -260,9 +263,9 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
             </a>
           )}
 
-          {currentToken?.telegram && currentToken.telegram !== '#' && (
+          {hasTelegram && (
             <a 
-              href={currentToken.telegram.startsWith('http') ? currentToken.telegram : `https://t.me/${currentToken.telegram.replace('@', '')}`} 
+              href={safeTelegram.startsWith('http') ? safeTelegram : `https://t.me/${safeTelegram.replace('@', '')}`} 
               target="_blank" 
               rel="noreferrer" 
               className="bg-[#1c1d24] hover:bg-white/10 text-zinc-300 hover:text-white text-[11px] px-3 py-2 rounded-lg border border-white/5 font-mono flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
