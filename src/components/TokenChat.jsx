@@ -813,9 +813,10 @@ console.log("Chat Gate is receiving:", userBalance);
           </div>
         )}
 
-           {/* 🔒 TOKEN GATE CHECK */}
-        {parseFloat(String(userBalance).replace(/[^0-9.]/g, '')) > 0 ? (
+          {/* 🔒 TOKEN GATE CHECK */}
+        {(parseFloat(localTokenBalance) > 0 || parseFloat(String(userBalance).replace(/[^0-9.]/g, '')) > 0) ? (
           <form onSubmit={handleSendMessage} className="flex items-end gap-1.5 bg-black border border-white/10 focus-within:border-[#089981]/50 rounded-xl p-1 pr-1.5 transition-colors">
+           
             {/* 🟢 THE CHAT FORM */}
             <div className="flex items-center shrink-0">
               <input
