@@ -756,9 +756,10 @@ useEffect(() => {
             {mobileActivityTab === 'holders' && <TokenHolders top10Percentage={displayTop10} />}
             {mobileActivityTab === 'about' && (
               <TokenAbout 
-                currentToken={currentToken} 
-                onOpenChat={() => setIsMobileChatOpen(true)} 
-              />
+          currentToken={currentToken}
+          onOpenChat={() => setIsMobileChatOpen(true)}
+          onViewProfile={(devAddress) => window.location.href = `/profile/${devAddress}`}
+        />
             )}
           </div>
         </div> {/* <--- RESTORED: THIS CLOSES THE MAIN PAGE CONTAINER FROM LINE 258 */}
@@ -1255,16 +1256,25 @@ useEffect(() => {
                 {activeHubTab === 'about' && typeof TokenAbout !== 'undefined' && <TokenAbout currentToken={currentToken} />}
                 
                 {/* NEW CHAT TAB RENDER */}
-                {activeHubTab === 'chat' && typeof TokenChat !== 'undefined' && (
-                <TokenChat
-  token={currentToken}
-  onBack={() => setIsMobileChatOpen(false)}
-  userBalance={userTokenBalance}
-  userSolBalance={userSolBalance}     // 👈 Add this
-  userTokenBalance={userTokenBalance} // 👈 Add this
-  onOpenProfile={(walletAddress) => {
-    console.log("Opening profile for:", walletAddress);
-  }}
+                {activeHubTab === 'about' && typeof TokenAbout !== 'undefined' && (
+      <TokenAbout 
+        currentToken={currentToken} 
+        onOpenChat={() => setIsMobileChatOpen(true)}
+        onViewProfile={(devAddress) => window.location.href = `/profile/${devAddress}`}
+      />
+    )}
+
+    {/* NEW CHAT TAB RENDER */}
+    {activeHubTab === 'chat' && typeof TokenChat !== 'undefined' && (
+      <TokenChat
+        token={currentToken}
+        onBack={() => setIsMobileChatOpen(false)}
+        userBalance={userTokenBalance}
+        userSolBalance={userSolBalance}     // 👈 Add this
+        userTokenBalance={userTokenBalance} // 👈 Add this
+        onOpenProfile={(walletAddress) => {
+          console.log("Opening profile for:", walletAddress);
+        }}
 />
                 )}
               </div>
