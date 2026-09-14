@@ -45,10 +45,11 @@ function AppContent() {
   const { connected, publicKey } = useWallet();
   const { activeStreamUrl, stopStream } = useStream();
 
-  const [activePage, setActivePage] = useState(() => {
+const [activePage, setActivePage] = useState(() => {
+    if (window.location.pathname.startsWith('/profile')) return 'profile';
     const saved = localStorage.getItem('apex_active_page');
-    return saved ? saved : 'home'; 
-  }); 
+    return saved ? saved : 'home';
+  });
   const [previousPage, setPreviousPage] = useState(() => {
     const saved = localStorage.getItem('apex_previous_page');
     return saved ? saved : 'home';
