@@ -962,16 +962,18 @@ console.log("Chat Gate is receiving:", userBalance);
 
             <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-3">
-           <div className="relative w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 overflow-hidden border border-white/10">
-  <span className="absolute text-[10px] font-bold text-zinc-400 uppercase">
-    {(displayToken?.symbol || 'T').charAt(0)}
-  </span>
-  <img 
-    src={displayToken?.image_url || displayToken?.imagePreview || displayToken?.image || displayToken?.imageUrl || displayToken?.logoURI || ''} 
-    alt={displayToken?.symbol} 
-    className="absolute inset-0 w-full h-full object-cover z-10" 
-    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-  />
+           <div className="w-8 h-8 rounded-full border border-white/10 bg-zinc-800 flex items-center justify-center shrink-0 overflow-hidden">
+  {(displayToken?.image_url || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.image) ? (
+    <img 
+      src={displayToken?.image_url || displayToken?.imageUrl || displayToken?.imagePreview || displayToken?.image} 
+      alt={displayToken?.symbol} 
+      className="w-full h-full object-cover" 
+    />
+  ) : (
+    <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+      {displayToken?.icon || displayToken?.symbol?.slice(0, 2) || 'TK'}
+    </span>
+  )}
 </div>
             <div className="flex flex-col">
               <h3 className="text-lg font-black text-white uppercase tracking-widest flex items-center gap-2">
