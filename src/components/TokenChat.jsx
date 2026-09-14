@@ -26,6 +26,8 @@ const DexDollarIcon = ({ className, strokeWidth }) => (
     
   const myAvatar = userProfile?.avatar || (publicKey ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${publicKey.toBase58()}` : null);
 
+const [localTokenBalance, setLocalTokenBalance] = useState(userTokenBalance || userBalance || 0);
+
   // 🚀 STEP 3: ALL STATE VARIABLES
   const { executeTradeOnChain, isProcessing } = useTrade();
   const messagesEndRef = useRef(null);
