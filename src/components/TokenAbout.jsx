@@ -24,9 +24,15 @@ const DexDollarIcon = ({ className = "w-3 h-3", strokeWidth = 3 }) => (
 export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) {
   const [copied, setCopied] = useState(false);
   const [chatCount, setChatCount] = useState(0);
-  const [isFollowing, setIsFollowing] = useState(false);
 
   const mintAddress = currentToken?.mint_address || currentToken?.mintAddress || currentToken?.address || '';
+  const rawCreatorAddress = currentToken?.creator_address || currentToken?.creatorAddress || currentToken?.dev_address || '';
+  
+  // FIX: Persistent Local Storage for Follow Button
+  const followStorageKey = `apex_following_${rawCreatorAddress}`;
+  const [isFollowing, setIsFollowing] = useState(() => {
+    return localStorage.getItem(followStorageKey) === 'true';
+  });
 
   useEffect(() => {
     if (!mintAddress) return;
@@ -71,21 +77,19 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
     };
   }, [mintAddress]);
 
-  const rawCreatorAddress = currentToken?.creator_address || currentToken?.creatorAddress || currentToken?.dev_address || '';
   const formattedCreatorAddress = rawCreatorAddress.length > 10 
     ? `${rawCreatorAddress.slice(0, 4)}...${rawCreatorAddress.slice(-4)}` 
     : (rawCreatorAddress || 'Anonymous Dev');
 
+  // FIX: Safe Profile Click handler (No more Vercel 404s)
   const handleDevClick = (e) => {
     e.stopPropagation(); 
     if (!rawCreatorAddress) return;
     
-    // Use the prop passed from the parent if it exists to avoid hard reloading
     if (typeof onViewProfile === 'function') {
       onViewProfile(rawCreatorAddress);
     } else {
-      // Fallback if no prop is passed
-      window.location.href = `/profile/${rawCreatorAddress}`;
+      alert(`Profile Page Not Connected Yet!\n\nPass the 'onViewProfile' prop from TokenHome to open Dev: ${rawCreatorAddress}`);
     }
   };
 
@@ -97,9 +101,12 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
     setTimeout(() => setCopied(false), 1500);
   };
 
+  // FIX: Save state to browser memory on click
   const handleFollow = (e) => {
     e.stopPropagation(); 
-    setIsFollowing(!isFollowing);
+    const newState = !isFollowing;
+    setIsFollowing(newState);
+    localStorage.setItem(followStorageKey, newState);
   };
 
   const displayMcap = currentToken?.mcap ? currentToken.mcap.toString().replace('$', '') : '0.00';
@@ -207,7 +214,6 @@ export default function TokenAbout({ currentToken, onOpenChat, onViewProfile }) 
             </div>
           </div>
           
-          {/* DYNAMIC FOLLOW BUTTON */}
           <button 
             onClick={handleFollow}
             className={`text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors shrink-0 ml-2 active:scale-95 ${
