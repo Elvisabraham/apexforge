@@ -114,9 +114,11 @@ const [localTokenBalance, setLocalTokenBalance] = useState(userTokenBalance || u
         if (accounts.value.length > 0) {
           const rawBalance = accounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
           const scaledBalance = rawBalance < 1000 ? (rawBalance * 1000000) : rawBalance; 
-          if (isMounted) setUserTokenBalance(scaledBalance);
+          if (isMounted) setLocalTokenBalance(scaledBalance); // 👈 FIXED: Now uses the local state
         }
-      } catch (error) {}
+      } catch (error) {
+        console.warn("Could not fetch user token balance.");
+      }
     };
 
     fetchMyTokenBalance();
