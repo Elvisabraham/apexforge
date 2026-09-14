@@ -754,13 +754,14 @@ useEffect(() => {
             {mobileActivityTab === 'trades' && <TokenTrades currentToken={currentToken} />}
             {mobileActivityTab === 'callouts' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
             {mobileActivityTab === 'holders' && <TokenHolders top10Percentage={displayTop10} />}
-            {activeHubTab === 'about' && typeof TokenAbout !== 'undefined' && (
-  <TokenAbout 
-    currentToken={currentToken} 
-    onOpenChat={() => setIsMobileChatOpen(true)}
-    onViewProfile={(devAddress) => window.location.href = `/profile/${devAddress}`}
-  />
-            )}
+          
+          {mobileActivityTab === 'about' && (
+          <TokenAbout
+            currentToken={currentToken}
+            onOpenChat={() => setIsMobileChatOpen(true)}
+            onViewProfile={(devAddress) => window.location.href = `/profile/${devAddress}`}
+          />
+        )}
           </div>
         </div> {/* <--- RESTORED: THIS CLOSES THE MAIN PAGE CONTAINER FROM LINE 258 */}
 
@@ -1253,23 +1254,22 @@ useEffect(() => {
                 {activeHubTab === 'top_traders' && typeof TokenTopTraders !== 'undefined' && <TokenTopTraders currentToken={currentToken} />}
                 {activeHubTab === 'callouts' && typeof TokenCallouts !== 'undefined' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
                 {activeHubTab === 'holders' && typeof TokenHolders !== 'undefined' && <TokenHolders top10Percentage={displayTop10} />}
-                {activeHubTab === 'about' && typeof TokenAbout !== 'undefined' && <TokenAbout currentToken={currentToken} />}
-                
-                {/* NEW CHAT TAB RENDER */}
-                {activeHubTab === 'about' && typeof TokenAbout !== 'undefined' && (
-      <TokenAbout 
-        currentToken={currentToken} 
-        onOpenChat={() => setIsMobileChatOpen(true)}
-        onViewProfile={(devAddress) => window.location.href = `/profile/${devAddress}`}
-      />
-    )}
+                {activeHubTab === 'holders' && typeof TokenHolders !== 'undefined' && <TokenHolders top10Percentage={displayTop10} />}
+        
+        {activeHubTab === 'about' && typeof TokenAbout !== 'undefined' && (
+          <TokenAbout 
+            currentToken={currentToken}
+            onOpenChat={() => setIsMobileChatOpen(true)}
+            onViewProfile={(devAddress) => window.location.href = `/profile/${devAddress}`}
+          />
+        )}
 
-    {/* NEW CHAT TAB RENDER */}
-    {activeHubTab === 'chat' && typeof TokenChat !== 'undefined' && (
-      <TokenChat
-        token={currentToken}
-        onBack={() => setIsMobileChatOpen(false)}
-        userBalance={userTokenBalance}
+        {/* NEW CHAT TAB RENDER */}
+        {activeHubTab === 'chat' && typeof TokenChat !== 'undefined' && (
+          <TokenChat
+            token={currentToken}
+            onBack={() => setIsMobileChatOpen(false)}
+            userBalance={userTokenBalance}
         userSolBalance={userSolBalance}     // 👈 Add this
         userTokenBalance={userTokenBalance} // 👈 Add this
         onOpenProfile={(walletAddress) => {
