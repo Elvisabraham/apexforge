@@ -408,6 +408,8 @@ function AppContent() {
           />
         );
       }
+      case 'profile':
+      return <Profile />;
 
       default: 
         return <Home 
