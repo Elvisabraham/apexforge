@@ -1249,7 +1249,7 @@ useEffect(() => {
 
               {/* Tab Content Rendering */}
               <div className="flex-1 overflow-y-auto bg-[#0c0d10] custom-scrollbar">
-                {activeHubTab === 'trades' && typeof TokenTrades !== 'undefined' && <TokenTrades currentToken={currentToken} />}
+                {activeHubTab === 'trades' && <TokenTrades currentToken={currentToken} />}
                 {activeHubTab === 'my_trades' && typeof TokenMyTrades !== 'undefined' && <TokenMyTrades currentToken={currentToken} />}
                 {activeHubTab === 'top_traders' && typeof TokenTopTraders !== 'undefined' && <TokenTopTraders currentToken={currentToken} />}
                 {activeHubTab === 'callouts' && typeof TokenCallouts !== 'undefined' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
