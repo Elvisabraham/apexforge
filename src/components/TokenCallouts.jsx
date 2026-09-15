@@ -1,7 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Flame, ShieldCheck, Send, TrendingUp, Clock, MessageSquare, Zap } from 'lucide-react';
+import { 
+  MessageSquare, 
+  Repeat2, 
+  Heart, 
+  MoreHorizontal, 
+  Image as ImageIcon, 
+  BarChart2, 
+  Zap, 
+  ShieldCheck, 
+  TrendingUp, 
+  TrendingDown,
+  Activity
+} from 'lucide-react';
 
 const shortenAddress = (address) => {
   if (!address) return 'Unknown';
@@ -22,7 +34,8 @@ export default function TokenCallouts({ currentToken, token, tokenSymbol }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const activeToken = currentToken || token;
-const tokenMint = activeToken?.mintAddress || activeToken?.mint || activeToken?.address || activeToken?.mint_address || activeToken?.symbol || tokenSymbol;
+  const tokenMint = activeToken?.mintAddress || activeToken?.mint || activeToken?.address || activeToken?.mint_address || activeToken?.symbol || tokenSymbol;
+  const displaySymbol = activeToken?.symbol || 'TOKEN';
   
   // Fallback to $54,800 if activeToken doesn't have a live market cap yet
   const liveMarketCap = activeToken?.marketCap || activeToken?.usd_market_cap || 54800; 
@@ -47,7 +60,7 @@ const tokenMint = activeToken?.mintAddress || activeToken?.mint || activeToken?.
 
   useEffect(() => {
     fetchCallouts();
-    const interval = setInterval(fetchCallouts, 15000); // Live refresh every 15s
+    const interval = setInterval(fetchCallouts, 15000); 
     return () => clearInterval(interval);
   }, [tokenMint]);
 
@@ -66,7 +79,7 @@ const tokenMint = activeToken?.mintAddress || activeToken?.mint || activeToken?.
 
       if (error) throw error;
       setNewCallout('');
-      fetchCallouts(); // Instantly refresh list
+      fetchCallouts();
     } catch (err) {
       console.error("Error posting callout:", err);
     } finally {
@@ -74,133 +87,157 @@ const tokenMint = activeToken?.mintAddress || activeToken?.mint || activeToken?.
     }
   };
 
-  // Helper to calculate time ago
   const timeAgo = (dateString) => {
     const seconds = Math.floor((new Date() - new Date(dateString)) / 1000);
-    if (seconds < 60) return `${seconds}s ago`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    return `${Math.floor(seconds / 86400)}d ago`;
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+    return `${Math.floor(seconds / 86400)}d`;
   };
 
   return (
-    <div className="flex flex-col gap-4 pb-16 pt-2">
+    <div className="flex flex-col pb-16">
       
-      {/* 📝 POST ALPHA INPUT */}
-      <div className="bg-[#121318] border border-white/5 rounded-xl p-3 shadow-sm">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div className="flex justify-between items-center px-1">
-            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <Flame className="w-3.5 h-3.5 text-amber-500" /> Transmit Alpha
-            </span>
-            <span className="text-[10px] text-zinc-500 font-mono tracking-wider bg-black/30 px-2 py-0.5 rounded border border-white/5">
-              Entry MC Snapshot: <span className="text-[#00f2a1] font-bold">{formatCurrency(liveMarketCap)}</span>
-            </span>
-          </div>
-          
+      {/* 📝 THE X (TWITTER) STYLE INPUT */}
+      <div className="flex gap-3 p-4 border-b border-white/5 bg-[#121318]/50">
+        <div className="w-10 h-10 rounded-full bg-zinc-800 border border-white/10 overflow-hidden shrink-0 mt-1">
+          {publicKey ? (
+             <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${publicKey.toString()}`} alt="You" className="w-full h-full object-cover" />
+          ) : (
+             <div className="w-full h-full flex items-center justify-center text-zinc-600"><Activity className="w-5 h-5"/></div>
+          )}
+        </div>
+        
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-2">
           <textarea
             value={newCallout}
             onChange={(e) => setNewCallout(e.target.value)}
             disabled={!publicKey || isSubmitting}
-            placeholder={publicKey ? "What's the play? Give the thesis..." : "Connect wallet to post alpha..."}
-            className="w-full bg-black/20 border border-white/5 rounded-lg p-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#00f2a1]/50 resize-none h-20 transition-all custom-scrollbar"
+            placeholder={publicKey ? "Drop your alpha thesis..." : "Connect wallet to post..."}
+            className="w-full bg-transparent text-white placeholder-zinc-500 text-[15px] resize-none h-14 focus:outline-none custom-scrollbar pt-2"
           />
           
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={!publicKey || !newCallout.trim() || isSubmitting}
-              className="bg-[#00f2a1]/10 text-[#00f2a1] hover:bg-[#00f2a1]/20 border border-[#00f2a1]/30 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2"
-            >
-              {isSubmitting ? 'Transmitting...' : 'Post Callout'}
-              <Send className="w-3.5 h-3.5" />
-            </button>
+          <div className="flex justify-between items-center pt-2 border-t border-white/5">
+            <div className="flex items-center gap-4 text-[#00f2a1]">
+              <button type="button" className="hover:bg-[#00f2a1]/10 p-1.5 rounded-full transition-colors"><ImageIcon className="w-4 h-4" /></button>
+              <button type="button" className="hover:bg-[#00f2a1]/10 p-1.5 rounded-full transition-colors"><BarChart2 className="w-4 h-4" /></button>
+            </div>
+            
+            <div className="flex items-center gap-3">
+               <span className="text-[10px] text-zinc-500 font-mono tracking-wider">
+                 Entry MC: <span className="text-white font-bold">{formatCurrency(liveMarketCap)}</span>
+               </span>
+               <button
+                 type="submit"
+                 disabled={!publicKey || !newCallout.trim() || isSubmitting}
+                 className="bg-[#00f2a1] text-black hover:bg-[#00f2a1]/80 disabled:opacity-50 disabled:cursor-not-allowed px-5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all"
+               >
+                 {isSubmitting ? 'Posting' : 'Post'}
+               </button>
+            </div>
           </div>
         </form>
       </div>
 
-      {/* 📋 CALLOUTS FEED */}
+      {/* 📋 THE BINANCE SQUARE STYLE FEED */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-center text-xs text-[#00f2a1] font-mono animate-pulse uppercase tracking-widest">
-            Scanning Comms...
-          </div>
+          <div className="text-center text-xs text-[#00f2a1] font-mono animate-pulse uppercase tracking-widest">Loading Feed...</div>
         </div>
       ) : callouts.length === 0 ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-center text-xs text-zinc-500 font-mono uppercase tracking-widest">
-            No alpha posted yet. Be the first.
-          </div>
+          <div className="text-center text-xs text-zinc-500 font-mono uppercase tracking-widest">No alpha posted yet. Lead the charge.</div>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col">
           {callouts.map((call) => {
-            // Calculate Performance Math
             const entryMc = parseFloat(call.entry_market_cap) || 1;
             const multiplier = liveMarketCap / entryMc;
             const pctChange = (multiplier - 1) * 100;
             
-            let perfColor = 'text-zinc-500 border-zinc-700 bg-zinc-800/50';
+            let perfColor = 'text-zinc-400 bg-zinc-800/50';
             let perfIcon = null;
-            let perfText = '';
+            let perfText = 'Entry';
 
             if (pctChange > 5) {
-              perfColor = 'text-[#00f2a1] border-[#00f2a1]/30 bg-[#00f2a1]/10 drop-shadow-[0_0_8px_rgba(0,242,161,0.2)]';
+              perfColor = 'text-[#00f2a1] bg-[#00f2a1]/10';
               perfIcon = <TrendingUp className="w-3 h-3" />;
-              perfText = `${multiplier.toFixed(1)}x (+${pctChange.toFixed(0)}%)`;
+              perfText = `${multiplier.toFixed(1)}x`;
             } else if (pctChange < -5) {
-              perfColor = 'text-[#F23645] border-[#F23645]/30 bg-[#F23645]/10';
+              perfColor = 'text-[#F23645] bg-[#F23645]/10';
+              perfIcon = <TrendingDown className="w-3 h-3" />;
               perfText = `-${Math.abs(pctChange).toFixed(0)}%`;
-            } else {
-              perfText = 'Entry';
             }
 
             return (
-              <div key={call.id} className="bg-[#121318] border border-white/5 rounded-xl p-3.5 flex flex-col gap-3 hover:border-white/10 transition-colors shadow-sm">
+              <div key={call.id} className="flex gap-3 p-4 border-b border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer group">
                 
-                {/* Header: User & Performance Badge */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-zinc-800 border border-white/10 overflow-hidden shrink-0">
-                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${call.creator_wallet}`} alt="Avatar" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-white hover:text-[#00f2a1] cursor-pointer transition-colors">
-                          {shortenAddress(call.creator_wallet)}
-                        </span>
-                        <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-                      </div>
-                      <span className="text-[9px] text-zinc-500 font-mono">Entry: {formatCurrency(entryMc)}</span>
-                    </div>
-                  </div>
-
-                  {/* Dynamic Multiplier Badge */}
-                  <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-black tracking-wider ${perfColor}`}>
-                    {perfIcon}
-                    {perfText}
-                  </div>
+                {/* Left: Avatar */}
+                <div className="w-10 h-10 rounded-full bg-zinc-800 border border-white/10 overflow-hidden shrink-0">
+                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${call.creator_wallet}`} alt="Avatar" className="w-full h-full object-cover" />
                 </div>
 
-                {/* Content */}
-                <p className="text-sm text-zinc-300 leading-relaxed break-words">
-                  {call.content}
-                </p>
-
-                {/* Footer: Actions & Timestamp */}
-                <div className="flex items-center justify-between mt-1 pt-3 border-t border-white/5">
-                  <div className="flex items-center gap-4">
-                    <button className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-500 hover:text-white transition-colors uppercase tracking-wider">
-                      <MessageSquare className="w-3.5 h-3.5" /> Reply
-                    </button>
-                    <span className="flex items-center gap-1 text-[9px] text-zinc-600 font-mono">
-                      <Clock className="w-3 h-3" /> {timeAgo(call.created_at)}
-                    </span>
+                {/* Right: Content */}
+                <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+                  
+                  {/* Header */}
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[14px] font-bold text-white hover:underline truncate max-w-[120px]">
+                        {shortenAddress(call.creator_wallet)}
+                      </span>
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#00f2a1]" />
+                      <span className="text-zinc-500 text-[13px]">· {timeAgo(call.created_at)}</span>
+                    </div>
+                    <button className="text-zinc-500 hover:text-[#00f2a1] p-1"><MoreHorizontal className="w-4 h-4" /></button>
                   </div>
 
-                  <button className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-3 py-1 rounded text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1">
-                    <Zap className="w-3 h-3 text-amber-400" /> Quick Buy
-                  </button>
+                  {/* Body Text */}
+                  <p className="text-[14px] text-zinc-200 leading-relaxed whitespace-pre-wrap break-words">
+                    {call.content}
+                  </p>
+
+                  {/* 📊 THE BINANCE DATA CENTER (Asset Embed) */}
+                  <div className="mt-2 mb-1 border border-white/10 rounded-xl p-3 bg-black/40 flex items-center justify-between hover:border-[#00f2a1]/30 transition-colors">
+                     <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-[#00f2a1]/10 flex items-center justify-center border border-[#00f2a1]/20">
+                           <span className="text-[#00f2a1] text-xs font-black">${displaySymbol.charAt(0)}</span>
+                        </div>
+                        <div className="flex flex-col">
+                           <span className="text-sm font-bold text-white uppercase">${displaySymbol}</span>
+                           <span className="text-[10px] text-zinc-500 font-mono tracking-wider">Entry: {formatCurrency(entryMc)}</span>
+                        </div>
+                     </div>
+                     <div className="flex flex-col items-end gap-1">
+                        <div className={`flex items-center gap-1 px-2 py-0.5 rounded font-black tracking-wider text-[11px] ${perfColor}`}>
+                           {perfIcon} {perfText}
+                        </div>
+                        <span className="text-[10px] text-zinc-500 font-mono tracking-wider">Now: {formatCurrency(liveMarketCap)}</span>
+                     </div>
+                  </div>
+
+                  {/* Footer Actions (X Style) */}
+                  <div className="flex items-center justify-between mt-1 pt-1 max-w-md pr-4">
+                    <button className="flex items-center gap-1.5 text-zinc-500 hover:text-[#00f2a1] transition-colors group-hover:text-zinc-400">
+                      <div className="p-1.5 rounded-full hover:bg-[#00f2a1]/10"><MessageSquare className="w-4 h-4" /></div>
+                      <span className="text-xs">12</span>
+                    </button>
+                    <button className="flex items-center gap-1.5 text-zinc-500 hover:text-[#00f2a1] transition-colors group-hover:text-zinc-400">
+                      <div className="p-1.5 rounded-full hover:bg-[#00f2a1]/10"><Repeat2 className="w-4 h-4" /></div>
+                      <span className="text-xs">3</span>
+                    </button>
+                    <button className="flex items-center gap-1.5 text-zinc-500 hover:text-[#F23645] transition-colors group-hover:text-zinc-400">
+                      <div className="p-1.5 rounded-full hover:bg-[#F23645]/10"><Heart className="w-4 h-4" /></div>
+                      <span className="text-xs">{call.likes_count || 0}</span>
+                    </button>
+                    <button className="flex items-center gap-1.5 text-[#00f2a1] hover:brightness-125 transition-all">
+                      <div className="flex items-center gap-1 bg-[#00f2a1]/10 px-3 py-1 rounded-full border border-[#00f2a1]/30">
+                         <Zap className="w-3.5 h-3.5 fill-current" />
+                         <span className="text-[10px] font-black uppercase tracking-wider">Buy</span>
+                      </div>
+                    </button>
+                  </div>
+
                 </div>
               </div>
             );
