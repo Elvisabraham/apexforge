@@ -4,11 +4,22 @@ import { supabase } from '../supabaseClient';
 import { useWallet } from '@solana/wallet-adapter-react';
 
 const TOTAL_SUPPLY = 1_000_000_000;
+const FALLBACK_SOL_PRICE = 145.00;
 
 const shortenAddress = (address) => {
   if (!address) return 'Unknown';
   if (address.length <= 8) return address;
   return `${address.slice(0, 4)}...${address.slice(-4)}`;
+};
+
+// 🛠️ FIXED: Added Millions (M) and Billions (B) formatting
+const formatCurrency = (value) => {
+  if (value === 0) return '$0.00';
+  const absValue = Math.abs(value);
+  if (absValue >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(2)}B`;
+  if (absValue >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
+  if (absValue >= 1_000) return `$${(value / 1000).toFixed(1)}k`;
+  return `$${value.toFixed(2)}`;
 };
 
 export default function TokenHolders({ currentToken, token, userTokenBalance }) {
@@ -20,54 +31,65 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
 
   const activeToken = currentToken || token;
   const tokenMint = activeToken?.mintAddress || activeToken?.mint || activeToken?.address || activeToken?.mint_address || activeToken?.symbol;
-  const devAddress = activeToken?.devAddress || activeToken?.creator || activeToken?.dev_address || activeToken?.user_address || activeToken?.wallet || activeToken?.owner || activeToken?.creator_address;
+  
+  const passedDevAddress = activeToken?.devAddress || activeToken?.creator || activeToken?.dev_address || activeToken?.user_address || activeToken?.wallet || activeToken?.owner || activeToken?.creator_address;
+  
+  const tokenPriceUsd = activeToken?.price || 0.00773;
 
   useEffect(() => {
     if (!tokenMint) return;
-
+console.log("Current Token Data:", activeToken);
+console.log("Connected Wallet:", publicKey?.toString());
     let isMounted = true;
 
     const fetchHolders = async () => {
       try {
         if (isFirstLoad.current) setIsLoading(true);
 
-        // Fetch trades in chronological order so we can identify the first buyers (Snipers)
         const { data, error } = await supabase
           .from('trades')
           .select('*')
           .eq('token_mint', tokenMint)
-          .order('created_at', { ascending: true }); // Must order by time to catch snipers!
+          .order('created_at', { ascending: true });
 
         if (error) throw error;
 
         if (data && isMounted) {
           const holdingsMap = {};
           const sniperWallets = new Set();
+          
+          // 🛡️ THE BULLETPROOF DEV FINDER:
+          // If the token object didn't give us the dev address, we find the very first wallet 
+          // that interacted with the token. On launchpads, the Dev is always transaction #1.
+          const firstTrade = data.find(tx => tx.wallet || tx.wallet_address || tx.user_address);
+          const actualDevAddress = passedDevAddress || (firstTrade ? (firstTrade.wallet || firstTrade.wallet_address || firstTrade.user_address) : null);
 
-          // Crunch the numbers and identify snipers
           data.forEach((tx) => {
             const wallet = tx.wallet || tx.wallet_address || tx.user_address;
             const tokenAmt = parseFloat(tx.token_amount || tx.amount || tx.tokens || 0);
+            const solAmt = parseFloat(tx.sol_amount || tx.sol || 0);
             const isBuy = tx.type?.toLowerCase() === 'buy' || tx.isBuy;
 
             if (!wallet || tokenAmt === 0) return;
 
             if (!holdingsMap[wallet]) {
-              holdingsMap[wallet] = { wallet, balance: 0, txCount: 0 };
+              holdingsMap[wallet] = { wallet, balance: 0, usdInvested: 0 };
             }
 
-            // The first 5 unique wallets to ever execute a BUY (that aren't the dev) are flagged as Snipers
-            if (isBuy && sniperWallets.size < 5 && wallet !== devAddress) {
+            // Snipers are the first 5 unique buyers who are NOT the Dev
+            if (isBuy && sniperWallets.size < 5 && wallet !== actualDevAddress) {
               sniperWallets.add(wallet);
             }
 
-            if (isBuy) holdingsMap[wallet].balance += tokenAmt;
-            else holdingsMap[wallet].balance -= tokenAmt;
-            
-            holdingsMap[wallet].txCount += 1;
+            if (isBuy) {
+              holdingsMap[wallet].balance += tokenAmt;
+              holdingsMap[wallet].usdInvested += (solAmt * FALLBACK_SOL_PRICE);
+            } else {
+              holdingsMap[wallet].balance -= tokenAmt;
+              holdingsMap[wallet].usdInvested -= (solAmt * FALLBACK_SOL_PRICE);
+            }
           });
 
-          // Inject your real wallet balance if available
           if (publicKey && userTokenBalance && holdingsMap[publicKey.toString()]) {
             const parsedBalance = parseFloat(userTokenBalance);
             if (!isNaN(parsedBalance) && parsedBalance > 1000) {
@@ -83,12 +105,12 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
           const effectiveTotalSupply = Math.max(TOTAL_SUPPLY, circulatingTokens);
           const curveTokens = Math.max(0, effectiveTotalSupply - circulatingTokens);
 
-          // Build the exact holder list with roles
           const fullList = [
             {
               id: 'bonding-curve',
               address: 'Bonding Curve Vault',
               balance: curveTokens,
+              usdInvested: 0, 
               percentage: (curveTokens / effectiveTotalSupply) * 100,
               isCurve: true,
             },
@@ -96,15 +118,15 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
               id: h.wallet,
               address: h.wallet,
               balance: h.balance,
+              usdInvested: h.usdInvested,
               percentage: (h.balance / effectiveTotalSupply) * 100,
               avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${h.wallet}`,
-              isDev: devAddress && h.wallet === devAddress,
+              isDev: actualDevAddress && h.wallet === actualDevAddress,
               isSniper: sniperWallets.has(h.wallet),
               isMe: publicKey && h.wallet === publicKey.toString(),
             }))
           ].sort((a, b) => b.balance - a.balance);
 
-          // Calculate Breakdown Metrics
           const top10Sum = fullList.filter(h => !h.isCurve).slice(0, 10).reduce((acc, h) => acc + h.percentage, 0);
           const devSum = fullList.filter(h => h.isDev).reduce((acc, h) => acc + h.percentage, 0);
           const sniperSum = fullList.filter(h => h.isSniper).reduce((acc, h) => acc + h.percentage, 0);
@@ -135,7 +157,7 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
     fetchHolders();
     const interval = setInterval(fetchHolders, 15000);
     return () => { isMounted = false; clearInterval(interval); };
-  }, [tokenMint, devAddress, publicKey, userTokenBalance]);
+  }, [tokenMint, passedDevAddress, publicKey, userTokenBalance, tokenPriceUsd]);
 
   if (isLoading && holders.length === 0) {
     return (
@@ -149,22 +171,20 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
 
   return (
     <div className="flex flex-col gap-3 pb-4">
-      {/* 📊 ADVANCED SUPPLY BREAKDOWN */}
+      {/* SUPPLY DISTRIBUTION BAR */}
       <div className="bg-[#121318] border border-white/5 rounded-xl p-3 flex flex-col gap-3 shadow-sm">
         <div className="flex justify-between items-center">
            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Supply Distribution</span>
            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Holders: <span className="text-white">{metrics.totalCount}</span></span>
         </div>
         
-        {/* Progress Bar */}
         <div className="w-full h-1.5 flex rounded-full overflow-hidden bg-white/5">
-          <div style={{ width: `${metrics.pool}%` }} className="bg-[#00f2a1] hover:brightness-125 transition-all" title={`Pool: ${metrics.pool.toFixed(1)}%`} />
-          <div style={{ width: `${metrics.dev}%` }} className="bg-amber-400 hover:brightness-125 transition-all" title={`Dev: ${metrics.dev.toFixed(1)}%`} />
-          <div style={{ width: `${metrics.snipers}%` }} className="bg-purple-500 hover:brightness-125 transition-all" title={`Snipers: ${metrics.snipers.toFixed(1)}%`} />
-          <div style={{ width: `${metrics.regular}%` }} className="bg-blue-500 hover:brightness-125 transition-all" title={`Regular: ${metrics.regular.toFixed(1)}%`} />
+          <div style={{ width: `${metrics.pool}%` }} className="bg-[#00f2a1] transition-all" title="Pool" />
+          <div style={{ width: `${metrics.dev}%` }} className="bg-amber-400 transition-all" title="Dev" />
+          <div style={{ width: `${metrics.snipers}%` }} className="bg-purple-500 transition-all" title="Snipers" />
+          <div style={{ width: `${metrics.regular}%` }} className="bg-blue-500 transition-all" title="Regular" />
         </div>
 
-        {/* Legend */}
         <div className="flex items-center justify-between mt-1">
           <div className="flex flex-col">
             <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-black">Top 10</span>
@@ -181,7 +201,15 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
         </div>
       </div>
 
-      {/* Holders List */}
+      {/* HOLDERS LIST HEADER */}
+      <div className="flex items-center px-3 py-1 text-[9px] font-black tracking-widest text-zinc-500 uppercase">
+        <div className="w-[40%]">Holder</div>
+        <div className="w-[25%] text-right">Position</div>
+        <div className="w-[20%] text-right">Profit</div>
+        <div className="w-[15%] text-right">%</div>
+      </div>
+
+      {/* HOLDERS LIST */}
       <div className="flex flex-col gap-2">
         {holders.map((holder, index) => {
           let rankColor = 'text-zinc-600';
@@ -193,57 +221,77 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
             ? "bg-[#00f2a1]/[0.02] border-[#00f2a1]/20 hover:bg-[#00f2a1]/[0.05]" 
             : "bg-[#121318] border-white/5 hover:bg-[#181920] hover:border-[#00f2a1]/30";
 
+          // Calculate Gamified Metrics
+          const positionUsd = holder.balance * tokenPriceUsd;
+          const profitUsd = positionUsd - holder.usdInvested;
+
+          // Formatting Profit text color
+          let profitColor = 'text-zinc-500';
+          let profitText = '---';
+          if (!holder.isCurve) {
+            if (profitUsd > 1) {
+                profitColor = 'text-[#00f2a1] drop-shadow-[0_0_8px_rgba(0,242,161,0.3)]';
+                profitText = `+${formatCurrency(profitUsd)}`;
+            } else if (profitUsd < -1) {
+                profitColor = 'text-[#F23645]';
+                profitText = `-${formatCurrency(Math.abs(profitUsd))}`;
+            } else {
+                profitText = '$0.00';
+            }
+          }
+
           return (
             <div 
               key={holder.id} 
               onClick={() => {
                 if (!holder.isCurve) window.open(`https://solscan.io/account/${holder.address}`, '_blank');
               }}
-              className={`${rowBg} rounded-xl p-3 flex items-center justify-between shadow-sm border transition-all duration-200 ${!holder.isCurve && 'cursor-pointer'} group relative overflow-hidden`}
+              className={`${rowBg} rounded-xl p-2.5 flex items-center justify-between shadow-sm border transition-all duration-200 ${!holder.isCurve && 'cursor-pointer'} group relative overflow-hidden`}
             >
               <div 
                 className="absolute left-0 top-0 bottom-0 bg-[#00f2a1]/[0.03] transition-all duration-500 pointer-events-none" 
                 style={{ width: `${Math.min(100, holder.percentage)}%` }} 
               />
 
-              <div className="flex items-center gap-3 relative z-10">
+              {/* 1. HOLDER INFO (40% width) */}
+              <div className="flex items-center gap-2 relative z-10 w-[40%]">
                 <span className={`text-[10px] w-3 text-center ${rankColor}`}>{index + 1}</span>
-                
-                <div className={`w-8 h-8 rounded-full border overflow-hidden shrink-0 flex items-center justify-center ${holder.isCurve ? 'bg-[#00f2a1]/10 border-[#00f2a1]/30' : 'bg-[#1c1d24] border-white/10'}`}>
-                  {holder.isCurve ? (
-                    <Landmark className="w-4 h-4 text-[#00f2a1]" />
-                  ) : (
-                    <img src={holder.avatar} alt="Holder Avatar" className="w-full h-full object-cover" />
-                  )}
+                <div className={`w-6 h-6 rounded-full border overflow-hidden shrink-0 flex items-center justify-center ${holder.isCurve ? 'bg-[#00f2a1]/10 border-[#00f2a1]/30' : 'bg-[#1c1d24] border-white/10'}`}>
+                  {holder.isCurve ? <Landmark className="w-3 h-3 text-[#00f2a1]" /> : <img src={holder.avatar} alt="Holder Avatar" className="w-full h-full object-cover" />}
                 </div>
-                
                 <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className={`text-xs font-bold ${holder.isCurve || holder.isMe ? 'text-[#00f2a1]' : 'text-white'}`}>
-                      {holder.isCurve ? 'Bonding Curve' : holder.isMe ? 'You' : shortenAddress(holder.address)}
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <span className={`text-xs font-bold truncate max-w-[80px] ${holder.isCurve || holder.isMe ? 'text-[#00f2a1]' : 'text-white'}`}>
+                      {holder.isCurve ? 'Curve' : holder.isMe ? 'You' : shortenAddress(holder.address)}
                     </span>
-                    {holder.isCurve && (
-                      <span className="text-[8px] bg-[#00f2a1]/10 text-[#00f2a1] px-1.5 py-0.5 rounded font-black uppercase tracking-wider border border-[#00f2a1]/20">Pool</span>
-                    )}
-                    {holder.isDev && (
-                      <span className="text-[8px] bg-amber-400/10 text-amber-400 px-1.5 py-0.5 rounded font-black uppercase tracking-wider border border-amber-400/20">Dev</span>
-                    )}
-                    {holder.isSniper && (
-                      <span className="text-[8px] bg-purple-500/10 text-purple-400 px-1.5 py-0.5 rounded font-black uppercase tracking-wider border border-purple-500/20">Sniper</span>
-                    )}
-                    {holder.isMe && (
-                      <span className="text-[8px] bg-[#00f2a1]/20 text-[#00f2a1] px-1.5 py-0.5 rounded font-black uppercase tracking-wider border border-[#00f2a1]/30">Bag</span>
-                    )}
+                    {holder.isDev && <span className="text-[8px] bg-amber-400/10 text-amber-400 px-1 py-0.5 rounded font-black uppercase border border-amber-400/20">Dev</span>}
+                    {holder.isSniper && !holder.isDev && <span className="text-[8px] bg-purple-500/10 text-purple-400 px-1 py-0.5 rounded font-black uppercase border border-purple-500/20">Sniper</span>}
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col items-end relative z-10">
-                <span className="text-xs font-black text-white tabular-nums">{holder.percentage.toFixed(2)}%</span>
+              {/* 2. POSITION (25% width) */}
+              <div className="flex flex-col items-end relative z-10 w-[25%]">
+                <span className={`text-xs font-bold ${holder.isCurve ? 'text-zinc-500' : 'text-white'}`}>
+                    {holder.isCurve ? '---' : formatCurrency(positionUsd)}
+                </span>
                 <span className="text-[9px] text-zinc-500 font-mono mt-0.5 tabular-nums">
-                  {Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(holder.balance)} tokens
+                  {Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(holder.balance)} tok
                 </span>
               </div>
+
+              {/* 3. PROFIT (20% width) */}
+              <div className="flex flex-col items-end relative z-10 w-[20%]">
+                <span className={`text-xs font-bold tabular-nums ${profitColor}`}>
+                    {profitText}
+                </span>
+              </div>
+
+              {/* 4. PERCENTAGE (15% width) */}
+              <div className="flex flex-col items-end relative z-10 w-[15%]">
+                <span className="text-xs font-black text-white tabular-nums">{holder.percentage.toFixed(2)}%</span>
+              </div>
+
             </div>
           );
         })}
