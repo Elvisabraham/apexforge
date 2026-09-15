@@ -14,7 +14,7 @@ const formatCurrency = (value) => {
   return `$${value.toFixed(2)}`;
 };
 
-export default function TokenCallouts({ currentToken, token }) {
+export default function TokenCallouts({ currentToken, token, tokenSymbol }) {
   const { publicKey } = useWallet();
   const [callouts, setCallouts] = useState([]);
   const [newCallout, setNewCallout] = useState('');
@@ -22,7 +22,7 @@ export default function TokenCallouts({ currentToken, token }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const activeToken = currentToken || token;
-  const tokenMint = activeToken?.mintAddress || activeToken?.mint || activeToken?.address || activeToken?.symbol;
+const tokenMint = activeToken?.mintAddress || activeToken?.mint || activeToken?.address || activeToken?.mint_address || activeToken?.symbol || tokenSymbol;
   
   // Fallback to $54,800 if activeToken doesn't have a live market cap yet
   const liveMarketCap = activeToken?.marketCap || activeToken?.usd_market_cap || 54800; 
