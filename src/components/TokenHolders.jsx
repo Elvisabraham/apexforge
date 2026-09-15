@@ -23,7 +23,7 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
   const tokenMint = activeToken?.mintAddress || activeToken?.mint || activeToken?.address || activeToken?.mint_address || activeToken?.symbol;
   const devAddress = activeToken?.devAddress || activeToken?.creator || activeToken?.dev_address;
 
-  useEffect(() => {
+ useEffect(() => {
     if (!tokenMint) return;
 
     let isMounted = true;
@@ -64,16 +64,23 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
 
           // If connected wallet has a verified on-chain balance, use it over estimated DB tally
           if (publicKey && userTokenBalance && holdingsMap[publicKey.toString()]) {
-            holdingsMap[publicKey.toString()].balance = parseFloat(userTokenBalance);
+            const parsedBalance = parseFloat(userTokenBalance);
+            // Only override if it's a valid number (ignores string formats like "627M")
+            if (!isNaN(parsedBalance) && parsedBalance > 1000) {
+                holdingsMap[publicKey.toString()].balance = parsedBalance;
+            }
           }
 
           const userHolders = Object.values(holdingsMap)
             .filter((h) => h.balance > 0.000001)
             .sort((a, b) => b.balance - a.balance);
 
-          // Calculate how many tokens are circulating vs held by the curve
+          // Calculate circulating tokens
           const circulatingTokens = userHolders.reduce((acc, h) => acc + h.balance, 0);
-          const curveTokens = Math.max(0, TOTAL_SUPPLY - circulatingTokens);
+
+          // 🛡️ TESTNET FAILSAFE: If test trades exceed 1 Billion, dynamically adjust total supply so math doesn't break
+          const effectiveTotalSupply = Math.max(TOTAL_SUPPLY, circulatingTokens);
+          const curveTokens = Math.max(0, effectiveTotalSupply - circulatingTokens);
 
           // Build full list: Bonding Curve is the biggest holder initially
           const fullList = [
@@ -81,22 +88,22 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
               id: 'bonding-curve',
               address: 'Bonding Curve Vault',
               balance: curveTokens,
-              percentage: (curveTokens / TOTAL_SUPPLY) * 100,
+              percentage: (curveTokens / effectiveTotalSupply) * 100,
               isCurve: true,
             },
             ...userHolders.map((h) => ({
               id: h.wallet,
               address: h.wallet,
               balance: h.balance,
-              percentage: (h.balance / TOTAL_SUPPLY) * 100,
+              percentage: (h.balance / effectiveTotalSupply) * 100,
               avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${h.wallet}`,
               isDev: devAddress && h.wallet === devAddress,
               isMe: publicKey && h.wallet === publicKey.toString(),
             }))
           ];
 
-          // Top 10 percentage across the entire token supply
-          const top10Sum = fullList.slice(0, 10).reduce((acc, h) => acc + h.percentage, 0);
+          // Top 10 percentage across the entire token supply (Capped at 100%)
+          const top10Sum = Math.min(100, fullList.slice(0, 10).reduce((acc, h) => acc + h.percentage, 0));
           setTop10Percent(`${top10Sum.toFixed(2)}%`);
           setTotalHoldersCount(userHolders.length + 1); // Users + Curve Vault
           setHolders(fullList.slice(0, 25));
