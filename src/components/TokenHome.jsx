@@ -752,7 +752,7 @@ useEffect(() => {
           {/* TAB CONTENT */}
           <div className="flex-1 bg-[#0c0d10] p-4 min-h-[300px] flex flex-col">
             {mobileActivityTab === 'trades' && <TokenTrades currentToken={currentToken} />}
-            {mobileActivityTab === 'callouts' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
+          {mobileActivityTab === 'callouts' && typeof TokenCallouts !== 'undefined' && <TokenCallouts currentToken={currentToken} />}
            {mobileActivityTab === 'holders' && typeof TokenHolders !== 'undefined' && (
   <TokenHolders 
     currentToken={currentToken} 
@@ -1258,7 +1258,9 @@ useEffect(() => {
                 {activeHubTab === 'trades' && <TokenTrades currentToken={currentToken} />}
                 {activeHubTab === 'my_trades' && typeof TokenMyTrades !== 'undefined' && <TokenMyTrades currentToken={currentToken} />}
                 {activeHubTab === 'top_traders' && typeof TokenTopTraders !== 'undefined' && <TokenTopTraders currentToken={currentToken} />}
-                {activeHubTab === 'callouts' && typeof TokenCallouts !== 'undefined' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
+                {activeHubTab === 'callouts' && typeof TokenCallouts !== 'undefined' && (
+  <TokenCallouts currentToken={currentToken} />
+)}
                 
 {activeHubTab === 'holders' && typeof TokenHolders !== 'undefined' && (
   <TokenHolders 
