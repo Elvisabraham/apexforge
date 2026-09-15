@@ -30,7 +30,7 @@ export default function TokenTopTraders({ currentToken, token }) {
         // Fetch up to 1000 recent trades to calculate the top traders leaderboard
         const { data, error } = await supabase
           .from('trades')
-          .select('wallet, wallet_address, user_address, sol_amount, sol, type')
+          .select('*') // 👈 FIXED: We reverted to '*' so Postgres doesn't crash looking for fake columns
           .eq('token_mint', tokenMint)
           .limit(1000);
 
