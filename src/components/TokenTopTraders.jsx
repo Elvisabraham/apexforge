@@ -11,7 +11,7 @@ const shortenAddress = (address) => {
 export default function TokenHolders({ currentToken, token }) {
   const { publicKey } = useWallet();
   const [topHolders, setTopHolders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // 👈 Controls the initial load screen
   const [totalSupplyHeld, setTotalSupplyHeld] = useState(0);
 
   // Unified mint resolution
@@ -25,6 +25,8 @@ export default function TokenHolders({ currentToken, token }) {
 
     const fetchHolders = async () => {
       try {
+        // Notice there is NO setIsLoading(true) here!
+        
         const { data, error } = await supabase
           .from('trades')
           .select('*')
@@ -35,7 +37,6 @@ export default function TokenHolders({ currentToken, token }) {
         if (data && isMounted) {
           const holdingsMap = {};
           
-          // Crunch the numbers: Calculate net token balance per wallet (Buys - Sells)
           data.forEach(tx => {
             const wallet = tx.wallet || tx.wallet_address || tx.user_address;
             const tokenAmt = parseFloat(tx.token_amount || tx.amount || tx.tokens || 0);
@@ -54,21 +55,20 @@ export default function TokenHolders({ currentToken, token }) {
             }
           });
 
-          // Filter out wallets that sold everything, then sort by biggest bag
           const validHolders = Object.values(holdingsMap)
             .filter(h => h.balance > 0)
             .sort((a, b) => b.balance - a.balance);
 
-          // Calculate total tokens distributed to calculate percentages
           const total = validHolders.reduce((sum, h) => sum + h.balance, 0);
+          
+          // Silently update the numbers in the background
           setTotalSupplyHeld(total);
-
-          // Slice top 20
           setTopHolders(validHolders.slice(0, 20));
         }
       } catch (err) {
         console.error("Error calculating holders:", err);
       } finally {
+        // ONLY turn off loading if it's currently on (prevents background flashing)
         if (isMounted) setIsLoading(false);
       }
     };
