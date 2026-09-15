@@ -150,7 +150,7 @@ export default function TokenTopTraders({ currentToken, token }) {
                   {isMe && <span className="bg-[#00f2a1]/20 text-[#00f2a1] border border-[#00f2a1]/30 text-[8px] px-1.5 py-0.5 rounded uppercase tracking-widest">Connected</span>}
                 </span>
                 <span className="text-[10px] text-zinc-500 font-mono mt-0.5">
-                  <span className="text-[#00f2a1]">{trader.buyVolume.toFixed(2)}B</span> / <span className="text-[#F23645]">{trader.sellVolume.toFixed(2)}S</span>
+                  <span className="text-[#00f2a1]">{trader.buyVolume.toFixed(2)} Buy</span> / <span className="text-[#F23645]">{trader.sellVolume.toFixed(2)} Sell</span>
                 </span>
               </div>
             </div>
