@@ -198,21 +198,38 @@ export default function TokenCallouts({ currentToken, token, tokenSymbol }) {
                   </p>
 
                   {/* 📊 THE BINANCE DATA CENTER (Asset Embed) */}
-                  <div className="mt-2 mb-1 border border-white/10 rounded-xl p-3 bg-black/40 flex items-center justify-between hover:border-[#00f2a1]/30 transition-colors">
-                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#00f2a1]/10 flex items-center justify-center border border-[#00f2a1]/20">
-                           <span className="text-[#00f2a1] text-xs font-black">${displaySymbol.charAt(0)}</span>
+                  <div className="mt-2 mb-1 border border-white/5 rounded-xl p-3 bg-black/40 flex items-center justify-between hover:border-[#00f2a1]/20 transition-all group/asset relative overflow-hidden">
+                     
+                     {/* Side-Status Indicator (Green if up, Red if down) */}
+                     {pctChange > 5 && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#00f2a1] shadow-[0_0_8px_#00f2a1]" />}
+                     {pctChange < -5 && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#F23645]" />}
+                     {pctChange >= -5 && pctChange <= 5 && <div className="absolute left-0 top-0 bottom-0 w-1 bg-zinc-600" />}
+                     
+                     <div className="flex items-center gap-3 pl-2">
+                        <div className="w-9 h-9 rounded-full bg-[#1c1d24] flex items-center justify-center border border-white/10 group-hover/asset:border-[#00f2a1]/30 transition-colors">
+                           <span className="text-white text-sm font-black uppercase">${displaySymbol.charAt(0)}</span>
                         </div>
-                        <div className="flex flex-col">
-                           <span className="text-sm font-bold text-white uppercase">${displaySymbol}</span>
-                           <span className="text-[10px] text-zinc-500 font-mono tracking-wider">Entry: {formatCurrency(entryMc)}</span>
+                        
+                        <div className="flex flex-col gap-0.5">
+                           <div className="flex items-center gap-2">
+                               <span className="text-[13px] font-black text-white uppercase">${displaySymbol}</span>
+                               <span className="text-[11px] font-mono text-zinc-400">
+                                 ${activeToken?.price || '0.00773'}
+                               </span>
+                           </div>
+                           <span className="text-[10px] text-zinc-500 font-mono tracking-wider">
+                             Called at MC: <span className="text-zinc-300">{formatCurrency(entryMc)}</span>
+                           </span>
                         </div>
                      </div>
+                     
                      <div className="flex flex-col items-end gap-1">
                         <div className={`flex items-center gap-1 px-2 py-0.5 rounded font-black tracking-wider text-[11px] ${perfColor}`}>
                            {perfIcon} {perfText}
                         </div>
-                        <span className="text-[10px] text-zinc-500 font-mono tracking-wider">Now: {formatCurrency(liveMarketCap)}</span>
+                        <span className="text-[10px] text-zinc-500 font-mono tracking-wider">
+                          Live MC: <span className={pctChange > 5 ? 'text-[#00f2a1]' : 'text-white'}>{formatCurrency(liveMarketCap)}</span>
+                        </span>
                      </div>
                   </div>
 
