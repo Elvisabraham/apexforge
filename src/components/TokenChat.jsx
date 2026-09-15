@@ -114,10 +114,13 @@ const [localTokenBalance, setLocalTokenBalance] = useState(0);
         if (accounts.value.length > 0) {
           const rawBalance = accounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
           const scaledBalance = rawBalance < 1000 ? (rawBalance * 1000000) : rawBalance; 
-          if (isMounted) setLocalTokenBalance(scaledBalance); // 👈 FIXED: Now uses the local state
+          if (isMounted) setLocalTokenBalance(scaledBalance);
+        } else {
+          // STRICT FIX: If they have no account for this token, lock it.
+          if (isMounted) setLocalTokenBalance(0);
         }
       } catch (error) {
-        console.warn("Could not fetch user token balance.");
+        if (isMounted) setLocalTokenBalance(0);
       }
     };
 
@@ -813,10 +816,9 @@ console.log("Chat Gate is receiving:", userBalance);
           </div>
         )}
 
-          {/* 🔒 TOKEN GATE CHECK */}
+         {/* 🔒 STRICT TOKEN GATE CHECK */}
         {parseFloat(localTokenBalance) > 0 ? (
           <form onSubmit={handleSendMessage} className="flex items-end gap-1.5 bg-black border border-white/10 focus-within:border-[#089981]/50 rounded-xl p-1 pr-1.5 transition-colors">
-           
             {/* 🟢 THE CHAT FORM */}
             <div className="flex items-center shrink-0">
               <input
