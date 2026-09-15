@@ -753,7 +753,7 @@ useEffect(() => {
           <div className="flex-1 bg-[#0c0d10] p-4 min-h-[300px] flex flex-col">
             {mobileActivityTab === 'trades' && <TokenTrades currentToken={currentToken} />}
             {mobileActivityTab === 'callouts' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
-            {mobileActivityTab === 'holders' && <TokenHolders top10Percentage={displayTop10} />}
+            {mobileActivityTab === 'holders' && <TokenHolders currentToken={currentToken} top10Percentage={displayTop10} />}
           
           {mobileActivityTab === 'about' && (
           <TokenAbout
@@ -1253,9 +1253,7 @@ useEffect(() => {
                 {activeHubTab === 'my_trades' && typeof TokenMyTrades !== 'undefined' && <TokenMyTrades currentToken={currentToken} />}
                 {activeHubTab === 'top_traders' && typeof TokenTopTraders !== 'undefined' && <TokenTopTraders currentToken={currentToken} />}
                 {activeHubTab === 'callouts' && typeof TokenCallouts !== 'undefined' && <TokenCallouts tokenSymbol={currentToken?.symbol} />}
-                {activeHubTab === 'holders' && typeof TokenHolders !== 'undefined' && <TokenHolders top10Percentage={displayTop10} />}
-                {activeHubTab === 'holders' && typeof TokenHolders !== 'undefined' && <TokenHolders top10Percentage={displayTop10} />}
-        
+                {activeHubTab === 'holders' && typeof TokenHolders !== 'undefined' && <TokenHolders currentToken={currentToken} top10Percentage={displayTop10} />}
         {activeHubTab === 'about' && typeof TokenAbout !== 'undefined' && (
           <TokenAbout 
             currentToken={currentToken}
