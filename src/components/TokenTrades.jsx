@@ -119,6 +119,7 @@ export default function TokenTrades({ currentToken, token }) {
       {liveTrades.map((tx) => {
         const solAmt = tx.sol_amount || tx.sol || tx.solAmount || 0;
         const tokenAmt = tx.amount || tx.token_amount || tx.tokenAmount || 0;
+        const wallet = tx.wallet || tx.wallet_address || tx.user_address || 'Unknown';
         const isMyTrade = publicKey && wallet === publicKey.toString();
         const txSignature = tx.signature || tx.tx_signature || tx.tx_hash;
         
