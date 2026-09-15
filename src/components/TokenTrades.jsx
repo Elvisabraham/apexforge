@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 // Helper to calculate relative time
 const timeAgo = (dateString) => {
