@@ -82,7 +82,7 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
           const effectiveTotalSupply = Math.max(TOTAL_SUPPLY, circulatingTokens);
           const curveTokens = Math.max(0, effectiveTotalSupply - circulatingTokens);
 
-          // Build full list: Bonding Curve is the biggest holder initially
+          // Build full list and dynamically SORT it so the true biggest whale is #1
           const fullList = [
             {
               id: 'bonding-curve',
@@ -100,7 +100,7 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
               isDev: devAddress && h.wallet === devAddress,
               isMe: publicKey && h.wallet === publicKey.toString(),
             }))
-          ];
+          ].sort((a, b) => b.balance - a.balance); // 👈 FIXED: We sort the final list here!
 
           // Top 10 percentage across the entire token supply (Capped at 100%)
           const top10Sum = Math.min(100, fullList.slice(0, 10).reduce((acc, h) => acc + h.percentage, 0));
