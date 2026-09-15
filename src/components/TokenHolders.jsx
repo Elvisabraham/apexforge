@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldAlert, Landmark } from 'lucide-react';
+import { ShieldAlert, Landmark, Code2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useWallet } from '@solana/wallet-adapter-react';
 
-const TOTAL_SUPPLY = 1_000_000_000; // Standard 1B Memecoin Supply
+const TOTAL_SUPPLY = 1_000_000_000;
 
 const shortenAddress = (address) => {
   if (!address) return 'Unknown';
@@ -23,7 +23,7 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
   const tokenMint = activeToken?.mintAddress || activeToken?.mint || activeToken?.address || activeToken?.mint_address || activeToken?.symbol;
   const devAddress = activeToken?.devAddress || activeToken?.creator || activeToken?.dev_address;
 
- useEffect(() => {
+  useEffect(() => {
     if (!tokenMint) return;
 
     let isMounted = true;
@@ -62,10 +62,9 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
             }
           });
 
-          // If connected wallet has a verified on-chain balance, use it over estimated DB tally
+          // Inject your real wallet balance if available
           if (publicKey && userTokenBalance && holdingsMap[publicKey.toString()]) {
             const parsedBalance = parseFloat(userTokenBalance);
-            // Only override if it's a valid number (ignores string formats like "627M")
             if (!isNaN(parsedBalance) && parsedBalance > 1000) {
                 holdingsMap[publicKey.toString()].balance = parsedBalance;
             }
@@ -75,14 +74,13 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
             .filter((h) => h.balance > 0.000001)
             .sort((a, b) => b.balance - a.balance);
 
-          // Calculate circulating tokens
           const circulatingTokens = userHolders.reduce((acc, h) => acc + h.balance, 0);
-
-          // 🛡️ TESTNET FAILSAFE: If test trades exceed 1 Billion, dynamically adjust total supply so math doesn't break
+          
+          // Testnet Failsafe: Ensures math never breaks 100%
           const effectiveTotalSupply = Math.max(TOTAL_SUPPLY, circulatingTokens);
           const curveTokens = Math.max(0, effectiveTotalSupply - circulatingTokens);
 
-          // Build full list and dynamically SORT it so the true biggest whale is #1
+          // Build the exact holder list and sort it properly
           const fullList = [
             {
               id: 'bonding-curve',
@@ -100,12 +98,11 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
               isDev: devAddress && h.wallet === devAddress,
               isMe: publicKey && h.wallet === publicKey.toString(),
             }))
-          ].sort((a, b) => b.balance - a.balance); // 👈 FIXED: We sort the final list here!
+          ].sort((a, b) => b.balance - a.balance);
 
-          // Top 10 percentage across the entire token supply (Capped at 100%)
           const top10Sum = Math.min(100, fullList.slice(0, 10).reduce((acc, h) => acc + h.percentage, 0));
           setTop10Percent(`${top10Sum.toFixed(2)}%`);
-          setTotalHoldersCount(userHolders.length + 1); // Users + Curve Vault
+          setTotalHoldersCount(userHolders.length + 1);
           setHolders(fullList.slice(0, 25));
         }
       } catch (err) {
@@ -162,6 +159,11 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
           else if (index === 1) rankColor = 'text-zinc-300 font-black';
           else if (index === 2) rankColor = 'text-amber-700 font-black';
 
+          // Give the curve a unique subtle background to separate it from user wallets
+          const rowBg = holder.isCurve 
+            ? "bg-[#00f2a1]/[0.02] border-[#00f2a1]/20 hover:bg-[#00f2a1]/[0.05]" 
+            : "bg-[#121318] border-white/5 hover:bg-[#181920] hover:border-[#00f2a1]/30";
+
           return (
             <div 
               key={holder.id} 
@@ -170,7 +172,7 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
                   window.open(`https://solscan.io/account/${holder.address}`, '_blank');
                 }
               }}
-              className="bg-[#121318] hover:bg-[#181920] border border-white/5 hover:border-[#00f2a1]/30 rounded-xl p-3 flex items-center justify-between shadow-sm transition-all duration-200 cursor-pointer group relative overflow-hidden"
+              className={`${rowBg} rounded-xl p-3 flex items-center justify-between shadow-sm border transition-all duration-200 ${!holder.isCurve && 'cursor-pointer'} group relative overflow-hidden`}
             >
               <div 
                 className="absolute left-0 top-0 bottom-0 bg-[#00f2a1]/[0.03] transition-all duration-500 pointer-events-none" 
@@ -180,9 +182,11 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
               <div className="flex items-center gap-3 relative z-10">
                 <span className={`text-[10px] w-3 text-center ${rankColor}`}>{index + 1}</span>
                 
-                <div className="w-8 h-8 rounded-full bg-[#1c1d24] border border-white/10 overflow-hidden shrink-0 flex items-center justify-center">
+                <div className={`w-8 h-8 rounded-full border overflow-hidden shrink-0 flex items-center justify-center ${holder.isCurve ? 'bg-[#00f2a1]/10 border-[#00f2a1]/30' : 'bg-[#1c1d24] border-white/10'}`}>
                   {holder.isCurve ? (
                     <Landmark className="w-4 h-4 text-[#00f2a1]" />
+                  ) : holder.isDev ? (
+                    <Code2 className="w-4 h-4 text-amber-400" />
                   ) : (
                     <img src={holder.avatar} alt="Holder Avatar" className="w-full h-full object-cover" />
                   )}
@@ -190,7 +194,7 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
                 
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1.5">
-                    <span className={`text-xs font-bold ${holder.isCurve ? 'text-[#00f2a1]' : holder.isMe ? 'text-[#00f2a1]' : 'text-white'}`}>
+                    <span className={`text-xs font-bold ${holder.isCurve || holder.isMe ? 'text-[#00f2a1]' : 'text-white'}`}>
                       {holder.isCurve ? 'Bonding Curve' : holder.isMe ? 'You' : shortenAddress(holder.address)}
                     </span>
                     {holder.isCurve && (
