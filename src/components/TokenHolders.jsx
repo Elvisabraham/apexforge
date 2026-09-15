@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldAlert, Landmark, Code2 } from 'lucide-react';
+import { ShieldAlert, Landmark, Code2, Crosshair } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useWallet } from '@solana/wallet-adapter-react';
 
@@ -14,8 +14,7 @@ const shortenAddress = (address) => {
 export default function TokenHolders({ currentToken, token, userTokenBalance }) {
   const { publicKey } = useWallet();
   const [holders, setHolders] = useState([]);
-  const [totalHoldersCount, setTotalHoldersCount] = useState(0);
-  const [top10Percent, setTop10Percent] = useState('0.00%');
+  const [metrics, setMetrics] = useState({ top10: 0, dev: 0, snipers: 0, pool: 0, regular: 0, totalCount: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const isFirstLoad = useRef(true);
 
@@ -30,20 +29,22 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
 
     const fetchHolders = async () => {
       try {
-        if (isFirstLoad.current) {
-          setIsLoading(true);
-        }
+        if (isFirstLoad.current) setIsLoading(true);
 
+        // Fetch trades in chronological order so we can identify the first buyers (Snipers)
         const { data, error } = await supabase
           .from('trades')
           .select('*')
-          .eq('token_mint', tokenMint);
+          .eq('token_mint', tokenMint)
+          .order('created_at', { ascending: true }); // Must order by time to catch snipers!
 
         if (error) throw error;
 
         if (data && isMounted) {
           const holdingsMap = {};
+          const sniperWallets = new Set();
 
+          // Crunch the numbers and identify snipers
           data.forEach((tx) => {
             const wallet = tx.wallet || tx.wallet_address || tx.user_address;
             const tokenAmt = parseFloat(tx.token_amount || tx.amount || tx.tokens || 0);
@@ -52,14 +53,18 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
             if (!wallet || tokenAmt === 0) return;
 
             if (!holdingsMap[wallet]) {
-              holdingsMap[wallet] = { wallet, balance: 0 };
+              holdingsMap[wallet] = { wallet, balance: 0, txCount: 0 };
             }
 
-            if (isBuy) {
-              holdingsMap[wallet].balance += tokenAmt;
-            } else {
-              holdingsMap[wallet].balance -= tokenAmt;
+            // The first 5 unique wallets to ever execute a BUY (that aren't the dev) are flagged as Snipers
+            if (isBuy && sniperWallets.size < 5 && wallet !== devAddress) {
+              sniperWallets.add(wallet);
             }
+
+            if (isBuy) holdingsMap[wallet].balance += tokenAmt;
+            else holdingsMap[wallet].balance -= tokenAmt;
+            
+            holdingsMap[wallet].txCount += 1;
           });
 
           // Inject your real wallet balance if available
@@ -75,12 +80,10 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
             .sort((a, b) => b.balance - a.balance);
 
           const circulatingTokens = userHolders.reduce((acc, h) => acc + h.balance, 0);
-          
-          // Testnet Failsafe: Ensures math never breaks 100%
           const effectiveTotalSupply = Math.max(TOTAL_SUPPLY, circulatingTokens);
           const curveTokens = Math.max(0, effectiveTotalSupply - circulatingTokens);
 
-          // Build the exact holder list and sort it properly
+          // Build the exact holder list with roles
           const fullList = [
             {
               id: 'bonding-curve',
@@ -96,13 +99,27 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
               percentage: (h.balance / effectiveTotalSupply) * 100,
               avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${h.wallet}`,
               isDev: devAddress && h.wallet === devAddress,
+              isSniper: sniperWallets.has(h.wallet),
               isMe: publicKey && h.wallet === publicKey.toString(),
             }))
           ].sort((a, b) => b.balance - a.balance);
 
-          const top10Sum = Math.min(100, fullList.slice(0, 10).reduce((acc, h) => acc + h.percentage, 0));
-          setTop10Percent(`${top10Sum.toFixed(2)}%`);
-          setTotalHoldersCount(userHolders.length + 1);
+          // Calculate Breakdown Metrics
+          const top10Sum = fullList.filter(h => !h.isCurve).slice(0, 10).reduce((acc, h) => acc + h.percentage, 0);
+          const devSum = fullList.filter(h => h.isDev).reduce((acc, h) => acc + h.percentage, 0);
+          const sniperSum = fullList.filter(h => h.isSniper).reduce((acc, h) => acc + h.percentage, 0);
+          const poolSum = (curveTokens / effectiveTotalSupply) * 100;
+          const regularSum = Math.max(0, 100 - (devSum + sniperSum + poolSum));
+
+          setMetrics({
+            top10: Math.min(100, top10Sum),
+            dev: devSum,
+            snipers: sniperSum,
+            pool: poolSum,
+            regular: regularSum,
+            totalCount: userHolders.length + 1
+          });
+
           setHolders(fullList.slice(0, 25));
         }
       } catch (err) {
@@ -116,12 +133,8 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
     };
 
     fetchHolders();
-
     const interval = setInterval(fetchHolders, 15000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
+    return () => { isMounted = false; clearInterval(interval); };
   }, [tokenMint, devAddress, publicKey, userTokenBalance]);
 
   if (isLoading && holders.length === 0) {
@@ -136,18 +149,35 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
 
   return (
     <div className="flex flex-col gap-3 pb-4">
-      {/* Summary Header */}
-      <div className="bg-[#121318] border border-white/5 rounded-xl p-3 flex justify-between items-center shadow-sm">
-        <div className="flex flex-col">
-          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Top 10 Supply</span>
-          <span className="text-xs font-black text-amber-500 flex items-center gap-1.5 mt-0.5">
-            <ShieldAlert className="w-3.5 h-3.5" />
-            {top10Percent}
-          </span>
+      {/* 📊 ADVANCED SUPPLY BREAKDOWN */}
+      <div className="bg-[#121318] border border-white/5 rounded-xl p-3 flex flex-col gap-3 shadow-sm">
+        <div className="flex justify-between items-center">
+           <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Supply Distribution</span>
+           <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Holders: <span className="text-white">{metrics.totalCount}</span></span>
         </div>
-        <div className="flex flex-col items-end">
-          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Total Holders</span>
-          <span className="text-xs font-black text-white mt-0.5 tabular-nums">{totalHoldersCount}</span>
+        
+        {/* Progress Bar */}
+        <div className="w-full h-1.5 flex rounded-full overflow-hidden bg-white/5">
+          <div style={{ width: `${metrics.pool}%` }} className="bg-[#00f2a1] hover:brightness-125 transition-all" title={`Pool: ${metrics.pool.toFixed(1)}%`} />
+          <div style={{ width: `${metrics.dev}%` }} className="bg-amber-400 hover:brightness-125 transition-all" title={`Dev: ${metrics.dev.toFixed(1)}%`} />
+          <div style={{ width: `${metrics.snipers}%` }} className="bg-purple-500 hover:brightness-125 transition-all" title={`Snipers: ${metrics.snipers.toFixed(1)}%`} />
+          <div style={{ width: `${metrics.regular}%` }} className="bg-blue-500 hover:brightness-125 transition-all" title={`Regular: ${metrics.regular.toFixed(1)}%`} />
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center justify-between mt-1">
+          <div className="flex flex-col">
+            <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-black">Top 10</span>
+            <span className="text-xs font-black text-amber-500 flex items-center gap-1"><ShieldAlert className="w-3 h-3" /> {metrics.top10.toFixed(2)}%</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-black">Snipers</span>
+            <span className="text-xs font-black text-purple-400 flex items-center gap-1"><Crosshair className="w-3 h-3" /> {metrics.snipers.toFixed(2)}%</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-black">Dev</span>
+            <span className="text-xs font-black text-amber-400 flex items-center gap-1"><Code2 className="w-3 h-3" /> {metrics.dev.toFixed(2)}%</span>
+          </div>
         </div>
       </div>
 
@@ -159,7 +189,6 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
           else if (index === 1) rankColor = 'text-zinc-300 font-black';
           else if (index === 2) rankColor = 'text-amber-700 font-black';
 
-          // Give the curve a unique subtle background to separate it from user wallets
           const rowBg = holder.isCurve 
             ? "bg-[#00f2a1]/[0.02] border-[#00f2a1]/20 hover:bg-[#00f2a1]/[0.05]" 
             : "bg-[#121318] border-white/5 hover:bg-[#181920] hover:border-[#00f2a1]/30";
@@ -168,9 +197,7 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
             <div 
               key={holder.id} 
               onClick={() => {
-                if (!holder.isCurve) {
-                  window.open(`https://solscan.io/account/${holder.address}`, '_blank');
-                }
+                if (!holder.isCurve) window.open(`https://solscan.io/account/${holder.address}`, '_blank');
               }}
               className={`${rowBg} rounded-xl p-3 flex items-center justify-between shadow-sm border transition-all duration-200 ${!holder.isCurve && 'cursor-pointer'} group relative overflow-hidden`}
             >
@@ -185,32 +212,27 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
                 <div className={`w-8 h-8 rounded-full border overflow-hidden shrink-0 flex items-center justify-center ${holder.isCurve ? 'bg-[#00f2a1]/10 border-[#00f2a1]/30' : 'bg-[#1c1d24] border-white/10'}`}>
                   {holder.isCurve ? (
                     <Landmark className="w-4 h-4 text-[#00f2a1]" />
-                  ) : holder.isDev ? (
-                    <Code2 className="w-4 h-4 text-amber-400" />
                   ) : (
                     <img src={holder.avatar} alt="Holder Avatar" className="w-full h-full object-cover" />
                   )}
                 </div>
                 
                 <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <span className={`text-xs font-bold ${holder.isCurve || holder.isMe ? 'text-[#00f2a1]' : 'text-white'}`}>
                       {holder.isCurve ? 'Bonding Curve' : holder.isMe ? 'You' : shortenAddress(holder.address)}
                     </span>
                     {holder.isCurve && (
-                      <span className="text-[8px] bg-[#00f2a1]/10 text-[#00f2a1] px-1.5 py-0.5 rounded font-black uppercase tracking-wider border border-[#00f2a1]/20">
-                        Pool
-                      </span>
+                      <span className="text-[8px] bg-[#00f2a1]/10 text-[#00f2a1] px-1.5 py-0.5 rounded font-black uppercase tracking-wider border border-[#00f2a1]/20">Pool</span>
                     )}
                     {holder.isDev && (
-                      <span className="text-[8px] bg-amber-400/10 text-amber-400 px-1.5 py-0.5 rounded font-black uppercase tracking-wider border border-amber-400/20">
-                        Dev
-                      </span>
+                      <span className="text-[8px] bg-amber-400/10 text-amber-400 px-1.5 py-0.5 rounded font-black uppercase tracking-wider border border-amber-400/20">Dev</span>
+                    )}
+                    {holder.isSniper && (
+                      <span className="text-[8px] bg-purple-500/10 text-purple-400 px-1.5 py-0.5 rounded font-black uppercase tracking-wider border border-purple-500/20">Sniper</span>
                     )}
                     {holder.isMe && (
-                      <span className="text-[8px] bg-[#00f2a1]/20 text-[#00f2a1] px-1.5 py-0.5 rounded font-black uppercase tracking-wider border border-[#00f2a1]/30">
-                        Bag
-                      </span>
+                      <span className="text-[8px] bg-[#00f2a1]/20 text-[#00f2a1] px-1.5 py-0.5 rounded font-black uppercase tracking-wider border border-[#00f2a1]/30">Bag</span>
                     )}
                   </div>
                 </div>
