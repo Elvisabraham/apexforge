@@ -55,8 +55,7 @@ export default function TokenMyTrades({ currentToken, token }) {
           .from('trades')
           .select('*')
           .eq('token_mint', tokenMint)
-          // Look for trades matching the connected wallet (checks multiple potential column names)
-          .or(`wallet.eq.${walletString},wallet_address.eq.${walletString},user_address.eq.${walletString}`)
+          .eq('wallet', walletString) // 👈 FIXED: Strictly targets your 'wallet' column so the DB doesn't crash
           .order('created_at', { ascending: false })
           .limit(50);
           
