@@ -20,7 +20,7 @@ export default function TokenHolders({ currentToken, token, userTokenBalance }) 
 
   const activeToken = currentToken || token;
   const tokenMint = activeToken?.mintAddress || activeToken?.mint || activeToken?.address || activeToken?.mint_address || activeToken?.symbol;
-  const devAddress = activeToken?.devAddress || activeToken?.creator || activeToken?.dev_address;
+  const devAddress = activeToken?.devAddress || activeToken?.creator || activeToken?.dev_address || activeToken?.user_address || activeToken?.wallet || activeToken?.owner || activeToken?.creator_address;
 
   useEffect(() => {
     if (!tokenMint) return;
