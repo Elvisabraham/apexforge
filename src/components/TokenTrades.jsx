@@ -23,6 +23,7 @@ const shortenAddress = (address) => {
 };
 
 export default function TokenTrades({ currentToken, token }) {
+  const { publicKey } = useWallet(); // 👈 Add this line
   const [liveTrades, setLiveTrades] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [, setTick] = useState(0); // Triggers periodic re-render for relative timestamps
@@ -118,7 +119,7 @@ export default function TokenTrades({ currentToken, token }) {
       {liveTrades.map((tx) => {
         const solAmt = tx.sol_amount || tx.sol || tx.solAmount || 0;
         const tokenAmt = tx.amount || tx.token_amount || tx.tokenAmount || 0;
-        const wallet = tx.wallet || tx.wallet_address || tx.user_address || 'Unknown';
+        const isMyTrade = publicKey && wallet === publicKey.toString();
         const txSignature = tx.signature || tx.tx_signature || tx.tx_hash;
         
         const isBuy = tx.type?.toLowerCase() === 'buy' || tx.isBuy;
@@ -146,7 +147,11 @@ export default function TokenTrades({ currentToken, token }) {
                   {parseFloat(solAmt).toFixed(3)} SOL
                 </span>
                 <span className="text-[10px] text-zinc-500 font-mono group-hover:text-zinc-300 transition-colors flex items-center gap-1">
-                  {shortenAddress(wallet)} • {timeAgo(tx.created_at)}
+  {isMyTrade ? (
+    <span className="text-[#00f2a1] font-bold">You</span>
+  ) : (
+    shortenAddress(wallet)
+  )} • {timeAgo(tx.created_at)}
                   {txSignature && (
                     <svg className="w-2.5 h-2.5 text-zinc-600 group-hover:text-[#00f2a1] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
